@@ -535,6 +535,19 @@ function App() {
   const [talabatVendorCode, setTalabatVendorCode] = useState('TLB-CyShop-AMM');
   const [talabatRemoteId, setTalabatRemoteId] = useState('123456');
 
+  // Careem & ZATCA Onboarding Credentials State
+  const [careemEnabled, setCareemEnabled] = useState(true);
+  const [careemMerchantId, setCareemMerchantId] = useState('CRM-CyShop-AMM');
+  const [careemVendorCode, setCareemVendorCode] = useState('CRM-VND-02');
+  const [careemBaseUrl, setCareemBaseUrl] = useState('https://api.careem.com/v1/pos');
+  const [careemApiKey, setCareemApiKey] = useState('crm_api_key_88f9a2b7');
+  const [careemConnected, setCareemConnected] = useState(true);
+
+  const [zatcaClientId, setZatcaClientId] = useState('ZATCA-CL-88291');
+  const [zatcaSecret, setZatcaSecret] = useState('ztc_sec_99a8b7c6d5');
+  const [zatcaCsid, setZatcaCsid] = useState('CSID-2026-98124');
+  const [zatcaConnected, setZatcaConnected] = useState(true);
+
   const [talabatClientId, setTalabatClientId] = useState('client_cyshop_prod_99');
   const [talabatClientSecret, setTalabatClientSecret] = useState('sec_d5f8a096f2ad74f199f94');
   const [talabatAccessToken, setTalabatAccessToken] = useState('eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJkZWxpdmVyeWhlcm8iLCJleHAiOjE3ODQwMDAwMDB9.xXyZ...');
@@ -821,9 +834,15 @@ function App() {
         }, 1200);
       }
     } else if (country === 'SA') {
-      setTimeout(() => {
-        triggerToast(`Invoice ${invoiceId} cleared with Saudi ZATCA API Portal!`, 'success');
-      }, 1200);
+      if (zatcaConnected && zatcaClientId && zatcaSecret) {
+        setTimeout(() => {
+          triggerToast(`Invoice ${invoiceId} successfully cleared & signed with Saudi ZATCA API Portal!`, 'success');
+        }, 1200);
+      } else {
+        setTimeout(() => {
+          triggerToast(`Warning: Invoice ${invoiceId} recorded locally. Submit to ZATCA failed: Invalid API credentials!`, 'warning');
+        }, 1200);
+      }
     }
   };
 
@@ -3117,6 +3136,112 @@ function App() {
                   </div>
                 </div>
 
+                {/* Careem Integration settings */}
+                <div style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: '16px' }}>
+                  <h4 style={{ color: '#00c010', marginBottom: '12px', fontSize: '14.5px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <Bike size={16} style={{ color: '#00c010' }} /> Careem Integration Panel
+                  </h4>
+                  
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '13.5px', color: 'var(--text-primary)', cursor: 'pointer' }}>
+                      <input
+                        type="checkbox"
+                        checked={careemEnabled}
+                        onChange={(e) => setCareemEnabled(e.target.checked)}
+                        style={{ width: '16px', height: '16px', cursor: 'pointer' }}
+                      />
+                      Enable Careem Delivery Store Channel
+                    </label>
+
+                    {careemEnabled && (
+                      <div style={{
+                        marginTop: '12px',
+                        padding: '14px',
+                        borderRadius: '8px',
+                        border: '1px solid var(--border-color)',
+                        background: 'var(--bg-card-hover)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '12px'
+                      }}>
+                        <span style={{ fontSize: '12.5px', fontWeight: '700', color: '#00c010', display: 'block' }}>
+                          🟢 Careem API Credentials
+                        </span>
+
+                        <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: '10px' }}>
+                          <div className="form-group" style={{ margin: 0 }}>
+                            <label className="form-label" style={{ fontSize: '11px', fontWeight: '600' }}>Merchant ID</label>
+                            <input
+                              type="text"
+                              className="input"
+                              style={{ fontSize: '12.5px', height: '36px', color: 'var(--text-primary)', background: 'var(--bg-card)' }}
+                              placeholder="e.g. CRM-CyShop-AMM"
+                              value={careemMerchantId}
+                              onChange={(e) => setCareemMerchantId(e.target.value)}
+                            />
+                          </div>
+                          <div className="form-group" style={{ margin: 0 }}>
+                            <label className="form-label" style={{ fontSize: '11px', fontWeight: '600' }}>Vendor Code</label>
+                            <input
+                              type="text"
+                              className="input"
+                              style={{ fontSize: '12.5px', height: '36px', color: 'var(--text-primary)', background: 'var(--bg-card)' }}
+                              placeholder="e.g. CRM-VND-02"
+                              value={careemVendorCode}
+                              onChange={(e) => setCareemVendorCode(e.target.value)}
+                            />
+                          </div>
+                        </div>
+
+                        <div className="form-group" style={{ margin: 0 }}>
+                          <label className="form-label" style={{ fontSize: '11px', fontWeight: '600' }}>Careem API Endpoint Base</label>
+                          <input
+                            type="text"
+                            className="input"
+                            style={{ fontSize: '12.5px', height: '36px', color: 'var(--text-primary)', background: 'var(--bg-card)' }}
+                            placeholder="https://api.careem.com/v1/pos"
+                            value={careemBaseUrl}
+                            onChange={(e) => setCareemBaseUrl(e.target.value)}
+                          />
+                        </div>
+
+                        <div className="form-group" style={{ margin: 0 }}>
+                          <label className="form-label" style={{ fontSize: '11px', fontWeight: '600' }}>Careem Authorization Key</label>
+                          <input
+                            type="password"
+                            className="input"
+                            style={{ fontSize: '12.5px', height: '36px', color: 'var(--text-primary)', background: 'var(--bg-card)' }}
+                            placeholder="Enter Careem API Key"
+                            value={careemApiKey}
+                            onChange={(e) => setCareemApiKey(e.target.value)}
+                          />
+                        </div>
+
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '4px' }}>
+                          <button
+                            type="button"
+                            className="btn btn-secondary"
+                            style={{ height: '32px', fontSize: '11px', padding: '0 12px', color: 'var(--text-primary)', border: '1px solid var(--border-color)', borderRadius: '6px' }}
+                            onClick={() => {
+                              if (!careemMerchantId || !careemApiKey) {
+                                triggerToast('Please enter Careem Merchant credentials first', 'error');
+                                return;
+                              }
+                              triggerToast('Testing Careem POS endpoint connection...', 'info');
+                              setTimeout(() => {
+                                setCareemConnected(true);
+                                triggerToast('Careem API connection established successfully!', 'success');
+                              }, 1500);
+                            }}
+                          >
+                            Verify Careem Link
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
                 <div style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: '16px' }}>
                   <h4 style={{ color: 'var(--text-primary)', marginBottom: '8px', fontSize: '14.5px' }}>Store Branding Settings</h4>
                   <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
@@ -3153,6 +3278,7 @@ function App() {
                       />
                       Enable ZATCA Phase-2 Developer Sandbox Compliance Mode
                     </label>
+                    
                     <div className="form-group" style={{ width: '220px', marginTop: '6px' }}>
                       <label className="form-label">Saudi VAT Rate (%)</label>
                       <input
@@ -3162,6 +3288,86 @@ function App() {
                         onChange={(e) => setDefaultVatSa(e.target.value)}
                       />
                     </div>
+
+                    {zatcaSandbox && (
+                      <div style={{
+                        marginTop: '12px',
+                        padding: '14px',
+                        borderRadius: '8px',
+                        border: '1px solid var(--border-color)',
+                        background: 'var(--bg-card-hover)',
+                        display: 'flex',
+                        flexDirection: 'column',
+                        gap: '12px'
+                      }}>
+                        <span style={{ fontSize: '12.5px', fontWeight: '700', color: 'var(--primary-color)', display: 'block' }}>
+                          🇸🇦 ZATCA Cryptographic Connection
+                        </span>
+                        
+                        <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 0.8fr', gap: '10px' }}>
+                          <div className="form-group" style={{ margin: 0 }}>
+                            <label className="form-label" style={{ fontSize: '11px', fontWeight: '600' }}>ZATCA Client ID</label>
+                            <input
+                              type="text"
+                              className="input"
+                              style={{ fontSize: '12.5px', height: '36px', color: 'var(--text-primary)', background: 'var(--bg-card)' }}
+                              placeholder="e.g. ZATCA-CL-88291"
+                              value={zatcaClientId}
+                              onChange={(e) => setZatcaClientId(e.target.value)}
+                            />
+                          </div>
+                          <div className="form-group" style={{ margin: 0 }}>
+                            <label className="form-label" style={{ fontSize: '11px', fontWeight: '600' }}>Stamp Mode</label>
+                            <span style={{ display: 'block', fontSize: '12px', color: 'var(--text-primary)', marginTop: '8px' }}>Sandbox-V2</span>
+                          </div>
+                        </div>
+
+                        <div className="form-group" style={{ margin: 0 }}>
+                          <label className="form-label" style={{ fontSize: '11px', fontWeight: '600' }}>Cryptographic Stamp (CSID)</label>
+                          <input
+                            type="text"
+                            className="input"
+                            style={{ fontSize: '12.5px', height: '36px', color: 'var(--text-primary)', background: 'var(--bg-card)' }}
+                            placeholder="e.g. CSID-2026-98124"
+                            value={zatcaCsid}
+                            onChange={(e) => setZatcaCsid(e.target.value)}
+                          />
+                        </div>
+
+                        <div className="form-group" style={{ margin: 0 }}>
+                          <label className="form-label" style={{ fontSize: '11px', fontWeight: '600' }}>API Secret Key</label>
+                          <input
+                            type="password"
+                            className="input"
+                            style={{ fontSize: '12.5px', height: '36px', color: 'var(--text-primary)', background: 'var(--bg-card)' }}
+                            placeholder="Enter ZATCA Secret Key"
+                            value={zatcaSecret}
+                            onChange={(e) => setZatcaSecret(e.target.value)}
+                          />
+                        </div>
+
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '4px' }}>
+                          <button
+                            type="button"
+                            className="btn btn-secondary"
+                            style={{ height: '32px', fontSize: '11px', padding: '0 12px', color: 'var(--text-primary)', border: '1px solid var(--border-color)', borderRadius: '6px' }}
+                            onClick={() => {
+                              if (!zatcaClientId || !zatcaSecret) {
+                                triggerToast('Please enter ZATCA Client credentials first', 'error');
+                                return;
+                              }
+                              triggerToast('Verifying signature certificate with ZATCA developer portal...', 'info');
+                              setTimeout(() => {
+                                setZatcaConnected(true);
+                                triggerToast('ZATCA Cryptographic Stamp & CSID verified successfully!', 'success');
+                              }, 1500);
+                            }}
+                          >
+                            Verify ZATCA Link
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -3308,8 +3514,16 @@ function App() {
                     </span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span>Careem Integration Node:</span>
+                    <span className={`badge ${careemEnabled && careemConnected && careemMerchantId && careemApiKey ? 'badge-success' : 'badge-danger'}`} style={{ padding: '1px 6px', fontSize: '10px' }}>
+                      {careemEnabled && careemConnected && careemMerchantId && careemApiKey ? 'Online' : 'Offline'}
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <span>ZATCA API Gateway:</span>
-                    <span className="badge badge-success" style={{ padding: '1px 6px', fontSize: '10px' }}>Online</span>
+                    <span className={`badge ${zatcaConnected && zatcaClientId && zatcaSecret ? 'badge-success' : 'badge-danger'}`} style={{ padding: '1px 6px', fontSize: '10px' }}>
+                      {zatcaConnected && zatcaClientId && zatcaSecret ? 'Online' : 'Offline'}
+                    </span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <span>Jordan ISTD Gateway:</span>
@@ -3329,12 +3543,21 @@ function App() {
                   onClick={() => {
                     triggerToast('Verifying connection pathways...', 'info');
                     setTimeout(() => {
-                      if (istdEnabled && (!jofotaraUsername || !jofotaraSecret)) {
-                        setJofotaraConnected(false);
-                        triggerToast('Verification failed: Jofotara credentials missing!', 'error');
+                      let errors = [];
+                      if (istdEnabled && (!jofotaraUsername || !jofotaraSecret)) errors.push('Jofotara');
+                      if (zatcaSandbox && (!zatcaClientId || !zatcaSecret)) errors.push('ZATCA');
+                      if (careemEnabled && (!careemMerchantId || !careemApiKey)) errors.push('Careem');
+                      
+                      if (errors.length > 0) {
+                        if (istdEnabled && (!jofotaraUsername || !jofotaraSecret)) setJofotaraConnected(false);
+                        if (zatcaSandbox && (!zatcaClientId || !zatcaSecret)) setZatcaConnected(false);
+                        if (careemEnabled && (!careemMerchantId || !careemApiKey)) setCareemConnected(false);
+                        triggerToast(`Verification failed: Config missing for ${errors.join(', ')}`, 'error');
                       } else {
                         setJofotaraConnected(true);
-                        triggerToast('All compliance pipelines & delivery channels verified!', 'success');
+                        setZatcaConnected(true);
+                        setCareemConnected(true);
+                        triggerToast('All compliance pipelines & delivery channels verified successfully!', 'success');
                       }
                     }, 1200);
                   }}
