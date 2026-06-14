@@ -488,7 +488,18 @@ function App() {
   const [globalSearch, setGlobalSearch] = useState('');
 
   // Core Data States
-  const [products, setProducts] = useState(INITIAL_PRODUCTS);
+  // Initial products setup with images
+  const initialProductsWithImages = INITIAL_PRODUCTS.map((p) => {
+    let image = '';
+    if (p.category === 'Coffee') image = 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=150&auto=format&fit=crop&q=60';
+    else if (p.category === 'Mains') image = 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=150&auto=format&fit=crop&q=60';
+    else if (p.category === 'Desserts') image = 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=150&auto=format&fit=crop&q=60';
+    else if (p.category === 'Drinks') image = 'https://images.unsplash.com/photo-1536882240095-0379873feb4e?w=150&auto=format&fit=crop&q=60';
+    return { ...p, image };
+  });
+
+  // Core Data States
+  const [products, setProducts] = useState(initialProductsWithImages);
   const [orders, setOrders] = useState(INITIAL_ORDERS);
   const [invoices, setInvoices] = useState(INITIAL_INVOICES);
   const [customers, setCustomers] = useState(INITIAL_CUSTOMERS);
@@ -498,7 +509,7 @@ function App() {
 
   // Inventory Management State
   const [inventory, setInventory] = useState(
-    INITIAL_PRODUCTS.map((p, idx) => ({
+    initialProductsWithImages.map((p, idx) => ({
       product: p,
       stock: 50 + ((idx * 8) % 45),
       minStock: 20
@@ -512,9 +523,15 @@ function App() {
 
   // Forms states
   const [newProdName, setNewProdName] = useState('');
+  const [newProdImage, setNewProdImage] = useState('');
   const [newProdCategory, setNewProdCategory] = useState('Coffee');
   const [newProdPrice, setNewProdPrice] = useState('');
   const [newProdStock, setNewProdStock] = useState('50');
+
+  // Kiosk & QR Menu States
+  const [kioskCart, setKioskCart] = useState([]);
+  const [kioskCategory, setKioskCategory] = useState('All');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const [newCustName, setNewCustName] = useState('');
   const [newCustPhone, setNewCustPhone] = useState('');
@@ -1168,13 +1185,15 @@ function App() {
       name: newProdName,
       price: priceNum,
       category: newProdCategory,
-      prepTime: '5 min'
+      prepTime: '5 min',
+      image: newProdImage
     };
 
     setProducts((prev) => [...prev, newProduct]);
     setInventory((prev) => [...prev, { product: newProduct, stock: stockNum, minStock: 20 }]);
 
     setNewProdName('');
+    setNewProdImage('');
     setNewProdPrice('');
     setNewProdStock('50');
 
@@ -1453,6 +1472,15 @@ function App() {
           >
             <BarChart3 size={18} />
             {!sidebarCollapsed && <span style={{ color: activeTab === 'analytics' ? 'var(--primary-color)' : 'var(--text-muted)' }}>Analytics</span>}
+          </button>
+
+          <button
+            onClick={() => setActiveTab('kiosk')}
+            className={`sidebar-item ${activeTab === 'kiosk' ? 'active' : ''}`}
+            style={{ border: 'none', background: 'none', textAlign: 'left', width: '100%' }}
+          >
+            <Store size={18} />
+            {!sidebarCollapsed && <span style={{ color: activeTab === 'kiosk' ? 'var(--primary-color)' : 'var(--text-muted)' }}>Kiosk & QR Menu</span>}
           </button>
 
           <button
@@ -1798,11 +1826,17 @@ function App() {
 
                     return (
                       <div key={p.id} className="product-item" onClick={() => addToCart(p)} style={{ opacity: isOut ? 0.5 : 1 }}>
-                        <div className="product-image-placeholder">
-                          {p.category === 'Coffee' && '☕'}
-                          {p.category === 'Mains' && '🍔'}
-                          {p.category === 'Desserts' && '🍰'}
-                          {p.category === 'Drinks' && '🥤'}
+                        <div className="product-image-placeholder" style={{ overflow: 'hidden', padding: 0 }}>
+                          {p.image ? (
+                            <img src={p.image} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          ) : (
+                            <span style={{ fontSize: '20px' }}>
+                              {p.category === 'Coffee' && '☕'}
+                              {p.category === 'Mains' && '🍔'}
+                              {p.category === 'Desserts' && '🍰'}
+                              {p.category === 'Drinks' && '🥤'}
+                            </span>
+                          )}
                         </div>
                         <div style={{ display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
                           <span className="product-name" style={{ color: 'var(--text-primary)' }}>{p.name}</span>
@@ -2128,6 +2162,7 @@ function App() {
                     <input
                       type="text"
                       className="input"
+                      style={{ color: 'var(--text-primary)', background: 'var(--bg-card)' }}
                       placeholder="e.g. Cyber Donut"
                       value={newProdName}
                       onChange={(e) => setNewProdName(e.target.value)}
@@ -2138,6 +2173,7 @@ function App() {
                     <label className="form-label">Category</label>
                     <select
                       className="select"
+                      style={{ color: 'var(--text-primary)', background: 'var(--bg-card)' }}
                       value={newProdCategory}
                       onChange={(e) => setNewProdCategory(e.target.value)}
                     >
@@ -2153,6 +2189,7 @@ function App() {
                     <input
                       type="text"
                       className="input"
+                      style={{ color: 'var(--text-primary)', background: 'var(--bg-card)' }}
                       placeholder="e.g. 5.5"
                       value={newProdPrice}
                       onChange={(e) => setNewProdPrice(e.target.value)}
@@ -2164,10 +2201,72 @@ function App() {
                     <input
                       type="number"
                       className="input"
+                      style={{ color: 'var(--text-primary)', background: 'var(--bg-card)' }}
                       placeholder="e.g. 50"
                       value={newProdStock}
                       onChange={(e) => setNewProdStock(e.target.value)}
                     />
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label">Product Catalog Image</label>
+                    <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        id="product-image-upload"
+                        style={{ display: 'none' }}
+                        onChange={(e) => {
+                          const file = e.target.files[0];
+                          if (file) {
+                            const reader = new FileReader();
+                            reader.onload = (event) => {
+                              setNewProdImage(event.target.result);
+                              triggerToast('Image uploaded successfully!', 'success');
+                            };
+                            reader.readAsDataURL(file);
+                          }
+                        }}
+                      />
+                      <button
+                        type="button"
+                        className="btn btn-secondary"
+                        style={{ color: 'var(--text-primary)', height: '36px', fontSize: '12.5px', border: '1px solid var(--border-color)' }}
+                        onClick={() => document.getElementById('product-image-upload').click()}
+                      >
+                        📂 Upload Image
+                      </button>
+                      {newProdImage ? (
+                        <div style={{ width: '36px', height: '36px', borderRadius: '6px', overflow: 'hidden', border: '1px solid var(--border-color)', background: 'var(--bg-card-hover)' }}>
+                          <img src={newProdImage} alt="Preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                        </div>
+                      ) : (
+                        <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>No image uploaded</span>
+                      )}
+                    </div>
+
+                    <div style={{ display: 'flex', gap: '6px', marginTop: '8px', flexWrap: 'wrap' }}>
+                      <span style={{ fontSize: '10px', color: 'var(--text-muted)', display: 'block', alignSelf: 'center' }}>Presets:</span>
+                      {[
+                        { name: '☕ Coffee', url: 'https://images.unsplash.com/photo-1509042239860-f550ce710b93?w=150&auto=format&fit=crop&q=60' },
+                        { name: '🍔 Burger', url: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=150&auto=format&fit=crop&q=60' },
+                        { name: '🍰 Cake', url: 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?w=150&auto=format&fit=crop&q=60' },
+                        { name: '🥤 Juice', url: 'https://images.unsplash.com/photo-1536882240095-0379873feb4e?w=150&auto=format&fit=crop&q=60' }
+                      ].map((img) => (
+                        <button
+                          key={img.name}
+                          type="button"
+                          className="btn"
+                          style={{ padding: '2px 6px', fontSize: '9.5px', borderRadius: '4px', border: '1px solid var(--border-color)', color: 'var(--text-primary)', background: 'var(--bg-card-hover)' }}
+                          onClick={() => {
+                            setNewProdImage(img.url);
+                            triggerToast(`Selected ${img.name.split(' ')[1]} preset!`, 'info');
+                          }}
+                        >
+                          {img.name.split(' ')[0]}
+                        </button>
+                      ))}
+                    </div>
                   </div>
 
                   <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '8px', color: '#ffffff' }}>
@@ -3926,6 +4025,347 @@ function App() {
                 </div>
               </div>
             </div>
+          </main>
+        )}
+
+        {/* Kiosk & QR Menu Tab View */}
+        {activeTab === 'kiosk' && (
+          <main className="page-content" style={{ animation: 'fadeIn 0.3s ease' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '24px' }}>
+              {/* Left Column: Kiosk Terminal Catalog */}
+              <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid var(--border-color)', paddingBottom: '12px' }}>
+                  <h3 className="card-title" style={{ color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <Store size={18} style={{ color: 'var(--primary-color)' }} />
+                    Interactive Self-Service Kiosk Terminal
+                  </h3>
+                  <span className="badge badge-success" style={{ fontSize: '10px', padding: '2px 8px' }}>
+                    Kiosk Online Mode
+                  </span>
+                </div>
+
+                {/* Category Filtering Bar */}
+                <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '4px' }}>
+                  {['All', 'Coffee', 'Mains', 'Desserts', 'Drinks'].map((cat) => (
+                    <button
+                      key={cat}
+                      onClick={() => setKioskCategory(cat)}
+                      className={`btn ${kioskCategory === cat ? 'btn-primary' : 'btn-secondary'}`}
+                      style={{ padding: '6px 14px', fontSize: '12px', borderRadius: '20px', height: 'auto', color: kioskCategory === cat ? '#ffffff' : 'var(--text-primary)', fontWeight: '600' }}
+                    >
+                      {cat === 'All' ? '🌐 All items' : cat === 'Coffee' ? '☕ Coffee' : cat === 'Mains' ? '🍔 Mains' : cat === 'Desserts' ? '🍰 Desserts' : '🥤 Drinks'}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Product Grid showing high-res images */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))', gap: '16px', maxHeight: '500px', overflowY: 'auto', padding: '4px' }}>
+                  {products
+                    .filter((p) => kioskCategory === 'All' || p.category === kioskCategory)
+                    .map((p) => {
+                      const invItem = inventory.find((i) => i.product.id === p.id);
+                      const isOut = invItem && invItem.stock <= 0;
+
+                      return (
+                        <div
+                          key={p.id}
+                          style={{
+                            background: 'var(--bg-card-hover)',
+                            border: '1px solid var(--border-color)',
+                            borderRadius: '12px',
+                            overflow: 'hidden',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            cursor: isOut ? 'not-allowed' : 'pointer',
+                            opacity: isOut ? 0.5 : 1,
+                            transition: 'all 0.2s',
+                            boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+                          }}
+                          onClick={() => {
+                            if (isOut) return;
+                            setKioskCart((prev) => {
+                              const existing = prev.find((item) => item.product.id === p.id);
+                              if (existing) {
+                                return prev.map((item) =>
+                                  item.product.id === p.id ? { ...item, quantity: item.quantity + 1 } : item
+                                );
+                              }
+                              return [...prev, { product: p, quantity: 1 }];
+                            });
+                            triggerToast(`Added ${p.name} to Kiosk order!`, 'success');
+                          }}
+                        >
+                          {/* Product Image */}
+                          <div style={{ height: '110px', background: 'var(--bg-card)', position: 'relative', overflow: 'hidden' }}>
+                            {p.image ? (
+                              <img src={p.image} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            ) : (
+                              <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '32px' }}>
+                                {p.category === 'Coffee' && '☕'}
+                                {p.category === 'Mains' && '🍔'}
+                                {p.category === 'Desserts' && '🍰'}
+                                {p.category === 'Drinks' && '🥤'}
+                              </div>
+                            )}
+                            <div style={{ position: 'absolute', top: '6px', right: '6px', background: 'rgba(0,0,0,0.6)', padding: '2px 6px', borderRadius: '4px', fontSize: '10px', color: '#fff', fontWeight: '700' }}>
+                              {p.price.toFixed(2)} {getCurrency()}
+                            </div>
+                          </div>
+
+                          {/* Info */}
+                          <div style={{ padding: '10px', display: 'flex', flexDirection: 'column', gap: '4px', flex: 1 }}>
+                            <span style={{ fontSize: '12.5px', fontWeight: '700', color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                              {p.name}
+                            </span>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 'auto' }}>
+                              <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>{p.category}</span>
+                              {isOut && <span style={{ fontSize: '9px', color: 'var(--danger-color)', fontWeight: '700' }}>SOLD OUT</span>}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                </div>
+              </div>
+
+              {/* Right Column: Kiosk Checkout & QR Mobile Menu Simulator */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                {/* Kiosk Cart panel */}
+                <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '14px', flex: 1 }}>
+                  <h4 className="card-title" style={{ color: 'var(--text-primary)', margin: 0, display: 'flex', alignItems: 'center', gap: '6px', fontSize: '14px' }}>
+                    <ShoppingBag size={16} style={{ color: 'var(--primary-color)' }} />
+                    Self-Checkout Cart
+                  </h4>
+
+                  {kioskCart.length === 0 ? (
+                    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', minHeight: '180px' }}>
+                      <span style={{ fontSize: '32px' }}>🛒</span>
+                      <span style={{ fontSize: '12px', marginTop: '6px' }}>Select items to begin self-checkout</span>
+                    </div>
+                  ) : (
+                    <>
+                      {/* Cart List */}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', overflowY: 'auto', flex: 1, maxHeight: '200px' }}>
+                        {kioskCart.map((item) => (
+                          <div key={item.product.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-card-hover)', padding: '8px 10px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', maxWidth: '60%' }}>
+                              <span style={{ fontSize: '12px', fontWeight: '700', color: 'var(--text-primary)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{item.product.name}</span>
+                              <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>{item.product.price.toFixed(2)} {getCurrency()}</span>
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <button
+                                className="btn"
+                                style={{ width: '22px', height: '22px', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}
+                                onClick={() => {
+                                  setKioskCart((prev) =>
+                                    prev
+                                      .map((i) => (i.product.id === item.product.id ? { ...i, quantity: i.quantity - 1 } : i))
+                                      .filter((i) => i.quantity > 0)
+                                  );
+                                }}
+                              >
+                                -
+                              </button>
+                              <span style={{ fontSize: '12px', fontWeight: '700', color: 'var(--text-primary)' }}>{item.quantity}</span>
+                              <button
+                                className="btn"
+                                style={{ width: '22px', height: '22px', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}
+                                onClick={() => {
+                                  setKioskCart((prev) =>
+                                    prev.map((i) => (i.product.id === item.product.id ? { ...i, quantity: i.quantity + 1 } : i))
+                                  );
+                                }}
+                              >
+                                +
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Totals */}
+                      <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '10px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', color: 'var(--text-primary)' }}>
+                          <span>Total Amount (incl VAT)</span>
+                          <span style={{ fontWeight: '700' }}>
+                            {kioskCart.reduce((acc, item) => acc + item.product.price * item.quantity, 0).toFixed(2)} {getCurrency()}
+                          </span>
+                        </div>
+                        <button
+                          className="btn btn-primary"
+                          style={{ width: '100%', marginTop: '4px', color: '#ffffff' }}
+                          onClick={() => {
+                            const subtotal = kioskCart.reduce((acc, item) => acc + item.product.price * item.quantity, 0);
+                            const taxRate = getTaxRate();
+                            const tax = subtotal * taxRate;
+                            const total = subtotal + tax;
+                            const orderId = `ORD-KSK-${orders.length + 101}`;
+                            const invoiceId = `INV-KSK-${String(invoices.length + 1).padStart(3, '0')}`;
+                            const timestamp = new Date().toISOString();
+
+                            const newOrder = {
+                              id: orderId,
+                              items: kioskCart.map((item) => ({ ...item, price: item.product.price })),
+                              total: parseFloat(total.toFixed(2)),
+                              status: 'pending',
+                              timestamp,
+                              invoiceId,
+                              country,
+                              source: 'kiosk'
+                            };
+
+                            const newInvoice = {
+                              id: invoiceId,
+                              orderId,
+                              timestamp,
+                              items: kioskCart.map((item) => ({ ...item, price: item.product.price })),
+                              subtotal: parseFloat(subtotal.toFixed(2)),
+                              tax: parseFloat(tax.toFixed(2)),
+                              total: parseFloat(total.toFixed(2)),
+                              country,
+                              source: 'kiosk',
+                              qrData: `CyShop Kiosk ${country} | Inv: ${invoiceId} | Total: ${total.toFixed(2)} ${getCurrency()}`
+                            };
+
+                            setOrders((prev) => [newOrder, ...prev]);
+                            setInvoices((prev) => [newInvoice, ...prev]);
+                            setKioskCart([]);
+                            triggerToast(`Kiosk Checkout Completed! Ticket ${orderId} sent to Kitchen.`, 'success');
+                            confetti({ particleCount: 100, spread: 50 });
+                          }}
+                        >
+                          Place Order & Print Ticket
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                {/* QR Mobile Menu Simulator */}
+                <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '12px', alignItems: 'center', textAlign: 'center' }}>
+                  <h4 style={{ color: 'var(--text-primary)', margin: 0, fontSize: '13.5px', fontWeight: '700' }}>
+                    Scan QR Mobile Menu
+                  </h4>
+                  <p style={{ fontSize: '11px', color: 'var(--text-muted)', margin: 0 }}>
+                    Customers can scan this QR code at their table to browse and order directly from their smartphones.
+                  </p>
+
+                  {/* Generated QR Code Graphic */}
+                  <div
+                    style={{
+                      background: '#ffffff',
+                      padding: '12px',
+                      borderRadius: '12px',
+                      cursor: 'pointer',
+                      border: '2px solid var(--primary-color)',
+                      marginTop: '6px',
+                      boxShadow: 'var(--shadow-natural)'
+                    }}
+                    onClick={() => setMobileMenuOpen(true)}
+                  >
+                    {/* Mock QR graphic */}
+                    <div style={{ width: '100px', height: '100px', display: 'flex', flexWrap: 'wrap' }}>
+                      {Array.from({ length: 25 }).map((_, i) => (
+                        <div
+                          key={i}
+                          style={{
+                            width: '20px',
+                            height: '20px',
+                            backgroundColor: (i % 2 === 0 && i % 3 !== 0) || i === 0 || i === 4 || i === 20 || i === 24 ? '#18181b' : '#ffffff'
+                          }}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                  <span style={{ fontSize: '10.5px', color: 'var(--primary-color)', fontWeight: '700', marginTop: '4px' }}>
+                    Click to Simulate Mobile Screen
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Mobile QR Menu Simulation Popup */}
+            {mobileMenuOpen && (
+              <div
+                style={{
+                  position: 'fixed',
+                  top: 0,
+                  left: 0,
+                  width: '100%',
+                  height: '100%',
+                  backgroundColor: 'rgba(0,0,0,0.7)',
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  zIndex: 2000,
+                  animation: 'fadeIn 0.2s ease'
+                }}
+              >
+                <div
+                  style={{
+                    width: '320px',
+                    height: '560px',
+                    background: 'var(--bg-card)',
+                    border: '4px solid var(--border-color)',
+                    borderRadius: '24px',
+                    overflow: 'hidden',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    position: 'relative',
+                    boxShadow: 'var(--shadow-deep)'
+                  }}
+                >
+                  {/* Phone Notch */}
+                  <div style={{ width: '120px', height: '18px', background: '#000', borderRadius: '0 0 10px 10px', position: 'absolute', top: 0, left: '100px', zIndex: 10 }} />
+
+                  {/* Header */}
+                  <div style={{ background: 'var(--bg-card-hover)', padding: '24px 14px 10px 14px', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: '14px', fontWeight: '800', color: 'var(--text-primary)' }}>📱 QR Mobile Menu</span>
+                    <button
+                      className="btn"
+                      style={{ padding: '2px 8px', fontSize: '11px', borderRadius: '4px', border: '1px solid var(--border-color)', color: 'var(--text-primary)' }}
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      Close
+                    </button>
+                  </div>
+
+                  {/* Mobile Menu List */}
+                  <div style={{ flex: 1, overflowY: 'auto', padding: '14px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    {products.map((p) => (
+                      <div key={p.id} style={{ display: 'flex', gap: '10px', background: 'var(--bg-card-hover)', padding: '8px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                        <div style={{ width: '50px', height: '50px', borderRadius: '6px', overflow: 'hidden', background: 'var(--bg-card)' }}>
+                          {p.image ? (
+                            <img src={p.image} alt={p.name} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                          ) : (
+                            <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '18px' }}>
+                              {p.category === 'Coffee' && '☕'}
+                              {p.category === 'Mains' && '🍔'}
+                              {p.category === 'Desserts' && '🍰'}
+                              {p.category === 'Drinks' && '🥤'}
+                            </div>
+                          )}
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
+                          <span style={{ fontSize: '12.5px', fontWeight: '700', color: 'var(--text-primary)' }}>{p.name}</span>
+                          <span style={{ fontSize: '11px', color: 'var(--primary-color)', fontWeight: '700', marginTop: '2px' }}>{p.price.toFixed(2)} {getCurrency()}</span>
+                        </div>
+                        <button
+                          className="btn btn-primary"
+                          style={{ alignSelf: 'center', height: '26px', fontSize: '10px', padding: '0 8px', color: '#fff' }}
+                          onClick={() => {
+                            triggerToast(`Order submitted on smartphone for ${p.name}!`, 'success');
+                            setMobileMenuOpen(false);
+                          }}
+                        >
+                          Add
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
           </main>
         )}
       </div>
