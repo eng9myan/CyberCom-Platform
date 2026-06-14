@@ -141,6 +141,344 @@ const INITIAL_STAFF = [
   { id: 'STF-03', name: 'Tareq Qabil', role: 'Delivery Agent', activeShift: false, clockInTime: '-' }
 ];
 
+// Interactive WebGL/Canvas Avatar component
+function NovaAvatarCanvas({ avatar, expression, speaking }) {
+  const canvasRef = useRef(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    let animationFrameId;
+    let time = 0;
+
+    const render = () => {
+      time += 0.05;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      
+      const width = canvas.width;
+      const height = canvas.height;
+      const cx = width / 2;
+      const cy = height / 2 - 20;
+
+      // Draw Neural Background Grid
+      ctx.strokeStyle = 'rgba(139, 92, 246, 0.08)';
+      ctx.lineWidth = 1;
+      for (let i = 0; i < width; i += 20) {
+        ctx.beginPath();
+        ctx.moveTo(i, 0);
+        ctx.lineTo(i, height);
+        ctx.stroke();
+      }
+      for (let j = 0; j < height; j += 20) {
+        ctx.beginPath();
+        ctx.moveTo(0, j);
+        ctx.lineTo(width, j);
+        ctx.stroke();
+      }
+
+      // Draw Holographic Orbit Rings (Core mode or background)
+      if (avatar === 'core') {
+        ctx.strokeStyle = 'rgba(139, 92, 246, 0.4)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.ellipse(cx, cy, 80 + Math.sin(time) * 5, 80 + Math.cos(time) * 5, time * 0.5, 0, Math.PI * 2);
+        ctx.stroke();
+
+        ctx.strokeStyle = 'rgba(6, 182, 212, 0.3)';
+        ctx.beginPath();
+        ctx.ellipse(cx, cy, 110 + Math.cos(time * 0.8) * 8, 50 + Math.sin(time * 0.8) * 4, -time * 0.7, 0, Math.PI * 2);
+        ctx.stroke();
+
+        // Pulsating Center Core
+        const gradient = ctx.createRadialGradient(cx, cy, 5, cx, cy, 40 + Math.sin(time * 4) * 3);
+        gradient.addColorStop(0, '#a78bfa');
+        gradient.addColorStop(0.5, 'rgba(139, 92, 246, 0.6)');
+        gradient.addColorStop(1, 'rgba(6, 182, 212, 0)');
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.arc(cx, cy, 45 + Math.sin(time * 4) * 3, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Neural network connections
+        ctx.fillStyle = '#22d3ee';
+        for (let a = 0; a < 6; a++) {
+          const angle = (a * Math.PI) / 3 + time * 0.2;
+          const px = cx + Math.cos(angle) * (80 + Math.sin(time) * 5);
+          const py = cy + Math.sin(angle) * (80 + Math.sin(time) * 5);
+          ctx.beginPath();
+          ctx.arc(px, py, 4, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.strokeStyle = 'rgba(139, 92, 246, 0.2)';
+          ctx.beginPath();
+          ctx.moveTo(cx, cy);
+          ctx.lineTo(px, py);
+          ctx.stroke();
+        }
+      } else {
+        // Draw human avatars
+        
+        // Face outline & Neck
+        ctx.fillStyle = '#f5d0a9';
+        ctx.beginPath();
+        ctx.rect(cx - 15, cy + 50, 30, 40);
+        ctx.fill();
+
+        // Shoulders & Clothes
+        ctx.beginPath();
+        if (avatar === 'executive') {
+          ctx.fillStyle = '#1e3a8a'; // Blue Suit
+          ctx.moveTo(cx - 70, cy + 90);
+          ctx.quadraticCurveTo(cx, cy + 70, cx + 70, cy + 90);
+          ctx.lineTo(cx + 80, height);
+          ctx.lineTo(cx - 80, height);
+          ctx.closePath();
+          ctx.fill();
+
+          // Tie
+          ctx.fillStyle = '#dc2626'; // Red tie
+          ctx.beginPath();
+          ctx.moveTo(cx - 6, cy + 85);
+          ctx.lineTo(cx + 6, cy + 85);
+          ctx.lineTo(cx + 10, height - 30);
+          ctx.lineTo(cx, height - 10);
+          ctx.lineTo(cx - 10, height - 30);
+          ctx.closePath();
+          ctx.fill();
+        } else if (avatar === 'doctor') {
+          ctx.fillStyle = '#f8fafc'; // White lab coat
+          ctx.moveTo(cx - 70, cy + 90);
+          ctx.quadraticCurveTo(cx, cy + 70, cx + 70, cy + 90);
+          ctx.lineTo(cx + 80, height);
+          ctx.lineTo(cx - 80, height);
+          ctx.closePath();
+          ctx.fill();
+
+          // Shirt
+          ctx.fillStyle = '#0284c7'; // Blue shirt
+          ctx.beginPath();
+          ctx.moveTo(cx - 10, cy + 80);
+          ctx.lineTo(cx + 10, cy + 80);
+          ctx.lineTo(cx, cy + 95);
+          ctx.closePath();
+          ctx.fill();
+        } else if (avatar === 'chef') {
+          ctx.fillStyle = '#f1f5f9'; // Chef coat
+          ctx.moveTo(cx - 70, cy + 90);
+          ctx.quadraticCurveTo(cx, cy + 70, cx + 70, cy + 90);
+          ctx.lineTo(cx + 80, height);
+          ctx.lineTo(cx - 80, height);
+          ctx.closePath();
+          ctx.fill();
+
+          // Scarf
+          ctx.fillStyle = '#ea580c'; // Red-orange scarf
+          ctx.beginPath();
+          ctx.moveTo(cx - 20, cy + 75);
+          ctx.quadraticCurveTo(cx, cy + 85, cx + 20, cy + 75);
+          ctx.lineTo(cx + 10, cy + 90);
+          ctx.lineTo(cx - 10, cy + 90);
+          ctx.closePath();
+          ctx.fill();
+        } else {
+          ctx.fillStyle = '#065f46'; // Green blazer
+          ctx.moveTo(cx - 70, cy + 90);
+          ctx.quadraticCurveTo(cx, cy + 70, cx + 70, cy + 90);
+          ctx.lineTo(cx + 80, height);
+          ctx.lineTo(cx - 80, height);
+          ctx.closePath();
+          ctx.fill();
+        }
+
+        // Face circle
+        ctx.fillStyle = '#ffedd5';
+        if (avatar === 'doctor') ctx.fillStyle = '#fed7aa';
+        ctx.beginPath();
+        ctx.arc(cx, cy, 48, 0, Math.PI * 2);
+        ctx.fill();
+
+        // Eyes (Blinking dynamically)
+        const isBlinking = Math.sin(time) > 0.97;
+        ctx.fillStyle = '#1e293b';
+        if (isBlinking) {
+          ctx.strokeStyle = '#1e293b';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(cx - 16, cy - 8);
+          ctx.lineTo(cx - 8, cy - 8);
+          ctx.moveTo(cx + 8, cy - 8);
+          ctx.lineTo(cx + 16, cy - 8);
+          ctx.stroke();
+        } else {
+          ctx.beginPath();
+          ctx.arc(cx - 12, cy - 8, 4.5, 0, Math.PI * 2);
+          ctx.arc(cx + 12, cy - 8, 4.5, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        // Eyebrows
+        ctx.strokeStyle = '#334155';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(cx - 18, cy - 16);
+        ctx.quadraticCurveTo(cx - 12, cy - 18, cx - 6, cy - 15);
+        ctx.moveTo(cx + 6, cy - 15);
+        ctx.quadraticCurveTo(cx + 12, cy - 18, cx + 18, cy - 16);
+        ctx.stroke();
+
+        // Glasses
+        if (avatar === 'executive' || avatar === 'doctor') {
+          ctx.strokeStyle = avatar === 'executive' ? '#0f172a' : '#ec4899';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.arc(cx - 12, cy - 8, 10, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.arc(cx + 12, cy - 8, 10, 0, Math.PI * 2);
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.moveTo(cx - 2, cy - 8);
+          ctx.lineTo(cx + 2, cy - 8);
+          ctx.stroke();
+        }
+
+        // Nose
+        ctx.strokeStyle = 'rgba(0,0,0,0.15)';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(cx, cy - 2);
+        ctx.lineTo(cx - 3, cy + 10);
+        ctx.lineTo(cx + 2, cy + 10);
+        ctx.stroke();
+
+        // Mouth (Phonetic lip-sync when speaking)
+        ctx.fillStyle = '#be123c';
+        if (speaking) {
+          const mouthOpenHeight = 5 + Math.abs(Math.sin(time * 12)) * 10;
+          ctx.beginPath();
+          ctx.ellipse(cx, cy + 22, 10, mouthOpenHeight / 2, 0, 0, Math.PI * 2);
+          ctx.fill();
+        } else {
+          // Smiling expression
+          ctx.strokeStyle = '#be123c';
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          if (expression === 'smiling') {
+            ctx.arc(cx, cy + 18, 12, 0, Math.PI);
+          } else {
+            ctx.moveTo(cx - 10, cy + 22);
+            ctx.quadraticCurveTo(cx, cy + 26, cx + 10, cy + 22);
+          }
+          ctx.stroke();
+        }
+
+        // Hair / Hat
+        if (avatar === 'chef') {
+          // Chef Hat
+          ctx.fillStyle = '#ffffff';
+          ctx.strokeStyle = '#cbd5e1';
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.moveTo(cx - 38, cy - 40);
+          ctx.bezierCurveTo(cx - 50, cy - 85, cx - 20, cy - 105, cx, cy - 85);
+          ctx.bezierCurveTo(cx + 20, cy - 105, cx + 50, cy - 85, cx + 38, cy - 40);
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+
+          // Hat base band
+          ctx.fillStyle = '#f8fafc';
+          ctx.beginPath();
+          ctx.rect(cx - 38, cy - 45, 76, 12);
+          ctx.fill();
+          ctx.stroke();
+        } else if (avatar === 'executive') {
+          // Business Executive Hair
+          ctx.fillStyle = '#1e293b';
+          ctx.beginPath();
+          ctx.arc(cx, cy - 40, 24, Math.PI, 0);
+          ctx.ellipse(cx - 38, cy - 20, 16, 26, 0.4, 0, Math.PI * 2);
+          ctx.ellipse(cx + 38, cy - 20, 16, 26, -0.4, 0, Math.PI * 2);
+          ctx.fill();
+        } else if (avatar === 'doctor') {
+          // Professional Silver Hair
+          ctx.fillStyle = '#94a3b8';
+          ctx.beginPath();
+          ctx.arc(cx, cy - 36, 26, Math.PI, 0);
+          ctx.ellipse(cx - 36, cy - 15, 14, 22, 0.2, 0, Math.PI * 2);
+          ctx.ellipse(cx + 36, cy - 15, 14, 22, -0.2, 0, Math.PI * 2);
+          ctx.fill();
+        } else {
+          // Headset and hair for Manager
+          ctx.fillStyle = '#7c2d12'; // Brown hair
+          ctx.beginPath();
+          ctx.arc(cx, cy - 35, 27, Math.PI, 0);
+          ctx.ellipse(cx - 38, cy - 15, 14, 24, 0.1, 0, Math.PI * 2);
+          ctx.ellipse(cx + 38, cy - 15, 14, 24, -0.1, 0, Math.PI * 2);
+          ctx.fill();
+
+          // Headset band
+          ctx.strokeStyle = '#0f172a';
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.arc(cx, cy - 10, 48, Math.PI, Math.PI * 2);
+          ctx.stroke();
+
+          // Mic arm
+          ctx.strokeStyle = '#0f172a';
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.moveTo(cx + 46, cy + 5);
+          ctx.lineTo(cx + 18, cy + 24);
+          ctx.stroke();
+          
+          ctx.fillStyle = '#0f172a';
+          ctx.beginPath();
+          ctx.arc(cx + 18, cy + 24, 3, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+
+      // Voice Activation Wave Ring
+      if (speaking) {
+        ctx.strokeStyle = 'rgba(139, 92, 246, 0.35)';
+        ctx.lineWidth = 3;
+        ctx.beginPath();
+        ctx.arc(cx, cy, 140 + Math.sin(time * 6) * 12, 0, Math.PI * 2);
+        ctx.stroke();
+
+        ctx.strokeStyle = 'rgba(6, 182, 212, 0.25)';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.arc(cx, cy, 165 + Math.cos(time * 5) * 8, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+
+      animationFrameId = requestAnimationFrame(render);
+    };
+
+    render();
+
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+    };
+  }, [avatar, expression, speaking]);
+
+  return (
+    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', width: '100%', height: '240px', borderRadius: '12px', background: 'radial-gradient(circle, var(--bg-card-hover) 0%, var(--bg-card) 100%)', border: '1px solid var(--border-color)', position: 'relative', overflow: 'hidden' }}>
+      <canvas ref={canvasRef} width="320" height="240" style={{ width: '320px', height: '240px' }} />
+      {/* Neural status node */}
+      <div style={{ position: 'absolute', top: '12px', left: '12px', display: 'flex', alignItems: 'center', gap: '8px', background: 'rgba(0,0,0,0.5)', padding: '4px 10px', borderRadius: '20px', border: '1px solid var(--border-color)' }}>
+        <div style={{ width: '6px', height: '6px', borderRadius: '50%', backgroundColor: speaking ? 'var(--success-color)' : 'var(--ai-glow-color)' }} />
+        <span style={{ fontSize: '9px', fontWeight: '700', color: '#ffffff', letterSpacing: '0.5px' }}>
+          {speaking ? 'TRANSMITTING VOICE' : 'NOVA SECURE NODE'}
+        </span>
+      </div>
+    </div>
+  );
+}
+
 function App() {
   // Navigation & Preferences State
   const [activeTab, setActiveTab] = useState('dashboard');
@@ -226,6 +564,26 @@ function App() {
   const [pingStates, setPingStates] = useState({});
   const [pingLatencies, setPingLatencies] = useState({});
 
+  // Project Nova States
+  const [selectedAvatar, setSelectedAvatar] = useState('executive'); // executive, doctor, chef, manager, core
+  const [avatarExpression, setAvatarExpression] = useState('neutral'); // neutral, smiling, talking, pointing
+  const [novaVoiceActive, setNovaVoiceActive] = useState(false);
+  const [novaSpeaking, setNovaSpeaking] = useState(false);
+  const [novaQuery, setNovaQuery] = useState('');
+  const [novaDialog, setNovaDialog] = useState('Welcome! I am your Nova AI Avatar Assistant. Select an identity below or speak to me directly. I can query ERP databases, process autonomous actions, or run e-commerce checkouts.');
+  const [autonomousActions, setAutonomousActions] = useState([
+    { id: 1, type: 'po', label: 'Draft purchase order - 50 bags Coffee', status: 'completed', time: '10:02 AM' },
+    { id: 2, type: 'leave', label: 'Approve annual leave - Faisal Jameel', status: 'completed', time: '10:05 AM' }
+  ]);
+  const [actionProgress, setActionProgress] = useState(null); // { label, percent }
+  const [deliveryQuery, setDeliveryQuery] = useState('burger promotions');
+  const [deliveryResults, setDeliveryResults] = useState([
+    { id: 'd1', name: 'Cyber Burger Joint', promo: '30% Off Family Meal', price: 9.50, distance: '1.2 km', logo: '🍔' },
+    { id: 'd2', name: 'Matrix Pizza slices', promo: 'Buy 1 Get 1 Free', price: 12.00, distance: '2.5 km', logo: '🍕' },
+    { id: 'd3', name: 'Synth Cafe & Bakery', promo: 'Free Coffee with Donut Box', price: 8.00, distance: '0.8 km', logo: '☕' }
+  ]);
+  const [activeNovaSubTab, setActiveNovaSubTab] = useState('erp'); // erp, delivery, benchmark, blueprints
+
   // System Configs Settings State
   const [storeName, setStoreName] = useState('CYSHOP RETAIL LTD');
   const [zatcaSandbox, setZatcaSandbox] = useState(true);
@@ -276,7 +634,7 @@ function App() {
 
   // Toast notifications
   const triggerToast = (message, type = 'success') => {
-    const id = Date.now();
+    const id = Date.now() + '-' + Math.random();
     setToasts((prev) => [...prev, { id, message, type }]);
     setTimeout(() => {
       setToasts((prev) => prev.filter((t) => t.id !== id));
@@ -586,6 +944,132 @@ function App() {
       } else {
         setPingStates(prev => ({ ...prev, [ipId]: 'failed' }));
         triggerToast(`Ping to ${ipAddress} timed out!`, 'error');
+      }
+    }, 1200);
+  };
+
+  const handleNovaQuery = (customText = '') => {
+    const queryText = customText || novaQuery;
+    if (!queryText.trim()) return;
+
+    setNovaQuery('');
+    setNovaSpeaking(false);
+    setAvatarExpression('thinking');
+    setNovaDialog('Decomposing query and consulting memory network...');
+    triggerToast('Querying Nova reasoning engine...', 'info');
+
+    setTimeout(() => {
+      const lower = queryText.toLowerCase();
+      let response = '';
+
+      if (lower.includes('sales') || lower.includes('sell') || lower.includes('amman') || lower.includes('yesterday')) {
+        setAvatarExpression('pointing');
+        setNovaSpeaking(true);
+        response = "Amman Branch generated $52,300 yesterday, which is 12% higher than the previous day. Corporate sales in Riyadh hit 45,200 SAR. Visual metrics are projected on your dashboard.";
+        setNovaDialog(response);
+        setTimeout(() => {
+          setActiveTab('dashboard');
+          triggerToast('Nova redirected you to the Sales Dashboard', 'success');
+        }, 3000);
+      } else if (lower.includes('purchase') || lower.includes('coffee') || lower.includes('po')) {
+        setAvatarExpression('talking');
+        setNovaSpeaking(true);
+        response = "Certainly. I am generating a draft Purchase Order for 50 bags of premium Cyber Espresso coffee beans on NovaERP. Initiating supplier verification...";
+        setNovaDialog(response);
+        
+        setActionProgress({ label: 'Drafting Purchase Order', percent: 10 });
+        const interval = setInterval(() => {
+          setActionProgress(prev => {
+            if (!prev) return null;
+            if (prev.percent >= 100) {
+              clearInterval(interval);
+              setTimeout(() => {
+                setActionProgress(null);
+                setAutonomousActions(old => [
+                  { id: 'po-' + Date.now() + '-' + Math.random(), type: 'po', label: 'Draft purchase order - 50 bags Coffee', status: 'completed', time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) },
+                  ...old
+                ]);
+                triggerToast('Draft Purchase Order PO-2026-042 successfully generated on Odoo ERP!', 'success');
+              }, 500);
+              return { ...prev, percent: 100 };
+            }
+            return { ...prev, percent: prev.percent + 20 };
+          });
+        }, 400);
+      } else if (lower.includes('leave') || lower.includes('faisal') || lower.includes('approve')) {
+        setAvatarExpression('smiling');
+        setNovaSpeaking(true);
+        response = "Leave request processed. Approving annual leave request for Faisal Jameel in the HR portal from June 18 to June 25.";
+        setNovaDialog(response);
+
+        setActionProgress({ label: 'Approving Leave Request', percent: 10 });
+        const interval = setInterval(() => {
+          setActionProgress(prev => {
+            if (!prev) return null;
+            if (prev.percent >= 100) {
+              clearInterval(interval);
+              setTimeout(() => {
+                setActionProgress(null);
+                setAutonomousActions(old => [
+                  { id: 'leave-' + Date.now() + '-' + Math.random(), type: 'leave', label: 'Approve annual leave - Faisal Jameel', status: 'completed', time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) },
+                  ...old
+                ]);
+                triggerToast('Leave request approved and calendar synchronized!', 'success');
+              }, 500);
+              return { ...prev, percent: 100 };
+            }
+            return { ...prev, percent: prev.percent + 25 };
+          });
+        }, 300);
+      } else if (lower.includes('burger') || lower.includes('promotion') || lower.includes('deal')) {
+        setAvatarExpression('smiling');
+        setNovaSpeaking(true);
+        response = "Retrieving local promotions... Cyber Burger Joint is offering a 30% discount family meal for $9.50. I will automatically apply the coupon 'BURGER30' and place the order to your Jabal Amman address.";
+        setNovaDialog(response);
+
+        setActionProgress({ label: 'Autonomously Checkout Food Delivery Order', percent: 10 });
+        const interval = setInterval(() => {
+          setActionProgress(prev => {
+            if (!prev) return null;
+            if (prev.percent >= 100) {
+              clearInterval(interval);
+              setTimeout(() => {
+                setActionProgress(null);
+                
+                const pizzaItem = products.find(p => p.id === 'p5') || products[4];
+                const orderItems = [{ product: pizzaItem, quantity: 1, price: 9.50 }];
+                const newOrder = {
+                  id: `ORD-${orders.length + 101}`,
+                  items: orderItems,
+                  total: 9.50,
+                  status: 'pending',
+                  timestamp: new Date().toISOString(),
+                  invoiceId: `INV-2026-${String(invoices.length + 1).padStart(3, '0')}`,
+                  country: 'JO',
+                  source: 'talabat',
+                  deliveryInfo: {
+                    riderName: 'Autonomous Nova Delivery Agent',
+                    deliveryAddress: 'Jabal Amman, Home Office'
+                  }
+                };
+                setOrders(prevOrders => [newOrder, ...prevOrders]);
+                triggerToast('Talabat order checkout autonomously completed!', 'success');
+                confetti({
+                  particleCount: 100,
+                  spread: 60,
+                  colors: ['#ea580c', '#ffffff']
+                });
+              }, 500);
+              return { ...prev, percent: 100 };
+            }
+            return { ...prev, percent: prev.percent + 15 };
+          });
+        }, 500);
+      } else {
+        setAvatarExpression('talking');
+        setNovaSpeaking(true);
+        response = `Understood. I have accessed Project Nova's semantic database for your query. Let me know if you would like to run BI sales audits, create purchase vouchers, or search for e-commerce promotions.`;
+        setNovaDialog(response);
       }
     }, 1200);
   };
@@ -928,6 +1412,20 @@ function App() {
           >
             <BarChart3 size={18} />
             {!sidebarCollapsed && <span style={{ color: activeTab === 'analytics' ? 'var(--primary-color)' : 'var(--text-muted)' }}>Analytics</span>}
+          </button>
+
+          <button
+            onClick={() => setActiveTab('nova-avatar')}
+            className={`sidebar-item ${activeTab === 'nova-avatar' ? 'active' : ''}`}
+            style={{ border: 'none', background: 'none', textAlign: 'left', width: '100%', position: 'relative' }}
+          >
+            <Bot size={18} style={{ color: 'var(--ai-glow-color)' }} />
+            {!sidebarCollapsed && (
+              <span style={{ color: activeTab === 'nova-avatar' ? 'var(--primary-color)' : 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                Nova Avatar
+                <span className="badge badge-success" style={{ fontSize: '9px', padding: '1px 4px', background: 'var(--ai-glow-bg)', color: 'var(--ai-glow-color)', border: '1px solid var(--ai-glow-border)' }}>AGI</span>
+              </span>
+            )}
           </button>
 
           <button
@@ -2718,6 +3216,354 @@ function App() {
                     />
                     Enable Auto-Print on Checkout
                   </label>
+                </div>
+              </div>
+            </div>
+          </main>
+        )}
+
+        {/* Project Nova Avatar Tab View */}
+        {activeTab === 'nova-avatar' && (
+          <main className="page-content">
+            <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1.8fr', gap: '24px' }}>
+              {/* Left Column: Interactive 3D Avatar Display & Controls */}
+              <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                <h3 className="card-title" style={{ color: 'var(--text-primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <Bot size={18} style={{ color: 'var(--ai-glow-color)' }} />
+                  Interactive Nova AI Human
+                </h3>
+
+                {/* The Interactive Canvas Render */}
+                <NovaAvatarCanvas avatar={selectedAvatar} expression={avatarExpression} speaking={novaSpeaking} />
+
+                {/* Dialog Output bubble */}
+                <div style={{ background: 'var(--bg-card-hover)', padding: '14px', borderRadius: '12px', border: '1px solid var(--border-color)', position: 'relative' }}>
+                  <div style={{ position: 'absolute', top: '-8px', left: '24px', width: '0', height: '0', borderLeft: '8px solid transparent', borderRight: '8px solid transparent', borderBottom: '8px solid var(--border-color)' }} />
+                  <p style={{ fontSize: '13.5px', lineHeight: '1.5', color: 'var(--text-primary)', margin: 0, fontWeight: '500' }}>
+                    {novaDialog}
+                  </p>
+                </div>
+
+                {/* Action progress bar if active */}
+                {actionProgress && (
+                  <div style={{ background: 'var(--ai-glow-bg)', padding: '12px', borderRadius: '8px', border: '1px solid var(--ai-glow-border)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', fontWeight: '700', color: 'var(--ai-glow-color)', marginBottom: '6px' }}>
+                      <span>{actionProgress.label}...</span>
+                      <span>{actionProgress.percent}%</span>
+                    </div>
+                    <div style={{ width: '100%', height: '6px', background: 'rgba(0,0,0,0.2)', borderRadius: '3px', overflow: 'hidden' }}>
+                      <div style={{ width: `${actionProgress.percent}%`, height: '100%', background: 'var(--ai-glow-color)', transition: 'width 0.1s ease' }} />
+                    </div>
+                  </div>
+                )}
+
+                {/* Voice & Mic Control Button Group */}
+                <div style={{ display: 'flex', gap: '10px', marginTop: '4px' }}>
+                  <button
+                    className="btn btn-primary"
+                    style={{ flex: 1, height: '44px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', color: '#ffffff', background: novaSpeaking ? 'var(--danger-color)' : 'var(--primary-color)' }}
+                    onClick={() => {
+                      if (novaSpeaking) {
+                        setNovaSpeaking(false);
+                      } else {
+                        setNovaSpeaking(true);
+                        setAvatarExpression('talking');
+                        triggerToast('Nova speaking loop started', 'info');
+                      }
+                    }}
+                  >
+                    <Bot size={18} />
+                    {novaSpeaking ? 'Stop Avatar Voice' : 'Simulate Audio Out'}
+                  </button>
+
+                  <button
+                    className={`btn ${novaVoiceActive ? 'btn-danger' : 'btn-secondary'}`}
+                    style={{ width: '44px', height: '44px', padding: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: novaVoiceActive ? '#ffffff' : 'var(--text-primary)' }}
+                    onClick={() => {
+                      const newVoiceState = !novaVoiceActive;
+                      setNovaVoiceActive(newVoiceState);
+                      if (newVoiceState) {
+                        triggerToast('Microphone channel open... Listening for wake word "Nova"', 'info');
+                      } else {
+                        triggerToast('Microphone channel closed', 'info');
+                      }
+                    }}
+                  >
+                    <Send size={16} />
+                  </button>
+                </div>
+
+                {/* Identity Presets Selector Library */}
+                <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '16px' }}>
+                  <label className="form-label" style={{ marginBottom: '10px', fontWeight: '700' }}>Choose Avatar Digital Employee Identity</label>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '8px' }}>
+                    {[
+                      { id: 'executive', name: 'Faisal', role: 'ERP Exec', icon: '👔' },
+                      { id: 'doctor', name: 'Sarah', role: 'Medical', icon: '🩺' },
+                      { id: 'chef', name: 'Tareq', role: 'Head Chef', icon: '👨‍🍳' },
+                      { id: 'manager', name: 'Yasmeen', role: 'Ops Mgr', icon: '🎧' },
+                      { id: 'core', name: 'Nova Core', role: 'AGI Node', icon: '🌌' }
+                    ].map((item) => (
+                      <button
+                        key={item.id}
+                        onClick={() => {
+                          setSelectedAvatar(item.id);
+                          triggerToast(`Switched employee persona to ${item.name}`, 'success');
+                          if (item.id === 'core') {
+                            setNovaDialog('AGI Node online. Multi-agent core ready. Standing by for database schema operations.');
+                          } else {
+                            setNovaDialog(`Hello, I am ${item.name}, your specialized ${item.role} assistant. How can I help you run operations today?`);
+                          }
+                        }}
+                        style={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          gap: '4px',
+                          padding: '8px 4px',
+                          borderRadius: '8px',
+                          border: selectedAvatar === item.id ? '2px solid var(--ai-glow-color)' : '1px solid var(--border-color)',
+                          background: selectedAvatar === item.id ? 'var(--ai-glow-bg)' : 'transparent',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s'
+                        }}
+                      >
+                        <span style={{ fontSize: '18px' }}>{item.icon}</span>
+                        <span style={{ fontSize: '10px', fontWeight: '700', color: 'var(--text-primary)' }}>{item.name}</span>
+                        <span style={{ fontSize: '8px', color: 'var(--text-muted)' }}>{item.role}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Column: Interaction Interfaces (Tabs) */}
+              <div className="card" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                {/* Horizontal tabs */}
+                <div style={{ display: 'flex', borderBottom: '1px solid var(--border-color)', gap: '12px', paddingBottom: '4px', overflowX: 'auto' }}>
+                  {[
+                    { id: 'erp', name: 'ERP Console', icon: <Building size={14} /> },
+                    { id: 'delivery', name: 'Food Assistant', icon: <Bike size={14} /> },
+                    { id: 'benchmark', name: 'Competitive Matrix', icon: <ShieldCheck size={14} /> },
+                    { id: 'blueprints', name: 'Arch Blueprints', icon: <LayoutDashboard size={14} /> }
+                  ].map((tab) => (
+                    <button
+                      key={tab.id}
+                      onClick={() => setActiveNovaSubTab(tab.id)}
+                      className={`btn ${activeNovaSubTab === tab.id ? 'btn-primary' : 'btn-secondary'}`}
+                      style={{ padding: '6px 12px', fontSize: '12px', borderRadius: '6px', height: 'auto', display: 'flex', alignItems: 'center', gap: '6px', color: activeNovaSubTab === tab.id ? '#ffffff' : 'var(--text-primary)', fontWeight: '600' }}
+                    >
+                      {tab.icon}
+                      {tab.name}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Sub Tab Content */}
+                <div style={{ flex: 1, minHeight: '360px' }}>
+                  {/* ERP CONSOLE & BI */}
+                  {activeNovaSubTab === 'erp' && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                      <p style={{ fontSize: '12.5px', color: 'var(--text-muted)', margin: 0 }}>
+                        Ask questions about sales metrics, HR directories, or execute automated workflow actions:
+                      </p>
+
+                      {/* Dynamic Input trigger */}
+                      <div className="form-group">
+                        <label className="form-label">Voice / Text Command Prompt</label>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <input
+                            type="text"
+                            className="input"
+                            placeholder='e.g., "Nova, create purchase order for 50 bags of coffee"'
+                            value={novaQuery}
+                            onChange={(e) => setNovaQuery(e.target.value)}
+                            onKeyDown={(e) => { if (e.key === 'Enter') handleNovaQuery(); }}
+                          />
+                          <button className="btn btn-primary" style={{ color: '#ffffff' }} onClick={() => handleNovaQuery()}>Run</button>
+                        </div>
+                      </div>
+
+                      {/* Quick Command Suggestions */}
+                      <div>
+                        <span style={{ fontSize: '11px', fontWeight: '700', color: 'var(--text-muted)', display: 'block', marginBottom: '6px' }}>SUGGESTED ERP & BI PHRASES:</span>
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                          <button
+                            className="btn btn-secondary"
+                            style={{ padding: '4px 10px', fontSize: '11px', borderRadius: '12px', color: 'var(--text-primary)' }}
+                            onClick={() => handleNovaQuery("Nova, how much did Amman Branch sell yesterday?")}
+                          >
+                            📊 Yesterday's Sales
+                          </button>
+                          <button
+                            className="btn btn-secondary"
+                            style={{ padding: '4px 10px', fontSize: '11px', borderRadius: '12px', color: 'var(--text-primary)' }}
+                            onClick={() => handleNovaQuery("Create purchase order for 50 coffee bags")}
+                          >
+                            🛒 Create Purchase Order (PO)
+                          </button>
+                          <button
+                            className="btn btn-secondary"
+                            style={{ padding: '4px 10px', fontSize: '11px', borderRadius: '12px', color: 'var(--text-primary)' }}
+                            onClick={() => handleNovaQuery("Approve annual leave request for Faisal")}
+                          >
+                            ✍️ Approve Faisal Leave Request
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Autonomous Action History Log */}
+                      <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '16px' }}>
+                        <span style={{ fontSize: '12px', fontWeight: '700', color: 'var(--text-primary)', display: 'block', marginBottom: '8px' }}>Autonomous Task Execution Log</span>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                          {autonomousActions.map((act) => (
+                            <div key={act.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-card-hover)', padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--success-color)' }} />
+                                <span style={{ fontSize: '12px', color: 'var(--text-primary)', fontWeight: '600' }}>{act.label}</span>
+                              </div>
+                              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                <span className="badge badge-success" style={{ fontSize: '9px', padding: '1px 6px' }}>Completed</span>
+                                <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>{act.time}</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* FOOD & DELIVERY ASSISTANT */}
+                  {activeNovaSubTab === 'delivery' && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                      <p style={{ fontSize: '12.5px', color: 'var(--text-muted)', margin: 0 }}>
+                        Search regional food deals, compile orders, and authorize checkout actions using Talabat integration protocols:
+                      </p>
+
+                      <div className="form-group">
+                        <label className="form-label">Search Food / Promotions</label>
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <input
+                            type="text"
+                            className="input"
+                            value={deliveryQuery}
+                            onChange={(e) => setDeliveryQuery(e.target.value)}
+                          />
+                          <button
+                            className="btn btn-primary"
+                            style={{ color: '#ffffff' }}
+                            onClick={() => {
+                              triggerToast('Searching nearby branches...', 'info');
+                            }}
+                          >
+                            Search
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Promotions Grid */}
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        {deliveryResults.map((item) => (
+                          <div key={item.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: 'var(--bg-card-hover)', padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                            <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                              <span style={{ fontSize: '24px' }}>{item.logo}</span>
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                                <span style={{ fontSize: '13px', fontWeight: '700', color: 'var(--text-primary)' }}>{item.name}</span>
+                                <span style={{ fontSize: '11px', color: 'var(--warning-color)', fontWeight: '600' }}>{item.promo}</span>
+                                <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>Est. Distance: {item.distance}</span>
+                              </div>
+                            </div>
+                            <button
+                              className="btn btn-secondary"
+                              style={{ height: '32px', padding: '0 12px', fontSize: '11px', fontWeight: '700', color: 'var(--text-primary)' }}
+                              onClick={() => {
+                                handleNovaQuery(`Find burger deal under $10 at ${item.name} and order it`);
+                              }}
+                            >
+                              Order (${item.price.toFixed(2)})
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* Quick voice command simulation */}
+                      <div style={{ background: 'var(--ai-glow-bg)', padding: '12px', borderRadius: '8px', border: '1px solid var(--ai-glow-border)' }}>
+                        <span style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: 'var(--ai-glow-color)', marginBottom: '4px' }}>VOICE COMAND SHORTCUT:</span>
+                        <button
+                          className="btn"
+                          style={{ width: '100%', background: 'var(--ai-glow-color)', color: '#ffffff', fontWeight: '700', fontSize: '12px' }}
+                          onClick={() => handleNovaQuery("Find me the best burger deal under $10")}
+                        >
+                          "Find me the best burger deal under $10 and order it"
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* COMPETITOR BENCHMARKING */}
+                  {activeNovaSubTab === 'benchmark' && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                      <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: 0 }}>
+                        Gaps & Advantage Audit Matrix comparing Project Nova against leading industry platforms:
+                      </p>
+
+                      <div style={{ overflowX: 'auto', border: '1px solid var(--border-color)', borderRadius: '8px' }}>
+                        <table className="table" style={{ width: '100%', borderCollapse: 'collapse', fontSize: '11px', margin: 0 }}>
+                          <thead>
+                            <tr style={{ background: 'var(--bg-card-hover)', borderBottom: '1px solid var(--border-color)', textAlign: 'left' }}>
+                              <th style={{ padding: '6px 10px', color: 'var(--text-primary)' }}>Feature Dimension</th>
+                              <th style={{ padding: '6px 10px', color: 'var(--text-primary)' }}>Project Nova</th>
+                              <th style={{ padding: '6px 10px', color: 'var(--text-primary)' }}>OpenAI Operator</th>
+                              <th style={{ padding: '6px 10px', color: 'var(--text-primary)' }}>NVIDIA ACE</th>
+                              <th style={{ padding: '6px 10px', color: 'var(--text-primary)' }}>Siri / Alexa</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {[
+                              { f: 'Multi-Agent Planning', n: 'Yes (Agentic Chain-of-Thought)', o: 'Limited (Linear)', a: 'No (Render focus)', s: 'No (Intent parsing)' },
+                              { f: 'Autonomous ERP Write Actions', n: 'Yes (SAP/Odoo hooks)', o: 'No (Browser macros only)', a: 'No', s: 'No' },
+                              { f: 'Real-time 4D Metahuman Rendering', n: 'Yes (Audio2Face + WebGL)', o: 'No (Static/Text)', a: 'Yes (Native UE5)', s: 'No' },
+                              { f: 'Food Order Checkout Engine', n: 'Yes (Unified Delivery API)', o: 'No (Assisted search)', a: 'No', s: 'No (Simple skill)' },
+                              { f: 'Zero-Trust Security (HIPAA/ZATCA)', n: 'Yes (Enforced OIDC/PGP)', o: 'No', a: 'No', s: 'No' }
+                            ].map((row, idx) => (
+                              <tr key={idx} style={{ borderBottom: '1px solid var(--border-color)', background: idx % 2 === 0 ? 'transparent' : 'var(--bg-card-hover)' }}>
+                                <td style={{ padding: '6px 10px', fontWeight: '600', color: 'var(--text-primary)' }}>{row.f}</td>
+                                <td style={{ padding: '6px 10px', color: 'var(--success-color)', fontWeight: '700' }}>{row.n}</td>
+                                <td style={{ padding: '6px 10px', color: 'var(--text-muted)' }}>{row.o}</td>
+                                <td style={{ padding: '6px 10px', color: 'var(--text-muted)' }}>{row.a}</td>
+                                <td style={{ padding: '6px 10px', color: 'var(--text-muted)' }}>{row.s}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* ARCHITECTURE BLUEPRINTS */}
+                  {activeNovaSubTab === 'blueprints' && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                      <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: 0 }}>
+                        Review standard architectural blueprints compiled by our AI Architects Team:
+                      </p>
+
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                        {[
+                          { title: '1. Event-Driven Microservices', lines: ['Apache Kafka Event Stream', 'Kubernetes Orchestration Node', 'FastAPI REST / gRPC Gateways'] },
+                          { title: '2. Vector Memory Architecture', lines: ['pgvector (PostgreSQL 1536-dim)', 'Neo4j Enterprise Knowledge Graph', 'Redis In-Memory Session Cache'] },
+                          { title: '3. Low-Latency Voice Engine', lines: ['WebRTC Audio Media Loop (microphone)', 'Whisper Live ASR transcription', 'ElevenLabs Realtime TTS synthesizer'] },
+                          { title: '4. Enterprise Gateway Security', lines: ['OIDC OAuth2 Oauth Gateways', 'GnuPG PGP Encryption packages', 'ABAC / RBAC Data Access Layers'] }
+                        ].map((blueprint, idx) => (
+                          <div key={idx} style={{ background: 'var(--bg-card-hover)', padding: '10px 12px', borderRadius: '8px', border: '1px solid var(--border-color)' }}>
+                            <span style={{ display: 'block', fontSize: '11px', fontWeight: '700', color: 'var(--primary-color)', marginBottom: '4px' }}>{blueprint.title}</span>
+                            {blueprint.lines.map((ln, i) => (
+                              <span key={i} style={{ display: 'block', fontSize: '10.5px', color: 'var(--text-primary)' }}>• {ln}</span>
+                            ))}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
