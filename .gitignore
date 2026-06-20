@@ -19,6 +19,21 @@ dist-ssr
 .DS_Store
 *.suo
 *.ntvs*
-*.njsproj
+.njsproj
 *.sln
 *.sw?
+
+# Next.js
+frontend/.next/
+frontend/out/
+frontend/.env*.local
+
+# Python/Django
+__pycache__/
+*.py[cod]
+*$py.class
+backend/db.sqlite3
+backend/media/
+backend/staticfiles/
+*.log
+

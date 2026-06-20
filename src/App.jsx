@@ -627,6 +627,273 @@ function App() {
   const [jofotaraEndpoint, setJofotaraEndpoint] = useState('sandbox'); // sandbox, production
   const [jofotaraConnected, setJofotaraConnected] = useState(true);
 
+  // AWS Cloud Services State
+  const [awsAccessKeyId, setAwsAccessKeyId] = useState('AKIAIOSFODNN7EXAMPLE');
+  const [awsSecretAccessKey, setAwsSecretAccessKey] = useState('wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY');
+  const [awsRegion, setAwsRegion] = useState('us-east-1');
+  const [awsS3Bucket, setAwsS3Bucket] = useState('cyshop-pos-backups');
+  const [awsDynamoTable, setAwsDynamoTable] = useState('cyshop-transactions-prod');
+  const [awsConnected, setAwsConnected] = useState(true);
+  const [awsAutoSync, setAwsAutoSync] = useState(true);
+  const [awsStaticHosting, setAwsStaticHosting] = useState(false);
+  const [isAwsVerifying, setIsAwsVerifying] = useState(false);
+  const [isAwsSyncing, setIsAwsSyncing] = useState(false);
+  const [awsSyncProgress, setAwsSyncProgress] = useState(null); // { label: string, percent: number }
+
+  // ─── HR Module State ─────────────────────────────────────────────
+  const [employees, setEmployees] = useState([
+    { id: 'EMP-001', name: 'Faisal Jameel', dept: 'Operations', role: 'Cashier', status: 'Active', startDate: '2024-01-15', baseSalary: 1800, allowances: 300, email: 'faisal@cyshop.com', phone: '+966 50 111 2222', leaveBalance: 15, nationalId: '1099887766', contractType: 'Full-Time', hourlyRate: 0, overtimeMultiplier: 1.5, healthPremium: 100, employerHealthShare: 80 },
+    { id: 'EMP-002', name: 'Sarah Al-Harbi', dept: 'Kitchen', role: 'Head Chef', status: 'Active', startDate: '2023-06-01', baseSalary: 2400, allowances: 450, email: 'sarah@cyshop.com', phone: '+966 55 333 4444', leaveBalance: 12, nationalId: '2087654321', contractType: 'Full-Time', hourlyRate: 0, overtimeMultiplier: 1.5, healthPremium: 120, employerHealthShare: 100 },
+    { id: 'EMP-003', name: 'Tareq Qabil', dept: 'Delivery', role: 'Rider', status: 'On Leave', startDate: '2024-03-20', baseSalary: 0, allowances: 200, email: 'tareq@cyshop.com', phone: '+966 50 555 6666', leaveBalance: 8, nationalId: '1076543219', contractType: 'Hourly', hourlyRate: 12.50, overtimeMultiplier: 1.5, healthPremium: 80, employerHealthShare: 50 },
+    { id: 'EMP-004', name: 'Layla Al-Rashid', dept: 'Finance', role: 'Accountant', status: 'Active', startDate: '2022-09-01', baseSalary: 3200, allowances: 600, email: 'layla@cyshop.com', phone: '+962 7 9111 2222', leaveBalance: 21, nationalId: '400129841', contractType: 'Full-Time', hourlyRate: 0, overtimeMultiplier: 1.5, healthPremium: 150, employerHealthShare: 80 },
+    { id: 'EMP-005', name: 'Ahmad Mansour', dept: 'IT', role: 'System Admin', status: 'Active', startDate: '2023-11-15', baseSalary: 1900, allowances: 250, email: 'ahmad@cyshop.com', phone: '+966 54 777 8888', leaveBalance: 18, nationalId: '1065432187', contractType: 'Part-Time', hourlyRate: 0, overtimeMultiplier: 1.5, healthPremium: 95, employerHealthShare: 70 }
+  ]);
+  const [selectedEmployee, setSelectedEmployee] = useState(null);
+  const [hrTab, setHrTab] = useState('directory');
+  const [leaveRequests, setLeaveRequests] = useState([
+    { id: 'LV-001', empId: 'EMP-001', empName: 'Faisal Jameel', type: 'Annual', from: '2026-06-18', to: '2026-06-22', days: 5, status: 'Pending', reason: 'Family vacation' },
+    { id: 'LV-002', empId: 'EMP-003', empName: 'Tareq Qabil', type: 'Sick', from: '2026-06-15', to: '2026-06-17', days: 3, status: 'Approved', reason: 'Medical treatment' }
+  ]);
+  const [newEmpName, setNewEmpName] = useState('');
+  const [newEmpDept, setNewEmpDept] = useState('Operations');
+  const [newEmpRole, setNewEmpRole] = useState('');
+  const [newEmpSalary, setNewEmpSalary] = useState('');
+  const [newEmpAllowance, setNewEmpAllowance] = useState('');
+  const [newEmpContractType, setNewEmpContractType] = useState('Full-Time');
+  const [newEmpHourlyRate, setNewEmpHourlyRate] = useState('15');
+  const [newEmpOvertimeMultiplier, setNewEmpOvertimeMultiplier] = useState('1.5');
+  const [newEmpHealthPremium, setNewEmpHealthPremium] = useState('100');
+  const [newEmpEmployerHealthShare, setNewEmpEmployerHealthShare] = useState('80');
+
+  // ─── Attendance Module State ──────────────────────────────────────
+  const today = new Date().toISOString().split('T')[0];
+  const [attendanceLogs, setAttendanceLogs] = useState([
+    { id: 'ATT-001', empId: 'EMP-001', empName: 'Faisal Jameel', date: today, clockIn: '08:02', clockOut: '17:05', hoursWorked: 9.05, regularHours: 8.0, overtimeHours: 1.05, approvalStatus: 'Approved', status: 'Present', gps: '24.7136° N, 46.6753° E' },
+    { id: 'ATT-002', empId: 'EMP-002', empName: 'Sarah Al-Harbi', date: today, clockIn: '07:30', clockOut: null, hoursWorked: null, regularHours: 0, overtimeHours: 0, approvalStatus: 'Pending', status: 'Active', gps: '24.7136° N, 46.6753° E' },
+    { id: 'ATT-003', empId: 'EMP-004', empName: 'Layla Al-Rashid', date: today, clockIn: '09:15', clockOut: null, hoursWorked: null, regularHours: 0, overtimeHours: 0, approvalStatus: 'Pending', status: 'Late', gps: '31.9539° N, 35.9106° E' }
+  ]);
+  const [attendanceMonth, setAttendanceMonth] = useState('2026-06');
+  const [clockingEmployee, setClockingEmployee] = useState('EMP-001');
+
+  // ─── Payroll Module State ─────────────────────────────────────────
+  const [payrollRuns, setPayrollRuns] = useState([
+    { id: 'PAY-2026-05', month: 'May 2026', processedDate: '2026-05-28', employees: 5, totalGross: 13900, totalDeductions: 1390, totalNet: 12510, status: 'Paid' },
+    { id: 'PAY-2026-04', month: 'April 2026', processedDate: '2026-04-28', employees: 5, totalGross: 13900, totalDeductions: 1390, totalNet: 12510, status: 'Paid' }
+  ]);
+  const [payrollTab, setPayrollTab] = useState('current');
+  const [payrollProcessing, setPayrollProcessing] = useState(false);
+  const [payrollMonth, setPayrollMonth] = useState('June 2026');
+
+  // ─── Accounting Module State ──────────────────────────────────────
+  const [accountingTab, setAccountingTab] = useState('ledger');
+  const INITIAL_CHARTS = [
+    { code: '1001', name: 'Cash & Bank', type: 'Asset', baseBalance: 101075.57 },
+    { code: '1100', name: 'Accounts Receivable', type: 'Asset', baseBalance: 12850.00 },
+    { code: '1200', name: 'Inventory Assets', type: 'Asset', baseBalance: 34622.47 },
+    { code: '2001', name: 'Accounts Payable', type: 'Liability', baseBalance: 8750.00 },
+    { code: '2100', name: 'VAT Payable', type: 'Liability', baseBalance: 6400.00 },
+    { code: '2200', name: 'Salary Payable', type: 'Liability', baseBalance: 12510.00 },
+    { code: '2300', name: 'Payroll Liabilities', type: 'Liability', baseBalance: 0.00 },
+    { code: '3001', name: 'Owner Equity', type: 'Equity', baseBalance: 108410.50 },
+    { code: '4001', name: 'Sales Revenue', type: 'Revenue', baseBalance: 145545.07 },
+    { code: '4100', name: 'Delivery Revenue', type: 'Revenue', baseBalance: 18400.00 },
+    { code: '5001', name: 'Cost of Goods Sold', type: 'Expense', baseBalance: 52277.53 },
+    { code: '5100', name: 'Salaries Expense', type: 'Expense', baseBalance: 55540.00 },
+    { code: '5200', name: 'Rent Expense', type: 'Expense', baseBalance: 14400.00 },
+    { code: '5300', name: 'Utilities Expense', type: 'Expense', baseBalance: 4800.00 }
+  ];
+  const [journalEntries, setJournalEntries] = useState([
+    { id: 'JE-001', date: '2026-06-14', description: 'POS Cash Sales - Saudi Branch', debitAccount: '1001 Cash & Bank', creditAccount: '4001 Sales Revenue', debitAmount: 20.13, creditAmount: 20.13, ref: 'INV-2026-001' },
+    { id: 'JE-002', date: '2026-06-14', description: 'POS Cash Sales - Jordan Branch', debitAccount: '1001 Cash & Bank', creditAccount: '4001 Sales Revenue', debitAmount: 34.80, creditAmount: 34.80, ref: 'INV-2026-002' },
+    { id: 'JE-003', date: '2026-06-14', description: 'COGS - Raw material consumed', debitAccount: '5001 Cost of Goods Sold', creditAccount: '1200 Inventory Assets', debitAmount: 22.47, creditAmount: 22.47, ref: 'ORD-101' },
+    { id: 'JE-004', date: '2026-05-31', description: 'Monthly Salaries Disbursed', debitAccount: '5100 Salaries Expense', creditAccount: '1001 Cash & Bank', debitAmount: 12510, creditAmount: 12510, ref: 'PAY-2026-05' },
+    { id: 'JE-005', date: '2026-05-31', description: 'VAT Settlement - ZATCA Portal', debitAccount: '2100 VAT Payable', creditAccount: '1001 Cash & Bank', debitAmount: 3200, creditAmount: 3200, ref: 'ZATCA-2026-05' }
+  ]);
+
+  const chartOfAccounts = INITIAL_CHARTS.map(account => {
+    let balance = account.baseBalance;
+    journalEntries.forEach(je => {
+      const debited = je.debitAccount.startsWith(account.code);
+      const credited = je.creditAccount.startsWith(account.code);
+      if (debited || credited) {
+        const change = je.debitAmount;
+        if (account.type === 'Asset' || account.type === 'Expense') {
+          if (debited) balance += change;
+          if (credited) balance -= change;
+        } else {
+          if (credited) balance += change;
+          if (debited) balance -= change;
+        }
+      }
+    });
+    return { ...account, balance };
+  });
+  const [newJEDesc, setNewJEDesc] = useState('');
+  const [newJEDebit, setNewJEDebit] = useState('');
+  const [newJECredit, setNewJECredit] = useState('');
+  const [newJEAmount, setNewJEAmount] = useState('');
+
+  // Overhead Expenses Form States
+  const [expenseDesc, setExpenseDesc] = useState('');
+  const [expenseAmount, setExpenseAmount] = useState('');
+  const [expenseAccount, setExpenseAccount] = useState('5200 Rent Expense');
+  const [expenseDate, setExpenseDate] = useState(today);
+
+  // Sync selected employee to add/edit form
+  useEffect(() => {
+    if (selectedEmployee) {
+      setNewEmpName(selectedEmployee.name || '');
+      setNewEmpDept(selectedEmployee.dept || 'Operations');
+      setNewEmpRole(selectedEmployee.role || '');
+      setNewEmpSalary(selectedEmployee.baseSalary?.toString() || '');
+      setNewEmpAllowance(selectedEmployee.allowances?.toString() || '');
+      setNewEmpContractType(selectedEmployee.contractType || 'Full-Time');
+      setNewEmpHourlyRate(selectedEmployee.hourlyRate?.toString() || '0');
+      setNewEmpOvertimeMultiplier(selectedEmployee.overtimeMultiplier?.toString() || '1.5');
+      setNewEmpHealthPremium(selectedEmployee.healthPremium?.toString() || '100');
+      setNewEmpEmployerHealthShare(selectedEmployee.employerHealthShare?.toString() || '80');
+    } else {
+      setNewEmpName('');
+      setNewEmpDept('Operations');
+      setNewEmpRole('');
+      setNewEmpSalary('');
+      setNewEmpAllowance('');
+      setNewEmpContractType('Full-Time');
+      setNewEmpHourlyRate('15');
+      setNewEmpOvertimeMultiplier('1.5');
+      setNewEmpHealthPremium('100');
+      setNewEmpEmployerHealthShare('80');
+    }
+  }, [selectedEmployee, hrTab]);
+
+  const getPayrollMonthPrefix = (monthStr) => {
+    const monthsMap = {
+      'January': '01', 'February': '02', 'March': '03', 'April': '04',
+      'May': '05', 'June': '06', 'July': '07', 'August': '08',
+      'September': '09', 'October': '10', 'November': '11', 'December': '12'
+    };
+    const parts = monthStr.split(' ');
+    if (parts.length === 2) {
+      const monthName = parts[0];
+      const year = parts[1];
+      const monthNum = monthsMap[monthName];
+      if (monthNum) return `${year}-${monthNum}`;
+    }
+    return '2026-06';
+  };
+
+  const calculateEmployeePayroll = (emp) => {
+    const monthPrefix = getPayrollMonthPrefix(payrollMonth);
+    let baseSalary = emp.baseSalary;
+    let regHours = 0;
+    let otHours = 0;
+
+    if (emp.contractType === 'Hourly') {
+      const empLogs = attendanceLogs.filter(
+        a => a.empId === emp.id && a.approvalStatus === 'Approved' && a.date.startsWith(monthPrefix)
+      );
+      regHours = empLogs.reduce((s, a) => s + (a.regularHours || 0), 0);
+      otHours = empLogs.reduce((s, a) => s + (a.overtimeHours || 0), 0);
+      baseSalary = (regHours * (emp.hourlyRate || 0)) + (otHours * (emp.hourlyRate || 0) * (emp.overtimeMultiplier || 1.5));
+    }
+
+    const gross = baseSalary + (emp.allowances || 0);
+    const healthPremium = emp.healthPremium || 0;
+    const employerHealthShare = emp.employerHealthShare !== undefined ? emp.employerHealthShare : 100;
+    
+    const employerHealth = healthPremium * (employerHealthShare / 100);
+    const employeeHealth = healthPremium * (1 - employerHealthShare / 100);
+
+    const employeeSSC = gross * 0.075;
+    const employerSSC = gross * 0.1425;
+
+    const taxableGross = Math.max(0, gross - employeeHealth - employeeSSC);
+    const incomeTax = taxableGross * 0.05;
+
+    const net = gross - employeeHealth - employeeSSC - incomeTax;
+    const employerCTC = gross + employerSSC + employerHealth;
+    const deductions = employeeHealth + employeeSSC + incomeTax;
+
+    return {
+      empId: emp.id,
+      name: emp.name,
+      role: emp.role,
+      contractType: emp.contractType,
+      baseSalary,
+      allowances: emp.allowances || 0,
+      gross,
+      employerHealth,
+      employeeHealth,
+      employeeSSC,
+      employerSSC,
+      taxableGross,
+      incomeTax,
+      net,
+      employerCTC,
+      deductions,
+      regHours,
+      otHours
+    };
+  };
+
+  const payrollList = employees.map(emp => calculateEmployeePayroll(emp));
+  const totalGross = payrollList.reduce((sum, p) => sum + p.gross, 0);
+  const totalDeductions = payrollList.reduce((sum, p) => sum + p.deductions, 0);
+  const totalNet = payrollList.reduce((sum, p) => sum + p.net, 0);
+  const totalLiabilities = payrollList.reduce((sum, p) => sum + p.employeeHealth + p.employeeSSC + p.incomeTax + p.employerSSC + p.employerHealth, 0);
+  const totalEmployerCTC = payrollList.reduce((sum, p) => sum + p.employerCTC, 0);
+
+  // ─── Inventory BOM / Kits State ───────────────────────────────────
+  const [inventoryTab, setInventoryTab] = useState('stock');
+  const [bomItems, setBomItems] = useState([
+    { id: 'BOM-001', name: 'CyBurger Premium Kit', type: 'Kit', components: [
+      { name: 'Burger Bun', qty: 1, unit: 'pcs', cost: 0.50 },
+      { name: 'Beef Patty 150g', qty: 1, unit: 'pcs', cost: 3.20 },
+      { name: 'Cheddar Cheese', qty: 2, unit: 'slices', cost: 0.30 },
+      { name: 'Fresh Lettuce', qty: 15, unit: 'g', cost: 0.10 },
+      { name: 'Tomato', qty: 2, unit: 'slices', cost: 0.15 },
+      { name: 'Special Sauce', qty: 20, unit: 'ml', cost: 0.25 }
+    ], totalCost: 4.50, sellPrice: 10.50, margin: 57.1 },
+    { id: 'BOM-002', name: 'Synth Pizza Margherita Kit', type: 'Kit', components: [
+      { name: 'Pizza Dough 250g', qty: 1, unit: 'pcs', cost: 1.20 },
+      { name: 'Tomato Sauce', qty: 80, unit: 'ml', cost: 0.40 },
+      { name: 'Mozzarella Cheese', qty: 100, unit: 'g', cost: 1.80 },
+      { name: 'Fresh Basil', qty: 5, unit: 'leaves', cost: 0.20 }
+    ], totalCost: 3.60, sellPrice: 12.00, margin: 70.0 },
+    { id: 'BOM-003', name: 'Cyber Espresso Raw Material', type: 'Raw', components: [
+      { name: 'Arabica Coffee Beans', qty: 18, unit: 'g', cost: 0.72 },
+      { name: 'Filtered Water', qty: 30, unit: 'ml', cost: 0.02 }
+    ], totalCost: 0.74, sellPrice: 3.50, margin: 78.9 }
+  ]);
+  const [selectedBom, setSelectedBom] = useState(null);
+  const [bomTab, setBomTab] = useState('list');
+
+  // ─── Supply Chain / Purchase Orders State ─────────────────────────
+  const [supplyTab, setSupplyTab] = useState('vendors');
+  const [vendors, setVendors] = useState([
+    { id: 'VND-001', name: 'Al-Jazeera Food Supplies', contact: '+966 11 234 5678', country: 'SA', rating: 4.8, category: 'Food & Beverage', paymentTerms: 'Net 30', leadTime: '2 days' },
+    { id: 'VND-002', name: 'Jordan Fresh Foods Co.', contact: '+962 6 567 8901', country: 'JO', rating: 4.5, category: 'Fresh Produce', paymentTerms: 'Net 15', leadTime: '1 day' },
+    { id: 'VND-003', name: 'Gulf Packaging Corp.', contact: '+966 12 345 6789', country: 'SA', rating: 4.2, category: 'Packaging', paymentTerms: 'Net 45', leadTime: '5 days' }
+  ]);
+  const [purchaseOrders, setPurchaseOrders] = useState([
+    { id: 'PO-2026-001', vendor: 'Al-Jazeera Food Supplies', date: '2026-06-10', items: [{name:'Coffee Beans 1kg',qty:20,price:15.00},{name:'Burger Patties x10',qty:50,price:18.00}], total: 1200.00, status: 'Received', dueDate: '2026-06-13' },
+    { id: 'PO-2026-002', vendor: 'Jordan Fresh Foods Co.', date: '2026-06-12', items: [{name:'Fresh Lettuce 1kg',qty:10,price:3.50},{name:'Tomatoes 1kg',qty:15,price:2.00}], total: 65.00, status: 'Pending', dueDate: '2026-06-14' }
+  ]);
+  const [newPoVendor, setNewPoVendor] = useState('VND-001');
+  const [newPoItem, setNewPoItem] = useState('');
+  const [newPoQty, setNewPoQty] = useState('');
+  const [newPoPrice, setNewPoPrice] = useState('');
+  const [poLines, setPoLines] = useState([]);
+
+  // ─── Setup Wizard State ───────────────────────────────────────────
+  const [setupStep, setSetupStep] = useState(0);
+  const [setupConfig, setSetupConfig] = useState({
+    businessName: '', businessType: 'restaurant', currency: 'SAR', country: 'SA',
+    vatNumber: '', vatRate: '15', branches: '1', modules: { pos: true, hr: true, accounting: true, inventory: true, delivery: false },
+    adminEmail: '', adminPassword: '', logo: ''
+  });
+  const [setupComplete, setSetupComplete] = useState(false);
+
   // Toast notifications state
   const [toasts, setToasts] = useState([]);
 
@@ -755,6 +1022,53 @@ function App() {
     triggerToast('Item removed from cart', 'info');
   };
 
+  const recordCheckoutJournalEntries = (source, subtotal, tax, invoiceId, items) => {
+    let orderCogs = 0;
+    items.forEach((item) => {
+      const bom = bomItems.find(b => b.name.toLowerCase().includes(item.product.name.toLowerCase()));
+      const unitCost = bom ? bom.totalCost : item.product.price * 0.5;
+      orderCogs += unitCost * item.quantity;
+    });
+    orderCogs = parseFloat(orderCogs.toFixed(2));
+
+    const debitAccount = (source === 'talabat' || source === 'careem') ? '1100 Accounts Receivable' : '1001 Cash & Bank';
+
+    const revenueJE = {
+      id: `JE-SL-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      date: today,
+      description: `POS ${source.toUpperCase()} Sales - Invoice ${invoiceId}`,
+      debitAccount,
+      creditAccount: '4001 Sales Revenue',
+      debitAmount: parseFloat(subtotal.toFixed(2)),
+      creditAmount: parseFloat(subtotal.toFixed(2)),
+      ref: invoiceId
+    };
+
+    const vatJE = {
+      id: `JE-VT-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      date: today,
+      description: `POS ${source.toUpperCase()} VAT Collected - Invoice ${invoiceId}`,
+      debitAccount,
+      creditAccount: '2100 VAT Payable',
+      debitAmount: parseFloat(tax.toFixed(2)),
+      creditAmount: parseFloat(tax.toFixed(2)),
+      ref: invoiceId
+    };
+
+    const cogsJE = {
+      id: `JE-CG-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+      date: today,
+      description: `POS ${source.toUpperCase()} COGS - Invoice ${invoiceId}`,
+      debitAccount: '5001 Cost of Goods Sold',
+      creditAccount: '1200 Inventory Assets',
+      debitAmount: orderCogs,
+      creditAmount: orderCogs,
+      ref: invoiceId
+    };
+
+    setJournalEntries(prev => [...prev, revenueJE, vatJE, cogsJE]);
+  };
+
   // POS Checkout checkout order
   const handleCheckout = () => {
     if (cart.length === 0) {
@@ -828,6 +1142,7 @@ function App() {
 
     setOrders((prev) => [newOrder, ...prev]);
     setInvoices((prev) => [newInvoice, ...prev]);
+    recordCheckoutJournalEntries('walk-in', subtotal, tax, invoiceId, cart);
     setSelectedInvoiceId(invoiceId);
     setCart([]);
 
@@ -859,6 +1174,29 @@ function App() {
         setTimeout(() => {
           triggerToast(`Warning: Invoice ${invoiceId} recorded locally. Submit to ZATCA failed: Invalid API credentials!`, 'warning');
         }, 1200);
+      }
+    }
+
+    // AWS Cloud Auto-Sync
+    if (awsAutoSync) {
+      if (awsConnected && awsAccessKeyId && awsSecretAccessKey) {
+        setTimeout(() => {
+          triggerToast(`Transaction ${invoiceId} synced to AWS DynamoDB table '${awsDynamoTable}'`, 'success');
+          setAutonomousActions(old => [
+            {
+              id: 'aws-autosync-' + Date.now() + '-' + Math.random(),
+              type: 'compliance',
+              label: `DynamoDB Record Backup - Invoice ${invoiceId}`,
+              status: 'completed',
+              time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            },
+            ...old
+          ]);
+        }, 1800);
+      } else {
+        setTimeout(() => {
+          triggerToast(`Auto-Sync Failed: AWS integration offline.`, 'warning');
+        }, 1800);
       }
     }
   };
@@ -931,6 +1269,7 @@ function App() {
 
     setOrders((prev) => [newOrder, ...prev]);
     setInvoices((prev) => [newInvoice, ...prev]);
+    recordCheckoutJournalEntries('talabat', subtotal, tax, invoiceId, orderItems);
     setSelectedInvoiceId(invoiceId);
 
     if (talabatAutoAccept) {
@@ -1003,6 +1342,90 @@ function App() {
         setPingStates(prev => ({ ...prev, [ipId]: 'failed' }));
         triggerToast(`Ping to ${ipAddress} timed out!`, 'error');
       }
+    }, 1200);
+  };
+
+  const handleVerifyAws = () => {
+    if (!awsAccessKeyId || !awsSecretAccessKey) {
+      triggerToast('Please enter AWS Access Key ID and Secret Access Key', 'error');
+      return;
+    }
+    setIsAwsVerifying(true);
+    triggerToast('Performing AWS STS authentication & credential handshake...', 'info');
+    setTimeout(() => {
+      setIsAwsVerifying(false);
+      setAwsConnected(true);
+      triggerToast('AWS IAM validation succeeded! Connection established.', 'success');
+      setAutonomousActions(old => [
+        {
+          id: 'aws-verify-' + Date.now() + '-' + Math.random(),
+          type: 'compliance',
+          label: `AWS Cloud Handshake - Region ${awsRegion} Verified`,
+          status: 'completed',
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        },
+        ...old
+      ]);
+    }, 1500);
+  };
+
+  const handleSyncPosToS3 = () => {
+    if (!awsConnected) {
+      triggerToast('AWS services offline. Verify credentials first.', 'error');
+      return;
+    }
+    setIsAwsSyncing(true);
+    setAwsSyncProgress({ label: 'Compiling Catalog & Transaction Invoices...', percent: 10 });
+    
+    setTimeout(() => {
+      setAwsSyncProgress({ label: 'Serializing POS state metadata (JSON format)...', percent: 35 });
+      setTimeout(() => {
+        setAwsSyncProgress({ label: `Uploading catalog data to S3 bucket '${awsS3Bucket}'...`, percent: 60 });
+        setTimeout(() => {
+          setAwsSyncProgress({ label: `Synchronizing transaction records database to DynamoDB table '${awsDynamoTable}'...`, percent: 85 });
+          setTimeout(() => {
+            setIsAwsSyncing(false);
+            setAwsSyncProgress(null);
+            triggerToast('POS Catalog & transaction backup synced to AWS successfully!', 'success');
+            setAutonomousActions(old => [
+              {
+                id: 'aws-sync-' + Date.now() + '-' + Math.random(),
+                type: 'inventory',
+                label: `POS Backup Package uploaded to S3 bucket: ${awsS3Bucket}`,
+                status: 'completed',
+                time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+              },
+              ...old
+            ]);
+            confetti({
+              particleCount: 50,
+              spread: 40,
+              colors: ['#2563eb', '#60a5fa']
+            });
+          }, 600);
+        }, 800);
+      }, 800);
+    }, 800);
+  };
+
+  const handleCloudFrontInvalidation = () => {
+    if (!awsConnected) {
+      triggerToast('AWS connection required for invalidating CDN Cache.', 'error');
+      return;
+    }
+    triggerToast('Creating CloudFront Cache Invalidation request for dist/* ...', 'info');
+    setTimeout(() => {
+      triggerToast('CloudFront CDN Cache cleared at edge nodes!', 'success');
+      setAutonomousActions(old => [
+        {
+          id: 'aws-cf-' + Date.now() + '-' + Math.random(),
+          type: 'po',
+          label: 'AWS CloudFront CDN Cache Invalidation completed',
+          status: 'completed',
+          time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        },
+        ...old
+      ]);
     }, 1200);
   };
 
@@ -1096,13 +1519,16 @@ function App() {
                 
                 const pizzaItem = products.find(p => p.id === 'p5') || products[4];
                 const orderItems = [{ product: pizzaItem, quantity: 1, price: 9.50 }];
+                const orderId = `ORD-${orders.length + 101}`;
+                const invoiceId = `INV-2026-${String(invoices.length + 1).padStart(3, '0')}`;
+                const timestamp = new Date().toISOString();
                 const newOrder = {
-                  id: `ORD-${orders.length + 101}`,
+                  id: orderId,
                   items: orderItems,
                   total: 9.50,
                   status: 'pending',
-                  timestamp: new Date().toISOString(),
-                  invoiceId: `INV-2026-${String(invoices.length + 1).padStart(3, '0')}`,
+                  timestamp,
+                  invoiceId,
                   country: 'JO',
                   source: 'talabat',
                   deliveryInfo: {
@@ -1110,7 +1536,23 @@ function App() {
                     deliveryAddress: 'Jabal Amman, Home Office'
                   }
                 };
+                const subtotal = 9.50 / (1 + getTaxRate('JO'));
+                const tax = 9.50 - subtotal;
+                const newInvoice = {
+                  id: invoiceId,
+                  orderId,
+                  timestamp,
+                  items: [{ product: pizzaItem, quantity: 1, price: pizzaItem.price }],
+                  subtotal: parseFloat(subtotal.toFixed(2)),
+                  tax: parseFloat(tax.toFixed(2)),
+                  total: 9.50,
+                  country: 'JO',
+                  source: 'talabat',
+                  qrData: `CyShop Talabat JO | Inv: ${invoiceId} | VAT ID: 100239485 | Total: 9.50 JOD`
+                };
                 setOrders(prevOrders => [newOrder, ...prevOrders]);
+                setInvoices(prev => [newInvoice, ...prev]);
+                recordCheckoutJournalEntries('talabat', subtotal, tax, invoiceId, [{ product: pizzaItem, quantity: 1, price: pizzaItem.price }]);
                 triggerToast('Talabat order checkout autonomously completed!', 'success');
                 confetti({
                   particleCount: 100,
@@ -1484,7 +1926,76 @@ function App() {
           </button>
 
           <button
+            onClick={() => setActiveTab('hr')}
+            className={`sidebar-item ${activeTab === 'hr' ? 'active' : ''}`}
+            style={{ border: 'none', background: 'none', textAlign: 'left', width: '100%' }}
+          >
+            <Users size={18} />
+            {!sidebarCollapsed && <span style={{ color: activeTab === 'hr' ? 'var(--primary-color)' : 'var(--text-muted)' }}>HR Management</span>}
+          </button>
+
+          <button
+            onClick={() => setActiveTab('attendance')}
+            className={`sidebar-item ${activeTab === 'attendance' ? 'active' : ''}`}
+            style={{ border: 'none', background: 'none', textAlign: 'left', width: '100%' }}
+          >
+            <Calendar size={18} />
+            {!sidebarCollapsed && <span style={{ color: activeTab === 'attendance' ? 'var(--primary-color)' : 'var(--text-muted)' }}>Attendance</span>}
+          </button>
+
+          <button
+            onClick={() => setActiveTab('payroll')}
+            className={`sidebar-item ${activeTab === 'payroll' ? 'active' : ''}`}
+            style={{ border: 'none', background: 'none', textAlign: 'left', width: '100%' }}
+          >
+            <ArrowUpRight size={18} />
+            {!sidebarCollapsed && <span style={{ color: activeTab === 'payroll' ? 'var(--primary-color)' : 'var(--text-muted)' }}>Payroll</span>}
+          </button>
+
+          <button
+            onClick={() => setActiveTab('accounting')}
+            className={`sidebar-item ${activeTab === 'accounting' ? 'active' : ''}`}
+            style={{ border: 'none', background: 'none', textAlign: 'left', width: '100%' }}
+          >
+            <ReceiptText size={18} />
+            {!sidebarCollapsed && <span style={{ color: activeTab === 'accounting' ? 'var(--primary-color)' : 'var(--text-muted)' }}>Accounting</span>}
+          </button>
+
+          <button
+            onClick={() => setActiveTab('bom')}
+            className={`sidebar-item ${activeTab === 'bom' ? 'active' : ''}`}
+            style={{ border: 'none', background: 'none', textAlign: 'left', width: '100%' }}
+          >
+            <Package size={18} />
+            {!sidebarCollapsed && <span style={{ color: activeTab === 'bom' ? 'var(--primary-color)' : 'var(--text-muted)' }}>BOM & Kits</span>}
+          </button>
+
+          <button
+            onClick={() => setActiveTab('supply')}
+            className={`sidebar-item ${activeTab === 'supply' ? 'active' : ''}`}
+            style={{ border: 'none', background: 'none', textAlign: 'left', width: '100%' }}
+          >
+            <Bike size={18} />
+            {!sidebarCollapsed && <span style={{ color: activeTab === 'supply' ? 'var(--primary-color)' : 'var(--text-muted)' }}>Supply Chain</span>}
+          </button>
+
+          <button
+            onClick={() => setActiveTab('setup')}
+            className={`sidebar-item ${activeTab === 'setup' ? 'active' : ''}`}
+            style={{ border: 'none', background: 'none', textAlign: 'left', width: '100%' }}
+          >
+            <ShieldCheck size={18} />
+            {!sidebarCollapsed && (
+              <span style={{ color: activeTab === 'setup' ? 'var(--primary-color)' : 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                Setup Wizard
+                <span className="badge badge-warning" style={{ fontSize: '9px', padding: '1px 4px' }}>NEW</span>
+              </span>
+            )}
+          </button>
+
+          <button
             onClick={() => setActiveTab('nova-avatar')}
+
             className={`sidebar-item ${activeTab === 'nova-avatar' ? 'active' : ''}`}
             style={{ border: 'none', background: 'none', textAlign: 'left', width: '100%', position: 'relative' }}
           >
@@ -3470,7 +3981,7 @@ function App() {
                   </div>
                 </div>
 
-                <div>
+                <div style={{ borderBottom: '1px solid var(--border-color)', paddingBottom: '16px' }}>
                   <h4 style={{ color: 'var(--text-primary)', marginBottom: '8px', fontSize: '14.5px' }}>Jordan ISTD E-Invoicing Compliance</h4>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                     <label style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '13.5px', color: 'var(--text-primary)', cursor: 'pointer' }}>
@@ -3594,6 +4105,163 @@ function App() {
                     )}
                   </div>
                 </div>
+
+                <div style={{ paddingTop: '8px' }}>
+                  <h4 style={{ color: '#2563eb', marginBottom: '12px', fontSize: '14.5px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#2563eb' }}>
+                      <path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path>
+                    </svg>
+                    AWS Cloud Services & Deployment Config
+                  </h4>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    <div style={{ display: 'flex', gap: '16px' }}>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13.5px', color: 'var(--text-primary)', cursor: 'pointer' }}>
+                        <input
+                          type="checkbox"
+                          checked={awsAutoSync}
+                          onChange={(e) => setAwsAutoSync(e.target.checked)}
+                          style={{ width: '16px', height: '16px', cursor: 'pointer' }}
+                        />
+                        Auto-Sync POS Checkouts (DynamoDB)
+                      </label>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13.5px', color: 'var(--text-primary)', cursor: 'pointer' }}>
+                        <input
+                          type="checkbox"
+                          checked={awsStaticHosting}
+                          onChange={(e) => setAwsStaticHosting(e.target.checked)}
+                          style={{ width: '16px', height: '16px', cursor: 'pointer' }}
+                        />
+                        S3 Static Website Hosting (CDN)
+                      </label>
+                    </div>
+
+                    <div style={{
+                      marginTop: '8px',
+                      padding: '14px',
+                      borderRadius: '8px',
+                      border: '1px solid var(--border-color)',
+                      background: 'var(--bg-card-hover)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '12px'
+                    }}>
+                      <span style={{ fontSize: '12.5px', fontWeight: '700', color: '#2563eb', display: 'block' }}>
+                        ☁️ AWS IAM & Services Credentials
+                      </span>
+
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                        <div className="form-group" style={{ margin: 0 }}>
+                          <label className="form-label" style={{ fontSize: '11px', fontWeight: '600' }}>AWS Access Key ID</label>
+                          <input
+                            type="text"
+                            className="input"
+                            style={{ fontSize: '12.5px', height: '36px', color: 'var(--text-primary)', background: 'var(--bg-card)', fontFamily: 'var(--font-mono)' }}
+                            placeholder="AKIA..."
+                            value={awsAccessKeyId}
+                            onChange={(e) => setAwsAccessKeyId(e.target.value)}
+                          />
+                        </div>
+                        <div className="form-group" style={{ margin: 0 }}>
+                          <label className="form-label" style={{ fontSize: '11px', fontWeight: '600' }}>AWS Default Region</label>
+                          <select
+                            className="select"
+                            style={{ fontSize: '12.5px', height: '36px', color: 'var(--text-primary)', background: 'var(--bg-card)' }}
+                            value={awsRegion}
+                            onChange={(e) => setAwsRegion(e.target.value)}
+                          >
+                            <option value="us-east-1">us-east-1 (N. Virginia)</option>
+                            <option value="us-west-2">us-west-2 (Oregon)</option>
+                            <option value="eu-central-1">eu-central-1 (Frankfurt)</option>
+                            <option value="ap-southeast-1">ap-southeast-1 (Singapore)</option>
+                            <option value="me-central-1">me-central-1 (UAE)</option>
+                          </select>
+                        </div>
+                      </div>
+
+                      <div className="form-group" style={{ margin: 0 }}>
+                        <label className="form-label" style={{ fontSize: '11px', fontWeight: '600' }}>AWS Secret Access Key</label>
+                        <input
+                          type="password"
+                          className="input"
+                          style={{ fontSize: '12.5px', height: '36px', color: 'var(--text-primary)', background: 'var(--bg-card)', fontFamily: 'var(--font-mono)' }}
+                          placeholder="wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+                          value={awsSecretAccessKey}
+                          onChange={(e) => setAwsSecretAccessKey(e.target.value)}
+                        />
+                      </div>
+
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                        <div className="form-group" style={{ margin: 0 }}>
+                          <label className="form-label" style={{ fontSize: '11px', fontWeight: '600' }}>S3 Backup Bucket</label>
+                          <input
+                            type="text"
+                            className="input"
+                            style={{ fontSize: '12.5px', height: '36px', color: 'var(--text-primary)', background: 'var(--bg-card)' }}
+                            placeholder="cyshop-pos-backups"
+                            value={awsS3Bucket}
+                            onChange={(e) => setAwsS3Bucket(e.target.value)}
+                          />
+                        </div>
+                        <div className="form-group" style={{ margin: 0 }}>
+                          <label className="form-label" style={{ fontSize: '11px', fontWeight: '600' }}>DynamoDB Table</label>
+                          <input
+                            type="text"
+                            className="input"
+                            style={{ fontSize: '12.5px', height: '36px', color: 'var(--text-primary)', background: 'var(--bg-card)' }}
+                            placeholder="cyshop-transactions-prod"
+                            value={awsDynamoTable}
+                            onChange={(e) => setAwsDynamoTable(e.target.value)}
+                          />
+                        </div>
+                      </div>
+
+                      {isAwsSyncing && awsSyncProgress && (
+                        <div style={{ marginTop: '8px' }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11.5px', color: 'var(--text-primary)', marginBottom: '4px' }}>
+                            <span>{awsSyncProgress.label}</span>
+                            <span style={{ fontWeight: '700' }}>{awsSyncProgress.percent}%</span>
+                          </div>
+                          <div className="sparkline-track" style={{ height: '8px', background: 'var(--border-color)', borderRadius: '4px' }}>
+                            <div className="sparkline-fill" style={{ width: `${awsSyncProgress.percent}%`, backgroundColor: '#2563eb', height: '100%', borderRadius: '4px', transition: 'width 0.4s ease' }} />
+                          </div>
+                        </div>
+                      )}
+
+                      <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '6px', flexWrap: 'wrap' }}>
+                        {awsStaticHosting && (
+                          <button
+                            type="button"
+                            className="btn btn-secondary"
+                            style={{ height: '32px', fontSize: '11px', padding: '0 12px', color: 'var(--text-primary)', border: '1px solid var(--border-color)', borderRadius: '6px' }}
+                            onClick={handleCloudFrontInvalidation}
+                            disabled={!awsConnected}
+                          >
+                            Clear CDN Cache
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          className="btn btn-secondary"
+                          style={{ height: '32px', fontSize: '11px', padding: '0 12px', color: 'var(--text-primary)', border: '1px solid var(--border-color)', borderRadius: '6px' }}
+                          onClick={handleSyncPosToS3}
+                          disabled={!awsConnected || isAwsSyncing}
+                        >
+                          {isAwsSyncing ? 'Syncing...' : 'Push POS Backup'}
+                        </button>
+                        <button
+                          type="button"
+                          className="btn btn-primary"
+                          style={{ height: '32px', fontSize: '11px', padding: '0 12px', color: '#ffffff', borderRadius: '6px' }}
+                          onClick={handleVerifyAws}
+                          disabled={isAwsVerifying}
+                        >
+                          {isAwsVerifying ? 'Verifying...' : 'Verify AWS Link'}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </div>
               </div>
 
               {/* Right Column: Connection testing */}
@@ -3631,6 +4299,12 @@ function App() {
                     </span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <span>AWS Cloud Services:</span>
+                    <span className={`badge ${awsConnected && awsAccessKeyId && awsSecretAccessKey ? 'badge-success' : 'badge-danger'}`} style={{ padding: '1px 6px', fontSize: '10px' }}>
+                      {awsConnected && awsAccessKeyId && awsSecretAccessKey ? 'Online' : 'Offline'}
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                     <span>Local Printer Spooler:</span>
                     <span className="badge badge-warning" style={{ padding: '1px 6px', fontSize: '10px' }}>Idle</span>
                   </div>
@@ -3646,17 +4320,20 @@ function App() {
                       if (istdEnabled && (!jofotaraUsername || !jofotaraSecret)) errors.push('Jofotara');
                       if (zatcaSandbox && (!zatcaClientId || !zatcaSecret)) errors.push('ZATCA');
                       if (careemEnabled && (!careemMerchantId || !careemApiKey)) errors.push('Careem');
+                      if (!awsAccessKeyId || !awsSecretAccessKey) errors.push('AWS Cloud');
                       
                       if (errors.length > 0) {
                         if (istdEnabled && (!jofotaraUsername || !jofotaraSecret)) setJofotaraConnected(false);
                         if (zatcaSandbox && (!zatcaClientId || !zatcaSecret)) setZatcaConnected(false);
                         if (careemEnabled && (!careemMerchantId || !careemApiKey)) setCareemConnected(false);
+                        if (!awsAccessKeyId || !awsSecretAccessKey) setAwsConnected(false);
                         triggerToast(`Verification failed: Config missing for ${errors.join(', ')}`, 'error');
                       } else {
                         setJofotaraConnected(true);
                         setZatcaConnected(true);
                         setCareemConnected(true);
-                        triggerToast('All compliance pipelines & delivery channels verified successfully!', 'success');
+                        setAwsConnected(true);
+                        triggerToast('All compliance pipelines, delivery channels, and AWS services verified successfully!', 'success');
                       }
                     }, 1200);
                   }}
@@ -4229,6 +4906,7 @@ function App() {
 
                             setOrders((prev) => [newOrder, ...prev]);
                             setInvoices((prev) => [newInvoice, ...prev]);
+                            recordCheckoutJournalEntries('kiosk', subtotal, tax, invoiceId, kioskCart);
                             setKioskCart([]);
                             triggerToast(`Kiosk Checkout Completed! Ticket ${orderId} sent to Kitchen.`, 'success');
                             confetti({ particleCount: 100, spread: 50 });
@@ -4368,9 +5046,1517 @@ function App() {
             )}
           </main>
         )}
+
+        {/* ═══════════════════════════════════════════════════════════
+            HR MANAGEMENT MODULE
+        ═══════════════════════════════════════════════════════════ */}
+        {activeTab === 'hr' && (
+          <main className="page-content">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+              <div>
+                <h1 style={{ fontSize: '26px', fontWeight: '800', color: 'var(--text-primary)', marginBottom: '4px' }}>👥 HR Management</h1>
+                <p style={{ color: 'var(--text-muted)', fontSize: '14px' }}>{employees.length} employees · {employees.filter(e => e.status === 'Active').length} active · {leaveRequests.filter(l => l.status === 'Pending').length} leave requests pending</p>
+              </div>
+              <button className="btn btn-primary" onClick={() => { setHrTab('add'); setSelectedEmployee(null); }}><PlusCircle size={16} /> Add Employee</button>
+            </div>
+
+            <div className="tabs-container">
+              {['directory', 'leave', 'add'].map(tab => (
+                <button key={tab} className={`tab-btn ${hrTab === tab ? 'active' : ''}`} onClick={() => setHrTab(tab)}>
+                  {tab === 'directory' ? '🏢 Directory' : tab === 'leave' ? '🏖 Leave Requests' : '➕ Add Employee'}
+                </button>
+              ))}
+            </div>
+
+            {hrTab === 'directory' && (
+              <div className="split-pane">
+                <div className="pane-main">
+                  <div className="kpi-grid" style={{ gridTemplateColumns: 'repeat(4, 1fr)', marginBottom: '20px' }}>
+                    {[
+                      { label: 'Total Employees', value: employees.length, icon: '👥', color: 'var(--primary-color)' },
+                      { label: 'Active', value: employees.filter(e => e.status === 'Active').length, icon: '✅', color: 'var(--success-color)' },
+                      { label: 'On Leave', value: employees.filter(e => e.status === 'On Leave').length, icon: '🏖', color: 'var(--warning-color)' },
+                      { label: 'Total Payroll', value: employees.reduce((s, e) => s + e.baseSalary + e.allowances, 0).toLocaleString() + ' ' + getCurrency(), icon: '💰', color: 'var(--ai-glow-color)' }
+                    ].map((k, i) => (
+                      <div key={i} className="card kpi-card">
+                        <div className="kpi-header">
+                          <span className="kpi-label">{k.label}</span>
+                          <span style={{ fontSize: '20px' }}>{k.icon}</span>
+                        </div>
+                        <div className="kpi-value" style={{ fontSize: '22px', color: k.color }}>{k.value}</div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="table-container">
+                    <div className="table-toolbar">
+                      <span className="table-title">Employee Directory</span>
+                      <span className="badge badge-ai"><Sparkles size={12} /> AI Screened</span>
+                    </div>
+                    <table className="data-table">
+                      <thead>
+                        <tr>
+                          <th>Employee</th><th>Department</th><th>Role</th><th>Base Salary</th><th>Leave Balance</th><th>Status</th><th>Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {employees.map(emp => (
+                          <tr key={emp.id} className={selectedEmployee?.id === emp.id ? 'active-row' : ''} onClick={() => setSelectedEmployee(emp)}>
+                            <td>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--primary-color), var(--ai-glow-color))', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: '700', fontSize: '13px' }}>
+                                  {emp.name.split(' ').map(n => n[0]).join('')}
+                                </div>
+                                <div>
+                                  <div style={{ fontWeight: '600', color: 'var(--text-primary)' }}>{emp.name}</div>
+                                  <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{emp.id}</div>
+                                </div>
+                              </div>
+                            </td>
+                            <td><span className="badge badge-info">{emp.dept}</span></td>
+                            <td style={{ color: 'var(--text-muted)' }}>{emp.role}</td>
+                            <td style={{ fontFamily: 'var(--font-mono)', color: 'var(--success-color)', fontWeight: '600' }}>{(emp.baseSalary + emp.allowances).toLocaleString()} {getCurrency()}</td>
+                            <td>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <div className="sparkline-track"><div className="sparkline-fill" style={{ width: `${Math.min(100, emp.leaveBalance * 4)}%`, background: emp.leaveBalance > 10 ? 'var(--success-color)' : 'var(--warning-color)' }} /></div>
+                                <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{emp.leaveBalance}d</span>
+                              </div>
+                            </td>
+                            <td><span className={`badge ${emp.status === 'Active' ? 'badge-success' : 'badge-warning'}`}>{emp.status}</span></td>
+                            <td>
+                              <button className="btn btn-ghost" style={{ padding: '4px 8px', fontSize: '12px', color: 'var(--text-primary)' }} onClick={(e) => { e.stopPropagation(); setSelectedEmployee(emp); setHrTab('add'); }}>Edit</button>
+                              <button className="btn btn-danger" style={{ padding: '4px 8px', fontSize: '12px', marginLeft: '4px' }} onClick={(e) => { e.stopPropagation(); setEmployees(prev => prev.filter(em => em.id !== emp.id)); triggerToast(`${emp.name} removed from HR`, 'info'); }}>Remove</button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+                {selectedEmployee && (
+                  <div className="pane-side">
+                    <div className="card" style={{ borderTop: '3px solid var(--primary-color)' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                        <h3 style={{ fontWeight: '700', color: 'var(--text-primary)' }}>Employee Profile</h3>
+                        <button className="btn btn-ghost btn-icon" onClick={() => setSelectedEmployee(null)} style={{ color: 'var(--text-muted)' }}><X size={16} /></button>
+                      </div>
+                      <div style={{ textAlign: 'center', marginBottom: '20px' }}>
+                        <div style={{ width: '70px', height: '70px', borderRadius: '50%', background: 'linear-gradient(135deg, var(--primary-color), var(--ai-glow-color))', display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'white', fontWeight: '800', fontSize: '22px', margin: '0 auto 12px' }}>
+                          {selectedEmployee.name.split(' ').map(n => n[0]).join('')}
+                        </div>
+                        <div style={{ fontWeight: '700', fontSize: '16px', color: 'var(--text-primary)' }}>{selectedEmployee.name}</div>
+                        <div style={{ color: 'var(--text-muted)', fontSize: '13px' }}>{selectedEmployee.role} · {selectedEmployee.dept}</div>
+                      </div>
+                      {[
+                        ['Employee ID', selectedEmployee.id], ['Email', selectedEmployee.email], ['Phone', selectedEmployee.phone],
+                        ['National ID', selectedEmployee.nationalId], ['Start Date', selectedEmployee.startDate],
+                        ['Contract Type', selectedEmployee.contractType || 'Full-Time'],
+                        ...(selectedEmployee.contractType === 'Hourly' ? [
+                          ['Hourly Rate', `${(selectedEmployee.hourlyRate || 0).toLocaleString()} ${getCurrency()}/h`],
+                          ['Overtime Multiplier', `${selectedEmployee.overtimeMultiplier || 1.5}x`]
+                        ] : [
+                          ['Base Salary', `${(selectedEmployee.baseSalary || 0).toLocaleString()} ${getCurrency()}`]
+                        ]),
+                        ['Allowances', `${(selectedEmployee.allowances || 0).toLocaleString()} ${getCurrency()}`],
+                        ['Health Premium', `${(selectedEmployee.healthPremium || 0).toLocaleString()} ${getCurrency()} (Employer: ${selectedEmployee.employerHealthShare || 0}%)`],
+                        ['Total CTC', selectedEmployee.contractType === 'Hourly' ? 'Hourly (based on work logs)' : `${Math.round((selectedEmployee.baseSalary + selectedEmployee.allowances) * 1.1425 + (selectedEmployee.healthPremium * selectedEmployee.employerHealthShare / 100)).toLocaleString()} ${getCurrency()}/mo`],
+                        ['Leave Balance', `${selectedEmployee.leaveBalance} days`]
+                      ].map(([label, val]) => (
+                        <div key={label} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid var(--border-color)', fontSize: '13px' }}>
+                          <span style={{ color: 'var(--text-muted)' }}>{label}</span>
+                          <span style={{ fontWeight: '600', color: 'var(--text-primary)' }}>{val}</span>
+                        </div>
+                      ))}
+                      <div style={{ marginTop: '16px', display: 'flex', gap: '8px' }}>
+                        <button className="btn btn-primary" style={{ flex: 1, fontSize: '13px' }} onClick={() => { setLeaveRequests(prev => [...prev, { id: `LV-${Date.now()}`, empId: selectedEmployee.id, empName: selectedEmployee.name, type: 'Annual', from: today, to: today, days: 1, status: 'Pending', reason: 'Auto request' }]); triggerToast(`Leave request submitted for ${selectedEmployee.name}`, 'success'); }}>Request Leave</button>
+                        <button className="btn btn-secondary" style={{ flex: 1, fontSize: '13px' }} onClick={() => { setActiveTab('payroll'); triggerToast('Viewing payroll for ' + selectedEmployee.name, 'info'); }}>View Payslip</button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {hrTab === 'leave' && (
+              <div className="table-container">
+                <div className="table-toolbar">
+                  <span className="table-title">Leave Requests</span>
+                  <span style={{ display: 'flex', gap: '8px' }}>
+                    <span className="badge badge-warning">{leaveRequests.filter(l => l.status === 'Pending').length} Pending</span>
+                    <span className="badge badge-success">{leaveRequests.filter(l => l.status === 'Approved').length} Approved</span>
+                  </span>
+                </div>
+                <table className="data-table">
+                  <thead><tr><th>ID</th><th>Employee</th><th>Type</th><th>From</th><th>To</th><th>Days</th><th>Reason</th><th>Status</th><th>Actions</th></tr></thead>
+                  <tbody>
+                    {leaveRequests.map(lr => (
+                      <tr key={lr.id}>
+                        <td style={{ fontFamily: 'var(--font-mono)', fontSize: '12px', color: 'var(--text-muted)' }}>{lr.id}</td>
+                        <td style={{ fontWeight: '600', color: 'var(--text-primary)' }}>{lr.empName}</td>
+                        <td><span className="badge badge-info">{lr.type}</span></td>
+                        <td style={{ color: 'var(--text-muted)' }}>{lr.from}</td>
+                        <td style={{ color: 'var(--text-muted)' }}>{lr.to}</td>
+                        <td style={{ fontWeight: '700', color: 'var(--text-primary)' }}>{lr.days}</td>
+                        <td style={{ color: 'var(--text-muted)', maxWidth: '150px', overflow: 'hidden', textOverflow: 'ellipsis' }}>{lr.reason}</td>
+                        <td><span className={`badge ${lr.status === 'Approved' ? 'badge-success' : lr.status === 'Rejected' ? 'badge-danger' : 'badge-warning'}`}>{lr.status}</span></td>
+                        <td style={{ display: 'flex', gap: '4px' }}>
+                          {lr.status === 'Pending' && <>
+                            <button className="btn btn-success" style={{ padding: '3px 8px', fontSize: '11px' }} onClick={() => { setLeaveRequests(prev => prev.map(l => l.id === lr.id ? { ...l, status: 'Approved' } : l)); triggerToast(`Leave approved for ${lr.empName}`, 'success'); }}>Approve</button>
+                            <button className="btn btn-danger" style={{ padding: '3px 8px', fontSize: '11px' }} onClick={() => { setLeaveRequests(prev => prev.map(l => l.id === lr.id ? { ...l, status: 'Rejected' } : l)); triggerToast(`Leave rejected for ${lr.empName}`, 'info'); }}>Reject</button>
+                          </>}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {hrTab === 'add' && (
+              <div style={{ maxWidth: '600px', margin: '0 auto' }}>
+                <div className="card">
+                  <h3 style={{ fontWeight: '700', color: 'var(--text-primary)', marginBottom: '20px' }}>{selectedEmployee ? '✏️ Edit Employee' : '➕ Add New Employee'}</h3>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                    <div className="form-group">
+                      <label className="form-label">Full Name *</label>
+                      <input className="input" value={newEmpName} onChange={e => setNewEmpName(e.target.value)} placeholder="e.g. Ahmad Al-Sayed" style={{ color: 'var(--text-primary)' }} />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Department</label>
+                      <select className="select" value={newEmpDept} onChange={e => setNewEmpDept(e.target.value)} style={{ color: 'var(--text-primary)' }}>
+                        {['Operations', 'Kitchen', 'Finance', 'IT', 'Delivery', 'Management'].map(d => <option key={d}>{d}</option>)}
+                      </select>
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Job Role *</label>
+                      <input className="input" value={newEmpRole} onChange={e => setNewEmpRole(e.target.value)} placeholder="e.g. Shift Supervisor" style={{ color: 'var(--text-primary)' }} />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Contract Type</label>
+                      <select className="select" value={newEmpContractType} onChange={e => setNewEmpContractType(e.target.value)} style={{ color: 'var(--text-primary)' }}>
+                        {['Full-Time', 'Part-Time', 'Hourly'].map(t => <option key={t}>{t}</option>)}
+                      </select>
+                    </div>
+                    {newEmpContractType === 'Hourly' ? (
+                      <div className="form-group">
+                        <label className="form-label">Hourly Rate ({getCurrency()}) *</label>
+                        <input className="input" type="number" value={newEmpHourlyRate} onChange={e => setNewEmpHourlyRate(e.target.value)} placeholder="e.g. 15" style={{ color: 'var(--text-primary)' }} />
+                      </div>
+                    ) : (
+                      <div className="form-group">
+                        <label className="form-label">Base Salary ({getCurrency()})</label>
+                        <input className="input" type="number" value={newEmpSalary} onChange={e => setNewEmpSalary(e.target.value)} placeholder="e.g. 2500" style={{ color: 'var(--text-primary)' }} />
+                      </div>
+                    )}
+                    <div className="form-group">
+                      <label className="form-label">Monthly Allowances ({getCurrency()})</label>
+                      <input className="input" type="number" value={newEmpAllowance} onChange={e => setNewEmpAllowance(e.target.value)} placeholder="e.g. 400" style={{ color: 'var(--text-primary)' }} />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Overtime Multiplier</label>
+                      <input className="input" type="number" step="0.1" value={newEmpOvertimeMultiplier} onChange={e => setNewEmpOvertimeMultiplier(e.target.value)} placeholder="e.g. 1.5" style={{ color: 'var(--text-primary)' }} />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Monthly Health Premium ({getCurrency()})</label>
+                      <input className="input" type="number" value={newEmpHealthPremium} onChange={e => setNewEmpHealthPremium(e.target.value)} placeholder="e.g. 100" style={{ color: 'var(--text-primary)' }} />
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Employer Health Share (%)</label>
+                      <input className="input" type="number" min="0" max="100" value={newEmpEmployerHealthShare} onChange={e => setNewEmpEmployerHealthShare(e.target.value)} placeholder="e.g. 80" style={{ color: 'var(--text-primary)' }} />
+                    </div>
+                  </div>
+                  <div className="ai-glow-panel" style={{ marginTop: '16px', marginBottom: '16px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                      <Sparkles size={16} style={{ color: 'var(--ai-glow-color)' }} />
+                      <span style={{ fontWeight: '700', color: 'var(--ai-glow-color)', fontSize: '13px' }}>AI CV Screener</span>
+                    </div>
+                    <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '8px' }}>Paste candidate CV text below for AI scoring and role matching:</p>
+                    <textarea className="input" rows={4} placeholder="Paste CV content here... AI will extract skills, experience, and match to role automatically." style={{ resize: 'vertical', color: 'var(--text-primary)', fontFamily: 'var(--font-sans)' }} onChange={e => { if (e.target.value.length > 50) { setTimeout(() => triggerToast('AI extracted: 5 years experience, degree in Business. 87% match score for this role!', 'success'), 800); }}} />
+                  </div>
+                  <div style={{ display: 'flex', gap: '12px' }}>
+                    <button className="btn btn-primary" style={{ flex: 1 }} onClick={() => {
+                      if (!newEmpName || !newEmpRole) { triggerToast('Name and Role are required', 'error'); return; }
+                      if (selectedEmployee) {
+                        setEmployees(prev => prev.map(emp => emp.id === selectedEmployee.id ? {
+                          ...emp,
+                          name: newEmpName,
+                          dept: newEmpDept,
+                          role: newEmpRole,
+                          baseSalary: newEmpContractType === 'Hourly' ? 0 : parseFloat(newEmpSalary) || 0,
+                          allowances: parseFloat(newEmpAllowance) || 0,
+                          contractType: newEmpContractType,
+                          hourlyRate: parseFloat(newEmpHourlyRate) || 0,
+                          overtimeMultiplier: parseFloat(newEmpOvertimeMultiplier) || 1.5,
+                          healthPremium: parseFloat(newEmpHealthPremium) || 0,
+                          employerHealthShare: parseFloat(newEmpEmployerHealthShare) || 0
+                        } : emp));
+                        triggerToast(`Employee ${newEmpName} updated successfully!`, 'success');
+                      } else {
+                        const newEmp = {
+                          id: `EMP-${String(employees.length + 1).padStart(3, '0')}`,
+                          name: newEmpName,
+                          dept: newEmpDept,
+                          role: newEmpRole,
+                          status: 'Active',
+                          startDate: today,
+                          baseSalary: newEmpContractType === 'Hourly' ? 0 : parseFloat(newEmpSalary) || 0,
+                          allowances: parseFloat(newEmpAllowance) || 0,
+                          email: `${newEmpName.toLowerCase().replace(' ', '.')}@cyshop.com`,
+                          phone: '',
+                          leaveBalance: 21,
+                          nationalId: '',
+                          contractType: newEmpContractType,
+                          hourlyRate: parseFloat(newEmpHourlyRate) || 0,
+                          overtimeMultiplier: parseFloat(newEmpOvertimeMultiplier) || 1.5,
+                          healthPremium: parseFloat(newEmpHealthPremium) || 0,
+                          employerHealthShare: parseFloat(newEmpEmployerHealthShare) || 0
+                        };
+                        setEmployees(prev => [...prev, newEmp]);
+                        triggerToast(`Employee ${newEmpName} added to HR system!`, 'success');
+                      }
+                      setNewEmpName(''); setNewEmpRole(''); setNewEmpSalary(''); setNewEmpAllowance('');
+                      setSelectedEmployee(null);
+                      setHrTab('directory');
+                      confetti({ particleCount: 60, spread: 50 });
+                    }}>Save Employee</button>
+                    <button className="btn btn-secondary" onClick={() => { setSelectedEmployee(null); setHrTab('directory'); }}>Cancel</button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </main>
+        )}
+
+        {/* ═══════════════════════════════════════════════════════════
+            ATTENDANCE MODULE
+        ═══════════════════════════════════════════════════════════ */}
+        {activeTab === 'attendance' && (
+          <main className="page-content">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+              <div>
+                <h1 style={{ fontSize: '26px', fontWeight: '800', color: 'var(--text-primary)', marginBottom: '4px' }}>⏱ Attendance Tracker</h1>
+                <p style={{ color: 'var(--text-muted)', fontSize: '14px' }}>Date: {today} · {attendanceLogs.filter(a => a.date === today).length} employees clocked in today</p>
+              </div>
+            </div>
+
+            {/* Clock In/Out Panel */}
+            <div className="kpi-grid" style={{ gridTemplateColumns: '1fr 2fr', gap: '24px', marginBottom: '24px' }}>
+              <div className="card ai-border-glow">
+                <h3 style={{ fontWeight: '700', color: 'var(--text-primary)', marginBottom: '16px' }}>Clock In / Out</h3>
+                <div className="form-group">
+                  <label className="form-label">Select Employee</label>
+                  <select className="select" value={clockingEmployee} onChange={e => setClockingEmployee(e.target.value)} style={{ color: 'var(--text-primary)' }}>
+                    {employees.map(e => <option key={e.id} value={e.id}>{e.name}</option>)}
+                  </select>
+                </div>
+                {/* Biometric Mock */}
+                <div style={{ background: 'var(--bg-card-hover)', border: '1px solid var(--border-color)', borderRadius: '12px', padding: '16px', textAlign: 'center', marginBottom: '16px' }}>
+                  <div style={{ fontSize: '36px', marginBottom: '8px' }}>👁️</div>
+                  <p style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '8px' }}>Facial Recognition / Fingerprint Scanner</p>
+                  <div style={{ fontSize: '11px', color: 'var(--success-color)', fontWeight: '600', background: 'var(--success-bg)', padding: '4px 12px', borderRadius: '20px', display: 'inline-block' }}>● SENSOR ONLINE</div>
+                  <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '6px' }}>GPS: {attendanceLogs[0]?.gps || '24.7136° N, 46.6753° E'}</div>
+                </div>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button className="btn btn-success" style={{ flex: 1, fontSize: '13px' }} onClick={() => {
+                    const emp = employees.find(e => e.id === clockingEmployee);
+                    const existing = attendanceLogs.find(a => a.empId === clockingEmployee && a.date === today);
+                    if (existing && !existing.clockOut) { triggerToast(`${emp?.name} is already clocked in!`, 'error'); return; }
+                    const newLog = { id: `ATT-${Date.now()}`, empId: clockingEmployee, empName: emp?.name || '', date: today, clockIn: new Date().toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'}), clockOut: null, hoursWorked: null, regularHours: 0, overtimeHours: 0, approvalStatus: 'Pending', status: 'Active', gps: '24.7136° N, 46.6753° E' };
+                    setAttendanceLogs(prev => [...prev, newLog]);
+                    triggerToast(`✅ ${emp?.name} clocked IN at ${newLog.clockIn}`, 'success');
+                  }}>Clock In</button>
+                  <button className="btn btn-danger" style={{ flex: 1, fontSize: '13px' }} onClick={() => {
+                    const emp = employees.find(e => e.id === clockingEmployee);
+                    const existing = attendanceLogs.find(a => a.empId === clockingEmployee && a.date === today && !a.clockOut);
+                    if (!existing) { triggerToast(`${emp?.name} has not clocked in!`, 'error'); return; }
+                    const clockOut = new Date().toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'});
+                    const [inH, inM] = existing.clockIn.split(':').map(Number);
+                    const [outH, outM] = clockOut.split(':').map(Number);
+                    const hours = parseFloat(((outH * 60 + outM - inH * 60 - inM) / 60).toFixed(2));
+                    const regularHours = Math.min(8.0, hours);
+                    const overtimeHours = Math.max(0.0, hours - 8.0);
+                    setAttendanceLogs(prev => prev.map(a => a.id === existing.id ? { ...a, clockOut, hoursWorked: hours, regularHours, overtimeHours, status: 'Present', approvalStatus: 'Pending' } : a));
+                    triggerToast(`✅ ${emp?.name} clocked OUT. Hours worked: ${hours}h`, 'success');
+                  }}>Clock Out</button>
+                </div>
+              </div>
+
+              <div className="card">
+                <h3 style={{ fontWeight: '700', color: 'var(--text-primary)', marginBottom: '16px' }}>Today's Attendance Log — {today}</h3>
+                <table className="data-table">
+                  <thead><tr><th>Employee</th><th>Clock In</th><th>Clock Out</th><th>Regular</th><th>Overtime</th><th>Total</th><th>Status</th><th>Work Entry Approval</th><th>Actions</th></tr></thead>
+                  <tbody>
+                    {attendanceLogs.filter(a => a.date === today).map(log => (
+                      <tr key={log.id}>
+                        <td style={{ fontWeight: '600', color: 'var(--text-primary)' }}>{log.empName}</td>
+                        <td style={{ color: 'var(--success-color)', fontFamily: 'var(--font-mono)' }}>{log.clockIn}</td>
+                        <td style={{ color: log.clockOut ? 'var(--text-muted)' : 'var(--warning-color)', fontFamily: 'var(--font-mono)' }}>{log.clockOut || '– active –'}</td>
+                        <td style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-primary)' }}>{log.clockOut ? `${log.regularHours}h` : '–'}</td>
+                        <td style={{ fontFamily: 'var(--font-mono)', color: 'var(--warning-color)', fontWeight: '600' }}>{log.clockOut ? `${log.overtimeHours}h` : '–'}</td>
+                        <td style={{ fontWeight: '700', color: 'var(--text-primary)', fontFamily: 'var(--font-mono)' }}>{log.hoursWorked ? `${log.hoursWorked}h` : '–'}</td>
+                        <td><span className={`badge ${log.status === 'Present' ? 'badge-success' : log.status === 'Active' ? 'badge-info' : log.status === 'Late' ? 'badge-warning' : 'badge-danger'}`}>{log.status}</span></td>
+                        <td>
+                          <span className={`badge ${log.approvalStatus === 'Approved' ? 'badge-success' : log.approvalStatus === 'Rejected' ? 'badge-danger' : 'badge-warning'}`}>
+                            {log.approvalStatus}
+                          </span>
+                        </td>
+                        <td>
+                          {log.clockOut && log.approvalStatus === 'Pending' && (
+                            <div style={{ display: 'flex', gap: '4px' }}>
+                              <button
+                                className="btn btn-success"
+                                style={{ padding: '3px 8px', fontSize: '10.5px', height: 'auto' }}
+                                onClick={() => {
+                                  setAttendanceLogs(prev => prev.map(a => a.id === log.id ? { ...a, approvalStatus: 'Approved' } : a));
+                                  triggerToast(`Approved hours for ${log.empName}`, 'success');
+                                }}
+                              >
+                                Approve
+                              </button>
+                              <button
+                                className="btn btn-danger"
+                                style={{ padding: '3px 8px', fontSize: '10.5px', height: 'auto' }}
+                                onClick={() => {
+                                  setAttendanceLogs(prev => prev.map(a => a.id === log.id ? { ...a, approvalStatus: 'Rejected' } : a));
+                                  triggerToast(`Rejected hours for ${log.empName}`, 'info');
+                                }}
+                              >
+                                Reject
+                              </button>
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                    {attendanceLogs.filter(a => a.date === today).length === 0 && (
+                      <tr><td colSpan={9} style={{ textAlign: 'center', padding: '32px', color: 'var(--text-muted)' }}>No attendance records for today yet.</td></tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* Monthly Summary */}
+            <div className="card">
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                <h3 style={{ fontWeight: '700', color: 'var(--text-primary)' }}>Monthly Summary</h3>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <label className="form-label" style={{ margin: 0 }}>Month:</label>
+                  <input type="month" className="input" style={{ width: 'auto', height: '36px', color: 'var(--text-primary)' }} value={attendanceMonth} onChange={e => setAttendanceMonth(e.target.value)} />
+                </div>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: '12px' }}>
+                {employees.map(emp => {
+                  const empLogs = attendanceLogs.filter(a => a.empId === emp.id && a.date.startsWith(attendanceMonth));
+                  const approvedLogs = empLogs.filter(a => a.approvalStatus === 'Approved');
+                  const regHours = approvedLogs.reduce((s, a) => s + (a.regularHours || 0), 0);
+                  const otHours = approvedLogs.reduce((s, a) => s + (a.overtimeHours || 0), 0);
+                  const presentDays = empLogs.filter(a => a.status === 'Present' || a.status === 'Active').length;
+                  return (
+                    <div key={emp.id} className="card" style={{ padding: '16px' }}>
+                      <div style={{ fontWeight: '700', color: 'var(--text-primary)', fontSize: '13px', marginBottom: '4px' }}>{emp.name}</div>
+                      <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{emp.role} ({emp.contractType})</div>
+                      <div style={{ marginTop: '10px', display: 'flex', justifyContent: 'space-between', gap: '4px' }}>
+                        <div>
+                          <div style={{ fontSize: '16px', fontWeight: '800', color: 'var(--text-primary)' }}>{presentDays}d</div>
+                          <div style={{ fontSize: '9px', color: 'var(--text-muted)' }}>Days</div>
+                        </div>
+                        <div>
+                          <div style={{ fontSize: '16px', fontWeight: '800', color: 'var(--primary-color)' }}>{regHours.toFixed(1)}h</div>
+                          <div style={{ fontSize: '9px', color: 'var(--text-muted)' }}>Approved Reg</div>
+                        </div>
+                        <div>
+                          <div style={{ fontSize: '16px', fontWeight: '800', color: 'var(--warning-color)' }}>{otHours.toFixed(1)}h</div>
+                          <div style={{ fontSize: '9px', color: 'var(--text-muted)' }}>Approved OT</div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </main>
+        )}
+
+        {/* ═══════════════════════════════════════════════════════════
+            PAYROLL MODULE
+        ═══════════════════════════════════════════════════════════ */}
+        {activeTab === 'payroll' && (
+          <main className="page-content">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+              <div>
+                <h1 style={{ fontSize: '26px', fontWeight: '800', color: 'var(--text-primary)', marginBottom: '4px' }}>💰 Payroll Management</h1>
+                <p style={{ color: 'var(--text-muted)', fontSize: '14px' }}>Current period: {payrollMonth} · {employees.length} employees</p>
+              </div>
+              <button className="btn btn-ai" disabled={payrollProcessing} onClick={() => {
+                setPayrollProcessing(true);
+                triggerToast('Processing payroll calculations with AI anomaly detection...', 'info');
+                setTimeout(() => {
+                  const runId = `PAY-2026-${String(payrollRuns.length + 1).padStart(2, '0')}`;
+                  const newRun = {
+                    id: runId,
+                    month: payrollMonth,
+                    processedDate: today,
+                    employees: employees.length,
+                    totalGross,
+                    totalDeductions,
+                    totalNet,
+                    totalLiabilities,
+                    status: 'Processed'
+                  };
+
+                  // Post general ledger double-entry journal entries
+                  const salaryExpenseJE = {
+                    id: `JE-PAY-EXP-${Date.now()}-1`,
+                    date: today,
+                    description: `Payroll Run Salaries Expense - ${payrollMonth}`,
+                    debitAccount: '5100 Salaries Expense',
+                    creditAccount: '2200 Salary Payable',
+                    debitAmount: totalNet,
+                    creditAmount: totalNet,
+                    ref: runId
+                  };
+
+                  const payrollLiabJE = {
+                    id: `JE-PAY-LIAB-${Date.now()}-2`,
+                    date: today,
+                    description: `Payroll Run Liabilities (Taxes & Social Shares) - ${payrollMonth}`,
+                    debitAccount: '5100 Salaries Expense',
+                    creditAccount: '2300 Payroll Liabilities',
+                    debitAmount: totalLiabilities,
+                    creditAmount: totalLiabilities,
+                    ref: runId
+                  };
+
+                  setJournalEntries(prev => [...prev, salaryExpenseJE, payrollLiabJE]);
+                  setPayrollRuns(prev => [newRun, ...prev]);
+                  setPayrollProcessing(false);
+                  triggerToast(`✅ Payroll for ${payrollMonth} processed! Total Net: ${totalNet.toLocaleString()} ${getCurrency()} (Ledger entries posted)`, 'success');
+                  confetti({ particleCount: 100, spread: 60 });
+                }, 2000);
+              }}>
+                {payrollProcessing ? '⏳ Processing...' : <><Sparkles size={16} /> Run Payroll</>}
+              </button>
+            </div>
+
+            <div className="tabs-container">
+              {['current', 'history'].map(tab => (
+                <button key={tab} className={`tab-btn ${payrollTab === tab ? 'active' : ''}`} onClick={() => setPayrollTab(tab)}>
+                  {tab === 'current' ? '📊 Current Period' : '📋 History'}
+                </button>
+              ))}
+            </div>
+
+            {payrollTab === 'current' && (
+              <div>
+                <div className="kpi-grid" style={{ gridTemplateColumns: 'repeat(4, 1fr)', marginBottom: '24px' }}>
+                  {[
+                    { label: 'Total Gross', value: totalGross.toLocaleString(), suffix: getCurrency(), color: 'var(--primary-color)' },
+                    { label: 'Deductions (SSC & Tax)', value: totalDeductions.toLocaleString(), suffix: getCurrency(), color: 'var(--danger-color)' },
+                    { label: 'Net Payable', value: totalNet.toLocaleString(), suffix: getCurrency(), color: 'var(--success-color)' },
+                    { label: 'Employees', value: employees.length, suffix: 'staff', color: 'var(--ai-glow-color)' }
+                  ].map((k, i) => (
+                    <div key={i} className="card kpi-card">
+                      <div className="kpi-label">{k.label}</div>
+                      <div className="kpi-value" style={{ color: k.color, fontSize: '22px' }}>{k.value} <span style={{ fontSize: '14px' }}>{k.suffix}</span></div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="ai-glow-panel" style={{ marginBottom: '20px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                    <Sparkles size={16} style={{ color: 'var(--ai-glow-color)' }} /><span style={{ fontWeight: '700', color: 'var(--ai-glow-color)' }}>AI Payroll Audit — {payrollMonth}</span>
+                  </div>
+                  <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>✅ Calculations verified. Social security split (employer 14.25% / employee 7.5%) and income tax (5% flat) computed dynamically. Work entries approved feed into payroll calculations correctly.</p>
+                </div>
+
+                <div className="table-container">
+                  <div className="table-toolbar"><span className="table-title">Employee Payroll Breakdown</span></div>
+                  <table className="data-table">
+                    <thead><tr><th>Employee</th><th>Role</th><th>Contract</th><th>Base/Hours</th><th>Allowances</th><th>Gross</th><th>Deductions</th><th>Net Pay</th><th>Status</th></tr></thead>
+                    <tbody>
+                      {payrollList.map(item => {
+                        return (
+                          <tr key={item.empId}>
+                            <td style={{ fontWeight: '600', color: 'var(--text-primary)' }}>{item.name}</td>
+                            <td style={{ color: 'var(--text-muted)' }}>{item.role}</td>
+                            <td><span className="badge badge-info">{item.contractType}</span></td>
+                            <td style={{ fontFamily: 'var(--font-mono)' }}>
+                              {item.contractType === 'Hourly' ? `${(item.regHours + item.otHours).toFixed(1)}h (${item.regHours} reg / ${item.otHours} OT)` : `${Math.round(item.baseSalary).toLocaleString()}`}
+                            </td>
+                            <td style={{ fontFamily: 'var(--font-mono)' }}>{item.allowances.toLocaleString()}</td>
+                            <td style={{ fontFamily: 'var(--font-mono)', fontWeight: '600', color: 'var(--primary-color)' }}>{item.gross.toLocaleString()}</td>
+                            <td style={{ fontFamily: 'var(--font-mono)', color: 'var(--danger-color)' }}>({item.deductions.toLocaleString()})</td>
+                            <td style={{ fontFamily: 'var(--font-mono)', fontWeight: '700', color: 'var(--success-color)' }}>{item.net.toLocaleString()} {getCurrency()}</td>
+                            <td><span className="badge badge-warning">Pending</span></td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {payrollTab === 'history' && (
+              <div className="table-container">
+                <div className="table-toolbar"><span className="table-title">Payroll Run History</span></div>
+                <table className="data-table">
+                  <thead><tr><th>Run ID</th><th>Period</th><th>Processed</th><th>Employees</th><th>Total Gross</th><th>Deductions</th><th>Net Paid</th><th>Status</th><th>Actions</th></tr></thead>
+                  <tbody>
+                    {payrollRuns.map(run => (
+                      <tr key={run.id}>
+                        <td style={{ fontFamily: 'var(--font-mono)', fontSize: '12px', color: 'var(--text-muted)' }}>{run.id}</td>
+                        <td style={{ fontWeight: '600', color: 'var(--text-primary)' }}>{run.month}</td>
+                        <td style={{ color: 'var(--text-muted)' }}>{run.processedDate}</td>
+                        <td>{run.employees}</td>
+                        <td style={{ fontFamily: 'var(--font-mono)' }}>{run.totalGross.toLocaleString()}</td>
+                        <td style={{ fontFamily: 'var(--font-mono)', color: 'var(--danger-color)' }}>({run.totalDeductions.toLocaleString()})</td>
+                        <td style={{ fontFamily: 'var(--font-mono)', fontWeight: '700', color: 'var(--success-color)' }}>{run.totalNet.toLocaleString()} {getCurrency()}</td>
+                        <td><span className={`badge ${run.status === 'Paid' ? 'badge-success' : 'badge-warning'}`}>{run.status}</span></td>
+                        <td>
+                          <div style={{ display: 'flex', gap: '6px' }}>
+                            <button className="btn btn-secondary" style={{ fontSize: '12px', padding: '4px 10px', color: 'var(--text-primary)' }} onClick={() => triggerToast(`Payslips for ${run.month} downloaded!`, 'success')}>📄 Payslips</button>
+                            {run.status === 'Processed' && (
+                              <button className="btn btn-success" style={{ fontSize: '12px', padding: '4px 10px' }} onClick={() => {
+                                const settleNetJE = {
+                                  id: `JE-PAY-NET-${Date.now()}`,
+                                  date: today,
+                                  description: `Salary Payout - ${run.month}`,
+                                  debitAccount: '2200 Salary Payable',
+                                  creditAccount: '1001 Cash & Bank',
+                                  debitAmount: run.totalNet,
+                                  creditAmount: run.totalNet,
+                                  ref: run.id
+                                };
+                                const settleLiabJE = {
+                                  id: `JE-PAY-LIAB-${Date.now()}`,
+                                  date: today,
+                                  description: `Payroll Liabilities Settlement - ${run.month}`,
+                                  debitAccount: '2300 Payroll Liabilities',
+                                  creditAccount: '1001 Cash & Bank',
+                                  debitAmount: run.totalLiabilities || run.totalDeductions,
+                                  creditAmount: run.totalLiabilities || run.totalDeductions,
+                                  ref: run.id
+                                };
+                                setJournalEntries(prev => [...prev, settleNetJE, settleLiabJE]);
+                                setPayrollRuns(prev => prev.map(r => r.id === run.id ? { ...r, status: 'Paid' } : r));
+                                triggerToast(`Salary payment processed! Paid ${run.totalNet} Net, Settled ${run.totalLiabilities || run.totalDeductions} Liabilities.`, 'success');
+                                confetti({ particleCount: 150, spread: 80 });
+                              }}>Pay Salaries</button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </main>
+        )}
+
+        {/* ═══════════════════════════════════════════════════════════
+            ACCOUNTING MODULE
+        ═══════════════════════════════════════════════════════════ */}
+        {activeTab === 'accounting' && (
+          <main className="page-content">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+              <div>
+                <h1 style={{ fontSize: '26px', fontWeight: '800', color: 'var(--text-primary)', marginBottom: '4px' }}>📒 Accounting & Finance</h1>
+                <p style={{ color: 'var(--text-muted)', fontSize: '14px' }}>Double-entry bookkeeping · VAT compliance · P&L reports</p>
+              </div>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button className="btn btn-secondary" style={{ color: 'var(--text-primary)' }} onClick={() => triggerToast('P&L Report exported to PDF!', 'success')}>📊 Export P&L</button>
+                <button className="btn btn-primary" onClick={() => setAccountingTab('journal')}>+ Journal Entry</button>
+              </div>
+            </div>
+
+            <div className="tabs-container">
+              {['ledger', 'journal', 'expenses', 'reports'].map(tab => (
+                <button key={tab} className={`tab-btn ${accountingTab === tab ? 'active' : ''}`} onClick={() => setAccountingTab(tab)}>
+                  {tab === 'ledger' ? '📘 Chart of Accounts' : tab === 'journal' ? '📝 Journal Entries' : tab === 'expenses' ? '💸 Expenses Registry' : '📊 Reports & VAT'}
+                </button>
+              ))}
+            </div>
+
+            {accountingTab === 'ledger' && (
+              <div>
+                <div className="kpi-grid" style={{ gridTemplateColumns: 'repeat(4, 1fr)', marginBottom: '24px' }}>
+                  {['Asset', 'Liability', 'Revenue', 'Expense'].map(type => {
+                    const total = chartOfAccounts.filter(a => a.type === type).reduce((s, a) => s + a.balance, 0);
+                    const colors = { Asset: 'var(--primary-color)', Liability: 'var(--danger-color)', Revenue: 'var(--success-color)', Expense: 'var(--warning-color)' };
+                    return (
+                      <div key={type} className="card kpi-card">
+                        <div className="kpi-label">{type} Accounts</div>
+                        <div className="kpi-value" style={{ color: colors[type], fontSize: '20px' }}>{total.toLocaleString('en', { minimumFractionDigits: 2 })}</div>
+                        <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{getCurrency()} · {chartOfAccounts.filter(a => a.type === type).length} accounts</div>
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="table-container">
+                  <div className="table-toolbar"><span className="table-title">Chart of Accounts</span><span className="badge badge-ai"><Sparkles size={12} /> IFRS Compliant</span></div>
+                  <table className="data-table">
+                    <thead><tr><th>Code</th><th>Account Name</th><th>Type</th><th>Balance ({getCurrency()})</th></tr></thead>
+                    <tbody>
+                      {chartOfAccounts.map(acc => (
+                        <tr key={acc.code}>
+                          <td style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-muted)' }}>{acc.code}</td>
+                          <td style={{ fontWeight: '600', color: 'var(--text-primary)' }}>{acc.name}</td>
+                          <td><span className={`badge ${acc.type === 'Asset' ? 'badge-info' : acc.type === 'Liability' ? 'badge-danger' : acc.type === 'Revenue' ? 'badge-success' : 'badge-warning'}`}>{acc.type}</span></td>
+                          <td style={{ fontFamily: 'var(--font-mono)', fontWeight: '600', color: acc.type === 'Expense' || acc.type === 'Liability' ? 'var(--danger-color)' : 'var(--success-color)' }}>{acc.balance.toLocaleString('en', { minimumFractionDigits: 2 })}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {accountingTab === 'journal' && (
+              <div>
+                <div className="card" style={{ marginBottom: '20px' }}>
+                  <h3 style={{ fontWeight: '700', color: 'var(--text-primary)', marginBottom: '16px' }}>📝 New Journal Entry</h3>
+                  <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr', gap: '12px', alignItems: 'end' }}>
+                    <div className="form-group" style={{ margin: 0 }}>
+                      <label className="form-label">Description</label>
+                      <input className="input" value={newJEDesc} onChange={e => setNewJEDesc(e.target.value)} placeholder="Transaction description..." style={{ color: 'var(--text-primary)' }} />
+                    </div>
+                    <div className="form-group" style={{ margin: 0 }}>
+                      <label className="form-label">Debit Account</label>
+                      <select className="select" value={newJEDebit} onChange={e => setNewJEDebit(e.target.value)} style={{ color: 'var(--text-primary)' }}>
+                        <option value="">Select account</option>
+                        {chartOfAccounts.map(a => <option key={a.code} value={`${a.code} ${a.name}`}>{a.code} - {a.name}</option>)}
+                      </select>
+                    </div>
+                    <div className="form-group" style={{ margin: 0 }}>
+                      <label className="form-label">Credit Account</label>
+                      <select className="select" value={newJECredit} onChange={e => setNewJECredit(e.target.value)} style={{ color: 'var(--text-primary)' }}>
+                        <option value="">Select account</option>
+                        {chartOfAccounts.map(a => <option key={a.code} value={`${a.code} ${a.name}`}>{a.code} - {a.name}</option>)}
+                      </select>
+                    </div>
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-end' }}>
+                      <div className="form-group" style={{ margin: 0, flex: 1 }}>
+                        <label className="form-label">Amount</label>
+                        <input className="input" type="number" value={newJEAmount} onChange={e => setNewJEAmount(e.target.value)} placeholder="0.00" style={{ color: 'var(--text-primary)' }} />
+                      </div>
+                      <button className="btn btn-primary" style={{ height: '42px' }} onClick={() => {
+                        if (!newJEDesc || !newJEDebit || !newJECredit || !newJEAmount) { triggerToast('All fields required', 'error'); return; }
+                        const entry = { id: `JE-${String(journalEntries.length + 1).padStart(3, '0')}`, date: today, description: newJEDesc, debitAccount: newJEDebit, creditAccount: newJECredit, debitAmount: parseFloat(newJEAmount), creditAmount: parseFloat(newJEAmount), ref: 'MANUAL' };
+                        setJournalEntries(prev => [entry, ...prev]);
+                        setNewJEDesc(''); setNewJEDebit(''); setNewJECredit(''); setNewJEAmount('');
+                        triggerToast('Journal entry posted!', 'success');
+                      }}>Post</button>
+                    </div>
+                  </div>
+                </div>
+                <div className="table-container">
+                  <div className="table-toolbar"><span className="table-title">General Ledger Journal</span></div>
+                  <table className="data-table">
+                    <thead><tr><th>Entry ID</th><th>Date</th><th>Description</th><th>Debit Account</th><th>Credit Account</th><th>Amount ({getCurrency()})</th><th>Reference</th></tr></thead>
+                    <tbody>
+                      {journalEntries.map(je => (
+                        <tr key={je.id}>
+                          <td style={{ fontFamily: 'var(--font-mono)', fontSize: '12px', color: 'var(--text-muted)' }}>{je.id}</td>
+                          <td style={{ color: 'var(--text-muted)' }}>{je.date}</td>
+                          <td style={{ fontWeight: '600', color: 'var(--text-primary)' }}>{je.description}</td>
+                          <td style={{ color: 'var(--danger-color)', fontFamily: 'var(--font-mono)', fontSize: '12px' }}>DR: {je.debitAccount}</td>
+                          <td style={{ color: 'var(--success-color)', fontFamily: 'var(--font-mono)', fontSize: '12px' }}>CR: {je.creditAccount}</td>
+                          <td style={{ fontFamily: 'var(--font-mono)', fontWeight: '700', color: 'var(--text-primary)' }}>{je.debitAmount.toLocaleString('en', { minimumFractionDigits: 2 })}</td>
+                          <td style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{je.ref}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {accountingTab === 'expenses' && (() => {
+              const overheadExpenses = journalEntries.filter(
+                je => je.ref === 'OVERHEAD' || je.debitAccount.startsWith('5200') || je.debitAccount.startsWith('5300')
+              );
+              return (
+                <div>
+                  <div className="card" style={{ marginBottom: '20px' }}>
+                    <h3 style={{ fontWeight: '700', color: 'var(--text-primary)', marginBottom: '16px' }}>💸 Record Overhead Expense</h3>
+                    <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr', gap: '12px', alignItems: 'end' }}>
+                      <div className="form-group" style={{ margin: 0 }}>
+                        <label className="form-label">Expense Description *</label>
+                        <input
+                          className="input"
+                          value={expenseDesc}
+                          onChange={e => setExpenseDesc(e.target.value)}
+                          placeholder="e.g. Monthly Restaurant Rent, June Water Bill..."
+                          style={{ color: 'var(--text-primary)' }}
+                        />
+                      </div>
+                      <div className="form-group" style={{ margin: 0 }}>
+                        <label className="form-label">Expense Category *</label>
+                        <select
+                          className="select"
+                          value={expenseAccount}
+                          onChange={e => setExpenseAccount(e.target.value)}
+                          style={{ color: 'var(--text-primary)' }}
+                        >
+                          <option value="5200 Rent Expense">5200 - Rent Expense</option>
+                          <option value="5300 Utilities Expense">5300 - Utilities Expense</option>
+                          <option value="5100 Salaries Expense">5100 - Salaries Expense</option>
+                        </select>
+                      </div>
+                      <div className="form-group" style={{ margin: 0 }}>
+                        <label className="form-label">Date</label>
+                        <input
+                          type="date"
+                          className="input"
+                          value={expenseDate}
+                          onChange={e => setExpenseDate(e.target.value)}
+                          style={{ color: 'var(--text-primary)' }}
+                        />
+                      </div>
+                      <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-end' }}>
+                        <div className="form-group" style={{ margin: 0, flex: 1 }}>
+                          <label className="form-label">Amount ({getCurrency()}) *</label>
+                          <input
+                            className="input"
+                            type="number"
+                            value={expenseAmount}
+                            onChange={e => setExpenseAmount(e.target.value)}
+                            placeholder="0.00"
+                            style={{ color: 'var(--text-primary)' }}
+                          />
+                        </div>
+                        <button
+                          className="btn btn-primary"
+                          style={{ height: '42px' }}
+                          onClick={() => {
+                            if (!expenseDesc || !expenseAmount) {
+                              triggerToast('Description and Amount are required', 'error');
+                              return;
+                            }
+                            const entry = {
+                              id: `JE-EXP-${Date.now()}`,
+                              date: expenseDate || today,
+                              description: expenseDesc,
+                              debitAccount: expenseAccount,
+                              creditAccount: '1001 Cash & Bank',
+                              debitAmount: parseFloat(expenseAmount),
+                              creditAmount: parseFloat(expenseAmount),
+                              ref: 'OVERHEAD'
+                            };
+                            setJournalEntries(prev => [entry, ...prev]);
+                            setExpenseDesc('');
+                            setExpenseAmount('');
+                            setExpenseDate(today);
+                            triggerToast(`Overhead expense logged to ${expenseAccount}!`, 'success');
+                            confetti({ particleCount: 50, spread: 40 });
+                          }}
+                        >
+                          Log Expense
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="table-container">
+                    <div className="table-toolbar">
+                      <span className="table-title">Overhead Expenses Log</span>
+                      <span className="badge badge-ai">Paid via Cash & Bank</span>
+                    </div>
+                    <table className="data-table">
+                      <thead>
+                        <tr>
+                          <th>Entry ID</th>
+                          <th>Date</th>
+                          <th>Description</th>
+                          <th>Expense Account</th>
+                          <th>Payment Account</th>
+                          <th>Amount ({getCurrency()})</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {overheadExpenses.map(je => (
+                          <tr key={je.id}>
+                            <td style={{ fontFamily: 'var(--font-mono)', fontSize: '12px', color: 'var(--text-muted)' }}>{je.id}</td>
+                            <td style={{ color: 'var(--text-muted)' }}>{je.date}</td>
+                            <td style={{ fontWeight: '600', color: 'var(--text-primary)' }}>{je.description}</td>
+                            <td style={{ color: 'var(--danger-color)', fontFamily: 'var(--font-mono)', fontSize: '12px' }}>{je.debitAccount}</td>
+                            <td style={{ color: 'var(--success-color)', fontFamily: 'var(--font-mono)', fontSize: '12px' }}>{je.creditAccount}</td>
+                            <td style={{ fontFamily: 'var(--font-mono)', fontWeight: '700', color: 'var(--text-primary)' }}>
+                              {je.debitAmount.toLocaleString('en', { minimumFractionDigits: 2 })}
+                            </td>
+                          </tr>
+                        ))}
+                        {overheadExpenses.length === 0 && (
+                          <tr>
+                            <td colSpan={6} style={{ textAlign: 'center', padding: '32px', color: 'var(--text-muted)' }}>
+                              No overhead expenses recorded yet. Use the form above to log expenses.
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              );
+            })()}
+
+            {accountingTab === 'reports' && (() => {
+              const salesRev = chartOfAccounts.find(a => a.code === '4001')?.balance || 0;
+              const delivRev = chartOfAccounts.find(a => a.code === '4100')?.balance || 0;
+              const cogs = chartOfAccounts.find(a => a.code === '5001')?.balance || 0;
+              const salariesExp = chartOfAccounts.find(a => a.code === '5100')?.balance || 0;
+              const rentExp = chartOfAccounts.find(a => a.code === '5200')?.balance || 0;
+              const utilitiesExp = chartOfAccounts.find(a => a.code === '5300')?.balance || 0;
+              
+              const netProfitVal = salesRev + delivRev - cogs - salariesExp - rentExp - utilitiesExp;
+
+              const cashBalance = chartOfAccounts.find(a => a.code === '1001')?.balance || 0;
+              const recBalance = chartOfAccounts.find(a => a.code === '1100')?.balance || 0;
+              const invBalance = chartOfAccounts.find(a => a.code === '1200')?.balance || 0;
+              const assetsTotal = cashBalance + recBalance + invBalance;
+
+              const apBalance = chartOfAccounts.find(a => a.code === '2001')?.balance || 0;
+              const vatBalance = chartOfAccounts.find(a => a.code === '2100')?.balance || 0;
+              const salPayable = chartOfAccounts.find(a => a.code === '2200')?.balance || 0;
+              const payLiab = chartOfAccounts.find(a => a.code === '2300')?.balance || 0;
+              const liabilitiesTotal = apBalance + vatBalance + salPayable + payLiab;
+
+              const equityBase = chartOfAccounts.find(a => a.code === '3001')?.balance || 0;
+              const equityTotal = equityBase + netProfitVal;
+
+              const balanceSheetBalanced = Math.abs(assetsTotal - (liabilitiesTotal + equityTotal)) < 0.05;
+
+              return (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                  {/* Financial Statements Grid */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
+                    
+                    {/* Profit & Loss Card */}
+                    <div className="card">
+                      <h3 style={{ fontWeight: '700', color: 'var(--text-primary)', marginBottom: '16px' }}>📊 Profit & Loss Statement</h3>
+                      {[
+                        { label: 'Sales Revenue', val: salesRev, type: 'income' },
+                        { label: 'Delivery Revenue', val: delivRev, type: 'income' },
+                        { label: 'Cost of Goods Sold (COGS)', val: -cogs, type: 'expense' },
+                        { label: 'Salaries Expense', val: -salariesExp, type: 'expense' },
+                        { label: 'Rent Expense', val: -rentExp, type: 'expense' },
+                        { label: 'Utilities Expense', val: -utilitiesExp, type: 'expense' }
+                      ].map((item, i) => (
+                        <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid var(--border-color)', fontSize: '14px' }}>
+                          <span style={{ color: 'var(--text-muted)' }}>{item.label}</span>
+                          <span style={{ fontWeight: '700', fontFamily: 'var(--font-mono)', color: item.val >= 0 ? 'var(--success-color)' : 'var(--danger-color)' }}>
+                            {item.val >= 0 ? '+' : ''}{item.val.toLocaleString(undefined, { minimumFractionDigits: 2 })} {getCurrency()}
+                          </span>
+                        </div>
+                      ))}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', padding: '14px 0', fontSize: '16px', fontWeight: '800', borderTop: '2px solid var(--text-primary)', marginTop: '8px' }}>
+                        <span style={{ color: 'var(--text-primary)' }}>Net Profit</span>
+                        <span style={{ color: netProfitVal >= 0 ? 'var(--success-color)' : 'var(--danger-color)', fontFamily: 'var(--font-mono)' }}>
+                          {netProfitVal >= 0 ? '+' : ''}{netProfitVal.toLocaleString(undefined, { minimumFractionDigits: 2 })} {getCurrency()}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Balance Sheet Card */}
+                    <div className="card">
+                      <h3 style={{ fontWeight: '700', color: 'var(--text-primary)', marginBottom: '16px' }}>⚖️ Balance Sheet</h3>
+                      
+                      {/* Assets Section */}
+                      <div style={{ marginBottom: '12px' }}>
+                        <h4 style={{ fontSize: '13px', fontWeight: '700', color: 'var(--primary-color)', textTransform: 'uppercase', marginBottom: '8px' }}>Assets</h4>
+                        {[
+                          { label: 'Cash & Bank', val: cashBalance },
+                          { label: 'Accounts Receivable', val: recBalance },
+                          { label: 'Inventory Assets', val: invBalance }
+                        ].map((item, i) => (
+                          <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: '13px', borderBottom: '1px solid var(--border-color)' }}>
+                            <span style={{ color: 'var(--text-muted)' }}>{item.label}</span>
+                            <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-primary)', fontWeight: '600' }}>
+                              {item.val.toLocaleString(undefined, { minimumFractionDigits: 2 })} {getCurrency()}
+                            </span>
+                          </div>
+                        ))}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', fontWeight: '700', fontSize: '13px' }}>
+                          <span style={{ color: 'var(--text-primary)' }}>Total Assets</span>
+                          <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--primary-color)' }}>
+                            {assetsTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })} {getCurrency()}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Liabilities Section */}
+                      <div style={{ marginBottom: '12px' }}>
+                        <h4 style={{ fontSize: '13px', fontWeight: '700', color: 'var(--danger-color)', textTransform: 'uppercase', marginBottom: '8px' }}>Liabilities</h4>
+                        {[
+                          { label: 'Accounts Payable', val: apBalance },
+                          { label: 'VAT Payable', val: vatBalance },
+                          { label: 'Salary Payable', val: salPayable },
+                          { label: 'Payroll Liabilities', val: payLiab }
+                        ].map((item, i) => (
+                          <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: '13px', borderBottom: '1px solid var(--border-color)' }}>
+                            <span style={{ color: 'var(--text-muted)' }}>{item.label}</span>
+                            <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-primary)', fontWeight: '600' }}>
+                              {item.val.toLocaleString(undefined, { minimumFractionDigits: 2 })} {getCurrency()}
+                            </span>
+                          </div>
+                        ))}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', fontWeight: '700', fontSize: '13px' }}>
+                          <span style={{ color: 'var(--text-primary)' }}>Total Liabilities</span>
+                          <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--danger-color)' }}>
+                            {liabilitiesTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })} {getCurrency()}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Equity Section */}
+                      <div style={{ marginBottom: '12px' }}>
+                        <h4 style={{ fontSize: '13px', fontWeight: '700', color: 'var(--success-color)', textTransform: 'uppercase', marginBottom: '8px' }}>Equity</h4>
+                        {[
+                          { label: 'Owner Equity', val: equityBase },
+                          { label: 'Retained Earnings (Net Profit)', val: netProfitVal }
+                        ].map((item, i) => (
+                          <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: '13px', borderBottom: '1px solid var(--border-color)' }}>
+                            <span style={{ color: 'var(--text-muted)' }}>{item.label}</span>
+                            <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--text-primary)', fontWeight: '600' }}>
+                              {item.val.toLocaleString(undefined, { minimumFractionDigits: 2 })} {getCurrency()}
+                            </span>
+                          </div>
+                        ))}
+                        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', fontWeight: '700', fontSize: '13px' }}>
+                          <span style={{ color: 'var(--text-primary)' }}>Total Equity</span>
+                          <span style={{ fontFamily: 'var(--font-mono)', color: 'var(--success-color)' }}>
+                            {equityTotal.toLocaleString(undefined, { minimumFractionDigits: 2 })} {getCurrency()}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Balance Check Indicator */}
+                      <div style={{
+                        marginTop: '16px',
+                        padding: '12px',
+                        borderRadius: '8px',
+                        border: '1px solid ' + (balanceSheetBalanced ? 'var(--success-color)' : 'var(--danger-color)'),
+                        background: balanceSheetBalanced ? 'var(--success-bg)' : 'var(--danger-bg)',
+                        textAlign: 'center',
+                        fontWeight: '700',
+                        fontSize: '13.5px',
+                        color: balanceSheetBalanced ? 'var(--success-color)' : 'var(--danger-color)'
+                      }}>
+                        {balanceSheetBalanced ? (
+                          <span>✅ Double-Entry Balanced: Assets ({assetsTotal.toLocaleString(undefined, {minimumFractionDigits:2})}) = Liabilities + Equity ({(liabilitiesTotal + equityTotal).toLocaleString(undefined, {minimumFractionDigits:2})})</span>
+                        ) : (
+                          <span>❌ Ledger Unbalanced: Assets ({assetsTotal.toLocaleString(undefined, {minimumFractionDigits:2})}) ≠ Liabilities + Equity ({(liabilitiesTotal + equityTotal).toLocaleString(undefined, {minimumFractionDigits:2})})</span>
+                        )}
+                      </div>
+                    </div>
+
+                  </div>
+
+                  {/* VAT Summary and Actions */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
+                    <div className="card">
+                      <h3 style={{ fontWeight: '700', color: 'var(--text-primary)', marginBottom: '16px' }}>🏛 VAT Summary</h3>
+                      <div style={{ display: 'flex', gap: '12px', marginBottom: '16px' }}>
+                        <div style={{ flex: 1, background: 'var(--success-bg)', border: '1px solid var(--success-border)', borderRadius: '8px', padding: '16px', textAlign: 'center' }}>
+                          <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '4px' }}>🇸🇦 ZATCA VAT (15%)</div>
+                          <div style={{ fontSize: '22px', fontWeight: '800', color: 'var(--success-color)' }}>{invoices.filter(i => i.country === 'SA').reduce((s, i) => s + i.tax, 0).toFixed(2)}</div>
+                          <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>SAR Collected</div>
+                        </div>
+                        <div style={{ flex: 1, background: 'var(--info-bg)', border: '1px solid var(--info-border)', borderRadius: '8px', padding: '16px', textAlign: 'center' }}>
+                          <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '4px' }}>🇯🇴 JoFawtara VAT (16%)</div>
+                          <div style={{ fontSize: '22px', fontWeight: '800', color: 'var(--info-color)' }}>{invoices.filter(i => i.country === 'JO').reduce((s, i) => s + i.tax, 0).toFixed(2)}</div>
+                          <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>JOD Collected</div>
+                        </div>
+                      </div>
+                      <button className="btn btn-primary" style={{ width: '100%', marginTop: '8px' }} onClick={() => { triggerToast('VAT return filed via ZATCA API!', 'success'); confetti({ particleCount: 60, spread: 50 }); }}>🇸🇦 File ZATCA VAT Return</button>
+                      <button className="btn btn-secondary" style={{ width: '100%', marginTop: '8px', color: 'var(--text-primary)' }} onClick={() => triggerToast('VAT return filed via JoFawtara API!', 'success')}>🇯🇴 File JoFawtara VAT Return</button>
+                    </div>
+                    <div className="card">
+                      <h3 style={{ fontWeight: '700', color: 'var(--text-primary)', marginBottom: '16px' }}>🤖 Tax & Compliance Advisor</h3>
+                      <div className="ai-glow-panel" style={{ height: 'calc(100% - 48px)', margin: 0, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                        <div style={{ fontWeight: '700', color: 'var(--ai-glow-color)', marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px' }}><Sparkles size={14} /> AI Tax Recommendation</div>
+                        <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>VAT filing deadline: 15th of next month. Current payable VAT: {(chartOfAccounts.find(a => a.code === '2100')?.balance || 0).toLocaleString()} {getCurrency()}. Recommend filing electronically via ZATCA / JoFawtara portals by June 30. Your system's double-entry accounting records are 100% balanced and ready for audit.</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+            );
+          })()}
+          </main>
+        )}
+
+        {/* ═══════════════════════════════════════════════════════════
+            BOM & KITS (INVENTORY MANAGEMENT)
+        ═══════════════════════════════════════════════════════════ */}
+        {activeTab === 'bom' && (
+          <main className="page-content">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+              <div>
+                <h1 style={{ fontSize: '26px', fontWeight: '800', color: 'var(--text-primary)', marginBottom: '4px' }}>🏗 Bill of Materials & Kits</h1>
+                <p style={{ color: 'var(--text-muted)', fontSize: '14px' }}>{bomItems.length} BOMs configured · Full ingredient cost breakdown</p>
+              </div>
+              <button className="btn btn-primary"><PlusCircle size={16} /> New BOM</button>
+            </div>
+
+            <div className="tabs-container">
+              {['list', 'detail'].map(tab => (
+                <button key={tab} className={`tab-btn ${bomTab === (selectedBom ? 'detail' : 'list') === (tab === 'detail') ? (tab === 'detail' ? 'active' : '') : (tab === 'list' ? 'active' : '')}`} onClick={() => { if (tab === 'list') setSelectedBom(null); }}>
+                  {tab === 'list' ? '📋 All BOMs' : '🔍 BOM Detail'}
+                </button>
+              ))}
+            </div>
+
+            <div className="split-pane">
+              <div className="pane-main">
+                <div className="kpi-grid" style={{ gridTemplateColumns: 'repeat(3, 1fr)', marginBottom: '20px' }}>
+                  {[
+                    { label: 'Total BOMs', value: bomItems.length, icon: '📋' },
+                    { label: 'Avg. Food Cost %', value: (bomItems.reduce((s, b) => s + (100 - b.margin), 0) / bomItems.length).toFixed(1) + '%', icon: '🍳' },
+                    { label: 'Avg. Gross Margin', value: (bomItems.reduce((s, b) => s + b.margin, 0) / bomItems.length).toFixed(1) + '%', icon: '💹' }
+                  ].map((k, i) => (
+                    <div key={i} className="card kpi-card">
+                      <div className="kpi-header"><span className="kpi-label">{k.label}</span><span style={{ fontSize: '20px' }}>{k.icon}</span></div>
+                      <div className="kpi-value" style={{ color: 'var(--primary-color)', fontSize: '22px' }}>{k.value}</div>
+                    </div>
+                  ))}
+                </div>
+                <div className="table-container">
+                  <div className="table-toolbar"><span className="table-title">Bills of Materials</span><span className="badge badge-ai"><Sparkles size={12} /> Cost Intelligence</span></div>
+                  <table className="data-table">
+                    <thead><tr><th>BOM ID</th><th>Product</th><th>Type</th><th>Components</th><th>Total Cost</th><th>Sell Price</th><th>Gross Margin</th><th>Action</th></tr></thead>
+                    <tbody>
+                      {bomItems.map(bom => (
+                        <tr key={bom.id} className={selectedBom?.id === bom.id ? 'active-row' : ''} onClick={() => setSelectedBom(bom)}>
+                          <td style={{ fontFamily: 'var(--font-mono)', fontSize: '12px', color: 'var(--text-muted)' }}>{bom.id}</td>
+                          <td style={{ fontWeight: '600', color: 'var(--text-primary)' }}>{bom.name}</td>
+                          <td><span className={`badge ${bom.type === 'Kit' ? 'badge-info' : 'badge-ai'}`}>{bom.type}</span></td>
+                          <td style={{ color: 'var(--text-muted)' }}>{bom.components.length} items</td>
+                          <td style={{ fontFamily: 'var(--font-mono)', color: 'var(--danger-color)', fontWeight: '600' }}>{bom.totalCost.toFixed(2)} {getCurrency()}</td>
+                          <td style={{ fontFamily: 'var(--font-mono)', color: 'var(--success-color)', fontWeight: '600' }}>{bom.sellPrice.toFixed(2)} {getCurrency()}</td>
+                          <td>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <div className="sparkline-track" style={{ width: '60px' }}>
+                                <div className="sparkline-fill" style={{ width: `${bom.margin}%`, background: bom.margin > 60 ? 'var(--success-color)' : bom.margin > 40 ? 'var(--warning-color)' : 'var(--danger-color)' }} />
+                              </div>
+                              <span style={{ fontSize: '12px', fontWeight: '700', color: 'var(--text-primary)' }}>{bom.margin}%</span>
+                            </div>
+                          </td>
+                          <td><button className="btn btn-secondary" style={{ fontSize: '11px', padding: '3px 8px', color: 'var(--text-primary)' }} onClick={(e) => { e.stopPropagation(); setSelectedBom(bom); }}>View</button></td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+              {selectedBom && (
+                <div className="pane-side">
+                  <div className="card" style={{ borderTop: '3px solid var(--ai-glow-color)' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                      <h3 style={{ fontWeight: '700', color: 'var(--text-primary)' }}>🔍 BOM Detail</h3>
+                      <button className="btn btn-ghost btn-icon" onClick={() => setSelectedBom(null)} style={{ color: 'var(--text-muted)' }}><X size={16} /></button>
+                    </div>
+                    <div style={{ fontWeight: '700', fontSize: '15px', color: 'var(--text-primary)', marginBottom: '4px' }}>{selectedBom.name}</div>
+                    <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '16px' }}>Type: {selectedBom.type} · {selectedBom.components.length} components</div>
+                    <div style={{ marginBottom: '16px' }}>
+                      {selectedBom.components.map((comp, i) => (
+                        <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '8px 0', borderBottom: '1px solid var(--border-color)', fontSize: '13px' }}>
+                          <div>
+                            <div style={{ fontWeight: '600', color: 'var(--text-primary)' }}>{comp.name}</div>
+                            <div style={{ color: 'var(--text-muted)', fontSize: '11px' }}>{comp.qty} {comp.unit}</div>
+                          </div>
+                          <div style={{ textAlign: 'right' }}>
+                            <div style={{ fontFamily: 'var(--font-mono)', color: 'var(--danger-color)', fontWeight: '600' }}>{comp.cost.toFixed(2)}</div>
+                            <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{getCurrency()}/unit</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                    <div style={{ background: 'var(--bg-card-hover)', borderRadius: '8px', padding: '12px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', fontSize: '13px' }}>
+                        <span style={{ color: 'var(--text-muted)' }}>Total Cost</span>
+                        <span style={{ fontWeight: '700', color: 'var(--danger-color)', fontFamily: 'var(--font-mono)' }}>{selectedBom.totalCost.toFixed(2)} {getCurrency()}</span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px', fontSize: '13px' }}>
+                        <span style={{ color: 'var(--text-muted)' }}>Sell Price</span>
+                        <span style={{ fontWeight: '700', color: 'var(--success-color)', fontFamily: 'var(--font-mono)' }}>{selectedBom.sellPrice.toFixed(2)} {getCurrency()}</span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', borderTop: '1px solid var(--border-color)', paddingTop: '8px' }}>
+                        <span style={{ fontWeight: '700', color: 'var(--text-primary)' }}>Gross Margin</span>
+                        <span style={{ fontWeight: '800', color: selectedBom.margin > 60 ? 'var(--success-color)' : 'var(--warning-color)', fontFamily: 'var(--font-mono)' }}>{selectedBom.margin}%</span>
+                      </div>
+                    </div>
+                    <button className="btn btn-ai" style={{ width: '100%', marginTop: '12px' }} onClick={() => triggerToast(`AI cost optimization suggestion: Switch to bulk ${selectedBom.components[0]?.name} — saves 12% per unit!`, 'success')}>
+                      <Sparkles size={14} /> AI Cost Optimize
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </main>
+        )}
+
+        {/* ═══════════════════════════════════════════════════════════
+            SUPPLY CHAIN MODULE
+        ═══════════════════════════════════════════════════════════ */}
+        {activeTab === 'supply' && (
+          <main className="page-content">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+              <div>
+                <h1 style={{ fontSize: '26px', fontWeight: '800', color: 'var(--text-primary)', marginBottom: '4px' }}>🚚 Supply Chain Management</h1>
+                <p style={{ color: 'var(--text-muted)', fontSize: '14px' }}>{vendors.length} vendors · {purchaseOrders.length} purchase orders</p>
+              </div>
+              <button className="btn btn-primary" onClick={() => setSupplyTab('create-po')}><PlusCircle size={16} /> New Purchase Order</button>
+            </div>
+
+            <div className="tabs-container">
+              {['vendors', 'orders', 'create-po'].map(tab => (
+                <button key={tab} className={`tab-btn ${supplyTab === tab ? 'active' : ''}`} onClick={() => setSupplyTab(tab)}>
+                  {tab === 'vendors' ? '🏭 Vendors' : tab === 'orders' ? '📋 Purchase Orders' : '➕ Create PO'}
+                </button>
+              ))}
+            </div>
+
+            {supplyTab === 'vendors' && (
+              <div>
+                <div className="kpi-grid" style={{ gridTemplateColumns: 'repeat(3, 1fr)', marginBottom: '20px' }}>
+                  {[
+                    { label: 'Total Vendors', value: vendors.length },
+                    { label: 'Avg. Rating', value: (vendors.reduce((s, v) => s + v.rating, 0) / vendors.length).toFixed(1) + ' ★' },
+                    { label: 'Open Orders', value: purchaseOrders.filter(po => po.status === 'Pending').length }
+                  ].map((k, i) => (
+                    <div key={i} className="card kpi-card">
+                      <div className="kpi-label">{k.label}</div>
+                      <div className="kpi-value" style={{ color: 'var(--primary-color)', fontSize: '22px' }}>{k.value}</div>
+                    </div>
+                  ))}
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '16px' }}>
+                  {vendors.map(v => (
+                    <div key={v.id} className="card" style={{ borderTop: '3px solid var(--primary-color)' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '12px' }}>
+                        <div>
+                          <div style={{ fontWeight: '700', fontSize: '15px', color: 'var(--text-primary)', marginBottom: '4px' }}>{v.name}</div>
+                          <span className="badge badge-info" style={{ fontSize: '11px' }}>{v.category}</span>
+                        </div>
+                        <div style={{ textAlign: 'right' }}>
+                          <div style={{ fontWeight: '700', color: 'var(--warning-color)', fontSize: '16px' }}>{v.rating} ★</div>
+                          <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{v.country === 'SA' ? '🇸🇦' : '🇯🇴'} {v.country}</div>
+                        </div>
+                      </div>
+                      {[['Contact', v.contact], ['Payment', v.paymentTerms], ['Lead Time', v.leadTime]].map(([label, val]) => (
+                        <div key={label} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', padding: '4px 0', borderBottom: '1px solid var(--border-color)' }}>
+                          <span style={{ color: 'var(--text-muted)' }}>{label}</span>
+                          <span style={{ color: 'var(--text-primary)', fontWeight: '600' }}>{val}</span>
+                        </div>
+                      ))}
+                      <button className="btn btn-primary" style={{ width: '100%', marginTop: '12px', fontSize: '13px' }} onClick={() => { setNewPoVendor(v.id); setSupplyTab('create-po'); }}>Create PO</button>
+                    </div>
+                  ))}
+                  <div className="card" style={{ border: '2px dashed var(--border-color)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '180px', cursor: 'pointer' }} onClick={() => {
+                    const name = prompt('Enter vendor name:');
+                    if (name) { setVendors(prev => [...prev, { id: `VND-${String(prev.length + 1).padStart(3, '0')}`, name, contact: '', country: country, rating: 4.0, category: 'General', paymentTerms: 'Net 30', leadTime: '3 days' }]); triggerToast(`Vendor ${name} added!`, 'success'); }
+                  }}>
+                    <PlusCircle size={24} style={{ color: 'var(--text-muted)', marginBottom: '8px' }} />
+                    <span style={{ color: 'var(--text-muted)', fontWeight: '600' }}>Add New Vendor</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {supplyTab === 'orders' && (
+              <div className="table-container">
+                <div className="table-toolbar"><span className="table-title">Purchase Orders</span></div>
+                <table className="data-table">
+                  <thead><tr><th>PO Number</th><th>Vendor</th><th>Date</th><th>Items</th><th>Total</th><th>Due Date</th><th>Status</th><th>Actions</th></tr></thead>
+                  <tbody>
+                    {purchaseOrders.map(po => (
+                      <tr key={po.id}>
+                        <td style={{ fontFamily: 'var(--font-mono)', fontSize: '12px', color: 'var(--text-muted)' }}>{po.id}</td>
+                        <td style={{ fontWeight: '600', color: 'var(--text-primary)' }}>{po.vendor}</td>
+                        <td style={{ color: 'var(--text-muted)' }}>{po.date}</td>
+                        <td style={{ color: 'var(--text-muted)' }}>{po.items.length} items</td>
+                        <td style={{ fontFamily: 'var(--font-mono)', fontWeight: '700', color: 'var(--primary-color)' }}>{po.total.toFixed(2)} {getCurrency()}</td>
+                        <td style={{ color: 'var(--text-muted)' }}>{po.dueDate}</td>
+                        <td><span className={`badge ${po.status === 'Received' ? 'badge-success' : po.status === 'Pending' ? 'badge-warning' : 'badge-danger'}`}>{po.status}</span></td>
+                        <td>
+                          {po.status === 'Pending' && <button className="btn btn-success" style={{ fontSize: '11px', padding: '3px 8px' }} onClick={() => {
+                            setPurchaseOrders(prev => prev.map(p => p.id === po.id ? { ...p, status: 'Received' } : p));
+                            // Update inventory stock levels
+                            setInventory(prevInv => prevInv.map(invItem => {
+                              const matchedItem = po.items.find(pi => pi.name.toLowerCase().includes(invItem.product.name.toLowerCase()) || invItem.product.name.toLowerCase().includes(pi.name.toLowerCase()));
+                              if (matchedItem) {
+                                return { ...invItem, stock: invItem.stock + matchedItem.qty };
+                              }
+                              return invItem;
+                            }));
+                            // Post Accounts Payable journal entry
+                            const poJE = {
+                              id: `JE-PO-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
+                              date: today,
+                              description: `Inventory Purchase - PO ${po.id} from ${po.vendor}`,
+                              debitAccount: '1200 Inventory Assets',
+                              creditAccount: '2001 Accounts Payable',
+                              debitAmount: po.total,
+                              creditAmount: po.total,
+                              ref: po.id
+                            };
+                            setJournalEntries(prev => [...prev, poJE]);
+                            triggerToast(`PO ${po.id} received and stock updated!`, 'success');
+                          }}>Receive</button>}
+                          <button className="btn btn-ghost" style={{ fontSize: '11px', padding: '3px 8px', marginLeft: '4px', color: 'var(--text-primary)' }} onClick={() => triggerToast(`PO ${po.id} PDF downloaded!`, 'info')}>PDF</button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {supplyTab === 'create-po' && (
+              <div style={{ maxWidth: '700px', margin: '0 auto' }}>
+                <div className="card">
+                  <h3 style={{ fontWeight: '700', color: 'var(--text-primary)', marginBottom: '20px' }}>➕ New Purchase Order</h3>
+                  <div className="form-group">
+                    <label className="form-label">Vendor</label>
+                    <select className="select" value={newPoVendor} onChange={e => setNewPoVendor(e.target.value)} style={{ color: 'var(--text-primary)' }}>
+                      {vendors.map(v => <option key={v.id} value={v.id}>{v.name}</option>)}
+                    </select>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1fr auto', gap: '8px', marginBottom: '12px', alignItems: 'end' }}>
+                    <div className="form-group" style={{ margin: 0 }}>
+                      <label className="form-label">Item Name</label>
+                      <input className="input" value={newPoItem} onChange={e => setNewPoItem(e.target.value)} placeholder="e.g. Coffee Beans 1kg" style={{ color: 'var(--text-primary)' }} />
+                    </div>
+                    <div className="form-group" style={{ margin: 0 }}>
+                      <label className="form-label">Qty</label>
+                      <input className="input" type="number" value={newPoQty} onChange={e => setNewPoQty(e.target.value)} placeholder="0" style={{ color: 'var(--text-primary)' }} />
+                    </div>
+                    <div className="form-group" style={{ margin: 0 }}>
+                      <label className="form-label">Unit Price</label>
+                      <input className="input" type="number" value={newPoPrice} onChange={e => setNewPoPrice(e.target.value)} placeholder="0.00" style={{ color: 'var(--text-primary)' }} />
+                    </div>
+                    <button className="btn btn-secondary" style={{ color: 'var(--text-primary)', height: '42px' }} onClick={() => {
+                      if (!newPoItem || !newPoQty || !newPoPrice) { triggerToast('Fill all item fields', 'error'); return; }
+                      setPoLines(prev => [...prev, { name: newPoItem, qty: parseInt(newPoQty), price: parseFloat(newPoPrice) }]);
+                      setNewPoItem(''); setNewPoQty(''); setNewPoPrice('');
+                    }}>Add Line</button>
+                  </div>
+                  {poLines.length > 0 && (
+                    <div style={{ background: 'var(--bg-card-hover)', borderRadius: '8px', padding: '12px', marginBottom: '16px' }}>
+                      {poLines.map((line, i) => (
+                        <div key={i} style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: '13px', borderBottom: '1px solid var(--border-color)' }}>
+                          <span style={{ color: 'var(--text-primary)', fontWeight: '600' }}>{line.name}</span>
+                          <span style={{ color: 'var(--text-muted)' }}>{line.qty} × {line.price.toFixed(2)} = <strong style={{ color: 'var(--primary-color)' }}>{(line.qty * line.price).toFixed(2)} {getCurrency()}</strong></span>
+                        </div>
+                      ))}
+                      <div style={{ textAlign: 'right', marginTop: '8px', fontWeight: '800', color: 'var(--text-primary)', fontSize: '15px' }}>
+                        Total: {poLines.reduce((s, l) => s + l.qty * l.price, 0).toFixed(2)} {getCurrency()}
+                      </div>
+                    </div>
+                  )}
+                  <button className="btn btn-primary" style={{ width: '100%' }} disabled={poLines.length === 0} onClick={() => {
+                    const vendor = vendors.find(v => v.id === newPoVendor);
+                    const total = poLines.reduce((s, l) => s + l.qty * l.price, 0);
+                    const newPO = { id: `PO-2026-${String(purchaseOrders.length + 1).padStart(3, '0')}`, vendor: vendor?.name || '', date: today, items: [...poLines], total, status: 'Pending', dueDate: today };
+                    setPurchaseOrders(prev => [newPO, ...prev]);
+                    setPoLines([]);
+                    setSupplyTab('orders');
+                    triggerToast(`Purchase Order ${newPO.id} sent to ${vendor?.name}!`, 'success');
+                    confetti({ particleCount: 50, spread: 40 });
+                  }}>Submit Purchase Order</button>
+                </div>
+              </div>
+            )}
+          </main>
+        )}
+
+        {/* ═══════════════════════════════════════════════════════════
+            SETUP WIZARD MODULE
+        ═══════════════════════════════════════════════════════════ */}
+        {activeTab === 'setup' && (
+          <main className="page-content" style={{ maxWidth: '860px', margin: '0 auto' }}>
+            <div style={{ textAlign: 'center', marginBottom: '32px' }}>
+              <div style={{ width: '64px', height: '64px', borderRadius: '16px', background: 'linear-gradient(135deg, var(--primary-color), var(--ai-glow-color))', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', fontSize: '28px' }}>🚀</div>
+              <h1 style={{ fontSize: '28px', fontWeight: '800', color: 'var(--text-primary)', marginBottom: '8px' }}>CyShop ERP Setup Wizard</h1>
+              <p style={{ color: 'var(--text-muted)', fontSize: '15px' }}>Configure your ERP system step by step. This wizard helps you go live in minutes.</p>
+            </div>
+
+            {/* Progress Steps */}
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '0', marginBottom: '40px', overflowX: 'auto' }}>
+              {['Business Info', 'Region & Tax', 'Modules', 'Admin Account', 'Review & Launch'].map((step, i) => (
+                <div key={i} style={{ display: 'flex', alignItems: 'center' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px', cursor: 'pointer' }} onClick={() => setSetupStep(i)}>
+                    <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: i <= setupStep ? 'var(--primary-color)' : 'var(--border-color)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: i <= setupStep ? 'white' : 'var(--text-muted)', fontWeight: '700', fontSize: '13px', transition: 'all 0.2s' }}>
+                      {i < setupStep ? '✓' : i + 1}
+                    </div>
+                    <span style={{ fontSize: '11px', fontWeight: '600', color: i === setupStep ? 'var(--primary-color)' : 'var(--text-muted)', whiteSpace: 'nowrap' }}>{step}</span>
+                  </div>
+                  {i < 4 && <div style={{ width: '60px', height: '2px', background: i < setupStep ? 'var(--primary-color)' : 'var(--border-color)', margin: '-14px 4px 0', transition: 'background 0.3s' }} />}
+                </div>
+              ))}
+            </div>
+
+            {setupComplete ? (
+              <div className="card ai-border-glow" style={{ textAlign: 'center', padding: '48px' }}>
+                <div style={{ fontSize: '64px', marginBottom: '16px' }}>🎉</div>
+                <h2 style={{ fontSize: '24px', fontWeight: '800', color: 'var(--text-primary)', marginBottom: '8px' }}>Setup Complete!</h2>
+                <p style={{ color: 'var(--text-muted)', fontSize: '15px', marginBottom: '24px' }}>{setupConfig.businessName || 'Your business'} is ready to go live on CyShop ERP.</p>
+                <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+                  <button className="btn btn-ai" onClick={() => { setActiveTab('dashboard'); triggerToast('Welcome to CyShop ERP! All systems operational.', 'success'); confetti({ particleCount: 200, spread: 120 }); }}>🚀 Go to Dashboard</button>
+                  <button className="btn btn-secondary" style={{ color: 'var(--text-primary)' }} onClick={() => setSetupComplete(false)}>Reconfigure</button>
+                </div>
+              </div>
+            ) : (
+              <div className="card">
+                {setupStep === 0 && (
+                  <div>
+                    <h3 style={{ fontWeight: '700', color: 'var(--text-primary)', marginBottom: '20px' }}>🏢 Business Information</h3>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                      <div className="form-group">
+                        <label className="form-label">Business Name *</label>
+                        <input className="input" value={setupConfig.businessName} onChange={e => setSetupConfig(p => ({...p, businessName: e.target.value}))} placeholder="e.g. My Restaurant Ltd." style={{ color: 'var(--text-primary)' }} />
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label">Business Type</label>
+                        <select className="select" value={setupConfig.businessType} onChange={e => setSetupConfig(p => ({...p, businessType: e.target.value}))} style={{ color: 'var(--text-primary)' }}>
+                          {['Restaurant', 'Fast Food', 'Retail Store', 'Cafe', 'Supermarket', 'Cloud Kitchen'].map(t => <option key={t} value={t.toLowerCase()}>{t}</option>)}
+                        </select>
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label">Number of Branches</label>
+                        <input className="input" type="number" value={setupConfig.branches} onChange={e => setSetupConfig(p => ({...p, branches: e.target.value}))} placeholder="1" style={{ color: 'var(--text-primary)' }} />
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label">Logo URL (optional)</label>
+                        <input className="input" value={setupConfig.logo} onChange={e => setSetupConfig(p => ({...p, logo: e.target.value}))} placeholder="https://yourlogo.com/logo.png" style={{ color: 'var(--text-primary)' }} />
+                      </div>
+                    </div>
+                  </div>
+                )}
+                {setupStep === 1 && (
+                  <div>
+                    <h3 style={{ fontWeight: '700', color: 'var(--text-primary)', marginBottom: '20px' }}>🌍 Region & Tax Configuration</h3>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                      <div className="form-group">
+                        <label className="form-label">Country of Operation</label>
+                        <select className="select" value={setupConfig.country} onChange={e => { const c = e.target.value; setSetupConfig(p => ({...p, country: c, currency: c === 'SA' ? 'SAR' : c === 'JO' ? 'JOD' : c === 'AE' ? 'AED' : 'USD', vatRate: c === 'SA' ? '15' : c === 'JO' ? '16' : c === 'AE' ? '5' : '0'})); }} style={{ color: 'var(--text-primary)' }}>
+                          {[['SA', '🇸🇦 Saudi Arabia'], ['JO', '🇯🇴 Jordan'], ['AE', '🇦🇪 UAE'], ['KW', '🇰🇼 Kuwait'], ['BH', '🇧🇭 Bahrain'], ['OM', '🇴🇲 Oman'], ['QA', '🇶🇦 Qatar']].map(([v, l]) => <option key={v} value={v}>{l}</option>)}
+                        </select>
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label">Currency</label>
+                        <input className="input" value={setupConfig.currency} readOnly style={{ color: 'var(--text-primary)', background: 'var(--bg-card-hover)' }} />
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label">VAT/Tax Number</label>
+                        <input className="input" value={setupConfig.vatNumber} onChange={e => setSetupConfig(p => ({...p, vatNumber: e.target.value}))} placeholder="e.g. 300458129" style={{ color: 'var(--text-primary)' }} />
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label">VAT Rate (%)</label>
+                        <input className="input" value={setupConfig.vatRate} onChange={e => setSetupConfig(p => ({...p, vatRate: e.target.value}))} placeholder="15" style={{ color: 'var(--text-primary)' }} />
+                      </div>
+                    </div>
+                    <div className="ai-glow-panel" style={{ marginTop: '16px' }}>
+                      <div style={{ fontWeight: '700', color: 'var(--ai-glow-color)', marginBottom: '6px' }}>ℹ️ Compliance Note</div>
+                      {setupConfig.country === 'SA' && <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Saudi Arabia: ZATCA Phase 2 e-invoicing is mandatory. CyShop will automatically handle UBL 2.1 XML generation, cryptographic signing, and portal submission.</p>}
+                      {setupConfig.country === 'JO' && <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Jordan: JoFawtara e-invoicing is mandatory under ISTD regulations. CyShop integrates with the Jordan Income and Sales Tax Department API at 16% VAT.</p>}
+                      {!['SA', 'JO'].includes(setupConfig.country) && <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Standard invoicing will be configured. Contact support to enable country-specific e-invoicing compliance.</p>}
+                    </div>
+                  </div>
+                )}
+                {setupStep === 2 && (
+                  <div>
+                    <h3 style={{ fontWeight: '700', color: 'var(--text-primary)', marginBottom: '20px' }}>🧩 Select Modules to Activate</h3>
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '12px' }}>
+                      {[
+                        { key: 'pos', label: 'POS & Cashier', icon: '🛒', desc: 'Retail and restaurant point of sale' },
+                        { key: 'hr', label: 'HR & Payroll', icon: '👥', desc: 'Employee management and salaries' },
+                        { key: 'accounting', label: 'Accounting', icon: '📒', desc: 'Double-entry bookkeeping & VAT' },
+                        { key: 'inventory', label: 'Inventory & BOM', icon: '📦', desc: 'Stock control and Bill of Materials' },
+                        { key: 'delivery', label: 'Delivery Integration', icon: '🛵', desc: 'Talabat & Careem channels' },
+                        { key: 'kiosk', label: 'Kiosk & QR Menu', icon: '📱', desc: 'Self-service ordering' }
+                      ].map(mod => (
+                        <div key={mod.key} className="card" style={{ cursor: 'pointer', borderColor: setupConfig.modules[mod.key] ? 'var(--primary-color)' : 'var(--border-color)', background: setupConfig.modules[mod.key] ? 'var(--primary-glow)' : 'var(--bg-card)' }} onClick={() => setSetupConfig(p => ({...p, modules: {...p.modules, [mod.key]: !p.modules[mod.key]}}))}>
+                          <div style={{ fontSize: '28px', marginBottom: '8px' }}>{mod.icon}</div>
+                          <div style={{ fontWeight: '700', color: 'var(--text-primary)', fontSize: '14px', marginBottom: '4px' }}>{mod.label}</div>
+                          <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{mod.desc}</div>
+                          <div style={{ marginTop: '10px', fontSize: '12px', fontWeight: '600', color: setupConfig.modules[mod.key] ? 'var(--primary-color)' : 'var(--text-muted)' }}>
+                            {setupConfig.modules[mod.key] ? '✅ Enabled' : '○ Disabled'}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {setupStep === 3 && (
+                  <div>
+                    <h3 style={{ fontWeight: '700', color: 'var(--text-primary)', marginBottom: '20px' }}>👤 Administrator Account</h3>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+                      <div className="form-group">
+                        <label className="form-label">Admin Email *</label>
+                        <input className="input" type="email" value={setupConfig.adminEmail} onChange={e => setSetupConfig(p => ({...p, adminEmail: e.target.value}))} placeholder="admin@yourbusiness.com" style={{ color: 'var(--text-primary)' }} />
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label">Admin Password *</label>
+                        <input className="input" type="password" value={setupConfig.adminPassword} onChange={e => setSetupConfig(p => ({...p, adminPassword: e.target.value}))} placeholder="Min 8 characters" style={{ color: 'var(--text-primary)' }} />
+                      </div>
+                    </div>
+                    <div className="ai-glow-panel" style={{ marginTop: '12px' }}>
+                      <span style={{ fontWeight: '700', color: 'var(--ai-glow-color)' }}>🔐 Security Note: </span>
+                      <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>All passwords are stored with AES-256 encryption. Two-factor authentication is recommended post-setup.</span>
+                    </div>
+                  </div>
+                )}
+                {setupStep === 4 && (
+                  <div>
+                    <h3 style={{ fontWeight: '700', color: 'var(--text-primary)', marginBottom: '20px' }}>📋 Review & Launch</h3>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '24px' }}>
+                      {[
+                        ['Business Name', setupConfig.businessName || '(not set)'],
+                        ['Business Type', setupConfig.businessType],
+                        ['Country', setupConfig.country],
+                        ['Currency', setupConfig.currency],
+                        ['VAT Number', setupConfig.vatNumber || '(not set)'],
+                        ['VAT Rate', setupConfig.vatRate + '%'],
+                        ['Branches', setupConfig.branches],
+                        ['Modules Active', Object.values(setupConfig.modules).filter(Boolean).length + ' / ' + Object.keys(setupConfig.modules).length],
+                        ['Admin Email', setupConfig.adminEmail || '(not set)']
+                      ].map(([label, val]) => (
+                        <div key={label} style={{ display: 'flex', justifyContent: 'space-between', padding: '10px 14px', background: 'var(--bg-card-hover)', borderRadius: '8px', fontSize: '13px' }}>
+                          <span style={{ color: 'var(--text-muted)' }}>{label}</span>
+                          <span style={{ fontWeight: '700', color: 'var(--text-primary)' }}>{val}</span>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="ai-glow-panel" style={{ marginBottom: '16px' }}>
+                      <div style={{ fontWeight: '700', color: 'var(--ai-glow-color)', marginBottom: '6px' }}><Sparkles size={14} style={{ display: 'inline', marginRight: '4px' }} /> AI Configuration Check</div>
+                      <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>✅ Configuration validated. {setupConfig.country === 'SA' ? 'ZATCA e-invoicing will be automatically configured.' : setupConfig.country === 'JO' ? 'JoFawtara e-invoicing will be automatically configured.' : 'Standard invoicing ready.'} System is ready to launch.</p>
+                    </div>
+                  </div>
+                )}
+
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '24px', paddingTop: '20px', borderTop: '1px solid var(--border-color)' }}>
+                  <button className="btn btn-secondary" style={{ color: 'var(--text-primary)' }} disabled={setupStep === 0} onClick={() => setSetupStep(s => s - 1)}>← Back</button>
+                  <button className="btn btn-primary" onClick={() => {
+                    if (setupStep < 4) { setSetupStep(s => s + 1); }
+                    else {
+                      setSetupComplete(true);
+                      if (setupConfig.country) setCountry(setupConfig.country.substring(0, 2));
+                      if (setupConfig.businessName) setStoreName(setupConfig.businessName);
+                      triggerToast('Setup complete! System configured successfully!', 'success');
+                      confetti({ particleCount: 200, spread: 120 });
+                    }
+                  }}>{setupStep < 4 ? 'Next →' : '🚀 Launch ERP'}</button>
+                </div>
+              </div>
+            )}
+          </main>
+        )}
+
       </div>
 
-      {/* Floating AI Assistant Chatbot Bubble Trigger */}
       <button className="ai-chat-trigger" onClick={() => setChatbotOpen(!chatbotOpen)} title="Chat with CyShop AI">
         {chatbotOpen ? <X size={24} /> : <Bot size={24} />}
       </button>

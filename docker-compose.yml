@@ -1,0 +1,51 @@
+version: '3.8'
+
+services:
+  postgres-db:
+    image: postgres:15-alpine
+    container_name: postgres-db
+    environment:
+      POSTGRES_USER: cyshop_admin
+      POSTGRES_PASSWORD: SecretProductionDbPassword
+      POSTGRES_DB: cyshop_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  redis-cache:
+    image: redis:7-alpine
+    container_name: redis-cache
+    ports:
+      - "6379:6379"
+
+  cyshop-backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: cyshop-backend
+    ports:
+      - "8000:8000"
+    environment:
+      - DB_NAME=cyshop_db
+      - DB_USER=cyshop_admin
+      - DB_PASSWORD=SecretProductionDbPassword
+      - DB_HOST=postgres-db
+      - DB_PORT=5432
+      - REDIS_URL=redis://redis-cache:6379/0
+    depends_on:
+      - postgres-db
+      - redis-cache
+
+  cyshop-frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: cyshop-frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - cyshop-backend
+
+volumes:
+  pgdata:
