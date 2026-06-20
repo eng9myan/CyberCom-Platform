@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Security Vulnerability
+    url: https://github.com/eng9myan/CyberCom-Platform/security/policy
+    about: Please report security vulnerabilities privately — see SECURITY.md. Do NOT open a public issue.
+  - name: Question / Discussion
+    url: https://github.com/eng9myan/CyberCom-Platform/discussions
+    about: Ask questions or start a discussion with the community.

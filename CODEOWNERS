@@ -1,0 +1,41 @@
+# CyberCom Platform — Code Owners
+#
+# Order matters: the last matching pattern takes precedence.
+# Replace placeholder teams/users with real GitHub handles once the org is provisioned.
+
+# ----- Default owners -----
+*                              @eng9myan
+
+# ----- Documentation -----
+/docs/                         @eng9myan
+/docs/business/                @eng9myan
+/docs/architecture/            @eng9myan
+/docs/security/                @eng9myan
+/docs/governance/              @eng9myan
+/docs/implementation/          @eng9myan
+/docs/localization/            @eng9myan
+/docs/uiux/                    @eng9myan
+/docs/healthcare/              @eng9myan
+/docs/erp/                     @eng9myan
+/docs/government/              @eng9myan
+/docs/testing/                 @eng9myan
+/docs/platforms/               @eng9myan
+/docs/decisions/               @eng9myan
+
+# ----- Application surfaces -----
+/backend/                      @eng9myan
+/frontend/                     @eng9myan
+/mobile/                       @eng9myan
+/desktop/                      @eng9myan
+
+# ----- Platform / Ops -----
+/infrastructure/               @eng9myan
+/scripts/                      @eng9myan
+/tests/                        @eng9myan
+
+# ----- CI / repo policy -----
+/.github/                      @eng9myan
+/CODEOWNERS                    @eng9myan
+/SECURITY.md                   @eng9myan
+/CONTRIBUTING.md               @eng9myan
+/README.md                     @eng9myan

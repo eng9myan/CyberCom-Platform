@@ -1,0 +1,103 @@
+# ----- OS -----
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ----- Editors / IDEs -----
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ----- Logs -----
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ----- Node -----
+node_modules/
+.npm/
+.pnp.*
+.yarn/
+dist/
+build/
+.next/
+out/
+coverage/
+
+# ----- Python -----
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.venv/
+venv/
+env/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.tox/
+htmlcov/
+
+# ----- Java / JVM -----
+target/
+.gradle/
+*.class
+*.jar
+*.war
+
+# ----- Mobile -----
+.gradle/
+ios/Pods/
+ios/build/
+android/build/
+android/.gradle/
+*.apk
+*.ipa
+*.aab
+
+# ----- Desktop -----
+*.exe
+*.dmg
+*.AppImage
+
+# ----- Infrastructure / Cloud -----
+*.tfstate
+*.tfstate.*
+*.tfvars
+.terraform/
+.terraformrc
+.terragrunt-cache/
+crash.log
+*.kubeconfig
+kubeconfig
+
+# ----- Secrets -----
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+secrets/
+credentials.json
+service-account*.json
+
+# ----- Coverage / reports -----
+.nyc_output/
+coverage/
+test-results/
+playwright-report/
+allure-results/
+
+# ----- Misc -----
+tmp/
+temp/
+*.bak
+*.tmp
