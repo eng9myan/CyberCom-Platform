@@ -35,5 +35,13 @@ Start every new ADR by copying [`ADR-0000-template.md`](ADR-0000-template.md).
 | # | Title | Status | Date | Supersedes |
 |---|---|---|---|---|
 | _0000_ | _Template_ | _N/A_ | _—_ | _—_ |
+| [0001](ADR-0001-platform-technology-stack.md) | Platform Technology Stack | Accepted | 2026-06-21 | — |
+| [0002](ADR-0002-multi-tenancy-strategy.md) | Multi-Tenancy Strategy | Accepted | 2026-06-21 | — |
+| [0003](ADR-0003-api-strategy.md) | API Strategy | Accepted | 2026-06-21 | — |
+| [0004](ADR-0004-event-driven-architecture-strategy.md) | Event-Driven Architecture Strategy | Accepted | 2026-06-21 | — |
+| [0005](ADR-0005-identity-access-management-strategy.md) | Identity & Access Management Strategy | Accepted | 2026-06-21 | — |
+| [0006](ADR-0006-icd-11-strategy.md) | ICD-11 Strategy | Accepted | 2026-06-21 | — |
+| [0007](ADR-0007-healthcare-interoperability-strategy.md) | Healthcare Interoperability Strategy | Accepted | 2026-06-21 | — |
+| [0008](ADR-0008-saas-deployment-strategy.md) | SaaS Deployment Strategy | Accepted | 2026-06-21 | — |
 
 _New ADRs are appended above. Keep the index sorted ascending by number._
