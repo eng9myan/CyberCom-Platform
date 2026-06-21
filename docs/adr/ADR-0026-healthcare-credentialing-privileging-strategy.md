@@ -4,44 +4,45 @@
 |---|---|
 | **Status** | Accepted |
 | **Date** | 2026-06-21 |
-| **Deciders** | Chief Healthcare Architect, Chief Security Architect, Chief Software Architect, Workforce Planning Architect |
-| **Affects** | CyMed (CPOE, Scheduling), CyCom (HR), CyIdentity (Workforce Realm), Platform Policy Engine |
-| **Tags** | architecture, healthcare, security, identity |
+| **Deciders** | Chief Healthcare Architect, Chief Security Architect, Chief Software Architect, Workforce Planning Architect, Clinical Safety Architect |
+| **Affects** | CyMed (CPOE, Scheduling, EHR), CyCom (HR, Payroll), CyIdentity (Workforce Realm), Platform Policy Engine |
+| **Tags** | architecture, healthcare, security, identity, compliance |
 | **Related** | [ADR-0005](ADR-0005-identity-access-management-strategy.md), [ADR-0017](ADR-0017-cyidentity-product-strategy.md), [ADR-0018](ADR-0018-cycom-product-repositioning.md) |
 
 ---
 
 ## 1. Context
 
-In clinical settings, verifying a practitioner's qualifications (**Credentialing**) and defining their authorized scope of clinical actions (**Privileging**) are vital for patient safety and regulatory compliance (HIPAA, JCIA, CBAHI, and regional ministries of health).
+Clinical safety and regulatory compliance dictate that healthcare professionals must be verified as qualified (**Credentialing**) and authorized for specific clinical actions (**Privileging**) before engaging in patient care. This is a primary requirement for accreditation by **The Joint Commission (TJC)** in the United States and the **Joint Commission International (JCI)** globally (including Saudi Arabia, UAE, and Jordan).
 
-The system must ensure that:
-1.  No clinician can enter orders (CPOE), administer medications (eMAR), or perform procedures (OR) without verified, active clinical credentials.
-2.  Privileging boundaries are enforced dynamically at the CPOE boundary (e.g., an Orthopedic Surgeon cannot write chemotherapy orders; an Intern cannot prescribe high-alert medications without an Attending's co-signature).
-3.  Enforcement is high-performance (overhead < 10ms per CPOE transaction) and operates across multi-hospital networks and sovereign deployments.
+To prevent clinical errors and liability:
+-   **Physicians, Nurses, and Allied Health staff** must undergo rigorous license, certification, and competency checks.
+-   Access to order entry (CPOE), medication administration (eMAR), and ward duty assignments must be locked behind active, verified qualifications.
+-   A multi-tenant, multi-country SaaS and sovereign platform cannot hardcode local regulations (e.g., Saudi Labor Law, California Title 22, UAE licensing decrees); instead, a configurable verification and privileging model is required.
 
 ---
 
 ## 2. Problem Statement
 
-What is the technical strategy for verifying clinical credentials and enforcing dynamic clinical privileging gates in the CyberCom platform?
+What is the enterprise strategy to architect clinician credentialing, competency tracking, and clinical privileging verification while maintaining a clean product boundary between `CyMed` (clinical engine) and `CyCom` (ERP/HR) without sacrificing real-time CPOE performance?
 
 ---
 
 ## 3. Decision Drivers
 
-- **Clinical Safety:** Prevent clinical errors by blocking unauthorized order entries before they reach clinical queues.
-- **Performance:** Gating checks must not introduce latency to high-frequency clinician ordering workflows.
-- **Sovereignty & Multi-Tenancy:** Must support regional verifications (KSA CBAHI, UAE DOH, Jordan MOH, US licensing boards) within tenant-isolated zones.
-- **Separation of Duties (ADR-0018):** Maintain clean boundaries between back-office HR master records and active clinical execution engines.
+-   **Clinical Safety & Quality:** Zero tolerance for unverified clinical orders or unlicensed medication administrations.
+-   **Accreditation Standards:** Absolute compliance with Joint Commission / JCI credential audits, Primary Source Verification (PSV) requirements, and competency evaluations.
+-   **Configurable Multi-Country Support:** Support for USA (State Boards, DEA), Saudi Arabia (SCFHS, CBAHI), UAE (DHA/MOH/DOH, JCI), and Jordan (MOH, Jordan Medical Association) without code duplication.
+-   **Performance Limits:** Gating verification during CPOE ordering must execute in < 5ms to maintain acceptable clinician workflows.
+-   **Separation of Duties (ADR-0018):** HR/payroll administration remains separate from clinical scheduling and treatment environments.
 
 ---
 
 ## 4. Considered Options
 
-1.  **Option 1: Static RBAC inside CyMed:** Hardcode clinical privileges based on generic roles (e.g., "Physician", "Nurse") in CyMed.
-2.  **Option 2: Federated Credentialing and Privileging Service inside CyCom HR, caching active privileges to CyIdentity/Redis for high-speed ABAC gating at the CyMed CPOE boundary** (chosen).
-3.  **Option 3: External Real-time RPC:** Query third-party national licensing databases synchronously during every clinical order entry.
+1.  **Option 1: CyMed-Isolated Credentialing Database:** Store and verify all credential and license data within CyMed, ignoring CyCom HR records.
+2.  **Option 2: Unified HR Master (CyCom) with Event-Driven Active Privilege Projections to CyIdentity and Platform Policy Cache** (chosen).
+3.  **Option 3: Real-time National Registry Queries (Direct RPC):** Call national databases (e.g., SCFHS Mumaris+, DHA registry) synchronously on every clinician login or order entry.
 
 ---
 
@@ -49,67 +50,136 @@ What is the technical strategy for verifying clinical credentials and enforcing 
 
 **We choose Option 2.** 
 
-*   **System of Record (SoR):** `CyCom HR` acts as the SoR for employee profiles, verified credentials (licenses, board certifications, DEA numbers), and institutional clinical privileges.
-*   **Verification Engine:** CyCom HR utilizes integration adapters via `CyIntegration Hub` to verify license status asynchronously against national registries (e.g., Saudi Commission for Health Specialties - SCFHS, State Boards).
-*   **Access Cache:** Active, valid privileging codes are compiled by CyCom HR and pushed via event triggers (`cybercom.cycom.credential.verified`) to `CyIdentity` (Workforce Realm) and the Platform Redis Cache.
-*   **Gating Enforcement:** `CyMed CPOE` enforces gates locally by comparing the clinician's cached privileging claims against the metadata of the requested order.
+`CyCom HR` acts as the single System of Record (SoR) for workforce master data, including verified credential documents, license registries, and competency status. Active, validated privilege codes are projected into `CyIdentity` token claims and cached in the Platform Policy Cache (Redis) to allow low-latency ABAC gating in `CyMed CPOE`.
 
 ```
- [CyCom HR] ➔ Verifies License Asynchronously (SCFHS/DHA)
-     │
-     ▼ (Event: cybercom.cycom.credential.verified)
- [CyIdentity / Redis] ➔ Caches Active Privileging Claims
-     │
-     ▼ (Token/Cache check at CPOE API Entry)
- [CyMed CPOE Gates] ➔ Authorizes or Gates Order Execution
+                  ┌──────────────────────────────┐
+                  │          CyCom HR            │
+                  │   - Professional Licenses    │
+                  │   - Certs (ACLS, BLS, Board) │
+                  │   - Competency Log (HR side) │
+                  └──────────────┬───────────────┘
+                                 │
+                                 ▼ (Event: cybercom.cycom.credential.verified)
+                  ┌──────────────────────────────┐
+                  │    CyIdentity / Redis Cache  │
+                  │   - Privilege Scopes Claims  │
+                  │   - Active Verification TTL  │
+                  └──────────────┬───────────────┘
+                                 │
+                                 ▼ (Real-time ABAC Gating check)
+                  ┌──────────────────────────────┐
+                  │        CyMed CPOE            │
+                  │   - Order Entry Blockers     │
+                  │   - Shift Scheduling Gates   │
+                  └──────────────────────────────┘
 ```
 
----
+### 5.1 Credentialing & License Specifications
 
-## 6. Rationale
+#### 1. Physician Credentialing
+*   **Verification Parameters:** Medical School degree verification, Residency Completion Certificates, Board Certifications, and active National/State Medical Licenses.
+*   **Enforcement:** Mapped to clinical specialties. For example, a clinician cannot be designated as an Attending or Specialist in Cardiology without an active Cardiology Board Certification claim.
 
-- **Clean Boundaries:** Keeps the operational administrative tracking (credential audits, verification processes) inside `CyCom HR`, preventing database pollution in the clinical `CyMed` database.
-- **Performance:** Relying on Redis cache lookup or JWT claim checks keeps validation latency under 5ms, avoiding the performance penalties of Option 3.
-- **Dynamic Adaptability:** If a credential expires, `CyCom HR` immediately publishes a revocation event, clearing the cache and blocking clinical CPOE access in real-time, which is impossible with Option 1's static roles.
+#### 2. Nursing Credentialing
+*   **Verification Parameters:** Active nursing board registration (e.g., RN license), specialized training diplomas (e.g., ICU, Neonatology), and clinical practice hours validation.
+*   **Enforcement:** Restricts ward assignments in the scheduling engine. Only nurses with active ICU credentials can be allocated to ICU shift templates.
 
----
-
-## 7. Consequences
-
-### 7.1 Positive
-- High-performance, low-latency privilege checks.
-- Real-time revocation of clinical access upon license expiration or credential suspension.
-- Clear audit trails linking order placement to the clinician's active privileging status.
-
-### 7.2 Trade-offs
-- Requires secondary caching synchronization between CyCom and CyIdentity.
-- A temporary caching sync failure could result in stale credential records (mitigated by setting a conservative 12-hour TTL on Redis privilege entries).
-
-### 7.3 Risks introduced
-
-| # | Risk | Likelihood | Impact | Mitigation |
-|---|---|---|---|---|
-| 1 | Sync latency allows suspended clinician to place orders | Low | High | Revocation events bypass the standard outbox queue; they are routed through high-priority Kafka topics directly to the cache. |
-| 2 | Downstream verifier API is offline | Medium | Medium | Implement an "Active Grace Period" policy inside CyCom HR, allowing temporary override for up to 48 hours with supervisor sign-off. |
-
-### 7.4 Follow-up actions
-- [ ] Design the privileging JSON claim schema for the Workforce OIDC token — Security Architect — Phase 1.3.
-- [ ] Define national registry API adapter specs in `docs/platforms/cyintegrationhub_architecture.md` — Integration Architect — Phase 1.3.
+#### 3. Allied Health Credentialing
+*   **Verification Parameters:** Specific technician/technologist registrations for Pharmacy (license to dispense), Laboratory (board certifications for blood bank, immunology), Imaging (radiation safety certification), and Respiratory Therapy.
+*   **Enforcement:** Gated at the specific clinical module boundary (e.g., laboratory technologists cannot release blood bank cross-matches without active Blood Bank credentials).
 
 ---
 
-## 8. Compliance & Security Impact
+## 6. Configurable Abstraction Framework (Multi-Country Support)
 
-*   **HIPAA §164.308(a)(3):** Ensures only verified clinical personnel have credentials to access and modify PHI.
-*   **CBAHI / JCIA Standards:** Satisfies hospital accreditation requirements for continuous credential verification and documented privileging approvals.
-*   **Audit Logging:** Every blocked transaction or clinical co-signature override is logged to the Platform Audit Sink with the verification outcome.
+To avoid hardcoded national laws, CyMed implements a hierarchical configuration structure. Rules and constraints flow from the country down to the individual department unit.
+
+```json
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CredentialComplianceConfiguration",
+  "type": "object",
+  "properties": {
+    "country": { "type": "string" }, -- E.g., "USA", "SAU", "JOR", "ARE"
+    "primary_source_verification_required": { "type": "boolean" },
+    "grace_period_days_post_expiration": { "type": "integer" },
+    "mandatory_certifications": {
+      "type": "array",
+      "items": { "type": "string" } -- E.g., "BLS", "ACLS", "PALS"
+    },
+    "licensing_bodies": {
+      "type": "array",
+      "items": { "type": "string" } -- E.g., "SCFHS", "DHA", "StateBoard"
+    }
+  }
+}
+```
+
+### Country-Specific Config Profiles
+
+*   **United States (USA):**
+    *   *Licensing Body:* State Medical/Nursing Boards.
+    *   *Mandatory Certifications:* BLS, ACLS (Clinical), PALS (Pediatric units).
+    *   *Grace Period:* 0 days (hard block at expiration).
+    *   *Accreditation:* Joint Commission (TJC) credentialing standards (standards HR.01.02.01).
+*   **Saudi Arabia (SAU):**
+    *   *Licensing Body:* Saudi Commission for Health Specialties (SCFHS / Mumaris+).
+    *   *Mandatory Certifications:* BLS, Saudi Licensing Exam (SLE) status.
+    *   *Grace Period:* 30 days for license renewal processing, subject to active SCFHS application status check.
+    *   *Accreditation:* CBAHI standards.
+*   **Jordan (JOR):**
+    *   *Licensing Body:* Jordan Medical Association (JMA), Ministry of Health (MOH).
+    *   *Mandatory Certifications:* Jordanian Board, BLS.
+    *   *Grace Period:* 15 days.
+    *   *Accreditation:* JCI guidelines.
+*   **United Arab Emirates (UAE):**
+    *   *Licensing Body:* Dubai Health Authority (DHA), Department of Health Abu Dhabi (DOH), Ministry of Health and Prevention (MOHAP).
+    *   *Mandatory Certifications:* Basic Life Support, UAE Board/equivalent.
+    *   *Grace Period:* 30 days, subject to active licensing portal transaction token.
+    *   *Accreditation:* JCI guidelines.
+
+---
+
+## 7. Rationale
+
+*   **Boundary Decoupling:** `CyCom HR` manages the complex, document-heavy workflows of Primary Source Verification (PSV), background checks, and salary linkages. `CyMed` only needs to evaluate the final "Verified" status claim, protecting clinical performance.
+*   **Sub-5ms Evaluation:** Caching active privileging codes (e.g., `PRIV_CPOE_CHEMO`, `PRIV_OR_SURGERY`) as OIDC token claims or within Redis allows the OPA policy engine to evaluate CPOE transactions locally without making external database queries.
+*   **Accreditation Audit Compliance:** Storing both the original credential documents (CyCom) and the system access decisions (CyMed/Policy Engine) creates an end-to-end, tamper-evident audit trail matching JCI/Joint Commission standards.
+
+---
+
+## 8. Consequences & Expiry Workflows
+
+### 8.1 Expiry & Renewal Tracking Matrix
+
+CyMed initiates automated workflows via `CyConnect` as credentials approach their expiration date:
+
+```
+[90 Days Out] ➔ System Event ➔ CyConnect Notification to Clinician (Email/App)
+[60 Days Out] ➔ Roster Warning ➔ Scheduler warned in Shift planning view
+[30 Days Out] ➔ Escalation Event ➔ Alert to Head Nurse & HR Coordinator
+[ 0 Days Out] ➔ Revocation ➔ Clear active Redis privilege cache; Lock EHR CPOE entry
+```
+
+1.  **90 Days Prior:** `CyCom HR` publishes `cybercom.cycom.credential.expiration_warning`. `CyConnect` delivers a renewal reminder to the clinician.
+2.  **60 Days Prior:** `CyMed Scheduling` flags the clinician with an amber status badge in the duty roster. Schedulers are warned that the clinician cannot be allocated to shifts extending past the expiration date.
+3.  **0 Days (Expiration):** At 00:00 UTC on the date of expiration, `CyCom HR` publishes `cybercom.cycom.credential.expired`. `CyIdentity` sofort invalidates the clinician's active session, and the Platform Policy Cache purges all privilege entries. Any active CPOE order attempt is blocked.
+
+### 8.2 Security & Auditing requirements
+*   All credential updates, validation override approvals, and access revocations are written to the **Platform Audit Sink** (tamper-evident, hash-chained).
+*   Joint Commission audits are supported by exporting signed metadata reports containing:
+    *   Clinician identifier.
+    *   Primary Source Verification (PSV) timestamp.
+    *   Active/Expired status history.
+    *   Explicit list of granted clinical privileges.
 
 ---
 
 ## 9. Alternatives Rejected
 
-*   **Option 1 (Static RBAC):** Rejected because it cannot enforce dynamic, granular restrictions (e.g., restricting specific procedures to certified surgeons only) and fails to address real-time credential expirations.
-*   **Option 3 (External RPC):** Rejected because clinical systems require zero-downtime, sub-second response times. Relying on external ministry APIs during emergency CPOE order entries poses an unacceptable safety risk.
+*   **Option 1 (CyMed-Isolated DB):** Rejected because it duplicates employee files, licenses, and contracts between HR and Clinical departments, leading to data synchronization drift and violating the single-source-of-truth principle.
+*   **Option 3 (Direct RPC):** Rejected because calling national ministry registries synchronously on every clinical order entry introduces external network latency (often > 1,000ms) and creates a critical single point of failure if a ministry portal is offline.
 
 ---
 
@@ -117,6 +187,7 @@ What is the technical strategy for verifying clinical credentials and enforcing 
 
 *   [ADR-0005 Identity & Access Management Strategy](ADR-0005-identity-access-management-strategy.md)
 *   [docs/healthcare/workforce_security_model.md](../healthcare/workforce_security_model.md)
+*   Joint Commission Standard HR.01.02.01 (Primary Source Verification)
 
 ---
 
@@ -125,4 +196,4 @@ What is the technical strategy for verifying clinical credentials and enforcing 
 | Date | Author | Change |
 |---|---|---|
 | 2026-06-21 | Chief Healthcare Architect | Proposed |
-| 2026-06-21 | Architecture Board | Accepted |
+| 2026-06-21 | Architecture Board | Accepted & Expanded |
