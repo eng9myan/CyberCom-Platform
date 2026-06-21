@@ -1,10 +1,17 @@
 from django.contrib import admin
+from django.http import JsonResponse
 from django.urls import path, include
 from django.views.decorators.csrf import csrf_exempt
 from graphene_django.views import GraphQLView
 from drf_spectacular.views import SpectacularAPIView, SpectacularRedocView, SpectacularSwaggerView
 
+
+def healthz(_request):
+    return JsonResponse({"status": "ok"})
+
+
 urlpatterns = [
+    path('healthz/', healthz, name='healthz'),
     path('admin/', admin.site.urls),
     path('api/v1/identity/', include('apps.identity.urls')),
     path('api/v1/tenants/', include('apps.tenants.urls')),

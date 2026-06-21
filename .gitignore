@@ -28,6 +28,11 @@ frontend/.next/
 frontend/out/
 frontend/.env*.local
 
+# Env (never commit secrets — use .env.example as a template)
+.env
+.env.local
+.env.*.local
+
 # Python/Django
 __pycache__/
 *.py[cod]

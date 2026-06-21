@@ -1,13 +1,30 @@
 import os
+import sys
 from pathlib import Path
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-prod-key-bound-metadata-secret')
 
-DEBUG = os.environ.get('DJANGO_DEBUG', 'True') == 'True'
+def _env_bool(name: str, default: bool) -> bool:
+    return os.environ.get(name, str(default)).lower() in ('1', 'true', 'yes', 'on')
 
-ALLOWED_HOSTS = ['*']
+
+DEBUG = _env_bool('DJANGO_DEBUG', False)
+
+SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY')
+if not SECRET_KEY:
+    if DEBUG:
+        SECRET_KEY = 'django-insecure-dev-only-do-not-use-in-prod'
+    else:
+        raise RuntimeError('DJANGO_SECRET_KEY must be set when DEBUG is False')
+
+ALLOWED_HOSTS = [
+    h.strip() for h in os.environ.get('DJANGO_ALLOWED_HOSTS', 'localhost,127.0.0.1').split(',') if h.strip()
+]
+
+CSRF_TRUSTED_ORIGINS = [
+    o.strip() for o in os.environ.get('DJANGO_CSRF_TRUSTED_ORIGINS', '').split(',') if o.strip()
+]
 
 INSTALLED_APPS = [
     'django.contrib.admin',
@@ -30,6 +47,7 @@ INSTALLED_APPS = [
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
@@ -60,9 +78,9 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'core_project.wsgi.application'
 
-import sys
+_use_sqlite = _env_bool('USE_SQLITE', False) or 'test' in sys.argv
 
-if 'test' in sys.argv or os.environ.get('USE_SQLITE', 'True') == 'True':
+if _use_sqlite:
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.sqlite3',
@@ -73,9 +91,9 @@ else:
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
-            'NAME': os.environ.get('DB_NAME', 'cyshop_db'),
-            'USER': os.environ.get('DB_USER', 'cyshop_admin'),
-            'PASSWORD': os.environ.get('DB_PASSWORD', 'SecretProductionDbPassword'),
+            'NAME': os.environ['DB_NAME'],
+            'USER': os.environ['DB_USER'],
+            'PASSWORD': os.environ['DB_PASSWORD'],
             'HOST': os.environ.get('DB_HOST', 'localhost'),
             'PORT': os.environ.get('DB_PORT', '5432'),
         }
@@ -103,9 +121,27 @@ USE_I18N = True
 USE_TZ = True
 
 STATIC_URL = 'static/'
+STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-CORS_ALLOW_ALL_ORIGINS = True
+_cors_origins = os.environ.get('DJANGO_CORS_ALLOWED_ORIGINS', '')
+if _cors_origins:
+    CORS_ALLOWED_ORIGINS = [o.strip() for o in _cors_origins.split(',') if o.strip()]
+    CORS_ALLOW_ALL_ORIGINS = False
+else:
+    CORS_ALLOW_ALL_ORIGINS = DEBUG
+
+if not DEBUG:
+    SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    SESSION_COOKIE_SECURE = True
+    CSRF_COOKIE_SECURE = True
+    SECURE_HSTS_SECONDS = 31536000
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_CONTENT_TYPE_NOSNIFF = True
+    SECURE_REFERRER_POLICY = 'same-origin'
+
+REDIS_URL = os.environ.get('REDIS_URL', 'redis://localhost:6379/0')
 
 GRAPHENE = {
     'SCHEMA': 'core_project.schema.schema'

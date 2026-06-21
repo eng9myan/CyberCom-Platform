@@ -4,9 +4,46 @@ import { useState, useEffect } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import Link from "next/link";
 import {
-  LayoutDashboard, Users, ShieldAlert, Settings, User, LogOut, Bell, Menu, ChevronLeft, ChevronRight,
-  Target, FileText, ShoppingBag, BarChart3, MessageSquare, Layers
+  LayoutDashboard, Users, ShieldAlert, Settings, User, LogOut, Bell, ChevronLeft, ChevronRight,
+  Target, FileText, ShoppingBag, BarChart3, MessageSquare, Layers, Search, Sparkles, Command
 } from "lucide-react";
+import Logo from "@/components/brand/Logo";
+
+const NAV_GROUPS = [
+  {
+    label: "Overview",
+    items: [
+      { name: "Dashboard", path: "/app", icon: LayoutDashboard },
+      { name: "Sales Analytics", path: "/app/sales-dashboard", icon: BarChart3 },
+    ],
+  },
+  {
+    label: "Pipeline",
+    items: [
+      { name: "CRM Kanban", path: "/app/crm", icon: Layers },
+      { name: "Leads", path: "/app/leads", icon: Target },
+      { name: "Quotations", path: "/app/quotations", icon: FileText },
+      { name: "Sales Orders", path: "/app/orders", icon: ShoppingBag },
+    ],
+  },
+  {
+    label: "Customer",
+    items: [
+      { name: "Customer Portal", path: "/app/customer-portal", icon: MessageSquare },
+    ],
+  },
+  {
+    label: "Administration",
+    items: [
+      { name: "Users", path: "/app/users", icon: Users },
+      { name: "Roles & RBAC", path: "/app/roles", icon: ShieldAlert },
+      { name: "System Settings", path: "/app/settings", icon: Settings },
+      { name: "My Profile", path: "/app/profile", icon: User },
+    ],
+  },
+];
+
+const FLAT_NAV = NAV_GROUPS.flatMap((g) => g.items);
 
 export default function AppLayout({ children }) {
   const router = useRouter();
@@ -16,15 +53,16 @@ export default function AppLayout({ children }) {
   const [username, setUsername] = useState("");
   const [notifications, setNotifications] = useState([]);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [aiOpen, setAiOpen] = useState(false);
 
   useEffect(() => {
-    const token = localStorage.getItem("access_token");
+    const token = typeof window !== "undefined" && localStorage.getItem("access_token");
     if (!token) {
       router.push("/login");
       return;
     }
-    setTenantName(localStorage.getItem("tenant_name") || "Tenant");
-    setUsername(localStorage.getItem("username") || "User");
+    setTenantName(localStorage.getItem("tenant_name") || "Acme Tenant");
+    setUsername(localStorage.getItem("username") || "Operator");
     fetchNotifications();
   }, []);
 
@@ -32,166 +70,255 @@ export default function AppLayout({ children }) {
     try {
       const token = localStorage.getItem("access_token");
       const tenantId = localStorage.getItem("tenant_id");
-      const response = await fetch("http://localhost:8000/api/v1/notifications/", {
-        headers: {
-          "Authorization": `Bearer ${token}`,
-          "X-Tenant-ID": tenantId
-        }
+      const base = process.env.NEXT_PUBLIC_API_URL || "";
+      const res = await fetch(`${base}/api/v1/notifications/`, {
+        headers: { Authorization: `Bearer ${token}`, "X-Tenant-ID": tenantId },
       });
-      if (response.ok) {
-        const data = await response.json();
-        setNotifications(data);
-      }
-    } catch (err) {
-      console.error(err);
-    }
+      if (res.ok) setNotifications(await res.json());
+    } catch (_) {}
   };
 
   const handleLogout = async () => {
     try {
       const token = localStorage.getItem("access_token");
-      await fetch("http://localhost:8000/api/v1/identity/logout/", {
+      const base = process.env.NEXT_PUBLIC_API_URL || "";
+      await fetch(`${base}/api/v1/identity/logout/`, {
         method: "POST",
-        headers: {
-          "Authorization": `Bearer ${token}`
-        }
+        headers: { Authorization: `Bearer ${token}` },
       });
-    } catch (err) {
-      console.error(err);
-    }
+    } catch (_) {}
     localStorage.clear();
     router.push("/login");
   };
 
-  const navItems = [
-    { name: "Dashboard", path: "/app", icon: <LayoutDashboard className="w-5 h-5" /> },
-    { name: "CRM Kanban", path: "/app/crm", icon: <Layers className="w-5 h-5" /> },
-    { name: "Leads", path: "/app/leads", icon: <Target className="w-5 h-5" /> },
-    { name: "Quotations", path: "/app/quotations", icon: <FileText className="w-5 h-5" /> },
-    { name: "Sales Orders", path: "/app/orders", icon: <ShoppingBag className="w-5 h-5" /> },
-    { name: "Sales Analytics", path: "/app/sales-dashboard", icon: <BarChart3 className="w-5 h-5" /> },
-    { name: "Customer Portal", path: "/app/customer-portal", icon: <MessageSquare className="w-5 h-5" /> },
-    { name: "Users", path: "/app/users", icon: <Users className="w-5 h-5" /> },
-    { name: "Roles & RBAC", path: "/app/roles", icon: <ShieldAlert className="w-5 h-5" /> },
-    { name: "System Settings", path: "/app/settings", icon: <Settings className="w-5 h-5" /> },
-    { name: "My Profile", path: "/app/profile", icon: <User className="w-5 h-5" /> },
-  ];
+  const currentPage = FLAT_NAV.find((n) => n.path === pathname);
+  const unread = notifications.filter((n) => !n.is_read).length;
 
   return (
-    <div className="min-h-screen bg-[#111] text-zinc-100 flex font-sans overflow-hidden bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-zinc-900 via-neutral-950 to-black">
-      
-      {/* Sidebar Navigation */}
-      <aside className={`bg-zinc-950/80 border-r border-zinc-800 flex flex-col transition-all duration-300 z-40 ${
-        collapsed ? "w-20" : "w-64"
-      }`}>
-        <div className="h-20 border-b border-zinc-850 px-6 flex items-center justify-between">
-          {!collapsed ? (
-            <div className="flex items-center gap-3">
-              <span className="w-4 h-4 bg-orange-500 rounded-full"></span>
-              <span className="font-bold tracking-wider text-sm font-mono text-zinc-100 truncate w-40">{tenantName}</span>
-            </div>
-          ) : (
-            <span className="w-4 h-4 bg-orange-500 rounded-full mx-auto"></span>
-          )}
+    <div className="min-h-dvh flex bg-[var(--color-surface)] text-[var(--color-ink)]">
+      {/* Sidebar */}
+      <aside
+        className={`hidden md:flex flex-col bg-white border-r border-[var(--color-line)] transition-[width] duration-300 ${
+          collapsed ? "w-[76px]" : "w-[260px]"
+        }`}
+      >
+        <div className="h-16 px-4 flex items-center justify-between border-b border-[var(--color-line)]">
+          {collapsed ? <Logo mark href={null} /> : <Logo href={null} />}
         </div>
 
-        <nav className="flex-1 py-6 px-4 flex flex-col gap-2 overflow-y-auto">
-          {navItems.map((item) => {
-            const isActive = pathname === item.path;
-            return (
-              <Link
-                key={item.path}
-                href={item.path}
-                className={`flex items-center gap-3 px-4 py-3 rounded-xl text-xs font-semibold tracking-wide transition-all ${
-                  isActive
-                    ? "bg-[#ED6C00] text-white"
-                    : "text-zinc-400 hover:bg-zinc-900 hover:text-white"
-                }`}
-              >
-                {item.icon}
-                {!collapsed && <span>{item.name}</span>}
-              </Link>
-            );
-          })}
+        {!collapsed && (
+          <div className="px-4 py-4 border-b border-[var(--color-line)]">
+            <button className="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg bg-[var(--color-surface-2)] hover:bg-[var(--color-line)] transition text-left">
+              <span className="flex items-center gap-2 min-w-0">
+                <span className="w-6 h-6 rounded-md bg-gradient-to-br from-[#ED6C00] to-[#FF8A2A] text-white text-[10px] font-bold flex items-center justify-center shrink-0">
+                  {(tenantName || "T").slice(0, 2).toUpperCase()}
+                </span>
+                <span className="text-sm font-semibold truncate">{tenantName}</span>
+              </span>
+              <ChevronRight className="w-3.5 h-3.5 text-[var(--color-ink-muted)]" />
+            </button>
+          </div>
+        )}
+
+        <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-5">
+          {NAV_GROUPS.map((group) => (
+            <div key={group.label}>
+              {!collapsed && (
+                <div className="px-3 mb-2 text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--color-ink-muted)]">
+                  {group.label}
+                </div>
+              )}
+              <ul className="space-y-1">
+                {group.items.map((item) => {
+                  const Icon = item.icon;
+                  const active = pathname === item.path;
+                  return (
+                    <li key={item.path}>
+                      <Link
+                        href={item.path}
+                        title={collapsed ? item.name : undefined}
+                        className={`group flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors relative ${
+                          active
+                            ? "bg-[rgba(237,108,0,0.10)] text-[var(--color-ink)]"
+                            : "text-[var(--color-ink-soft)] hover:bg-[var(--color-surface-2)] hover:text-[var(--color-ink)]"
+                        }`}
+                      >
+                        {active && (
+                          <span className="absolute left-0 top-1.5 bottom-1.5 w-[3px] rounded-r bg-[#ED6C00]" aria-hidden />
+                        )}
+                        <Icon className={`w-[18px] h-[18px] shrink-0 ${active ? "text-[#ED6C00]" : ""}`} />
+                        {!collapsed && <span className="truncate">{item.name}</span>}
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          ))}
         </nav>
 
-        <div className="border-t border-zinc-850 p-4 flex flex-col gap-2">
+        <div className="border-t border-[var(--color-line)] p-3 space-y-2">
           {!collapsed && (
-            <div className="flex items-center justify-between mb-2">
-              <div className="text-[10px] text-zinc-500 font-bold uppercase truncate w-32">{username}</div>
-              <button onClick={handleLogout} className="text-zinc-400 hover:text-red-500 transition duration-200">
+            <div className="flex items-center gap-3 px-2 py-2 rounded-lg">
+              <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#59C3E1] to-[#0E7C9B] text-white text-xs font-bold flex items-center justify-center shrink-0">
+                {(username || "U").slice(0, 2).toUpperCase()}
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="text-sm font-semibold truncate">{username}</div>
+                <div className="text-xs text-[var(--color-ink-muted)] truncate">Admin</div>
+              </div>
+              <button
+                onClick={handleLogout}
+                aria-label="Sign out"
+                className="w-9 h-9 rounded-lg hover:bg-[var(--color-surface-2)] text-[var(--color-ink-muted)] hover:text-[#DC2626] flex items-center justify-center transition"
+              >
                 <LogOut className="w-4 h-4" />
               </button>
             </div>
           )}
           <button
             onClick={() => setCollapsed(!collapsed)}
-            className="w-full py-2 bg-zinc-900 hover:bg-zinc-800 text-zinc-400 border border-zinc-800 rounded-lg flex items-center justify-center transition"
+            aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+            className="w-full h-9 rounded-lg border border-[var(--color-line)] hover:bg-[var(--color-surface-2)] text-[var(--color-ink-muted)] flex items-center justify-center transition"
           >
             {collapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
           </button>
         </div>
       </aside>
 
-      {/* Main Panel Content */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        
-        {/* Top Header */}
-        <header className="h-20 bg-zinc-950/40 backdrop-blur-md border-b border-zinc-800 px-8 flex items-center justify-between z-30">
-          <h2 className="text-sm font-bold uppercase tracking-wider font-mono text-zinc-300">
-            {navItems.find((n) => n.path === pathname)?.name || "CYShop Console"}
-          </h2>
-
-          <div className="flex items-center gap-6">
-            {/* Notification drop */}
-            <div className="relative">
-              <button
-                onClick={() => setShowNotifications(!showNotifications)}
-                className="w-10 h-10 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-400 hover:bg-zinc-800 hover:text-white transition relative"
-              >
-                <Bell className="w-5 h-5" />
-                {notifications.filter((n) => !n.is_read).length > 0 && (
-                  <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-orange-500"></span>
-                )}
-              </button>
-
-              {showNotifications && (
-                <div className="absolute top-full right-0 mt-3 w-80 bg-zinc-900 border border-zinc-800 rounded-xl shadow-2xl p-4 z-50 text-xs flex flex-col gap-3">
-                  <span className="font-bold text-zinc-400 uppercase tracking-widest block border-b border-zinc-800 pb-2">
-                    In-App Notifications
-                  </span>
-                  <div className="flex flex-col gap-3 max-h-60 overflow-y-auto">
-                    {notifications.length === 0 ? (
-                      <span className="text-zinc-500 text-center py-4">No recent messages</span>
-                    ) : (
-                      notifications.map((notif) => (
-                        <div key={notif.id} className={`p-2.5 rounded-lg border flex flex-col gap-1 ${
-                          notif.is_read ? "bg-zinc-950/40 border-zinc-850 text-zinc-400" : "bg-orange-950/20 border-orange-900/40 text-orange-200"
-                        }`}>
-                          <span className="font-bold">{notif.title}</span>
-                          <span className="text-[10px] text-zinc-400">{notif.message}</span>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </div>
-              )}
+      {/* Main column */}
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Topbar */}
+        <header className="h-16 bg-white/80 backdrop-blur-xl border-b border-[var(--color-line)] sticky top-0 z-30">
+          <div className="h-full px-4 md:px-8 flex items-center gap-4">
+            <div className="min-w-0">
+              <div className="text-[11px] uppercase tracking-[0.18em] text-[var(--color-ink-muted)]">
+                {tenantName}
+              </div>
+              <h1 className="text-base md:text-lg font-heading font-bold leading-tight truncate">
+                {currentPage?.name || "Console"}
+              </h1>
             </div>
 
-            <div className="flex items-center gap-3 border-l border-zinc-800 pl-6">
-              <div className="w-9 h-9 rounded-xl bg-[#ED6C00] flex items-center justify-center text-white font-bold text-sm">
-                {username.slice(0, 2).toUpperCase()}
+            <div className="flex-1 max-w-xl mx-auto hidden md:block">
+              <button
+                onClick={() => setAiOpen(true)}
+                className="w-full h-10 px-3 rounded-xl border border-[var(--color-line)] bg-[var(--color-surface)] hover:border-[var(--color-ink)] flex items-center gap-2 text-sm text-[var(--color-ink-muted)] transition"
+              >
+                <Search className="w-4 h-4" />
+                <span className="flex-1 text-left">Ask AI or search anything…</span>
+                <span className="hidden md:inline-flex items-center gap-1 text-[10px] font-mono px-1.5 py-0.5 rounded border border-[var(--color-line)] bg-white">
+                  <Command className="w-3 h-3" /> K
+                </span>
+              </button>
+            </div>
+
+            <div className="flex items-center gap-2 ml-auto">
+              <button
+                onClick={() => setAiOpen(true)}
+                className="cy-btn cy-btn-primary !py-2 !px-3 text-sm"
+              >
+                <Sparkles className="w-4 h-4" /> <span className="hidden sm:inline">AI Copilot</span>
+              </button>
+
+              <div className="relative">
+                <button
+                  onClick={() => setShowNotifications(!showNotifications)}
+                  aria-label="Notifications"
+                  className="relative w-10 h-10 rounded-xl border border-[var(--color-line)] bg-white hover:bg-[var(--color-surface-2)] flex items-center justify-center transition"
+                >
+                  <Bell className="w-[18px] h-[18px] text-[var(--color-ink-soft)]" />
+                  {unread > 0 && (
+                    <span className="absolute top-1.5 right-1.5 min-w-[16px] h-4 px-1 rounded-full bg-[#ED6C00] text-white text-[10px] font-bold flex items-center justify-center">
+                      {unread > 9 ? "9+" : unread}
+                    </span>
+                  )}
+                </button>
+                {showNotifications && (
+                  <div className="absolute top-full right-0 mt-2 w-80 cy-glass p-3 z-50">
+                    <div className="px-1 pb-2 text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--color-ink-muted)]">
+                      Notifications
+                    </div>
+                    <div className="max-h-72 overflow-y-auto space-y-2">
+                      {notifications.length === 0 && (
+                        <div className="text-sm text-[var(--color-ink-muted)] text-center py-6">
+                          You're all caught up.
+                        </div>
+                      )}
+                      {notifications.map((n) => (
+                        <div
+                          key={n.id}
+                          className={`p-3 rounded-lg border text-sm ${
+                            n.is_read
+                              ? "bg-white border-[var(--color-line)]"
+                              : "bg-[rgba(237,108,0,0.06)] border-[rgba(237,108,0,0.25)]"
+                          }`}
+                        >
+                          <div className="font-semibold">{n.title}</div>
+                          <div className="text-xs text-[var(--color-ink-soft)] mt-0.5">{n.message}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           </div>
         </header>
 
-        {/* Child Router Content */}
-        <main className="flex-1 overflow-y-auto p-8">
-          {children}
-        </main>
+        <main className="flex-1 p-4 md:p-8 overflow-y-auto">{children}</main>
       </div>
 
+      {/* AI Command Palette */}
+      {aiOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="AI Copilot"
+          className="fixed inset-0 z-[100] flex items-start justify-center pt-[12vh] px-4 bg-black/40 backdrop-blur-sm"
+          onClick={() => setAiOpen(false)}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="w-full max-w-2xl rounded-2xl bg-white shadow-2xl border border-[var(--color-line)] overflow-hidden"
+          >
+            <div className="flex items-center gap-3 px-4 h-14 border-b border-[var(--color-line)]">
+              <Sparkles className="w-5 h-5 text-[#ED6C00]" />
+              <input
+                autoFocus
+                placeholder="Draft a quote, forecast Q3, find dormant leads…"
+                className="flex-1 bg-transparent text-base placeholder:text-[var(--color-ink-muted)] focus:outline-none"
+              />
+              <button
+                onClick={() => setAiOpen(false)}
+                className="text-xs text-[var(--color-ink-muted)] px-2 py-1 rounded border border-[var(--color-line)]"
+              >
+                Esc
+              </button>
+            </div>
+            <div className="p-3 max-h-[50vh] overflow-y-auto">
+              <div className="px-2 pb-1 text-[10px] font-bold uppercase tracking-[0.18em] text-[var(--color-ink-muted)]">
+                Suggested
+              </div>
+              {[
+                { t: "Summarize this week's pipeline movement", i: BarChart3 },
+                { t: "Draft a follow-up sequence for stalled deals", i: MessageSquare },
+                { t: "Generate Q3 revenue forecast", i: Sparkles },
+                { t: "Find leads inactive 30+ days", i: Target },
+              ].map((s, i) => (
+                <button
+                  key={i}
+                  className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[var(--color-surface-2)] text-left transition"
+                >
+                  <s.i className="w-4 h-4 text-[var(--color-ink-muted)]" />
+                  <span className="text-sm flex-1">{s.t}</span>
+                  <ChevronRight className="w-4 h-4 text-[var(--color-ink-muted)]" />
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

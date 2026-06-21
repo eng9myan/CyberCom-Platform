@@ -66,7 +66,7 @@ export default function LeadsPage() {
     const tenantId = localStorage.getItem("tenant_id");
 
     try {
-      const response = await fetch("http://localhost:8000/api/v1/sales/leads/", {
+      const response = await fetch("/api/v1/sales/leads/", {
         headers: {
           "Authorization": `Bearer ${token}`,
           "X-Tenant-ID": tenantId,
@@ -93,7 +93,7 @@ export default function LeadsPage() {
     const tenantId = localStorage.getItem("tenant_id");
 
     try {
-      const response = await fetch("http://localhost:8000/api/v1/sales/leads/", {
+      const response = await fetch("/api/v1/sales/leads/", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -134,7 +134,7 @@ export default function LeadsPage() {
     const tenantId = localStorage.getItem("tenant_id");
 
     try {
-      const response = await fetch(`http://localhost:8000/api/v1/sales/leads/${leadId}/convert/`, {
+      const response = await fetch(`/api/v1/sales/leads/${leadId}/convert/`, {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${token}`,
@@ -173,15 +173,15 @@ export default function LeadsPage() {
   });
 
   return (
-    <div className="space-y-6 text-zinc-100 animate-fade">
+    <div className="space-y-6 text-[var(--color-ink)] animate-fade">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h1 className="text-xl font-bold tracking-tight text-white">Leads Directory</h1>
-          <p className="text-xs text-zinc-400">Capture, filter, and convert customer prospects into deal pipelines.</p>
+          <p className="text-xs text-[var(--color-ink-muted)]">Capture, filter, and convert customer prospects into deal pipelines.</p>
         </div>
         <button
           onClick={() => setIsCreateOpen(true)}
-          className="flex items-center gap-2 bg-[#ED6C00] hover:bg-orange-600 transition text-white px-4 py-2.5 rounded-xl text-xs font-bold shadow-lg shadow-orange-950/20"
+          className="flex items-center gap-2 bg-[#ED6C00] hover:bg-[#ED6C00] transition text-white px-4 py-2.5 rounded-xl text-xs font-bold shadow-lg shadow-orange-950/20"
         >
           <Plus className="w-4 h-4" />
           Create Lead
@@ -203,28 +203,28 @@ export default function LeadsPage() {
       )}
 
       {/* Filter panel */}
-      <div className="bg-zinc-900/60 border border-zinc-800 p-4 rounded-2xl flex flex-col md:flex-row gap-4 items-center justify-between">
+      <div className="bg-white border border-[var(--color-line)] p-4 rounded-2xl flex flex-col md:flex-row gap-4 items-center justify-between">
         <div className="relative w-full md:w-80">
-          <Search className="w-4 h-4 text-zinc-500 absolute left-3.5 top-3" />
+          <Search className="w-4 h-4 text-[var(--color-ink-muted)] absolute left-3.5 top-3" />
           <input
             type="text"
             placeholder="Search leads by name, company..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full bg-zinc-950 border border-zinc-850 rounded-xl py-2 pl-10 pr-4 text-xs text-zinc-200 placeholder-zinc-500 focus:outline-none focus:border-zinc-700 font-medium"
+            className="w-full bg-white border border-[var(--color-line)] rounded-xl py-2 pl-10 pr-4 text-xs text-[var(--color-ink)] placeholder-[var(--color-ink-muted)] focus:outline-none focus:border-[var(--color-ink)] font-medium"
           />
         </div>
 
         <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
           <div className="flex items-center gap-2">
-            <SlidersHorizontal className="w-3.5 h-3.5 text-zinc-500" />
-            <span className="text-[10px] text-zinc-500 uppercase tracking-wider font-bold">Filters:</span>
+            <SlidersHorizontal className="w-3.5 h-3.5 text-[var(--color-ink-muted)]" />
+            <span className="text-[10px] text-[var(--color-ink-muted)] uppercase tracking-wider font-bold">Filters:</span>
           </div>
 
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value)}
-            className="bg-zinc-950 border border-zinc-850 rounded-xl px-3 py-2 text-xs text-zinc-300 focus:outline-none focus:border-zinc-750 font-bold"
+            className="bg-white border border-[var(--color-line)] rounded-xl px-3 py-2 text-xs text-[var(--color-ink-soft)] focus:outline-none focus:border-[var(--color-ink)] font-bold"
           >
             <option value="ALL">All Statuses</option>
             {statuses.map((st) => (
@@ -235,7 +235,7 @@ export default function LeadsPage() {
           <select
             value={priorityFilter}
             onChange={(e) => setPriorityFilter(e.target.value)}
-            className="bg-zinc-950 border border-zinc-850 rounded-xl px-3 py-2 text-xs text-zinc-300 focus:outline-none focus:border-zinc-750 font-bold"
+            className="bg-white border border-[var(--color-line)] rounded-xl px-3 py-2 text-xs text-[var(--color-ink-soft)] focus:outline-none focus:border-[var(--color-ink)] font-bold"
           >
             <option value="ALL">All Priorities</option>
             {priorities.map((pr) => (
@@ -245,7 +245,7 @@ export default function LeadsPage() {
 
           <button
             onClick={fetchLeads}
-            className="w-9 h-9 bg-zinc-950 border border-zinc-850 rounded-xl flex items-center justify-center text-zinc-400 hover:text-white transition hover:bg-zinc-900"
+            className="w-9 h-9 bg-white border border-[var(--color-line)] rounded-xl flex items-center justify-center text-[var(--color-ink-muted)] hover:text-white transition hover:bg-white"
           >
             <RefreshCw className="w-3.5 h-3.5" />
           </button>
@@ -255,24 +255,24 @@ export default function LeadsPage() {
       {/* Main grid / list */}
       {loading ? (
         <div className="flex justify-center items-center h-60">
-          <div className="w-8 h-8 border-4 border-zinc-850 border-t-orange-500 rounded-full animate-spin"></div>
+          <div className="w-8 h-8 border-4 border-[var(--color-line)] border-t-orange-500 rounded-full animate-spin"></div>
         </div>
       ) : filteredLeads.length === 0 ? (
-        <div className="bg-zinc-900/20 border border-zinc-850 p-12 rounded-2xl text-center">
-          <p className="text-xs text-zinc-500 font-medium">No leads match the active filters.</p>
+        <div className="bg-white border border-[var(--color-line)] p-12 rounded-2xl text-center">
+          <p className="text-xs text-[var(--color-ink-muted)] font-medium">No leads match the active filters.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredLeads.map((lead) => {
             const priorityColors = {
-              LOW: "bg-zinc-800 text-zinc-400 border-zinc-700",
+              LOW: "bg-[var(--color-surface-2)] text-[var(--color-ink-muted)] border-[var(--color-ink)]",
               MEDIUM: "bg-blue-950/40 text-blue-400 border-blue-900/30",
-              HIGH: "bg-orange-950/40 text-orange-400 border-orange-900/30",
+              HIGH: "bg-[rgba(237,108,0,0.08)] text-[#ED6C00] border-[rgba(237,108,0,0.25)]",
               CRITICAL: "bg-red-950/40 text-red-400 border-red-900/30",
             };
 
             const statusColors = {
-              NEW: "bg-zinc-900 text-zinc-400 border-zinc-800",
+              NEW: "bg-white text-[var(--color-ink-muted)] border-[var(--color-line)]",
               CONTACTED: "bg-sky-950/40 text-sky-400 border-sky-900/30",
               QUALIFIED: "bg-emerald-950/40 text-emerald-400 border-emerald-900/30",
               LOST: "bg-red-950/20 text-red-500/80 border-red-950/40",
@@ -281,15 +281,15 @@ export default function LeadsPage() {
             return (
               <div
                 key={lead.id}
-                className="bg-zinc-900/60 border border-zinc-800 rounded-2xl p-6 flex flex-col justify-between hover:border-zinc-700 transition duration-200 shadow-sm"
+                className="bg-white border border-[var(--color-line)] rounded-2xl p-6 flex flex-col justify-between hover:border-[var(--color-ink)] transition duration-200 shadow-sm"
               >
                 <div className="space-y-4">
                   <div className="flex justify-between items-start gap-2">
                     <div>
-                      <h3 className="font-bold text-sm text-zinc-100">{lead.name}</h3>
+                      <h3 className="font-bold text-sm text-[var(--color-ink)]">{lead.name}</h3>
                       {lead.company && (
-                        <div className="flex items-center gap-1.5 text-xs text-zinc-400 mt-1">
-                          <Building className="w-3.5 h-3.5 text-zinc-500" />
+                        <div className="flex items-center gap-1.5 text-xs text-[var(--color-ink-muted)] mt-1">
+                          <Building className="w-3.5 h-3.5 text-[var(--color-ink-muted)]" />
                           <span>{lead.company}</span>
                         </div>
                       )}
@@ -304,30 +304,30 @@ export default function LeadsPage() {
                     </div>
                   </div>
 
-                  <div className="border-t border-zinc-850 pt-4 space-y-2 text-xs">
+                  <div className="border-t border-[var(--color-line)] pt-4 space-y-2 text-xs">
                     {lead.contact_person && (
-                      <div className="flex items-center gap-2 text-zinc-400">
-                        <User className="w-3.5 h-3.5 text-zinc-500" />
+                      <div className="flex items-center gap-2 text-[var(--color-ink-muted)]">
+                        <User className="w-3.5 h-3.5 text-[var(--color-ink-muted)]" />
                         <span>{lead.contact_person}</span>
                       </div>
                     )}
-                    <div className="flex items-center gap-2 text-zinc-400">
-                      <Mail className="w-3.5 h-3.5 text-zinc-500" />
+                    <div className="flex items-center gap-2 text-[var(--color-ink-muted)]">
+                      <Mail className="w-3.5 h-3.5 text-[var(--color-ink-muted)]" />
                       <span className="truncate">{lead.email}</span>
                     </div>
                     {lead.phone && (
-                      <div className="flex items-center gap-2 text-zinc-400">
-                        <Phone className="w-3.5 h-3.5 text-zinc-500" />
+                      <div className="flex items-center gap-2 text-[var(--color-ink-muted)]">
+                        <Phone className="w-3.5 h-3.5 text-[var(--color-ink-muted)]" />
                         <span>{lead.phone}</span>
                       </div>
                     )}
                   </div>
                 </div>
 
-                <div className="border-t border-zinc-850 mt-6 pt-4 flex items-center justify-between">
+                <div className="border-t border-[var(--color-line)] mt-6 pt-4 flex items-center justify-between">
                   <div className="space-y-0.5">
-                    <span className="text-[9px] text-zinc-500 font-bold uppercase tracking-wider">Est. Revenue</span>
-                    <div className="text-sm font-extrabold font-mono text-orange-400">
+                    <span className="text-[9px] text-[var(--color-ink-muted)] font-bold uppercase tracking-wider">Est. Revenue</span>
+                    <div className="text-sm font-extrabold font-mono text-[#ED6C00]">
                       {parseFloat(lead.expected_revenue).toFixed(2)} JOD
                     </div>
                   </div>
@@ -338,7 +338,7 @@ export default function LeadsPage() {
                         setSelectedLead(lead);
                         setIsConvertOpen(true);
                       }}
-                      className="flex items-center gap-1.5 bg-zinc-950 border border-zinc-800 hover:bg-zinc-900 transition text-zinc-300 hover:text-white px-3 py-1.5 rounded-xl text-[10px] font-bold"
+                      className="flex items-center gap-1.5 bg-white border border-[var(--color-line)] hover:bg-white transition text-[var(--color-ink-soft)] hover:text-white px-3 py-1.5 rounded-xl text-[10px] font-bold"
                     >
                       Convert
                       <ArrowRight className="w-3.5 h-3.5" />
@@ -353,13 +353,13 @@ export default function LeadsPage() {
 
       {/* CREATE LEAD MODAL */}
       {isCreateOpen && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-zinc-950 border border-zinc-800 w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden animate-zoomIn flex flex-col max-h-[90vh]">
-            <div className="px-6 py-4 border-b border-zinc-850 flex justify-between items-center">
-              <h2 className="text-sm font-bold uppercase tracking-wider text-zinc-300">Add New Prospect Lead</h2>
+        <div className="fixed inset-0 bg-white/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white border border-[var(--color-line)] w-full max-w-lg rounded-2xl shadow-2xl overflow-hidden animate-zoomIn flex flex-col max-h-[90vh]">
+            <div className="px-6 py-4 border-b border-[var(--color-line)] flex justify-between items-center">
+              <h2 className="text-sm font-bold uppercase tracking-wider text-[var(--color-ink-soft)]">Add New Prospect Lead</h2>
               <button
                 onClick={() => setIsCreateOpen(false)}
-                className="text-zinc-500 hover:text-white text-xs font-bold"
+                className="text-[var(--color-ink-muted)] hover:text-white text-xs font-bold"
               >
                 ✕
               </button>
@@ -368,86 +368,86 @@ export default function LeadsPage() {
             <form onSubmit={handleCreateLead} className="p-6 space-y-4 overflow-y-auto flex-1">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="text-[10px] text-zinc-400 uppercase tracking-widest font-bold">Prospect Name *</label>
+                  <label className="text-[10px] text-[var(--color-ink-muted)] uppercase tracking-widest font-bold">Prospect Name *</label>
                   <input
                     type="text"
                     required
                     value={newLead.name}
                     onChange={(e) => setNewLead({ ...newLead, name: e.target.value })}
                     placeholder="e.g., Al-Nabulsi Bakery"
-                    className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-zinc-700"
+                    className="w-full bg-white border border-[var(--color-line)] rounded-xl px-3 py-2 text-xs text-[var(--color-ink)] focus:outline-none focus:border-[var(--color-ink)]"
                   />
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-[10px] text-zinc-400 uppercase tracking-widest font-bold">Company Name</label>
+                  <label className="text-[10px] text-[var(--color-ink-muted)] uppercase tracking-widest font-bold">Company Name</label>
                   <input
                     type="text"
                     value={newLead.company}
                     onChange={(e) => setNewLead({ ...newLead, company: e.target.value })}
                     placeholder="e.g., Nabulsi & Sons"
-                    className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-zinc-700"
+                    className="w-full bg-white border border-[var(--color-line)] rounded-xl px-3 py-2 text-xs text-[var(--color-ink)] focus:outline-none focus:border-[var(--color-ink)]"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="text-[10px] text-zinc-400 uppercase tracking-widest font-bold">Contact Person</label>
+                  <label className="text-[10px] text-[var(--color-ink-muted)] uppercase tracking-widest font-bold">Contact Person</label>
                   <input
                     type="text"
                     value={newLead.contact_person}
                     onChange={(e) => setNewLead({ ...newLead, contact_person: e.target.value })}
                     placeholder="e.g., Tareq Nabulsi"
-                    className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-zinc-700"
+                    className="w-full bg-white border border-[var(--color-line)] rounded-xl px-3 py-2 text-xs text-[var(--color-ink)] focus:outline-none focus:border-[var(--color-ink)]"
                   />
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-[10px] text-zinc-400 uppercase tracking-widest font-bold">Email Address *</label>
+                  <label className="text-[10px] text-[var(--color-ink-muted)] uppercase tracking-widest font-bold">Email Address *</label>
                   <input
                     type="email"
                     required
                     value={newLead.email}
                     onChange={(e) => setNewLead({ ...newLead, email: e.target.value })}
                     placeholder="e.g., tareq@nabulsi.com"
-                    className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-zinc-700"
+                    className="w-full bg-white border border-[var(--color-line)] rounded-xl px-3 py-2 text-xs text-[var(--color-ink)] focus:outline-none focus:border-[var(--color-ink)]"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <label className="text-[10px] text-zinc-400 uppercase tracking-widest font-bold">Phone Number</label>
+                  <label className="text-[10px] text-[var(--color-ink-muted)] uppercase tracking-widest font-bold">Phone Number</label>
                   <input
                     type="text"
                     value={newLead.phone}
                     onChange={(e) => setNewLead({ ...newLead, phone: e.target.value })}
                     placeholder="e.g., +962791234567"
-                    className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-zinc-700"
+                    className="w-full bg-white border border-[var(--color-line)] rounded-xl px-3 py-2 text-xs text-[var(--color-ink)] focus:outline-none focus:border-[var(--color-ink)]"
                   />
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-[10px] text-zinc-400 uppercase tracking-widest font-bold">Estimated Deal Value (JOD)</label>
+                  <label className="text-[10px] text-[var(--color-ink-muted)] uppercase tracking-widest font-bold">Estimated Deal Value (JOD)</label>
                   <input
                     type="number"
                     step="0.01"
                     value={newLead.expected_revenue}
                     onChange={(e) => setNewLead({ ...newLead, expected_revenue: e.target.value })}
                     placeholder="5000.00"
-                    className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-200 focus:outline-none focus:border-zinc-700 font-mono"
+                    className="w-full bg-white border border-[var(--color-line)] rounded-xl px-3 py-2 text-xs text-[var(--color-ink)] focus:outline-none focus:border-[var(--color-ink)] font-mono"
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="space-y-1">
-                  <label className="text-[10px] text-zinc-400 uppercase tracking-widest font-bold">Source</label>
+                  <label className="text-[10px] text-[var(--color-ink-muted)] uppercase tracking-widest font-bold">Source</label>
                   <select
                     value={newLead.source}
                     onChange={(e) => setNewLead({ ...newLead, source: e.target.value })}
-                    className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-300 focus:outline-none focus:border-zinc-700"
+                    className="w-full bg-white border border-[var(--color-line)] rounded-xl px-3 py-2 text-xs text-[var(--color-ink-soft)] focus:outline-none focus:border-[var(--color-ink)]"
                   >
                     {sources.map((s) => (
                       <option key={s.value} value={s.value}>{s.label}</option>
@@ -456,11 +456,11 @@ export default function LeadsPage() {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-[10px] text-zinc-400 uppercase tracking-widest font-bold">Priority</label>
+                  <label className="text-[10px] text-[var(--color-ink-muted)] uppercase tracking-widest font-bold">Priority</label>
                   <select
                     value={newLead.priority}
                     onChange={(e) => setNewLead({ ...newLead, priority: e.target.value })}
-                    className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-300 focus:outline-none focus:border-zinc-700"
+                    className="w-full bg-white border border-[var(--color-line)] rounded-xl px-3 py-2 text-xs text-[var(--color-ink-soft)] focus:outline-none focus:border-[var(--color-ink)]"
                   >
                     {priorities.map((p) => (
                       <option key={p.value} value={p.value}>{p.label}</option>
@@ -469,11 +469,11 @@ export default function LeadsPage() {
                 </div>
 
                 <div className="space-y-1">
-                  <label className="text-[10px] text-zinc-400 uppercase tracking-widest font-bold">Status</label>
+                  <label className="text-[10px] text-[var(--color-ink-muted)] uppercase tracking-widest font-bold">Status</label>
                   <select
                     value={newLead.status}
                     onChange={(e) => setNewLead({ ...newLead, status: e.target.value })}
-                    className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-3 py-2 text-xs text-zinc-300 focus:outline-none focus:border-zinc-700"
+                    className="w-full bg-white border border-[var(--color-line)] rounded-xl px-3 py-2 text-xs text-[var(--color-ink-soft)] focus:outline-none focus:border-[var(--color-ink)]"
                   >
                     {statuses.map((st) => (
                       <option key={st.value} value={st.value}>{st.label}</option>
@@ -482,17 +482,17 @@ export default function LeadsPage() {
                 </div>
               </div>
 
-              <div className="pt-4 border-t border-zinc-850 flex justify-end gap-3">
+              <div className="pt-4 border-t border-[var(--color-line)] flex justify-end gap-3">
                 <button
                   type="button"
                   onClick={() => setIsCreateOpen(false)}
-                  className="bg-zinc-900 hover:bg-zinc-850 text-zinc-400 hover:text-white border border-zinc-800 px-4 py-2 rounded-xl text-xs font-bold transition"
+                  className="bg-white hover:bg-[var(--color-surface-2)] text-[var(--color-ink-muted)] hover:text-white border border-[var(--color-line)] px-4 py-2 rounded-xl text-xs font-bold transition"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  className="bg-[#ED6C00] hover:bg-orange-600 text-white px-4 py-2 rounded-xl text-xs font-bold transition"
+                  className="bg-[#ED6C00] hover:bg-[#ED6C00] text-white px-4 py-2 rounded-xl text-xs font-bold transition"
                 >
                   Submit Lead
                 </button>
@@ -504,33 +504,33 @@ export default function LeadsPage() {
 
       {/* CONVERT LEAD CONFIRMATION MODAL */}
       {isConvertOpen && selectedLead && (
-        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-zinc-950 border border-zinc-800 w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-zoomIn">
-            <div className="px-6 py-4 border-b border-zinc-850">
-              <h2 className="text-sm font-bold uppercase tracking-wider text-zinc-300">Convert Lead to Opportunity</h2>
+        <div className="fixed inset-0 bg-white/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white border border-[var(--color-line)] w-full max-w-md rounded-2xl shadow-2xl overflow-hidden animate-zoomIn">
+            <div className="px-6 py-4 border-b border-[var(--color-line)]">
+              <h2 className="text-sm font-bold uppercase tracking-wider text-[var(--color-ink-soft)]">Convert Lead to Opportunity</h2>
             </div>
 
             <div className="p-6 space-y-4">
-              <p className="text-xs text-zinc-400 leading-relaxed">
-                You are about to qualify <strong className="text-zinc-200">{selectedLead.name}</strong> and convert it into a pipeline Deal Opportunity. 
+              <p className="text-xs text-[var(--color-ink-muted)] leading-relaxed">
+                You are about to qualify <strong className="text-[var(--color-ink)]">{selectedLead.name}</strong> and convert it into a pipeline Deal Opportunity. 
                 This will automatically:
               </p>
-              <ul className="text-xs text-zinc-400 list-disc pl-4 space-y-1">
+              <ul className="text-xs text-[var(--color-ink-muted)] list-disc pl-4 space-y-1">
                 <li>Change Lead status to <strong className="text-emerald-400">QUALIFIED</strong>.</li>
-                <li>Create an Opportunity card in the CRM Kanban Board with stage <strong className="text-orange-400">QUALIFIED</strong>.</li>
+                <li>Create an Opportunity card in the CRM Kanban Board with stage <strong className="text-[#ED6C00]">QUALIFIED</strong>.</li>
                 <li>Log a converted audit action under activities history.</li>
               </ul>
 
-              <div className="pt-4 border-t border-zinc-850 flex justify-end gap-3">
+              <div className="pt-4 border-t border-[var(--color-line)] flex justify-end gap-3">
                 <button
                   onClick={() => setIsConvertOpen(false)}
-                  className="bg-zinc-900 hover:bg-zinc-850 text-zinc-400 hover:text-white border border-zinc-800 px-4 py-2 rounded-xl text-xs font-bold transition"
+                  className="bg-white hover:bg-[var(--color-surface-2)] text-[var(--color-ink-muted)] hover:text-white border border-[var(--color-line)] px-4 py-2 rounded-xl text-xs font-bold transition"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={() => handleConvertLead(selectedLead.id)}
-                  className="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5"
+                  className="bg-[#ED6C00] hover:bg-[#ED6C00] text-white px-4 py-2 rounded-xl text-xs font-bold transition flex items-center gap-1.5"
                 >
                   Confirm Conversion
                   <ArrowRight className="w-3.5 h-3.5" />

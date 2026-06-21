@@ -21,7 +21,7 @@ export default function SettingsPage() {
     const tenantId = localStorage.getItem("tenant_id");
 
     try {
-      const response = await fetch("http://localhost:8000/api/v1/tenants/settings/", {
+      const response = await fetch("/api/v1/tenants/settings/", {
         headers: {
           "Authorization": `Bearer ${token}`,
           "X-Tenant-ID": tenantId
@@ -57,7 +57,7 @@ export default function SettingsPage() {
     if (!settings) return;
 
     try {
-      const response = await fetch(`http://localhost:8000/api/v1/tenants/settings/${settings.id}/`, {
+      const response = await fetch(`/api/v1/tenants/settings/${settings.id}/`, {
         method: "PUT",
         headers: {
           "Content-Type": "application/json",
@@ -91,13 +91,13 @@ export default function SettingsPage() {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-96">
-        <div className="w-8 h-8 border-4 border-zinc-850 border-t-orange-500 rounded-full animate-spin"></div>
+        <div className="w-8 h-8 border-4 border-[var(--color-line)] border-t-orange-500 rounded-full animate-spin"></div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-3xl space-y-8 animate-fade text-zinc-100">
+    <div className="max-w-3xl space-y-8 animate-fade text-[var(--color-ink)]">
       
       {error && (
         <div className="bg-red-950/40 border border-red-800 text-red-400 p-4 rounded-xl text-xs">
@@ -114,18 +114,18 @@ export default function SettingsPage() {
       <form onSubmit={handleSaveSettings} className="space-y-8">
         
         {/* Localization & Branding Settings */}
-        <div className="bg-zinc-900/60 backdrop-blur-xl border border-zinc-800 rounded-2xl p-6 shadow-xl space-y-6">
-          <h3 className="text-sm font-bold uppercase tracking-wider border-b border-zinc-800 pb-3 flex items-center gap-2">
+        <div className="bg-white backdrop-blur-xl border border-[var(--color-line)] rounded-2xl p-6 shadow-xl space-y-6">
+          <h3 className="text-sm font-bold uppercase tracking-wider border-b border-[var(--color-line)] pb-3 flex items-center gap-2">
             <Globe className="w-4 h-4 text-[#ED6C00]" /> Localization & Regional Settings
           </h3>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-zinc-400 text-[10px] font-bold uppercase mb-2">Base Currency</label>
+              <label className="block text-[var(--color-ink-muted)] text-[10px] font-bold uppercase mb-2">Base Currency</label>
               <select
                 value={currency}
                 onChange={(e) => setCurrency(e.target.value)}
-                className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-4 py-2.5 text-xs focus:outline-none focus:border-orange-500 transition"
+                className="w-full bg-white border border-[var(--color-line)] rounded-lg px-4 py-2.5 text-xs focus:outline-none focus:border-orange-500 transition"
               >
                 <option value="JOD">JOD - Jordanian Dinar</option>
                 <option value="SAR">SAR - Saudi Riyal</option>
@@ -135,11 +135,11 @@ export default function SettingsPage() {
             </div>
 
             <div>
-              <label className="block text-zinc-400 text-[10px] font-bold uppercase mb-2">System Timezone</label>
+              <label className="block text-[var(--color-ink-muted)] text-[10px] font-bold uppercase mb-2">System Timezone</label>
               <select
                 value={timezone}
                 onChange={(e) => setTimezone(e.target.value)}
-                className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-4 py-2.5 text-xs focus:outline-none focus:border-orange-500 transition"
+                className="w-full bg-white border border-[var(--color-line)] rounded-lg px-4 py-2.5 text-xs focus:outline-none focus:border-orange-500 transition"
               >
                 <option value="Asia/Amman">Asia/Amman</option>
                 <option value="Asia/Riyadh">Asia/Riyadh</option>
@@ -149,11 +149,11 @@ export default function SettingsPage() {
             </div>
 
             <div>
-              <label className="block text-zinc-400 text-[10px] font-bold uppercase mb-2">System Language</label>
+              <label className="block text-[var(--color-ink-muted)] text-[10px] font-bold uppercase mb-2">System Language</label>
               <select
                 value={language}
                 onChange={(e) => setLanguage(e.target.value)}
-                className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-4 py-2.5 text-xs focus:outline-none focus:border-orange-500 transition"
+                className="w-full bg-white border border-[var(--color-line)] rounded-lg px-4 py-2.5 text-xs focus:outline-none focus:border-orange-500 transition"
               >
                 <option value="ar">العربية (Arabic)</option>
                 <option value="en">English (US)</option>
@@ -161,11 +161,11 @@ export default function SettingsPage() {
             </div>
 
             <div>
-              <label className="block text-zinc-400 text-[10px] font-bold uppercase mb-2">Visual Theme</label>
+              <label className="block text-[var(--color-ink-muted)] text-[10px] font-bold uppercase mb-2">Visual Theme</label>
               <select
                 value={themeMode}
                 onChange={(e) => setThemeMode(e.target.value)}
-                className="w-full bg-zinc-950 border border-zinc-800 rounded-lg px-4 py-2.5 text-xs focus:outline-none focus:border-orange-500 transition"
+                className="w-full bg-white border border-[var(--color-line)] rounded-lg px-4 py-2.5 text-xs focus:outline-none focus:border-orange-500 transition"
               >
                 <option value="DARK">Dark Space (Recommended)</option>
                 <option value="LIGHT">Light Theme</option>
@@ -176,19 +176,19 @@ export default function SettingsPage() {
         </div>
 
         {/* Subscription details */}
-        <div className="bg-zinc-900/60 backdrop-blur-xl border border-zinc-800 rounded-2xl p-6 shadow-xl space-y-4">
-          <h3 className="text-sm font-bold uppercase tracking-wider border-b border-zinc-800 pb-3 flex items-center gap-2">
+        <div className="bg-white backdrop-blur-xl border border-[var(--color-line)] rounded-2xl p-6 shadow-xl space-y-4">
+          <h3 className="text-sm font-bold uppercase tracking-wider border-b border-[var(--color-line)] pb-3 flex items-center gap-2">
             <Palette className="w-4 h-4 text-sky-400" /> SaaS Node Subscription
           </h3>
 
-          <div className="flex justify-between items-center text-xs font-semibold bg-zinc-950/40 p-4 rounded-xl border border-zinc-850">
+          <div className="flex justify-between items-center text-xs font-semibold bg-white p-4 rounded-xl border border-[var(--color-line)]">
             <div className="flex flex-col gap-1">
-              <span className="text-zinc-300">Active Node Tier: <strong className="text-orange-500">{settings?.subscription_tier}</strong></span>
-              <span className="text-zinc-500">Status: <strong className="text-green-500">{settings?.subscription_status}</strong></span>
+              <span className="text-[var(--color-ink-soft)]">Active Node Tier: <strong className="text-[#ED6C00]">{settings?.subscription_tier}</strong></span>
+              <span className="text-[var(--color-ink-muted)]">Status: <strong className="text-green-500">{settings?.subscription_status}</strong></span>
             </div>
             <button
               type="button"
-              className="bg-zinc-800 hover:bg-zinc-750 px-4 py-2 rounded-lg font-bold transition text-[10px] border border-zinc-700"
+              className="bg-[var(--color-surface-2)] hover:bg-[var(--color-surface-2)] px-4 py-2 rounded-lg font-bold transition text-[10px] border border-[var(--color-ink)]"
             >
               Upgrade Subscription
             </button>
@@ -197,7 +197,7 @@ export default function SettingsPage() {
 
         <button
           type="submit"
-          className="w-full bg-orange-600 hover:bg-orange-500 active:scale-[0.99] text-white font-bold py-3 rounded-xl text-xs transition shadow-lg shadow-orange-500/10"
+          className="w-full bg-[#ED6C00] hover:bg-[#ED6C00] active:scale-[0.99] text-white font-bold py-3 rounded-xl text-xs transition shadow-lg shadow-orange-500/10"
         >
           Save System Configurations
         </button>

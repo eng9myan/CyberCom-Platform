@@ -1,14 +1,21 @@
 import './globals.css'
 
 export const metadata = {
-  title: 'CYShop Commerce OS',
-  description: 'Enterprise Tenant Core Portal',
+  title: 'Cyshop — AI-native Commerce OS',
+  description: 'Multi-tenant commerce OS with an AI copilot for CRM, orders, inventory, and customer portal.',
+}
+
+export const viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  viewportFit: 'cover',
+  themeColor: '#FFFFFF',
 }
 
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body className="antialiased">{children}</body>
     </html>
   )
 }

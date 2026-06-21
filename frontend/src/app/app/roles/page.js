@@ -25,10 +25,10 @@ export default function RolesPage() {
         "X-Tenant-ID": tenantId
       };
 
-      const roleRes = await fetch("http://localhost:8000/api/v1/identity/roles/", { headers });
+      const roleRes = await fetch("/api/v1/identity/roles/", { headers });
       const roleData = roleRes.ok ? await roleRes.json() : [];
 
-      const permRes = await fetch("http://localhost:8000/api/v1/identity/permissions/", { headers });
+      const permRes = await fetch("/api/v1/identity/permissions/", { headers });
       const permData = permRes.ok ? await permRes.json() : [];
 
       setRoles(roleData);
@@ -49,7 +49,7 @@ export default function RolesPage() {
     const tenantId = localStorage.getItem("tenant_id");
 
     try {
-      const response = await fetch("http://localhost:8000/api/v1/identity/roles/", {
+      const response = await fetch("/api/v1/identity/roles/", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -83,13 +83,13 @@ export default function RolesPage() {
   if (loading) {
     return (
       <div className="flex justify-center items-center h-96">
-        <div className="w-8 h-8 border-4 border-zinc-850 border-t-orange-500 rounded-full animate-spin"></div>
+        <div className="w-8 h-8 border-4 border-[var(--color-line)] border-t-orange-500 rounded-full animate-spin"></div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-8 animate-fade text-zinc-100">
+    <div className="space-y-8 animate-fade text-[var(--color-ink)]">
       
       {error && (
         <div className="bg-red-950/40 border border-red-800 text-red-400 p-4 rounded-xl text-xs">
@@ -100,31 +100,31 @@ export default function RolesPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         
         {/* Roles Table */}
-        <div className="lg:col-span-2 bg-zinc-900/60 backdrop-blur-xl border border-zinc-800 rounded-2xl p-6 shadow-xl">
-          <h3 className="text-sm font-bold uppercase tracking-wider mb-6 border-b border-zinc-800 pb-3 flex items-center gap-2">
-            <Shield className="w-4 h-4 text-orange-500" /> Security Roles
+        <div className="lg:col-span-2 bg-white backdrop-blur-xl border border-[var(--color-line)] rounded-2xl p-6 shadow-xl">
+          <h3 className="text-sm font-bold uppercase tracking-wider mb-6 border-b border-[var(--color-line)] pb-3 flex items-center gap-2">
+            <Shield className="w-4 h-4 text-[#ED6C00]" /> Security Roles
           </h3>
 
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs font-semibold">
               <thead>
-                <tr className="border-b border-zinc-850 text-zinc-500 uppercase tracking-wider text-[10px]">
+                <tr className="border-b border-[var(--color-line)] text-[var(--color-ink-muted)] uppercase tracking-wider text-[10px]">
                   <th className="py-3">Role Code</th>
                   <th className="py-3">Display Name</th>
                   <th className="py-3">Assigned Permissions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-zinc-850 text-zinc-300">
+              <tbody className="divide-y divide-zinc-850 text-[var(--color-ink-soft)]">
                 {roles.length === 0 ? (
                   <tr>
-                    <td colSpan="3" className="py-4 text-center text-zinc-500">No security roles declared</td>
+                    <td colSpan="3" className="py-4 text-center text-[var(--color-ink-muted)]">No security roles declared</td>
                   </tr>
                 ) : (
                   roles.map((r) => (
                     <tr key={r.id}>
-                      <td className="py-4 font-mono font-bold text-orange-400">{r.code}</td>
-                      <td className="py-4 font-bold text-zinc-100">{r.name}</td>
-                      <td className="py-4 text-zinc-400">
+                      <td className="py-4 font-mono font-bold text-[#ED6C00]">{r.code}</td>
+                      <td className="py-4 font-bold text-[var(--color-ink)]">{r.name}</td>
+                      <td className="py-4 text-[var(--color-ink-muted)]">
                         {r.permissions?.length || 0} scopes mapped
                       </td>
                     </tr>
@@ -139,39 +139,39 @@ export default function RolesPage() {
         <div className="space-y-8">
           
           {/* Create Role Card */}
-          <div className="bg-zinc-900/60 backdrop-blur-xl border border-zinc-800 rounded-2xl p-6 shadow-xl">
-            <h3 className="text-sm font-bold uppercase tracking-wider mb-6 border-b border-zinc-800 pb-3 flex items-center gap-2">
+          <div className="bg-white backdrop-blur-xl border border-[var(--color-line)] rounded-2xl p-6 shadow-xl">
+            <h3 className="text-sm font-bold uppercase tracking-wider mb-6 border-b border-[var(--color-line)] pb-3 flex items-center gap-2">
               <Plus className="w-4 h-4 text-sky-400" /> Create Security Role
             </h3>
 
             <form onSubmit={handleCreateRole} className="space-y-4">
               <div>
-                <label className="block text-zinc-400 text-[10px] font-bold uppercase mb-2">Role Code</label>
+                <label className="block text-[var(--color-ink-muted)] text-[10px] font-bold uppercase mb-2">Role Code</label>
                 <input
                   type="text"
                   required
                   placeholder="e.g. CASHIER"
                   value={newRoleCode}
                   onChange={(e) => setNewRoleCode(e.target.value)}
-                  className="w-full bg-zinc-950/80 border border-zinc-800 rounded-lg px-4 py-2.5 text-xs focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition"
+                  className="w-full bg-white border border-[var(--color-line)] rounded-lg px-4 py-2.5 text-xs focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition"
                 />
               </div>
               <div>
-                <label className="block text-zinc-400 text-[10px] font-bold uppercase mb-2">Role Name</label>
+                <label className="block text-[var(--color-ink-muted)] text-[10px] font-bold uppercase mb-2">Role Name</label>
                 <input
                   type="text"
                   required
                   placeholder="e.g. POS Sales Agent"
                   value={newRoleName}
                   onChange={(e) => setNewRoleName(e.target.value)}
-                  className="w-full bg-zinc-950/80 border border-zinc-800 rounded-lg px-4 py-2.5 text-xs focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition"
+                  className="w-full bg-white border border-[var(--color-line)] rounded-lg px-4 py-2.5 text-xs focus:outline-none focus:border-orange-500 focus:ring-1 focus:ring-orange-500 transition"
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={submitting}
-                className="w-full bg-orange-600 hover:bg-orange-500 active:scale-[0.99] text-white font-bold py-2.5 rounded-lg text-xs transition disabled:opacity-50"
+                className="w-full bg-[#ED6C00] hover:bg-[#ED6C00] active:scale-[0.99] text-white font-bold py-2.5 rounded-lg text-xs transition disabled:opacity-50"
               >
                 {submitting ? "Deploying..." : "Add Security Role"}
               </button>
@@ -179,19 +179,19 @@ export default function RolesPage() {
           </div>
 
           {/* Permissions Registry list */}
-          <div className="bg-zinc-900/60 backdrop-blur-xl border border-zinc-800 rounded-2xl p-6 shadow-xl">
-            <h3 className="text-sm font-bold uppercase tracking-wider mb-6 border-b border-zinc-800 pb-3 flex items-center gap-2">
+          <div className="bg-white backdrop-blur-xl border border-[var(--color-line)] rounded-2xl p-6 shadow-xl">
+            <h3 className="text-sm font-bold uppercase tracking-wider mb-6 border-b border-[var(--color-line)] pb-3 flex items-center gap-2">
               <Key className="w-4 h-4 text-purple-400" /> Active Permission Registry
             </h3>
 
             <div className="space-y-3 max-h-60 overflow-y-auto pr-2">
               {permissions.length === 0 ? (
-                <div className="text-zinc-500 text-xs text-center py-4">No permission scopes registered</div>
+                <div className="text-[var(--color-ink-muted)] text-xs text-center py-4">No permission scopes registered</div>
               ) : (
                 permissions.map((p) => (
-                  <div key={p.id} className="flex justify-between items-center text-xs font-semibold bg-zinc-950/40 border border-zinc-850 p-2.5 rounded-lg">
-                    <span className="font-mono text-zinc-300">{p.code}</span>
-                    <span className="text-[10px] text-zinc-500">{p.name}</span>
+                  <div key={p.id} className="flex justify-between items-center text-xs font-semibold bg-white border border-[var(--color-line)] p-2.5 rounded-lg">
+                    <span className="font-mono text-[var(--color-ink-soft)]">{p.code}</span>
+                    <span className="text-[10px] text-[var(--color-ink-muted)]">{p.name}</span>
                   </div>
                 ))
               )}
