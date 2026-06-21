@@ -101,3 +101,18 @@ tmp/
 temp/
 *.bak
 *.tmp
+
+# ----- CyberCom Additions ────────────────────────────────────────────────────
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+staticfiles/
+media/
+vault-token
+.vault-token
+sbom.cyclonedx.json
+trivy-results.sarif
+coverage.xml
+.terraform.lock.hcl
+!infrastructure/terraform/**/.terraform.lock.hcl.example

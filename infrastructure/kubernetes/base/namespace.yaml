@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: cybercom
+  labels:
+    app.kubernetes.io/managed-by: kustomize
+    cybercom.io/tier: platform
+    istio-injection: enabled

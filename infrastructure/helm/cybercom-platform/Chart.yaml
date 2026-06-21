@@ -1,0 +1,23 @@
+apiVersion: v2
+name: cybercom-platform
+description: CyberCom Enterprise Platform Helm Chart
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+keywords:
+  - cybercom
+  - healthcare
+  - enterprise
+  - erp
+maintainers:
+  - name: CyberCom Platform Team
+    email: platform@cybercom.io
+dependencies:
+  - name: postgresql
+    version: "14.x.x"
+    repository: "https://charts.bitnami.com/bitnami"
+    condition: postgresql.enabled
+  - name: redis
+    version: "19.x.x"
+    repository: "https://charts.bitnami.com/bitnami"
+    condition: redis.enabled

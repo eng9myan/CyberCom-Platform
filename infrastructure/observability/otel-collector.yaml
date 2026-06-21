@@ -1,0 +1,67 @@
+# OTel Collector configuration. ADR-0009.
+receivers:
+  otlp:
+    protocols:
+      grpc:
+        endpoint: 0.0.0.0:4317
+      http:
+        endpoint: 0.0.0.0:4318
+
+  prometheus:
+    config:
+      scrape_configs:
+        - job_name: "otel-collector"
+          scrape_interval: 10s
+          static_configs:
+            - targets: ["0.0.0.0:8888"]
+
+processors:
+  batch:
+    timeout: 1s
+    send_batch_size: 1024
+
+  memory_limiter:
+    check_interval: 1s
+    limit_mib: 512
+    spike_limit_mib: 128
+
+  resource:
+    attributes:
+      - action: insert
+        key: deployment.environment
+        value: "${ENVIRONMENT}"
+
+  filter/no_phi:
+    error_mode: ignore
+    traces:
+      span:
+        - 'attributes["user.email"] != nil'
+        - 'attributes["patient.id"] != nil'
+
+exporters:
+  prometheus:
+    endpoint: "0.0.0.0:8889"
+    namespace: cybercom
+
+  logging:
+    verbosity: basic
+
+  otlp/tempo:
+    endpoint: tempo:4317
+    tls:
+      insecure: true
+
+service:
+  pipelines:
+    traces:
+      receivers: [otlp]
+      processors: [memory_limiter, filter/no_phi, batch]
+      exporters: [otlp/tempo, logging]
+    metrics:
+      receivers: [otlp, prometheus]
+      processors: [memory_limiter, resource, batch]
+      exporters: [prometheus, logging]
+    logs:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [logging]

@@ -1,0 +1,66 @@
+# CyberCom Backend — Multi-stage Dockerfile. ADR-0001, cicd_baseline §5.
+# Non-root user (UID 10001), read-only root, distroless runtime.
+
+# ── Stage 1: Build ────────────────────────────────────────────────────────────
+FROM python:3.12-slim AS builder
+
+WORKDIR /build
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY backend/requirements.txt .
+RUN pip install --user --no-cache-dir -r requirements.txt
+
+# ── Stage 2: Runtime ──────────────────────────────────────────────────────────
+FROM python:3.12-slim AS runtime
+
+LABEL org.opencontainers.image.title="cybercom-backend"
+LABEL org.opencontainers.image.description="CyberCom Platform Django Backend"
+LABEL org.opencontainers.image.licenses="Proprietary"
+
+WORKDIR /app
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    libpq5 \
+    && rm -rf /var/lib/apt/lists/* \
+    && groupadd --gid 10001 cybercom \
+    && useradd --uid 10001 --gid 10001 --no-create-home --shell /sbin/nologin cybercom
+
+COPY --from=builder /root/.local /home/cybercom/.local
+COPY backend/ .
+
+RUN chown -R cybercom:cybercom /app
+
+USER cybercom
+
+ENV PATH=/home/cybercom/.local/bin:$PATH \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PYTHONFAULTHANDLER=1 \
+    DJANGO_SETTINGS_MODULE=core.settings
+
+EXPOSE 8000
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=30s --retries=3 \
+  CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"
+
+CMD ["gunicorn", \
+     "--bind", "0.0.0.0:8000", \
+     "--workers", "4", \
+     "--worker-class", "uvicorn.workers.UvicornWorker", \
+     "--timeout", "30", \
+     "--graceful-timeout", "30", \
+     "--max-requests", "1000", \
+     "--max-requests-jitter", "100", \
+     "--access-logfile", "-", \
+     "--error-logfile", "-", \
+     "--log-level", "info", \
+     "core.asgi:application"]
