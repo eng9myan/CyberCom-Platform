@@ -134,3 +134,53 @@ flowchart TB
 ```
 
 All interactions between `CyMed` and `CyConnect` for shift changes, notifications, and alert routing flow through asynchronous event bindings, maintaining decoupled system reliability.
+
+---
+
+## 5. Hospital Types & Organizational Configurations
+
+To ensure applicability across various healthcare business models, CyMed supports 7 distinct **Hospital Types** with specialized scheduling, financial, and compliance parameters:
+
+### 5.1 Government Hospitals
+*   **Operational Focus:** Civil service rosters, rigid public sector contracts, fixed statutory allowances, and direct integration with government procurement.
+*   **System Configuration:**
+    *   *Allowances:* Integrates with `CyCom Payroll` to apply fixed public-sector shift allowances without performance-related premiums.
+    *   *Contracts:* Enforces fixed weekly hour limits with strict limitations on paid overtime.
+    *   *Vendor Bidding:* Integrates with `CyGov e-Procurement` (G3) to handle bids and compliance checks for external medical staffing contractors.
+
+### 5.2 Private Hospitals
+*   **Operational Focus:** Commercial efficiency, revenue cycle management (RCM) optimization, and flexible contractor usage (agencies, travel nurses).
+*   **System Configuration:**
+    *   *Billing Integration:* Direct linkage between `CyMed Charge Capture` (H12) and `CyShop` (S3) to post clinical billing records dynamically based on rostered procedure completions.
+    *   *Staffing Mix:* High reliance on `Float Pools` and `Agency Staff` to dynamically align nurse counts with active inpatient census.
+
+### 5.3 Academic Hospitals
+*   **Operational Focus:** Dual-role scheduling for clinical professors and medical researchers who divide their time between academic lectures, clinical trials, and clinical rounds.
+*   **System Configuration:**
+    *   *Split Schedules:* Support for "Non-Clinical Research Block" shift templates. The system blocks clinical rounds assignment during scheduled research hours.
+    *   *Data Sync:* Integrates with `CyData` to anonymize and export clinical outcomes metadata for research cohorts under strict consent boundaries.
+
+### 5.4 Teaching Hospitals
+*   **Operational Focus:** Management of residency and fellowship programs. Strict clinical supervision hierarchies and training-hour compliance.
+*   **System Configuration:**
+    *   *Residency Gates:* Automated monitoring of ACGME 80-hour weekly work caps.
+    *   *Supervision Enforcer:* Mandatory co-signature gates in `CyMed CPOE` (H4) preventing Interns and junior Residents from releasing high-risk orders without Attending approval.
+
+### 5.5 Multi-Hospital Networks
+*   **Operational Focus:** Cross-facility staffing, centralized roster coordination, and resource load-balancing.
+*   **System Configuration:**
+    *   *Cross-Site Roaming:* Clinicians maintain a single profile in `CyIdentity` but can be assigned shifts across multiple facility IDs in the network.
+    *   *Network Float Pool:* Centralized scheduling screen allowing coordinators to transfer float staff to facilities experiencing census surges.
+
+### 5.6 Specialty Hospitals (e.g., Pediatrics, Oncology)
+*   **Operational Focus:** Highly specialized clinical safety guidelines and customized acuity indices.
+*   **System Configuration:**
+    *   *Custom Acuity:* Integrates pediatric-specific (PEWS) or oncology-specific acuity scoring matrices to calculate HPPD (Hours Per Patient Day).
+    *   *Specialty Gates:* CPOE blocks clinical orders unless the clinician holds a verified sub-specialty credential (e.g., Pediatric Oncology board certification).
+
+### 5.7 Integrated Delivery Networks (IDN)
+*   **Operational Focus:** Care coordination across acute care facilities, outpatient clinics, and rehabilitation centers.
+*   **System Configuration:**
+    *   *Cross-Continuum Rostering:* Schedulers manage unified rosters that coordinate clinician transitions between inpatient shifts and outpatient telehealth clinics.
+    *   *Global Privileging:* Clinician privileges map dynamically across diverse clinics and acute units based on site-specific ABAC rules in `CyIdentity`.
+
