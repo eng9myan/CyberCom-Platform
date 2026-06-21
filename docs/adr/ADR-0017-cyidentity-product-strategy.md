@@ -7,7 +7,7 @@
 | **Deciders** | Chief Security Architect, Chief Software Architect, Platform Architect, Compliance Architect |
 | **Affects** | CyIdentity (the product); every product that authenticates anyone or anything |
 | **Tags** | identity, product, security, compliance |
-| **Related** | [ADR-0005](ADR-0005-identity-access-management-strategy.md), [identity_access_strategy](../security/identity_access_strategy.md), [security_architecture](../security/security_architecture.md), [ADR-0008](ADR-0008-saas-deployment-strategy.md) |
+| **Related** | [ADR-0005](ADR-0005-identity-access-management-strategy.md), [ADR-0035](ADR-0035-identity-provider-finalization.md), [identity_access_strategy](../security/identity_access_strategy.md), [security_architecture](../security/security_architecture.md), [ADR-0008](ADR-0008-saas-deployment-strategy.md) |
 
 ---
 
@@ -42,7 +42,7 @@ What is the **product shape** of CyIdentity — its build approach, realm model,
 
 ### 5.1 Build approach
 
-- **Build on a vetted OSS IdP base.** Run a **time-boxed 3-week PoC of Keycloak vs Zitadel** ([Phase 1, Sprint 1–2 follow-up sub-ADR ADR-0017a]) and pick one. Both meet baseline standards (OIDC, OAuth 2.1, SCIM, SAML, WebAuthn).
+- **Build on a vetted OSS IdP base. Base selected: Keycloak 24** — see [ADR-0035](ADR-0035-identity-provider-finalization.md). Both candidates (Keycloak, Zitadel) met baseline standards (OIDC, OAuth 2.1, SCIM, SAML, WebAuthn); Keycloak selected for FAPI 2.0 certification, SMART on FHIR, and CIBA.
 - **CyberCom owns:**
   - **Control plane** (tenant lifecycle, realm/policy provisioning, audit export, SCIM ingress).
   - **Customer / citizen UX** (white-labelable login, MFA enrollment, account, consent, recovery flows).
@@ -165,7 +165,7 @@ Realm provisioning is IaC (Terraform CyIdentity provider) + control-plane API; m
 | 10 | Key-rotation outage (JWT signing) | Low | Critical | Overlap window; canary verification; chaos drill |
 
 ### 7.4 Follow-up actions
-- [ ] **ADR-0017a:** OSS base selection (Keycloak vs Zitadel) after 3-week PoC — Chief Security Architect, Program 1 Sprint 1–2.
+- [x] **ADR-0035:** OSS base selection — **Keycloak 24 selected** — see [ADR-0035](ADR-0035-identity-provider-finalization.md) — Chief Security Architect, 2026-06-21. ✅ CLOSED
 - [ ] Author **CyIdentity reference architecture** in `docs/architecture/cyidentity/` — Security Architect, Program 1 Sprint 2.
 - [ ] Author **realm provisioning runbook** + Terraform module — Platform Eng + Security, Program 1 Sprint 2.
 - [ ] Author **graceful-degradation library spec** for product SDKs — Platform Eng, Program 1 Sprint 2.
