@@ -58,5 +58,9 @@ Start every new ADR by copying [`ADR-0000-template.md`](ADR-0000-template.md).
 | [0027](ADR-0027-master-data-management-strategy.md) | Master Data Management Strategy | Accepted | 2026-06-21 | — |
 | [0028](ADR-0028-audit-legal-record-strategy.md) | Audit & Legal Record Strategy | Accepted | 2026-06-21 | — |
 | [0029](ADR-0029-enterprise-document-management-strategy.md) | Enterprise Document Management Strategy | Accepted | 2026-06-21 | — |
+| [0030](ADR-0030-api-governance-strategy.md) | API Governance Strategy | Accepted | 2026-06-21 | — |
+| [0031](ADR-0031-event-governance-strategy.md) | Event Governance Strategy | Accepted | 2026-06-21 | — |
+| [0032](ADR-0032-ui-design-system-strategy.md) | UI Design System Strategy | Accepted | 2026-06-21 | — |
+| [0033](ADR-0033-mobile-offline-architecture-strategy.md) | Mobile & Offline Architecture Strategy | Accepted | 2026-06-21 | — |
 
 _New ADRs are appended above. Keep the index sorted ascending by number._
