@@ -92,7 +92,51 @@ The following architectural decisions have been accepted by the Healthcare Archi
 
 ---
 
-## 5. Readiness For Phase 1.3
+## 5. UI/UX ProMax Recommendations
+
+High-stress clinical environments require clear, responsive, and internationalized interfaces. Below are the design recommendations and guidelines for the 9 core workforce interfaces:
+
+### 5.1 Workforce Scheduling
+*   *Design Directive:* Interactive Gantt-style planning grids with drag-and-drop shift assignments.
+*   *Visual Cues:* Real-time inline conflict indicators (red badges for rest-period violations or expired licenses).
+*   *Layout:* Left-pinned sidebar for clinical roster templates; main viewport dedicated to the interactive calendar grid.
+
+### 5.2 Shift Planning
+*   *Design Directive:* Template-builder dashboard with multi-week cyclic planning widgets.
+*   *Visual Cues:* Color-coded shifts (day vs. night) and load-balancing indicators (bar graphs showing scheduled FTEs vs. predicted census).
+
+### 5.3 Mobile Workforce App
+*   *Design Directive:* Mobile-first viewport optimized for single-hand clinicians on clinical rounds.
+*   *Visual Cues:* Large touch-targets (min 48px) for check-in/out and shift swap accept buttons.
+*   *Offline Capability:* Cache the clinician's upcoming weekly shifts locally for offline access during low-network coverage.
+
+### 5.4 Staff Self-Service
+*   *Design Directive:* Clinician personal calendar displaying scheduled shifts, leaves, and pending swap requests.
+*   *Visual Cues:* Notifications badge at the top-right connecting directly to the CyConnect communication inbox.
+
+### 5.5 Nurse Staffing Boards
+*   *Design Directive:* Wall-mounted touch screen dashboards for ward reception desks.
+*   *Visual Cues:* Progress bars showing patient-to-nurse ratio per unit. Red alerts flash if a unit falls below the safe staffing ratio.
+
+### 5.6 Physician Schedules
+*   *Design Directive:* Shared department calendars showcasing attending physician, surgeon, and resident schedules.
+*   *Visual Cues:* Active on-call indicators (badges for Primary, Secondary, Backup) with click-to-call/page integration via CyConnect.
+
+### 5.7 Coverage Dashboards
+*   *Design Directive:* Real-time supervisor dashboard demonstrating network-wide nurse/doctor coverage.
+*   *Visual Cues:* Heatmaps showing over-staffed (blue) vs under-staffed (red) wards.
+
+### 5.8 On-Call Dashboards
+*   *Design Directive:* Dedicated view for on-call tracking per specialty.
+*   *Visual Cues:* Active response SLA countdown timers for paged physicians. Red flashing timers for expired response windows.
+
+### 5.9 Staffing Command Center
+*   *Design Directive:* C-suite unified view of labor costs, float pool deployments, and accreditation metrics.
+*   *Visual Cues:* Graphs tracking agency staff spend vs. budget and credential compliance gauges.
+
+---
+
+## 6. Readiness For Phase 1.3
 
 All deliverables for Phase 1.2 have been defined, validated, and documented. The codebase has **zero code conflicts**, and the design is fully aligned with previous architecture matrix parameters.
 
@@ -102,6 +146,8 @@ All deliverables for Phase 1.2 have been defined, validated, and documented. The
 *   [x] Dynamic ABAC security policy written in Cedar.
 *   [x] SLA-driven escalation logic designed.
 *   [x] Healthcare Credentialing & Privileging Strategy (ADR-0026) defined.
+*   [x] UI/UX ProMax Recommendations for 9 core interfaces completed.
 *   [x] All 11 documentation files created.
 
 **Recommendation:** Proceed immediately to **Phase 1.3: Implementation and Coding**.
+
