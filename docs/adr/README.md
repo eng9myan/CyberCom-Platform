@@ -54,5 +54,6 @@ Start every new ADR by copying [`ADR-0000-template.md`](ADR-0000-template.md).
 | [0017](ADR-0017-cyidentity-product-strategy.md) | CyIdentity Product Strategy | Accepted | 2026-06-21 | — |
 | [0018](ADR-0018-cycom-product-repositioning.md) | CyCom Product Repositioning (→ Enterprise Back-Office / ERP) | Accepted | 2026-06-21 | — |
 | [0019](ADR-0019-cyconnect-communications-platform.md) | CyConnect Communications Platform | Accepted | 2026-06-21 | — |
+| [0026](ADR-0026-healthcare-credentialing-privileging-strategy.md) | Healthcare Credentialing & Privileging Strategy | Accepted | 2026-06-21 | — |
 
 _New ADRs are appended above. Keep the index sorted ascending by number._

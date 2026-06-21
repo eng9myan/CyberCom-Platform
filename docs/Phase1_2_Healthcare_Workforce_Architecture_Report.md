@@ -5,7 +5,7 @@
 > **Date:** 2026-06-21  
 > **Status:** ✅ Complete  
 
-This report summarizes the design of the **Healthcare Workforce Architecture** for the `CyMed` product, providing a configurable, compliant, and secure system context that satisfies the constraints of all previous ADRs (ADR-0001 through ADR-0019).
+This report summarizes the design of the **Healthcare Workforce Architecture** for the `CyMed` product, providing a configurable, compliant, and secure system context that satisfies the constraints of all previous ADRs (ADR-0001 through ADR-0019, and ADR-0026).
 
 ---
 
@@ -23,6 +23,7 @@ We have created the following core architectural blueprints under `docs/healthca
 8.  **[workforce_compliance_framework.md](healthcare/workforce_compliance_framework.md):** Details JSON configuration schemas and rules templates for USA, Jordan, Saudi Arabia, and UAE.
 9.  **[workforce_security_model.md](healthcare/workforce_security_model.md):** Sets up RBAC/ABAC models, department isolation rules, and immutable audit logs.
 10. **[Phase1_2_Healthcare_Workforce_Architecture_Report.md](Phase1_2_Healthcare_Workforce_Architecture_Report.md):** (This consolidation report).
+11. **[ADR-0026-healthcare-credentialing-privileging-strategy.md](../adr/ADR-0026-healthcare-credentialing-privileging-strategy.md):** Establishes the Platform-wide Healthcare Credentialing & Privileging Strategy.
 
 ---
 
@@ -100,6 +101,7 @@ All deliverables for Phase 1.2 have been defined, validated, and documented. The
 *   [x] Bounded context domains between CyMed and CyCom mapped.
 *   [x] Dynamic ABAC security policy written in Cedar.
 *   [x] SLA-driven escalation logic designed.
-*   [x] All 10 documentation files created.
+*   [x] Healthcare Credentialing & Privileging Strategy (ADR-0026) defined.
+*   [x] All 11 documentation files created.
 
 **Recommendation:** Proceed immediately to **Phase 1.3: Implementation and Coding**.
