@@ -43,5 +43,9 @@ Start every new ADR by copying [`ADR-0000-template.md`](ADR-0000-template.md).
 | [0006](ADR-0006-icd-11-strategy.md) | ICD-11 Strategy | Accepted | 2026-06-21 | — |
 | [0007](ADR-0007-healthcare-interoperability-strategy.md) | Healthcare Interoperability Strategy | Accepted | 2026-06-21 | — |
 | [0008](ADR-0008-saas-deployment-strategy.md) | SaaS Deployment Strategy | Accepted | 2026-06-21 | — |
+| [0009](ADR-0009-observability-strategy.md) | Observability Strategy | Accepted | 2026-06-21 | — |
+| [0010](ADR-0010-gitops-deployment-strategy.md) | GitOps Deployment Strategy | Accepted | 2026-06-21 | — |
+| [0011](ADR-0011-platform-engineering-strategy.md) | Platform Engineering Strategy | Accepted | 2026-06-21 | — |
+| [0012](ADR-0012-environment-management-strategy.md) | Environment Management Strategy | Accepted | 2026-06-21 | — |
 
 _New ADRs are appended above. Keep the index sorted ascending by number._
