@@ -62,5 +62,7 @@ Start every new ADR by copying [`ADR-0000-template.md`](ADR-0000-template.md).
 | [0031](ADR-0031-event-governance-strategy.md) | Event Governance Strategy | Accepted | 2026-06-21 | — |
 | [0032](ADR-0032-ui-design-system-strategy.md) | UI Design System Strategy | Accepted | 2026-06-21 | — |
 | [0033](ADR-0033-mobile-offline-architecture-strategy.md) | Mobile & Offline Architecture Strategy | Accepted | 2026-06-21 | — |
+| [0034](ADR-0034-backend-technology-finalization.md) | Backend Technology Finalization | Accepted | 2026-06-21 | — |
 
 _New ADRs are appended above. Keep the index sorted ascending by number._
+
