@@ -32,7 +32,7 @@ This matrix prioritizes feature developments over a 3-year roadmap to close comp
 
 ### 2.1 Year 1 (Programs 2 & 3)
 *   **Focus:** Core Foundations, Identity, and Basic Ledgers.
-*   **Deliverables:** `CyIdentity` Realms, Kong API Gateway, PostgreSQL RLS schema deployments, `CyMed` Patient MPI, encounters, clinical core registries, and `CyCom` GL accounts (Phase 3.0 completed).
+*   **Deliverables:** `CyIdentity` Realms, Kong API Gateway, PostgreSQL RLS schema deployments, `CyMed` Patient MPI, encounters, clinical core registries, `CyCom` GL accounts, and the Clinical Terminology Foundation (Program 2.10 and Phase 3.0 completed).
 
 ### 2.2 Year 2 (Program 4)
 *   **Focus:** Interoperability and Transactions.
@@ -50,4 +50,6 @@ This matrix prioritizes feature developments over a 3-year roadmap to close comp
 |---|---|---|---|
 | 2026-06-21 | 1.0 | Initial Roadmap Matrix | Enterprise Architect |
 | 2026-06-22 | 1.1 | Mark Phase 3.0 Core Clinical Platform Complete | Claude Code / Antigravity |
+| 2026-06-22 | 1.2 | Mark Program 2.10 Clinical Terminology Foundation Complete | Claude Code / Antigravity |
+
 
