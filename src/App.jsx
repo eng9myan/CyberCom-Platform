@@ -161,8 +161,8 @@ function NovaAvatarCanvas({ avatar, expression, speaking }) {
       const cx = width / 2;
       const cy = height / 2 - 20;
 
-      // Draw Neural Background Grid
-      ctx.strokeStyle = 'rgba(139, 92, 246, 0.08)';
+      // Draw Neural Background Grid — CYBERCOM cyan grid
+      ctx.strokeStyle = 'rgba(89, 195, 225, 0.07)';
       ctx.lineWidth = 1;
       for (let i = 0; i < width; i += 20) {
         ctx.beginPath();
@@ -179,29 +179,31 @@ function NovaAvatarCanvas({ avatar, expression, speaking }) {
 
       // Draw Holographic Orbit Rings (Core mode or background)
       if (avatar === 'core') {
-        ctx.strokeStyle = 'rgba(139, 92, 246, 0.4)';
+        // Outer orange ring
+        ctx.strokeStyle = 'rgba(237, 108, 0, 0.45)';
         ctx.lineWidth = 2;
         ctx.beginPath();
         ctx.ellipse(cx, cy, 80 + Math.sin(time) * 5, 80 + Math.cos(time) * 5, time * 0.5, 0, Math.PI * 2);
         ctx.stroke();
 
-        ctx.strokeStyle = 'rgba(6, 182, 212, 0.3)';
+        // Inner cyan ring
+        ctx.strokeStyle = 'rgba(89, 195, 225, 0.35)';
         ctx.beginPath();
         ctx.ellipse(cx, cy, 110 + Math.cos(time * 0.8) * 8, 50 + Math.sin(time * 0.8) * 4, -time * 0.7, 0, Math.PI * 2);
         ctx.stroke();
 
-        // Pulsating Center Core
+        // Pulsating Center Core — orange to cyan
         const gradient = ctx.createRadialGradient(cx, cy, 5, cx, cy, 40 + Math.sin(time * 4) * 3);
-        gradient.addColorStop(0, '#a78bfa');
-        gradient.addColorStop(0.5, 'rgba(139, 92, 246, 0.6)');
-        gradient.addColorStop(1, 'rgba(6, 182, 212, 0)');
+        gradient.addColorStop(0, '#ff8c35');
+        gradient.addColorStop(0.5, 'rgba(237, 108, 0, 0.6)');
+        gradient.addColorStop(1, 'rgba(89, 195, 225, 0)');
         ctx.fillStyle = gradient;
         ctx.beginPath();
         ctx.arc(cx, cy, 45 + Math.sin(time * 4) * 3, 0, Math.PI * 2);
         ctx.fill();
 
-        // Neural network connections
-        ctx.fillStyle = '#22d3ee';
+        // Neural network nodes — cyan
+        ctx.fillStyle = '#59c3e1';
         for (let a = 0; a < 6; a++) {
           const angle = (a * Math.PI) / 3 + time * 0.2;
           const px = cx + Math.cos(angle) * (80 + Math.sin(time) * 5);
@@ -210,7 +212,7 @@ function NovaAvatarCanvas({ avatar, expression, speaking }) {
           ctx.arc(px, py, 4, 0, Math.PI * 2);
           ctx.fill();
 
-          ctx.strokeStyle = 'rgba(139, 92, 246, 0.2)';
+          ctx.strokeStyle = 'rgba(237, 108, 0, 0.2)';
           ctx.beginPath();
           ctx.moveTo(cx, cy);
           ctx.lineTo(px, py);
@@ -902,7 +904,7 @@ function App() {
   const [chatMessages, setChatMessages] = useState([
     {
       sender: 'assistant',
-      text: 'Hello! I am CyShop AI Assistant. How can I help you analyze sales, monitor inventory levels, configure compliance, or audit the Talabat delivery channel?',
+      text: 'Hello! I am CYBERCOM AI — your intelligent ERP assistant. I can analyze sales trends, monitor inventory, configure VAT compliance, or audit your Talabat delivery channel. How can I help?',
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
     }
   ]);
@@ -1400,7 +1402,7 @@ function App() {
             confetti({
               particleCount: 50,
               spread: 40,
-              colors: ['#2563eb', '#60a5fa']
+              colors: ['#ed6c00', '#59c3e1']
             });
           }, 600);
         }, 800);
@@ -1830,8 +1832,13 @@ function App() {
       {/* Sidebar Navigation */}
       <aside className={`sidebar ${sidebarCollapsed ? 'collapsed' : ''}`}>
         <div className="sidebar-brand">
-          <div className="sidebar-logo">CS</div>
-          {!sidebarCollapsed && <span className="sidebar-logo-text" style={{ color: 'var(--text-primary)' }}>CyShop ERP</span>}
+          <div className="sidebar-logo">C</div>
+          {!sidebarCollapsed && (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1px', overflow: 'hidden' }}>
+              <span className="sidebar-logo-text">CYBERCOM</span>
+              <span className="sidebar-tagline">CyShop ERP</span>
+            </div>
+          )}
         </div>
 
         <nav className="sidebar-nav">
@@ -2018,12 +2025,19 @@ function App() {
           </button>
         </nav>
 
+        {!sidebarCollapsed && (
+          <div className="cybercom-status">
+            <div className="cybercom-status-dot" />
+            Systems Online
+          </div>
+        )}
+
         <div className="sidebar-footer" onClick={() => setSidebarCollapsed(!sidebarCollapsed)} style={{ cursor: 'pointer' }}>
           <div className="user-avatar">AD</div>
           {!sidebarCollapsed && (
             <div className="user-info">
-              <span className="user-name" style={{ color: 'var(--text-primary)' }}>Admin Staff</span>
-              <span className="user-role" style={{ color: 'var(--text-muted)' }}>Store Manager</span>
+              <span className="user-name">Admin Staff</span>
+              <span className="user-role">Store Manager</span>
             </div>
           )}
         </div>
@@ -2034,9 +2048,12 @@ function App() {
         {/* Top Header */}
         <header className="top-header">
           <div className="header-left">
-            <h2 style={{ textTransform: 'capitalize', fontSize: '20px', fontWeight: '800', color: 'var(--text-primary)' }}>
-              {activeTab === 'pos' ? 'POS Cashier Screen' : activeTab === 'kds' ? 'Kitchen Monitor (KDS)' : activeTab === 'shifts' ? 'Staff Shifts' : activeTab === 'customers' ? 'CRM & Loyalty' : activeTab}
-            </h2>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1px' }}>
+              <h2 style={{ textTransform: 'capitalize', fontSize: '19px', fontWeight: '900', fontFamily: 'var(--font-display)', letterSpacing: '-0.01em', color: 'var(--text-primary)', lineHeight: 1.2 }}>
+                {activeTab === 'pos' ? 'POS Cashier Screen' : activeTab === 'kds' ? 'Kitchen Monitor (KDS)' : activeTab === 'shifts' ? 'Staff Shifts' : activeTab === 'customers' ? 'CRM & Loyalty' : activeTab}
+              </h2>
+              <span style={{ fontSize: '10px', fontWeight: '700', letterSpacing: '0.15em', textTransform: 'uppercase', background: 'var(--brand-gradient)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>CYBERCOM ERP</span>
+            </div>
             <div style={{ position: 'relative', width: '220px' }}>
               <Search
                 size={16}
@@ -4107,8 +4124,8 @@ function App() {
                 </div>
 
                 <div style={{ paddingTop: '8px' }}>
-                  <h4 style={{ color: '#2563eb', marginBottom: '12px', fontSize: '14.5px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#2563eb' }}>
+                  <h4 style={{ color: '#ed6c00', marginBottom: '12px', fontSize: '14.5px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" strokeWidth="2" fill="none" strokeLinecap="round" strokeLinejoin="round" style={{ color: '#ed6c00' }}>
                       <path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"></path>
                     </svg>
                     AWS Cloud Services & Deployment Config
@@ -4146,7 +4163,7 @@ function App() {
                       flexDirection: 'column',
                       gap: '12px'
                     }}>
-                      <span style={{ fontSize: '12.5px', fontWeight: '700', color: '#2563eb', display: 'block' }}>
+                      <span style={{ fontSize: '12.5px', fontWeight: '700', color: '#ed6c00', display: 'block' }}>
                         ☁️ AWS IAM & Services Credentials
                       </span>
 
@@ -4223,7 +4240,7 @@ function App() {
                             <span style={{ fontWeight: '700' }}>{awsSyncProgress.percent}%</span>
                           </div>
                           <div className="sparkline-track" style={{ height: '8px', background: 'var(--border-color)', borderRadius: '4px' }}>
-                            <div className="sparkline-fill" style={{ width: `${awsSyncProgress.percent}%`, backgroundColor: '#2563eb', height: '100%', borderRadius: '4px', transition: 'width 0.4s ease' }} />
+                            <div className="sparkline-fill" style={{ width: `${awsSyncProgress.percent}%`, backgroundColor: '#ed6c00', height: '100%', borderRadius: '4px', transition: 'width 0.4s ease' }} />
                           </div>
                         </div>
                       )}
@@ -6378,9 +6395,9 @@ function App() {
         {activeTab === 'setup' && (
           <main className="page-content" style={{ maxWidth: '860px', margin: '0 auto' }}>
             <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-              <div style={{ width: '64px', height: '64px', borderRadius: '16px', background: 'linear-gradient(135deg, var(--primary-color), var(--ai-glow-color))', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', fontSize: '28px' }}>🚀</div>
-              <h1 style={{ fontSize: '28px', fontWeight: '800', color: 'var(--text-primary)', marginBottom: '8px' }}>CyShop ERP Setup Wizard</h1>
-              <p style={{ color: 'var(--text-muted)', fontSize: '15px' }}>Configure your ERP system step by step. This wizard helps you go live in minutes.</p>
+              <div style={{ width: '64px', height: '64px', borderRadius: '16px', background: 'var(--brand-gradient)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px', fontFamily: 'var(--font-display)', fontWeight: 900, fontSize: '28px', color: 'white', boxShadow: 'var(--shadow-glow-orange)' }}>C</div>
+              <h1 style={{ fontSize: '28px', fontWeight: '900', fontFamily: 'var(--font-display)', letterSpacing: '0.04em', background: 'var(--brand-gradient)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', marginBottom: '8px' }}>CYBERCOM ERP Setup</h1>
+              <p style={{ color: 'var(--text-muted)', fontSize: '15px' }}>Configure your ERP system step by step. Go live in minutes.</p>
             </div>
 
             {/* Progress Steps */}
@@ -6402,9 +6419,9 @@ function App() {
               <div className="card ai-border-glow" style={{ textAlign: 'center', padding: '48px' }}>
                 <div style={{ fontSize: '64px', marginBottom: '16px' }}>🎉</div>
                 <h2 style={{ fontSize: '24px', fontWeight: '800', color: 'var(--text-primary)', marginBottom: '8px' }}>Setup Complete!</h2>
-                <p style={{ color: 'var(--text-muted)', fontSize: '15px', marginBottom: '24px' }}>{setupConfig.businessName || 'Your business'} is ready to go live on CyShop ERP.</p>
+                <p style={{ color: 'var(--text-muted)', fontSize: '15px', marginBottom: '24px' }}>{setupConfig.businessName || 'Your business'} is live on CYBERCOM ERP.</p>
                 <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
-                  <button className="btn btn-ai" onClick={() => { setActiveTab('dashboard'); triggerToast('Welcome to CyShop ERP! All systems operational.', 'success'); confetti({ particleCount: 200, spread: 120 }); }}>🚀 Go to Dashboard</button>
+                  <button className="btn btn-ai" onClick={() => { setActiveTab('dashboard'); triggerToast('CYBERCOM ERP is live. All systems operational.', 'success'); confetti({ particleCount: 200, spread: 120, colors: ['#ed6c00', '#59c3e1', '#ff8c35'] }); }}>Go to Dashboard</button>
                   <button className="btn btn-secondary" style={{ color: 'var(--text-primary)' }} onClick={() => setSetupComplete(false)}>Reconfigure</button>
                 </div>
               </div>
@@ -6557,7 +6574,7 @@ function App() {
 
       </div>
 
-      <button className="ai-chat-trigger" onClick={() => setChatbotOpen(!chatbotOpen)} title="Chat with CyShop AI">
+      <button className="ai-chat-trigger" onClick={() => setChatbotOpen(!chatbotOpen)} title="Chat with CYBERCOM AI">
         {chatbotOpen ? <X size={24} /> : <Bot size={24} />}
       </button>
 
@@ -6565,8 +6582,11 @@ function App() {
       {chatbotOpen && (
         <div className="ai-chat-window">
           <div className="ai-chat-header">
-            <span className="ai-chat-header-title" style={{ color: 'var(--text-primary)' }}>
-              <Bot size={18} style={{ color: 'var(--ai-glow-color)' }} /> CyShop AI Assistant
+            <span className="ai-chat-header-title">
+              <Bot size={18} style={{ color: 'var(--ai-glow-color)' }} />
+              <span style={{ background: 'var(--brand-gradient)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                CYBERCOM AI
+              </span>
             </span>
             <button
               className="btn btn-ghost btn-icon"
