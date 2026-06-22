@@ -2,7 +2,7 @@ name: Deploy CyShop to Oracle Cloud
 
 on:
   push:
-    branches: [Cymed]
+    branches: [main]
   workflow_dispatch:
 
 jobs:
