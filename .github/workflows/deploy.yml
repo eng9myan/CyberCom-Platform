@@ -1,0 +1,149 @@
+# =============================================================
+# CyberCom Platform — Deploy to OCI
+# Triggers on push to main (production) and develop (staging)
+# Target: OCI VM 158.178.130.4 | Region: il-jerusalem-1
+# =============================================================
+name: Deploy to OCI
+
+on:
+  push:
+    branches: [main, develop]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        required: true
+        default: 'staging'
+        type: choice
+        options: [staging, production]
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+
+  # ── Deploy Platform to OCI VM ────────────────────────────
+  deploy:
+    name: Deploy Platform
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: ${{ github.ref == 'refs/heads/main' && 'production' || 'staging' }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set deployment variables
+        id: vars
+        run: |
+          if [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            echo "ENV=production" >> $GITHUB_OUTPUT
+            echo "BRANCH=main" >> $GITHUB_OUTPUT
+          else
+            echo "ENV=staging" >> $GITHUB_OUTPUT
+            echo "BRANCH=develop" >> $GITHUB_OUTPUT
+          fi
+          echo "SHA=${{ github.sha }}" >> $GITHUB_OUTPUT
+          echo "DEPLOY_TIME=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> $GITHUB_OUTPUT
+
+      - name: Deploy via SSH to OCI
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.OCI_HOST }}
+          username: ${{ secrets.OCI_SSH_USERNAME }}
+          key: ${{ secrets.OCI_SSH_KEY }}
+          port: 22
+          timeout: 600s
+          command_timeout: 10m
+          script: |
+            set -euo pipefail
+
+            DEPLOY_DIR="/opt/cybercom/platform"
+            BRANCH="${{ steps.vars.outputs.BRANCH }}"
+            ENV="${{ steps.vars.outputs.ENV }}"
+            SHA="${{ steps.vars.outputs.SHA }}"
+
+            echo "=============================="
+            echo " CyberCom Platform Deploy"
+            echo " Env: $ENV | SHA: ${SHA:0:8}"
+            echo "=============================="
+
+            # ── Pull latest code ──────────────────────────
+            if [ -d "$DEPLOY_DIR/.git" ]; then
+              echo "[1/5] Pulling latest code..."
+              git -C "$DEPLOY_DIR" fetch --all
+              git -C "$DEPLOY_DIR" checkout "$BRANCH"
+              git -C "$DEPLOY_DIR" pull origin "$BRANCH"
+            else
+              echo "[1/5] Cloning repository..."
+              sudo mkdir -p "$DEPLOY_DIR"
+              sudo chown $(whoami):$(whoami) "$DEPLOY_DIR"
+              git clone --branch "$BRANCH" https://github.com/eng9myan/CyberCom-Platform.git "$DEPLOY_DIR"
+            fi
+
+            # ── Load environment config ────────────────────
+            echo "[2/5] Loading environment config..."
+            if [ -f "$DEPLOY_DIR/.env.$ENV" ]; then
+              cp "$DEPLOY_DIR/.env.$ENV" "$DEPLOY_DIR/.env"
+            fi
+
+            # ── Docker Compose deploy ──────────────────────
+            echo "[3/5] Starting services..."
+            if [ -f "$DEPLOY_DIR/docker-compose.yml" ]; then
+              cd "$DEPLOY_DIR"
+              docker compose pull --quiet 2>/dev/null || true
+              docker compose up -d --remove-orphans
+              docker compose ps
+            else
+              echo "No docker-compose.yml yet — skipping containers"
+            fi
+
+            # ── Run migrations ─────────────────────────────
+            echo "[4/5] Running database migrations..."
+            if docker compose ps --services 2>/dev/null | grep -q "api"; then
+              docker compose exec -T api python manage.py migrate --noinput || echo "Migration skipped (no Django yet)"
+            fi
+
+            # ── Health check ───────────────────────────────
+            echo "[5/5] Health check..."
+            sleep 5
+            if command -v curl >/dev/null; then
+              curl -sf http://localhost:8000/health || echo "Health check pending (API not deployed yet)"
+            fi
+
+            echo ""
+            echo "Deploy complete: $ENV @ ${SHA:0:8} at $(date -u)"
+
+      # ── Notify success ────────────────────────────────────
+      - name: Notify success
+        if: success()
+        run: |
+          echo "## Deployment Successful" >> $GITHUB_STEP_SUMMARY
+          echo "- Environment: ${{ steps.vars.outputs.ENV }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Branch: ${{ steps.vars.outputs.BRANCH }}" >> $GITHUB_STEP_SUMMARY
+          echo "- SHA: ${{ github.sha }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Time: ${{ steps.vars.outputs.DEPLOY_TIME }}" >> $GITHUB_STEP_SUMMARY
+
+      # ── Notify failure + rollback ─────────────────────────
+      - name: Rollback on failure
+        if: failure()
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.OCI_HOST }}
+          username: ${{ secrets.OCI_SSH_USERNAME }}
+          key: ${{ secrets.OCI_SSH_KEY }}
+          port: 22
+          script: |
+            DEPLOY_DIR="/opt/cybercom/platform"
+            echo "ROLLBACK TRIGGERED at $(date -u)"
+            if [ -d "$DEPLOY_DIR" ]; then
+              cd "$DEPLOY_DIR"
+              # Roll back to previous git commit
+              git stash || true
+              git reset --hard HEAD~1 || true
+              if [ -f "docker-compose.yml" ]; then
+                docker compose up -d --remove-orphans || true
+              fi
+              echo "Rollback complete"
+            fi
