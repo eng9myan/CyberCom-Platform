@@ -1,0 +1,57 @@
+name: Security Nightly
+
+on:
+  schedule:
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+jobs:
+
+  dast:
+    name: DAST Scan OWASP ZAP
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - name: ZAP Baseline Scan
+        uses: zaproxy/action-baseline@v0.12.0
+        with:
+          target: 'http://${{ secrets.OCI_HOST }}'
+          fail_action: false
+          allow_issue_writing: true
+
+  image-rescan:
+    name: Image Rescan Trivy
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: fs
+          scan-ref: .
+          severity: CRITICAL
+          format: sarif
+          output: trivy-results.sarif
+      - uses: github/codeql-action/upload-sarif@v3
+        if: always()
+        with:
+          sarif_file: trivy-results.sarif
+          category: trivy-nightly
+
+  dependency-freshness:
+    name: Dependency Freshness
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: |
+          pip install pip-audit
+          if find backend -name 'requirements*.txt' | grep -q .; then
+            pip-audit -r backend/requirements.txt || true
+          else
+            echo "No requirements.txt yet"
+          fi
