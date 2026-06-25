@@ -1,0 +1,153 @@
+# =============================================================
+# CyberCom Platform — Docker Compose
+# OCI VM: 158.178.130.4 | Region: il-jerusalem-1
+# ARM64 (VM.Standard.A1.Flex)
+# =============================================================
+
+services:
+
+  # ── Nginx Reverse Proxy ──────────────────────────────────
+  nginx:
+    image: nginx:1.27-alpine
+    platform: linux/arm64
+    container_name: cybercom-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./infrastructure/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./infrastructure/nginx/conf.d:/etc/nginx/conf.d:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro
+      - nginx-logs:/var/log/nginx
+    depends_on:
+      - api
+    networks:
+      - cybercom
+    labels:
+      cybercom.service: nginx
+      cybercom.product: platform
+
+  # ── API Gateway / Backend ────────────────────────────────
+  api:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      platforms:
+        - linux/arm64
+    image: cybercom-api:${IMAGE_TAG:-latest}
+    container_name: cybercom-api
+    restart: unless-stopped
+    expose:
+      - "8000"
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=${REDIS_URL}
+      - JWT_SECRET=${JWT_SECRET}
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS:-api.cy-com.com,localhost}
+      - ENVIRONMENT=${ENVIRONMENT:-production}
+      - OCI_REGION=il-jerusalem-1
+      - OCI_TENANCY_OCID=${OCI_TENANCY_OCID}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - cybercom
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    labels:
+      cybercom.service: api
+      cybercom.product: platform
+    volumes:
+      - api-logs:/app/logs
+      - static-files:/app/staticfiles
+
+  # ── PostgreSQL ───────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    platform: linux/arm64
+    container_name: cybercom-postgres
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB:-cybercom}
+      - POSTGRES_USER=${POSTGRES_USER:-cybercom}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./infrastructure/postgres/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    networks:
+      - cybercom
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-cybercom}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    labels:
+      cybercom.service: postgres
+
+  # ── Redis ────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    platform: linux/arm64
+    container_name: cybercom-redis
+    restart: unless-stopped
+    command: redis-server --requirepass ${REDIS_PASSWORD} --appendonly yes
+    volumes:
+      - redis-data:/data
+    networks:
+      - cybercom
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    labels:
+      cybercom.service: redis
+
+  # ── Worker (Celery / background jobs) ───────────────────
+  worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      platforms:
+        - linux/arm64
+    image: cybercom-api:${IMAGE_TAG:-latest}
+    container_name: cybercom-worker
+    restart: unless-stopped
+    command: celery -A cybercom worker -l info -c 2
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - REDIS_URL=${REDIS_URL}
+      - JWT_SECRET=${JWT_SECRET}
+      - ENVIRONMENT=${ENVIRONMENT:-production}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - cybercom
+    labels:
+      cybercom.service: worker
+    volumes:
+      - worker-logs:/app/logs
+
+networks:
+  cybercom:
+    driver: bridge
+    name: cybercom
+
+volumes:
+  postgres-data:
+  redis-data:
+  nginx-logs:
+  api-logs:
+  worker-logs:
+  static-files:
