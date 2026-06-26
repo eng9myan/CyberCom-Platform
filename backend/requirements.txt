@@ -1,0 +1,35 @@
+# =============================================================
+# CyberCom Platform - Backend Python dependencies
+# Pinned for reproducible ARM64 builds (Python 3.12)
+# =============================================================
+
+# --- Web framework / ASGI ---
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+gunicorn==23.0.0
+pydantic==2.10.4
+pydantic-settings==2.7.0
+
+# --- Database ---
+sqlalchemy==2.0.36
+psycopg[binary]==3.2.3
+alembic==1.14.0
+
+# --- Cache / queue ---
+redis==5.2.1
+celery==5.4.0
+
+# --- Auth / security ---
+pyjwt==2.10.1
+passlib[bcrypt]==1.7.4
+python-multipart==0.0.20
+
+# --- HTTP client (API consumption / health checks) ---
+httpx==0.28.1
+
+# --- Observability ---
+prometheus-client==0.21.1
+structlog==24.4.0
+
+# --- Config ---
+python-dotenv==1.0.1
