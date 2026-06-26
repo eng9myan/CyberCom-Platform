@@ -1,0 +1,28 @@
+# =============================================================
+# CyberCom Platform - Terraform variables EXAMPLE
+#
+# Copy to terraform.tfvars (which is gitignored) and fill in
+# the REAL OCIDs from your OCI console. Never commit the real
+# terraform.tfvars. In CI, prefer TF_VAR_* env vars sourced
+# from GitHub Secrets instead of a file.
+# =============================================================
+
+region = "il-jerusalem-1"
+
+# --- Replace placeholders below with values from OCI console ---
+# Identity > Tenancy details (OCID)
+tenancy_ocid = "ocid1.tenancy.oc1..xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+
+# For Free Trial the root compartment OCID == tenancy OCID
+compartment_ocid = "ocid1.tenancy.oc1..xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+
+# Networking > Virtual Cloud Networks > (your VCN) > OCID
+vcn_ocid = "ocid1.vcn.oc1.il-jerusalem-1.xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+
+# Compute > Instances > cybercom-web > OCID
+instance_ocid = "ocid1.instance.oc1.il-jerusalem-1.xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+
+# Restrict SSH to your admin IP, e.g. "203.0.113.10/32"
+ssh_allowed_cidr = "0.0.0.0/0"
+
+environment = "production"
