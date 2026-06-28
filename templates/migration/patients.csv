@@ -1,0 +1,3 @@
+mrn,first_name,last_name,first_name_ar,last_name_ar,date_of_birth,gender,national_id,phone_mobile,email,address_line1,city,country_code,blood_group,source_system
+MRN-001,John,Smith,,,1980-06-15,male,A12345678,+962791234567,john.smith@example.com,123 Main St,Amman,JO,O+,legacy_his
+MRN-002,Fatima,Al-Ahmad,فاطمة,الأحمد,1992-03-22,female,B98765432,+962791234568,,,,JO,A+,legacy_his
