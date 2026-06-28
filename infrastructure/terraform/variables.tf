@@ -49,3 +49,16 @@ variable "replica_count_frontend" {
   type        = number
   default     = 2
 }
+
+variable "compartment_id" {
+  description = "OCI Compartment ID"
+  type        = string
+  default     = "ocid1.compartment.oc1..aaaaaaaalocalcompartment"
+}
+
+variable "db_admin_password" {
+  description = "OCI PostgreSQL DB Admin password"
+  type        = string
+  sensitive   = true
+  default     = "TemporarySecurePassword2026!"
+}

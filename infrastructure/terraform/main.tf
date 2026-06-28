@@ -53,3 +53,10 @@ module "redis" {
 
   depends_on = [module.kubernetes]
 }
+
+module "oci" {
+  source            = "./modules/oci"
+  environment       = var.environment
+  compartment_id    = var.compartment_id
+  db_admin_password = var.db_admin_password
+}
