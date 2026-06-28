@@ -1,4 +1,4 @@
-# Commercial Strategy
+# Commercial Strategy & Platform Control Plane
 
 ## Business Model
 
@@ -14,7 +14,7 @@ CyberCom sells enterprise software licenses to healthcare facilities, government
 - Enterprise organizations (ERP)
 
 **Revenue streams:**
-- Annual SaaS subscription (per module, per facility, per user)
+- Annual SaaS subscription (per module, per facility, per user, concurrent users)
 - Implementation services
 - Training (CyberCom Academy)
 - Support and maintenance
@@ -23,14 +23,33 @@ CyberCom sells enterprise software licenses to healthcare facilities, government
 
 ---
 
-## Product Editions
+## Central Commercial Control Plane (cybercom_cr app)
 
-| Edition | Target | Included |
-|---------|--------|---------|
-| Basic | Small clinics, single-site labs | Core modules only |
-| Professional | Mid-size hospitals, multi-site clinics | All product modules |
-| Enterprise | Large hospital groups, networks | All modules + analytics + BI + population health |
-| Government | Public health organizations | Enterprise + CyGov + CyCitizen |
+All platform-wide commercial workflows are managed by the `products/commercial_readiness` module (registered as Django app label `cybercom_cr`).
+
+Key services and entities:
+- **PricingPlan:** Defines plans per product code (e.g. monthly, annual, per user, per bed, flat rate).
+- **Quotation & Proposal:** Tracks quote lifecycles (draft, sent, accepted, rejected) and proposal wins/losses.
+- **License:** Model for active license enforcement supporting multiple scopes (`tenant`, `facility`, `user`, `product`, `enterprise`, `concurrent`).
+- **Subscription:** Manages active subscription lifecycles linked to billing plans.
+- **ProductEdition & FeatureFlag:** Configurable editions (`starter`, `professional`, `enterprise`, `network`, `government`) with flag overrides per tenant.
+- **WhiteLabelConfig:** Stores tenant display names, colors, domains, favicon/logo URLs, and report headers.
+- **ConcurrentLicenseSession:** Live tracking of checked-in concurrent users.
+- **SupportTicket:** Ticket workflow (`open`, `in_progress`, `resolve`, `closed`) with assigned staff.
+- **MarketplaceListing:** Catalog of installable packages (`module`, `extension`, `theme`, `connector`, `ai_package`, `clinical_template`, `report`, `dashboard`).
+- **CommercialMetricsSnapshot:** Stores ARR, MRR, usage metrics, and churn data.
+
+---
+
+## Partner Ecosystem (cybercom_partners app)
+
+Managed by the `products/partner_ecosystem` module.
+
+Key services and entities:
+- **Partner & PartnerApplication:** Manages partner status (`prospect`, `active`, `certified`, `suspended`).
+- **PartnerCertification:** Technical and sales certifications of partner consultants.
+- **LeadRegistration:** Deal registration to protect partner-driven sales pipelines.
+- **MarketplaceExtension:** Optional packages built and published by partners.
 
 ---
 
@@ -38,46 +57,12 @@ CyberCom sells enterprise software licenses to healthcare facilities, government
 
 Feature flags control capability access per tenant per edition.
 
-Location: `products/cymed/commercial/feature_flags/`
-
-Rule: Every premium feature must check `FeatureFlagService.is_enabled(feature_key, tenant_id)`.
-
-Never hardcode edition logic in product code — always route through `FeatureFlagService`.
-
----
-
-## Licensing
-
-Location: `products/cymed/commercial/licensing/`
-
-`LicenseService` validates:
-- License key authenticity
-- License expiry
-- Module entitlements
-- User seat limits
-- Feature entitlements
-
-All APIs validate license status via `LicenseMiddleware`.
-
----
-
-## White Label
-
-Location: `products/cymed/commercial/branding/`
-
-`BrandingMiddleware` injects tenant brand per request:
-- Logo URL
-- Color scheme
-- Product name
-- Custom domain
-
-No hardcoded "CyberCom" branding in product UI — always from brand tokens.
+Rule: Every premium feature must check active features via `FeatureFlag` or `TenantFeatureFlagOverride`.
+Never hardcode edition logic in product code — always route through the feature flag services.
 
 ---
 
 ## Deployment Profiles
-
-Location: `products/cymed/commercial/deployment_profiles/`
 
 Supported profiles:
 - `cloud` — Managed SaaS on cloud
@@ -87,38 +72,6 @@ Supported profiles:
 - `air_gapped` — No internet connectivity
 
 Each profile has corresponding Kubernetes overlays in `infrastructure/kubernetes/overlays/`.
-
----
-
-## Go-To-Market Channels
-
-- **Direct sales:** Enterprise accounts (hospitals, health ministries)
-- **System integrators:** Licensed resellers with white-label rights
-- **Partner ecosystem:** `products/partner_ecosystem/` — certified implementation partners
-- **Marketplace:** Third-party integration catalog
-
----
-
-## Customer Success
-
-- **Implementation:** `products/implementation/` — methodology, project templates, training materials
-- **Academy:** `products/academy/` — self-service training, certifications
-- **Demo:** `products/demo/` — live demo environment with synthetic data
-- **Portal:** Customer portal on Cybercom-Website for license management and support
-
----
-
-## Pricing Principles (Engineering implications)
-
-- Usage metering (`products/cymed/commercial/usage_metering/`) tracks:
-  - Active users per tenant
-  - API calls per module per tenant
-  - Storage consumption
-  - Report generation count
-  - AI query count
-
-- Never expose pricing in backend code — pricing in CRM (CyCom) and external systems only.
-- Meter usage; pricing is a business decision applied externally.
 
 ---
 
