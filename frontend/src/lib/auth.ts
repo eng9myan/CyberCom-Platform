@@ -4,8 +4,6 @@
  */
 "use client";
 
-import type { UserSession } from "@/types";
-
 const CYIDENTITY_ISSUER = process.env.NEXT_PUBLIC_CYIDENTITY_ISSUER ?? "";
 const CLIENT_ID = process.env.NEXT_PUBLIC_CYIDENTITY_CLIENT_ID ?? "";
 

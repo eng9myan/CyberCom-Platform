@@ -3,6 +3,15 @@
 import { useState, useEffect } from "react";
 import { apiFetch } from "@/lib/api";
 
+interface BedOccupancyRaw {
+  occupancy_status?: string;
+  bed_detail?: { ward?: string };
+}
+
+interface BedCleaningRaw {
+  bed_id?: string;
+}
+
 interface HospitalMetrics {
   total_beds: number;
   occupied_beds: number;
@@ -59,8 +68,8 @@ export default function HospitalPortal() {
     async function fetchBedStatus() {
       setLoading(true);
       try {
-        const occupancies = await apiFetch<any[]>("/api/v1/hospital/beds/occupancy/");
-        const cleanings = await apiFetch<any[]>("/api/v1/hospital/beds/cleaning/");
+        const occupancies = await apiFetch<BedOccupancyRaw[]>("/api/v1/hospital/beds/occupancy/");
+        await apiFetch<BedCleaningRaw[]>("/api/v1/hospital/beds/cleaning/");
 
         if (occupancies && occupancies.length > 0) {
           const totalBedsCount = 320;
@@ -96,8 +105,8 @@ export default function HospitalPortal() {
           });
 
           const liveWards: WardSummary[] = Object.keys(wardMap).map(wKey => {
-            const total = wardMap[wKey].total;
-            const occupied = wardMap[wKey].occupied;
+            const total = wardMap[wKey]!.total;
+            const occupied = wardMap[wKey]!.occupied;
             const pct = total > 0 ? (occupied / total) * 100 : 0;
             const status = pct >= 90 ? "critical" : pct >= 75 ? "elevated" : "normal";
             return {
@@ -120,7 +129,7 @@ export default function HospitalPortal() {
         setLoading(false);
       }
     }
-    fetchBedStatus();
+    void fetchBedStatus();
   }, []);
 
   const capacityColor = metrics.capacity_pct >= 90 ? "#ef4444" : metrics.capacity_pct >= 80 ? "#f59e0b" : "#22c55e";

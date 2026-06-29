@@ -3,6 +3,15 @@
 import { useState, useEffect } from "react";
 import { apiFetch } from "@/lib/api";
 
+interface ClinicAppointmentRaw {
+  id: string;
+  patient_detail?: { first_name?: string; last_name?: string; first_name_ar?: string; mrn?: string };
+  appointment_time: string;
+  triage_priority?: string;
+  specialty_detail?: { name?: string };
+  status?: string;
+}
+
 interface ClinicMetrics {
   waiting_patients: number;
   in_consultation: number;
@@ -59,7 +68,7 @@ export default function ClinicPortal() {
       setLoading(true);
       try {
         // Query real clinic appointments API
-        const data = await apiFetch<any[]>("/api/v1/clinic/appointments/");
+        const data = await apiFetch<ClinicAppointmentRaw[]>("/api/v1/clinic/appointments/");
         if (data && data.length > 0) {
           const mappedQueue: QueueEntry[] = data.map((item, idx) => ({
             id: item.id,
@@ -68,7 +77,7 @@ export default function ClinicPortal() {
             mrn: item.patient_detail?.mrn || `MRN-${idx}`,
             check_in_time: new Date(item.appointment_time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
             wait_minutes: Math.max(0, Math.floor((Date.now() - new Date(item.appointment_time).getTime()) / 60000)),
-            triage_level: item.triage_priority || "routine",
+            triage_level: (item.triage_priority ?? "routine") as "urgent" | "semi_urgent" | "routine",
             specialty: item.specialty_detail?.name || "General Practice",
             status: item.status === "scheduled" ? "waiting" : item.status === "in_progress" ? "in_consultation" : "completed"
           }));
@@ -90,7 +99,7 @@ export default function ClinicPortal() {
         setLoading(false);
       }
     }
-    loadData();
+    void loadData();
   }, []);
 
   const handleCallIn = async (entry: QueueEntry) => {
@@ -249,7 +258,7 @@ export default function ClinicPortal() {
                   <div style={{ display: "flex", gap: "0.5rem" }}>
                     {entry.status === "waiting" && (
                       <button
-                        onClick={() => handleCallIn(entry)}
+                        onClick={() => { void handleCallIn(entry); }}
                         style={{ padding: "0.4rem 0.8rem", fontSize: "0.8rem", fontWeight: 600, borderRadius: "6px", background: "var(--color-primary)", color: "#fff", border: "none", cursor: "pointer" }}
                       >
                         {lang === "en" ? "Call In" : "استدعاء"}

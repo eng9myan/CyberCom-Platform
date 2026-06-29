@@ -1,0 +1,163 @@
+name: Deploy CyMed Frontend to cymed.cy-com.com
+
+on:
+  push:
+    branches: [develop, main]
+    paths:
+      - "frontend/**"
+      - ".github/workflows/deploy-cymed.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cymed-production
+  cancel-in-progress: false
+
+env:
+  NODE_VERSION: "20"
+
+jobs:
+  build-and-deploy:
+    name: Build & Deploy CyMed Frontend
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    environment: production
+    defaults:
+      run:
+        working-directory: frontend
+    env:
+      OCI_HOST: ${{ secrets.OCI_HOST }}
+      OCI_SSH_USER: ${{ secrets.OCI_SSH_USER }}
+      OCI_SSH_PRIVATE_KEY: ${{ secrets.OCI_SSH_PRIVATE_KEY }}
+      NEXT_PUBLIC_API_URL: ${{ secrets.CYMED_API_URL || 'https://api.cy-com.com' }}
+      NEXT_PUBLIC_CYIDENTITY_ISSUER: ${{ secrets.CYIDENTITY_ISSUER || '' }}
+      NEXT_PUBLIC_CYIDENTITY_CLIENT_ID: ${{ secrets.CYIDENTITY_CLIENT_ID || 'cymed-web' }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: TypeScript check
+        run: npm run typecheck
+
+      - name: Build
+        run: npm run build
+        env:
+          NODE_ENV: production
+
+      - name: Validate deployment secrets
+        shell: bash
+        run: |
+          set -euo pipefail
+          : "${OCI_HOST:?Missing OCI_HOST}"
+          : "${OCI_SSH_USER:?Missing OCI_SSH_USER}"
+          : "${OCI_SSH_PRIVATE_KEY:?Missing OCI_SSH_PRIVATE_KEY}"
+        working-directory: .
+
+      - name: Setup SSH
+        shell: bash
+        run: |
+          set -euo pipefail
+          install -m 700 -d "$HOME/.ssh"
+          printf '%s\n' "$OCI_SSH_PRIVATE_KEY" > "$HOME/.ssh/id_ed25519"
+          chmod 600 "$HOME/.ssh/id_ed25519"
+          ssh-keyscan -H "$OCI_HOST" >> "$HOME/.ssh/known_hosts"
+        working-directory: .
+
+      - name: Create release archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Archive frontend build + package files
+          tar -czf "$RUNNER_TEMP/cymed-${GITHUB_SHA}.tar.gz" \
+            .next \
+            public \
+            package.json \
+            package-lock.json \
+            next.config.ts \
+            next.config.js 2>/dev/null || true
+        continue-on-error: false
+
+      - name: Transfer to Oracle VM
+        shell: bash
+        run: |
+          set -euo pipefail
+          scp -i "$HOME/.ssh/id_ed25519" \
+            "$RUNNER_TEMP/cymed-${GITHUB_SHA}.tar.gz" \
+            "${OCI_SSH_USER}@${OCI_HOST}:/tmp/cymed-${GITHUB_SHA}.tar.gz"
+        working-directory: .
+
+      - name: Deploy on Oracle VM
+        shell: bash
+        run: |
+          set -euo pipefail
+          ssh -i "$HOME/.ssh/id_ed25519" "${OCI_SSH_USER}@${OCI_HOST}" "bash -s -- '${GITHUB_SHA}'" <<'REMOTE'
+          set -Eeuo pipefail
+          release="$1"
+          app_root=/opt/cymed-frontend
+          release_dir="$app_root/releases/$release"
+          current_link="$app_root/current"
+
+          sudo install -d -o "$USER" -g "$USER" \
+            "$app_root" \
+            "$app_root/releases"
+
+          install -d "$release_dir"
+          tar -xzf "/tmp/cymed-${release}.tar.gz" -C "$release_dir"
+          rm -f "/tmp/cymed-${release}.tar.gz"
+
+          # Install production dependencies
+          cd "$release_dir"
+          npm ci --omit=dev --prefer-offline 2>/dev/null || npm ci --omit=dev
+
+          # Atomic switch
+          ln -sfn "$release_dir" "$current_link"
+
+          # Start/restart the Next.js server on port 3010
+          if command -v pm2 &>/dev/null; then
+            pm2 describe cymed &>/dev/null \
+              && pm2 restart cymed \
+              || pm2 start "npm start -- -p 3010" \
+                   --name cymed \
+                   --cwd "$current_link" \
+                   --env production \
+                   -- --port 3010
+            pm2 save
+          else
+            # Fallback: restart via systemd or direct node
+            pkill -f "next.*3010" 2>/dev/null || true
+            nohup npm start -- -p 3010 > "$app_root/cymed.log" 2>&1 &
+          fi
+
+          # Health check — wait up to 30s for port 3010
+          for i in $(seq 1 6); do
+            sleep 5
+            if curl -fsS "http://localhost:3010" > /dev/null 2>&1; then
+              echo "CyMed is healthy on port 3010"
+              exit 0
+            fi
+            echo "Waiting for CyMed to start... attempt $i/6"
+          done
+          echo "WARNING: CyMed health check timed out — check logs at $app_root/cymed.log"
+          REMOTE
+        working-directory: .
+
+      - name: Reload nginx
+        shell: bash
+        run: |
+          ssh -i "$HOME/.ssh/id_ed25519" "${OCI_SSH_USER}@${OCI_HOST}" \
+            "sudo nginx -t && sudo systemctl reload nginx"
+        working-directory: .

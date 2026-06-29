@@ -38,14 +38,11 @@ export default function PatientPortal() {
   const [subject, setSubject] = useState("");
   const [message, setMessage] = useState("");
   const [success, setSuccess] = useState(false);
-  const [loading, setLoading] = useState(false);
-
   useEffect(() => {
     async function fetchPortalData() {
-      setLoading(true);
       try {
-        const medicalSummary = await apiFetch<any>("/api/v1/patient-portal/medical-summary/");
-        const bills = await apiFetch<any[]>("/api/v1/patient-portal/billing/outstanding/");
+        const medicalSummary = await apiFetch<PatientSummary>("/api/v1/patient-portal/medical-summary/");
+        const bills = await apiFetch<InvoiceSummary[]>("/api/v1/patient-portal/billing/outstanding/");
         if (medicalSummary) {
           setSummary({
             allergies: medicalSummary.allergies || SUMMARY.allergies,
@@ -59,11 +56,9 @@ export default function PatientPortal() {
         }
       } catch (err) {
         console.warn("Failed to fetch live patient portal data, using mock data:", err);
-      } finally {
-        setLoading(false);
       }
     }
-    fetchPortalData();
+    void fetchPortalData();
   }, []);
 
   const handleSendMessage = async (e: React.FormEvent) => {
@@ -72,7 +67,7 @@ export default function PatientPortal() {
     try {
       await apiFetch("/api/v1/patient-portal/messaging/send/", {
         method: "POST",
-        body: { subject, body: message, provider_id: "00000000-0000-0000-0000-000000000000" }
+        body: JSON.stringify({ subject, body: message, provider_id: "00000000-0000-0000-0000-000000000000" })
       });
       setSubject("");
       setMessage("");
@@ -91,7 +86,7 @@ export default function PatientPortal() {
     try {
       await apiFetch(`/api/v1/patient-portal/billing/pay/`, {
         method: "POST",
-        body: { invoice_id: invoiceId, amount: 320.00, payment_method: "credit_card" }
+        body: JSON.stringify({ invoice_id: invoiceId, amount: 320.00, payment_method: "credit_card" })
       });
       setInvoices([]);
     } catch (err) {
@@ -177,7 +172,7 @@ export default function PatientPortal() {
                 {lang === "en" ? "Message sent securely to your primary care physician." : "تم إرسال الرسالة بشكل آمن لطبيب الرعاية الأولية."}
               </div>
             )}
-            <form onSubmit={handleSendMessage} style={{ display: "grid", gap: "1rem" }}>
+            <form onSubmit={(e) => { void handleSendMessage(e); }} style={{ display: "grid", gap: "1rem" }}>
               <input
                 type="text"
                 placeholder={lang === "en" ? "Subject" : "الموضوع"}
@@ -219,7 +214,7 @@ export default function PatientPortal() {
                   <div style={{ fontSize: "0.8125rem", color: "var(--color-text-muted)" }}>
                     {lang === "en" ? `Due by ${inv.due_date}` : `مستحق السداد بحلول ${inv.due_date}`}
                   </div>
-                  <button onClick={() => handlePayInvoice(inv.invoice_id)} style={{ marginTop: "0.5rem", padding: "0.5rem", background: "#22c55e", color: "white", border: "none", borderRadius: "6px", fontWeight: 600, cursor: "pointer" }}>
+                  <button onClick={() => { void handlePayInvoice(inv.invoice_id); }} style={{ marginTop: "0.5rem", padding: "0.5rem", background: "#22c55e", color: "white", border: "none", borderRadius: "6px", fontWeight: 600, cursor: "pointer" }}>
                     {lang === "en" ? "Pay Now" : "سدد الآن"}
                   </button>
                 </div>

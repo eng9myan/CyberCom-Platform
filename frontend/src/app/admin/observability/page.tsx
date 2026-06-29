@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Head from "next/head";
 
 export default function ObservabilityAdminConsole() {
   const [lang, setLang] = useState<"en" | "ar">("en");

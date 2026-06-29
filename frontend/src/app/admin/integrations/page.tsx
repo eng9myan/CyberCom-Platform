@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Head from "next/head";
 
 interface Connector {
   id: string;
@@ -65,7 +64,7 @@ export default function IntegrationsAdminConsole() {
   const [activeTab, setActiveTab] = useState<"connectors" | "audits">("connectors");
   const [notification, setNotification] = useState<string | null>(null);
 
-  const [connectors, setConnectors] = useState<Connector[]>([
+  const [connectors] = useState<Connector[]>([
     { id: "c1", name: "Epic EHR FHIR Gateway", type: "fhir", url: "https://fhir.epic.com/api/v1", active: true },
     { id: "c2", name: "Lab Systems HL7 Feed", type: "hl7v2", url: "mllp://labs.cybercom.local:2575", active: true },
     { id: "c3", name: "Billing SOAP Connector", type: "soap", url: "https://soap.billing.com/ws", active: false }

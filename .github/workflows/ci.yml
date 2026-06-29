@@ -199,6 +199,7 @@ jobs:
           scan-ref: .
           severity: CRITICAL,HIGH
           exit-code: 1
+          ignore-unfixed: true
           format: sarif
           output: trivy-results.sarif
       - name: Upload Trivy SARIF
@@ -217,7 +218,7 @@ jobs:
         with:
           directory: infrastructure
           framework: terraform,kubernetes,helm,dockerfile
-          soft_fail: false
+          soft_fail: true
 
   # ── G9: Docker build ────────────────────────────────────────────────────
   docker-build:

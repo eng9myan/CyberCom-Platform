@@ -268,7 +268,7 @@ export default function TenantAdminPage() {
   const [theme, setTheme] = useState<"dark" | "light">("dark");
   const [tab, setTab] = useState(0);
   const [search, setSearch] = useState("");
-  const [selectedTenant, setSelectedTenant] = useState<Tenant>(MOCK_TENANTS[0]);
+  const [selectedTenant, setSelectedTenant] = useState<Tenant>(MOCK_TENANTS[0]!);
   const [flags, setFlags] = useState(MOCK_FLAGS);
   const [notification, setNotification] = useState<string | null>(null);
 

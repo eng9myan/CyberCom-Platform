@@ -3,6 +3,17 @@
 import { useState, useEffect } from "react";
 import { apiFetch } from "@/lib/api";
 
+interface PopHealthRiskRaw {
+  total?: number;
+  by_category?: { low: number; moderate: number; high: number; very_high: number };
+}
+
+interface PopHealthGapsRaw {
+  total_gaps?: number;
+  closed_mtd?: number;
+  compliance_rate?: number;
+}
+
 interface PopHealthMetrics {
   enrolled_patients: number;
   open_care_gaps: number;
@@ -40,42 +51,38 @@ export default function PopulationHealthDashboard() {
   const [lang, setLang] = useState<"en" | "ar">("en");
   const [metrics, setMetrics] = useState<PopHealthMetrics>(METRICS);
   const [riskDist, setRiskDist] = useState<RiskDistribution[]>(RISK_DIST);
-  const [loading, setLoading] = useState(false);
-
   useEffect(() => {
     async function fetchPopHealthData() {
-      setLoading(true);
       try {
-        const riskSummary = await apiFetch<any>("/api/v1/population-health/risk/summary/");
-        const gapsSummary = await apiFetch<any>("/api/v1/population-health/gaps/summary/");
-        
-        if (riskSummary || gapsSummary) {
+        const riskSummary = await apiFetch<PopHealthRiskRaw>("/api/v1/population-health/risk/summary/");
+        const gapsSummary = await apiFetch<PopHealthGapsRaw>("/api/v1/population-health/gaps/summary/");
+
+        if (riskSummary ?? gapsSummary) {
+          const totalRiskEval = riskSummary?.total ?? 45832;
           setMetrics({
             enrolled_patients: 8432,
-            open_care_gaps: gapsSummary?.total_gaps || 12005,
-            gaps_closed_mtd: gapsSummary?.closed_mtd || 842,
-            compliance_rate_pct: gapsSummary?.compliance_rate || 84.7,
+            open_care_gaps: gapsSummary?.total_gaps ?? 12005,
+            gaps_closed_mtd: gapsSummary?.closed_mtd ?? 842,
+            compliance_rate_pct: gapsSummary?.compliance_rate ?? 84.7,
             active_outbreaks: 2,
-            total_risk_evaluated: riskSummary?.total || 45832,
+            total_risk_evaluated: totalRiskEval,
           });
 
           if (riskSummary?.by_category) {
             const raw = riskSummary.by_category;
             setRiskDist([
-              { level: "Low Risk", level_ar: "مخاطر منخفضة", count: Math.round(metrics.total_risk_evaluated * (raw.low / 100)), percentage: raw.low, color: "#22c55e" },
-              { level: "Moderate Risk", level_ar: "مخاطر متوسطة", count: Math.round(metrics.total_risk_evaluated * (raw.moderate / 100)), percentage: raw.moderate, color: "#3b82f6" },
-              { level: "High Risk", level_ar: "مخاطر عالية", count: Math.round(metrics.total_risk_evaluated * (raw.high / 100)), percentage: raw.high, color: "#f59e0b" },
-              { level: "Very High Risk", level_ar: "مخاطر عالية جداً", count: Math.round(metrics.total_risk_evaluated * (raw.very_high / 100)), percentage: raw.very_high, color: "#ef4444" },
+              { level: "Low Risk", level_ar: "مخاطر منخفضة", count: Math.round(totalRiskEval * (raw.low / 100)), percentage: raw.low, color: "#22c55e" },
+              { level: "Moderate Risk", level_ar: "مخاطر متوسطة", count: Math.round(totalRiskEval * (raw.moderate / 100)), percentage: raw.moderate, color: "#3b82f6" },
+              { level: "High Risk", level_ar: "مخاطر عالية", count: Math.round(totalRiskEval * (raw.high / 100)), percentage: raw.high, color: "#f59e0b" },
+              { level: "Very High Risk", level_ar: "مخاطر عالية جداً", count: Math.round(totalRiskEval * (raw.very_high / 100)), percentage: raw.very_high, color: "#ef4444" },
             ]);
           }
         }
       } catch (err) {
         console.warn("Failed to fetch live Population Health data, using mock data:", err);
-      } finally {
-        setLoading(false);
       }
     }
-    fetchPopHealthData();
+    void fetchPopHealthData();
   }, []);
 
   return (

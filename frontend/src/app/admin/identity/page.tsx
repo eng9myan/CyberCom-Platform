@@ -252,13 +252,13 @@ export default function IdentityAdminPortal() {
     { id: "3", username: "erp.auditor", email: "auditor@cybercom.com", displayName: "ERP Auditor", enabled: false, lockedUntil: null, failedLoginCount: 0 },
   ]);
 
-  const [roles, setRoles] = useState<Role[]>([
+  const [roles] = useState<Role[]>([
     { id: "1", name: "platform_admin", displayName: "Platform Admin", clientRole: false, description: "Full superuser access across all components" },
     { id: "2", name: "clinical_director", displayName: "Clinical Director", clientRole: true, description: "Manage clinical paths and emergency protocols" },
     { id: "3", name: "financial_officer", displayName: "Chief Financial Officer", clientRole: true, description: "Approve large ledger transactions" },
   ]);
 
-  const [groups, setGroups] = useState<Group[]>([
+  const [groups] = useState<Group[]>([
     { id: "1", name: "Clinical Staff", path: "/medical/clinicians", description: "All active physicians and healthcare providers" },
     { id: "2", name: "Financial Auditors", path: "/erp/finance/auditors", description: "Internal compliance auditing team" },
   ]);
@@ -277,7 +277,7 @@ export default function IdentityAdminPortal() {
     { id: "bg1", username: "doc.ahmed", reason: "clinical", justification: "Mass casualty disaster in North ER wing", targetResource: "patient_records", targetAction: "override-consent", status: "requested" },
   ]);
 
-  const [auditLogs, setAuditLogs] = useState<AuditLog[]>([
+  const [auditLogs] = useState<AuditLog[]>([
     { id: "a1", timestamp: "2026-06-21T21:40:02Z", outcome: "success", usernameAttempted: "doc.ahmed", ipAddress: "192.168.1.14", details: "Successful MFA login via WebAuthn/Passkey" },
     { id: "a2", timestamp: "2026-06-21T21:38:15Z", outcome: "failure", usernameAttempted: "nurse.fatima", ipAddress: "10.200.4.52", details: "Failed password validation (5th attempt), account locked" },
   ]);
@@ -286,7 +286,7 @@ export default function IdentityAdminPortal() {
   const [newRealm, setNewRealm] = useState({ name: "", type: "customer", region: "me-central-1", mfaEnforced: true });
   const [newUser, setNewUser] = useState({ username: "", email: "", displayName: "" });
   const [dualApproval, setDualApproval] = useState({ approver: "", secondApprover: "" });
-  const [glassDuration, setGlassDuration] = useState(3600);
+  const [glassDuration] = useState(3600);
   const [selectedBgId, setSelectedBgId] = useState<string | null>(null);
 
   // --- Actions ---
@@ -473,7 +473,7 @@ export default function IdentityAdminPortal() {
             ].map((tab) => (
               <button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id as any)}
+                onClick={() => setActiveTab(tab.id as typeof activeTab)}
                 style={{
                   width: "100%",
                   padding: "var(--spacing-sm) var(--spacing-md)",

@@ -3,6 +3,20 @@
 import { useState, useEffect } from "react";
 import { apiFetch } from "@/lib/api";
 
+interface RCMDashboardRaw {
+  days_in_ar?: number;
+  total_ar?: number;
+  collection_rate_pct_pct?: number;
+  denial_rate_pct?: number;
+  net_collection_rate_pct_pct?: number;
+  gross_charges?: number;
+  net_revenue?: number;
+  adjustments?: number;
+  cash_collected?: number;
+  outstanding?: number;
+  ar_by_age?: ARByAge[];
+}
+
 interface RCMMetrics {
   days_in_ar: number;
   total_ar: number;
@@ -46,25 +60,22 @@ export default function RCMDashboard() {
   const [lang, setLang] = useState<"en" | "ar">("en");
   const [metrics, setMetrics] = useState<RCMMetrics>(METRICS);
   const [aging, setAging] = useState<ARByAge[]>(AGING_BUCKETS);
-  const [loading, setLoading] = useState(false);
-
   useEffect(() => {
     async function fetchRcmData() {
-      setLoading(true);
       try {
-        const dashboard = await apiFetch<any>("/api/v1/rcm/analytics/dashboard/");
+        const dashboard = await apiFetch<RCMDashboardRaw>("/api/v1/rcm/analytics/dashboard/");
         if (dashboard) {
           setMetrics({
-            days_in_ar: dashboard.days_in_ar || 42.3,
-            total_ar: dashboard.total_ar || 2400000.00,
-            collection_rate_pct: dashboard.collection_rate_pct_pct || 94.2,
-            denial_rate_pct: dashboard.denial_rate_pct || 8.1,
-            net_collection_rate_pct: dashboard.net_collection_rate_pct_pct || 91.8,
-            gross_charges: dashboard.gross_charges || 1500000.00,
-            net_revenue: dashboard.net_revenue || 1380000.00,
-            adjustments: dashboard.adjustments || 120000.00,
-            cash_collected: dashboard.cash_collected || 847000.00,
-            outstanding: dashboard.outstanding || 653000.00,
+            days_in_ar: dashboard.days_in_ar ?? 42.3,
+            total_ar: dashboard.total_ar ?? 2400000.00,
+            collection_rate_pct: dashboard.collection_rate_pct_pct ?? 94.2,
+            denial_rate_pct: dashboard.denial_rate_pct ?? 8.1,
+            net_collection_rate_pct: dashboard.net_collection_rate_pct_pct ?? 91.8,
+            gross_charges: dashboard.gross_charges ?? 1500000.00,
+            net_revenue: dashboard.net_revenue ?? 1380000.00,
+            adjustments: dashboard.adjustments ?? 120000.00,
+            cash_collected: dashboard.cash_collected ?? 847000.00,
+            outstanding: dashboard.outstanding ?? 653000.00,
           });
           if (dashboard.ar_by_age) {
             setAging(dashboard.ar_by_age);
@@ -72,11 +83,9 @@ export default function RCMDashboard() {
         }
       } catch (err) {
         console.warn("Failed to fetch live RCM data, using mock data:", err);
-      } finally {
-        setLoading(false);
       }
     }
-    fetchRcmData();
+    void fetchRcmData();
   }, []);
 
   const totalCollected = metrics.cash_collected;

@@ -30,7 +30,7 @@ export async function apiFetch<T>(path: string, options: FetchOptions = {}): Pro
   });
 
   if (!response.ok) {
-    const error = await response.json().catch(() => ({ detail: response.statusText }));
+    const error = await (response.json() as Promise<Record<string, unknown>>).catch(() => ({ detail: response.statusText }));
     throw error;
   }
 

@@ -34,26 +34,18 @@ const ALERTS: ClinicalAlert[] = [
 
 export default function ProviderPortal() {
   const [lang, setLang] = useState<"en" | "ar">("en");
-  const [visits, setVisits] = useState<PatientVisit[]>(VISITS);
+  const [visits] = useState<PatientVisit[]>(VISITS);
   const [alerts, setAlerts] = useState<ClinicalAlert[]>(ALERTS);
-  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     async function fetchProviderData() {
-      setLoading(true);
       try {
-        // Fetch active clinic queue or active tasks
-        const appointments = await apiFetch<any[]>("/api/v1/patient-portal/appointments/my-appointments/");
-        if (appointments && appointments.length > 0) {
-          // Map to queue
-        }
+        await apiFetch<unknown[]>("/api/v1/patient-portal/appointments/my-appointments/");
       } catch (err) {
         console.warn("Failed to fetch live provider portal data, using mock data:", err);
-      } finally {
-        setLoading(false);
       }
     }
-    fetchProviderData();
+    void fetchProviderData();
   }, []);
 
   const handleDismissAlert = (alertId: string) => {

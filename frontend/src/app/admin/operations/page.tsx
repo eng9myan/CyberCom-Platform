@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Head from "next/head";
 
 interface Backup {
   id: string;
@@ -57,7 +56,7 @@ export default function OperationsAdminConsole() {
   const [activeTab, setActiveTab] = useState<"backups" | "dr">("backups");
   const [notification, setNotification] = useState<string | null>(null);
 
-  const [backups, setBackups] = useState<Backup[]>([
+  const [backups] = useState<Backup[]>([
     { id: "1", assetName: "cybercom_identity_db", lastBackup: "2026-06-22T04:00:00Z", sizeMb: 1420, integrity: "passed" },
     { id: "2", assetName: "cybercom_clinical_ehr", lastBackup: "2026-06-22T04:05:00Z", sizeMb: 4890, integrity: "passed" },
     { id: "3", assetName: "cybercom_ledger_erp", lastBackup: "2026-06-21T04:00:00Z", sizeMb: 3120, integrity: "passed" }

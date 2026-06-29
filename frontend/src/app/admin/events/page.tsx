@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Head from "next/head";
 
 interface OutboxEvent {
   id: string;
@@ -66,7 +65,7 @@ export default function EventsAdminConsole() {
   const [activeTab, setActiveTab] = useState<"outbox" | "dlq" | "replay">("outbox");
   const [notification, setNotification] = useState<string | null>(null);
 
-  const [outbox, setOutbox] = useState<OutboxEvent[]>([
+  const [outbox] = useState<OutboxEvent[]>([
     { id: "e1", topic: "platform.identity.events", eventType: "cyidentity.user.provisioned", status: "published", createdAt: "2026-06-22T17:30:00Z" },
     { id: "e2", topic: "product.cymed.clinical.events", eventType: "cymed.patient.admission", status: "pending", createdAt: "2026-06-22T18:00:00Z" },
     { id: "e3", topic: "product.cycom.erp.events", eventType: "cycom.transaction.approved", status: "failed", createdAt: "2026-06-22T18:05:00Z" }

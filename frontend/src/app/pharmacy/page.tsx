@@ -3,6 +3,16 @@
 import { useState, useEffect } from "react";
 import { apiFetch } from "@/lib/api";
 
+interface PrescriptionRaw {
+  id: string;
+  patient_detail?: { first_name?: string; last_name?: string; first_name_ar?: string; mrn?: string };
+  medication_name?: string;
+  dosage_instruction?: string;
+  status?: string;
+  prescriber_name?: string;
+  created_at: string;
+}
+
 interface Prescription {
   id: string;
   patient_name: string;
@@ -48,7 +58,7 @@ export default function PharmacyPortal() {
     async function loadPrescriptions() {
       setLoading(true);
       try {
-        const data = await apiFetch<any[]>("/api/v1/pharmacy/prescriptions/");
+        const data = await apiFetch<PrescriptionRaw[]>("/api/v1/pharmacy/prescriptions/");
         if (data && data.length > 0) {
           const mapped: Prescription[] = data.map((item, idx) => ({
             id: item.id,
@@ -76,7 +86,7 @@ export default function PharmacyPortal() {
         setLoading(false);
       }
     }
-    loadPrescriptions();
+    void loadPrescriptions();
   }, []);
 
   const handleDispense = async (prescriptionId: string) => {
@@ -233,7 +243,7 @@ export default function PharmacyPortal() {
                 <td style={{ padding: "1rem" }}>
                   {entry.status === "pending" ? (
                     <button
-                      onClick={() => handleDispense(entry.id)}
+                      onClick={() => { void handleDispense(entry.id); }}
                       style={{ padding: "0.4rem 0.8rem", fontSize: "0.8rem", fontWeight: 700, borderRadius: "6px", background: "#22c55e", color: "#fff", border: "none", cursor: "pointer" }}
                     >
                       {lang === "en" ? "Dispense" : "صرف الدواء"}
