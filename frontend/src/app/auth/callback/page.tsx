@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect } from "react";
+import { Suspense, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { exchangeCodeForTokens, parseJwtClaims } from "@/lib/auth";
 import { useAuth } from "@/contexts/auth";
 import type { UserSession } from "@/types";
 
-export default function AuthCallbackPage() {
+function CallbackHandler() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { setSession } = useAuth();
@@ -55,5 +55,21 @@ export default function AuthCallbackPage() {
         <p>جاري المعالجة... Processing authentication...</p>
       </div>
     </div>
+  );
+}
+
+export default function AuthCallbackPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="login-container" role="main">
+          <div className="login-card glass-card">
+            <p>جاري المعالجة... Processing authentication...</p>
+          </div>
+        </div>
+      }
+    >
+      <CallbackHandler />
+    </Suspense>
   );
 }

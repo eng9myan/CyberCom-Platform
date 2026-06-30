@@ -19,9 +19,7 @@ const nextConfig = {
     ];
   },
 
-  experimental: {
-    typedRoutes: true,
-  },
+  experimental: {},
 };
 
 module.exports = nextConfig;
