@@ -49,3 +49,8 @@ variable "db_admin_password" {
   sensitive   = true
   description = "Administrator password for the managed PostgreSQL system."
 }
+
+variable "oci_node_image_id" {
+  type        = string
+  description = "OCID of the OS image for OKE worker nodes. Must be set explicitly — no default."
+}

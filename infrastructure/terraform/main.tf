@@ -55,8 +55,9 @@ module "redis" {
 }
 
 module "oci" {
-  source            = "./modules/oci"
-  environment       = var.environment
-  compartment_id    = var.compartment_id
-  db_admin_password = var.db_admin_password
+  source              = "./modules/oci"
+  environment         = var.environment
+  compartment_id      = var.compartment_id
+  db_admin_password   = var.db_admin_password
+  oci_node_image_id   = var.oci_node_image_id
 }

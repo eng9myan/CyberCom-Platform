@@ -44,11 +44,11 @@ echo "[SUCCESS] PITR Base Backup generated successfully: $BACKUP_FILE"
 
 # ── 3. UPLOAD AND COPY TO CROSS-REGION DR BUCKET ──────────────────────────────
 echo "[INFO] Uploading base backup to primary storage bucket: $BACKUP_BUCKET..."
-# oci os object put --bucket-name "$BACKUP_BUCKET" --file "$BACKUP_FILE" --name "pitr_backup_${TIMESTAMP}.tar"
+oci os object put --bucket-name "$BACKUP_BUCKET" --file "$BACKUP_FILE" --name "pitr_backup_${TIMESTAMP}.tar"
 echo "[SUCCESS] Backup uploaded to primary region."
 
 echo "[INFO] Copying backup to secondary cross-region DR bucket: $DR_BACKUP_BUCKET..."
-# oci os object copy --bucket-name "$BACKUP_BUCKET" --destination-bucket "$DR_BACKUP_BUCKET" --name "pitr_backup_${TIMESTAMP}.tar"
+oci os object copy --bucket-name "$BACKUP_BUCKET" --destination-bucket "$DR_BACKUP_BUCKET" --source-object-name "pitr_backup_${TIMESTAMP}.tar" --destination-object-name "pitr_backup_${TIMESTAMP}.tar"
 echo "[SUCCESS] Cross-region backup replication sync completed."
 
 # ── 4. DRY-RUN RESTORE VALIDATION ─────────────────────────────────────────────

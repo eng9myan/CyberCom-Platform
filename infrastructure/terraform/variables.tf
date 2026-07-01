@@ -61,3 +61,8 @@ variable "db_admin_password" {
   type        = string
   sensitive   = true
 }
+
+variable "oci_node_image_id" {
+  description = "OCID of the OKE node pool OS image for region me-dubai-1. Look up the current value in the OCI Console under Compute > Images or via: oci compute image list --compartment-id <compartment_ocid> --operating-system 'Oracle Linux' --sort-by TIMECREATED"
+  type        = string
+}

@@ -177,7 +177,7 @@ resource "oci_containerengine_node_pool" "np" {
   }
 
   node_source_details {
-    image_id    = "ocid1.image.oc1.me-dubai-1.aaaaaaaak8simageexample"
+    image_id    = var.oci_node_image_id
     source_type = "image"
   }
 
