@@ -127,7 +127,7 @@ jobs:
           user: ${{ secrets.OCI_USER_OCID }}
           fingerprint: ${{ secrets.OCI_FINGERPRINT }}
           tenancy: ${{ secrets.OCI_TENANCY_OCID }}
-          region: ${{ secrets.OCI_REGION | default 'me-dubai-1' }}
+          region: ${{ secrets.OCI_REGION || 'me-dubai-1' }}
           key_content: ${{ secrets.OCI_API_PRIVATE_KEY }}
 
       # Get OKE Kubeconfig
@@ -136,7 +136,7 @@ jobs:
           oci ce cluster create-kubeconfig \
             --cluster-id ${{ secrets.OCI_OKE_CLUSTER_ID }} \
             --file $HOME/.kube/config \
-            --region ${{ secrets.OCI_REGION | default 'me-dubai-1' }} \
+            --region ${{ secrets.OCI_REGION || 'me-dubai-1' }} \
             --token-version 2.0.0
 
       # Deploy using Helm with rollback on failure (atomic)

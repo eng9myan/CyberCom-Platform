@@ -57,8 +57,7 @@ variable "compartment_id" {
 }
 
 variable "db_admin_password" {
-  description = "OCI PostgreSQL DB Admin password"
+  description = "OCI PostgreSQL DB Admin password. Must be supplied explicitly — no default is set. Use OCI Vault or a secrets manager; never pass this in plaintext CI logs."
   type        = string
   sensitive   = true
-  default     = "TemporarySecurePassword2026!"
 }
