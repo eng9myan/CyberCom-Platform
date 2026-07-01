@@ -3,7 +3,7 @@
 import Link from "next/link";
 import {
   Building2, FlaskConical, Scan, Pill, User, UserCog, DollarSign, Activity,
-  Stethoscope, ChevronRight, Zap, Shield, Globe,
+  Stethoscope, ChevronRight, Zap, Shield, Globe, BarChart3,
 } from "lucide-react";
 
 const MODULES = [
@@ -88,6 +88,15 @@ const MODULES = [
     color: "text-pink-400",
     bg: "bg-pink-500/8 border-pink-500/20 hover:border-pink-400/40",
   },
+  {
+    href: "/erp",
+    icon: BarChart3,
+    title: "CyCom ERP",
+    subtitle: "نظام تخطيط الموارد",
+    desc: "Finance, HR, procurement, supply chain",
+    color: "text-orange-400",
+    bg: "bg-orange-500/8 border-orange-500/20 hover:border-orange-400/40",
+  },
 ];
 
 const TRUST = [
@@ -115,7 +124,7 @@ export default function CyMedLanding() {
       >
         <Zap style={{ width: 14, height: 14, color: "#22D3EE" }} aria-hidden />
         <span style={{ color: "#A5F3FC" }}>
-          <strong style={{ color: "#22D3EE" }}>Demo Mode</strong> — Live sample data. No account required. Explore all 9 CyMed modules below.
+          <strong style={{ color: "#22D3EE" }}>Demo Mode</strong> — Live sample data. No account required. Explore all 10 modules below.
         </span>
       </div>
 
