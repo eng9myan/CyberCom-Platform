@@ -32,6 +32,11 @@ jobs:
       - name: Verify git subtree is available
         run: git subtree --help > /dev/null
 
+      - name: Remove placeholder product dirs (created by init commit, block subtree add)
+        run: |
+          git rm -r --ignore-unmatch backend/products/cycom backend/products/cyshop
+          git commit -m "chore: remove placeholder dirs before subtree import" --allow-empty
+
       - name: Import CyCom ERP via git subtree (preserves full history)
         run: |
           git remote add cycom-src https://github.com/eng9myan/CyCom.git
