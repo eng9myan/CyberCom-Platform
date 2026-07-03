@@ -1,1 +1,115 @@
-bmFtZTogSW1wb3J0IEN5Q29tIEVSUCBhbmQgQ3lTaG9wCgpvbjoKICB3b3JrZmxvd19kaXNwYXRjaDoKICAgIGlucHV0czoKICAgICAgY29uZmlybToKICAgICAgICBkZXNjcmlwdGlvbjogJ1R5cGUgImltcG9ydCIgdG8gcnVuIHRoZSBzdWJ0cmVlIGltcG9ydCBpbnRvIGJhY2tlbmQvcHJvZHVjdHMvJwogICAgICAgIHJlcXVpcmVkOiB0cnVlCgpwZXJtaXNzaW9uczoKICBjb250ZW50czogd3JpdGUKICBwdWxsLXJlcXVlc3RzOiB3cml0ZQoKam9iczoKICBpbXBvcnQ6CiAgICBpZjogZ2l0aHViLmV2ZW50LmlucHV0cy5jb25maXJtID09ICdpbXBvcnQnCiAgICBydW5zLW9uOiB1YnVudHUtbGF0ZXN0CiAgICBzdGVwczoKICAgICAgLSBuYW1lOiBDaGVja291dCBDeWJlckNvbS1QbGF0Zm9ybQogICAgICAgIHVzZXM6IGFjdGlvbnMvY2hlY2tvdXRAdjQKICAgICAgICB3aXRoOgogICAgICAgICAgZmV0Y2gtZGVwdGg6IDAKCiAgICAgIC0gbmFtZTogQ29uZmlndXJlIGdpdCBpZGVudGl0eQogICAgICAgIHJ1bjogfAogICAgICAgICAgZ2l0IGNvbmZpZyB1c2VyLm5hbWUgImdpdGh1Yi1hY3Rpb25zW2JvdF0iCiAgICAgICAgICBnaXQgY29uZmlnIHVzZXIuZW1haWwgImdpdGh1Yi1hY3Rpb25zW2JvdF1AdXNlcnMubm9yZXBseS5naXRodWIuY29tIgoKICAgICAgLSBuYW1lOiBDcmVhdGUgaW1wb3J0IGJyYW5jaAogICAgICAgIHJ1bjogZ2l0IGNoZWNrb3V0IC1iIGZlYXQvaW1wb3J0LWN5Y29tLWVycC1jeXNob3AKCiAgICAgIC0gbmFtZTogVmVyaWZ5IGdpdCBzdWJ0cmVlIGlzIGF2YWlsYWJsZQogICAgICAgIHJ1bjogZ2l0IHN1YnRyZWUgLS1oZWxwID4gL2Rldi9udWxsCgogICAgICAtIG5hbWU6IEltcG9ydCBDeUNvbSBFUlAgdmlhIGdpdCBzdWJ0cmVlIChwcmVzZXJ2ZXMgZnVsbCBoaXN0b3J5KQogICAgICAgIHJ1bjogfAogICAgICAgICAgZ2l0IHJlbW90ZSBhZGQgY3ljb20tc3JjIGh0dHBzOi8vZ2l0aHViLmNvbS9lbmc5bXlhbi9DeUNvbS5naXQKICAgICAgICAgIGdpdCBmZXRjaCBjeWNvbS1zcmMgbWFpbgogICAgICAgICAgZ2l0IHN1YnRyZWUgYWRkIC0tcHJlZml4PWJhY2tlbmQvcHJvZHVjdHMvY3ljb20gY3ljb20tc3JjIG1haW4gLS1zcXVhc2g9ZmFsc2UgLW0gImZlYXQoY3ljb20pOiBpbXBvcnQgQ3lDb20gRVJQIChPZG9vICsgTmV4dC5qcyB3aXphcmQgVUkpIgogICAgICAgICAgZ2l0IHJlbW90ZSByZW1vdmUgY3ljb20tc3JjCgogICAgICAtIG5hbWU6IEltcG9ydCBDeVNob3AgdmlhIGdpdCBzdWJ0cmVlIChwcmVzZXJ2ZXMgZnVsbCBoaXN0b3J5KQogICAgICAgIHJ1bjogfAogICAgICAgICAgZ2l0IHJlbW90ZSBhZGQgY3lzaG9wLXNyYyBodHRwczovL2dpdGh1Yi5jb20vZW5nOW15YW4vQ3lzaG9wLmdpdAogICAgICAgICAgZ2l0IGZldGNoIGN5c2hvcC1zcmMgbWFpbgogICAgICAgICAgZ2l0IHN1YnRyZWUgYWRkIC0tcHJlZml4PWJhY2tlbmQvcHJvZHVjdHMvY3lzaG9wIGN5c2hvcC1zcmMgbWFpbiAtLXNxdWFzaD1mYWxzZSAtbSAiZmVhdChjeXNob3ApOiBpbXBvcnQgQ3lTaG9wIChEamFuZ28gKyBOZXh0LmpzICsgVml0ZSkiCiAgICAgICAgICBnaXQgcmVtb3RlIHJlbW92ZSBjeXNob3Atc3JjCgogICAgICAtIG5hbWU6IEV4dGVuZCAuZ2l0aWdub3JlIGZvciBpbXBvcnRlZCBwcm9kdWN0cwogICAgICAgIHJ1bjogfAogICAgICAgICAgewogICAgICAgICAgICBlY2hvICIiCiAgICAgICAgICAgIGVjaG8gIiMgLS0tIEltcG9ydGVkIEN5Q29tIEVSUCAvIEN5U2hvcCBidWlsZCBhcnRpZmFjdHMgLS0tIgogICAgICAgICAgICBlY2hvICJiYWNrZW5kL3Byb2R1Y3RzL2N5Y29tLyoqL25vZGVfbW9kdWxlcy8iCiAgICAgICAgICAgIGVjaG8gImJhY2tlbmQvcHJvZHVjdHMvY3ljb20vKiovLm5leHQvIgogICAgICAgICAgICBlY2hvICJiYWNrZW5kL3Byb2R1Y3RzL2N5Y29tLyoqL19fcHljYWNoZV9fLyIKICAgICAgICAgICAgZWNobyAiYmFja2VuZC9wcm9kdWN0cy9jeWNvbS8qKi8qLnB5YyIKICAgICAgICAgICAgZWNobyAiYmFja2VuZC9wcm9kdWN0cy9jeWNvbS8qKi9maWxlc3RvcmUvIgogICAgICAgICAgICBlY2hvICJiYWNrZW5kL3Byb2R1Y3RzL2N5c2hvcC8qKi9ub2RlX21vZHVsZXMvIgogICAgICAgICAgICBlY2hvICJiYWNrZW5kL3Byb2R1Y3RzL2N5c2hvcC8qKi8ubmV4dC8iCiAgICAgICAgICAgIGVjaG8gImJhY2tlbmQvcHJvZHVjdHMvY3lzaG9wLyoqL2Rpc3QvIgogICAgICAgICAgICBlY2hvICJiYWNrZW5kL3Byb2R1Y3RzL2N5c2hvcC8qKi9fX3B5Y2FjaGVfXy8iCiAgICAgICAgICAgIGVjaG8gImJhY2tlbmQvcHJvZHVjdHMvY3lzaG9wLyoqLyoucHljIgogICAgICAgICAgfSA+PiAuZ2l0aWdub3JlCiAgICAgICAgICBnaXQgYWRkIC5naXRpZ25vcmUKICAgICAgICAgIGdpdCBjb21taXQgLW0gImNob3JlOiBleHRlbmQgLmdpdGlnbm9yZSBmb3IgaW1wb3J0ZWQgY3ljb20vY3lzaG9wIHByb2R1Y3RzIiAtLWFsbG93LWVtcHR5CgogICAgICAtIG5hbWU6IEZ1bGwtaGlzdG9yeSBzZWNyZXQgc2NhbiAoZ2l0bGVha3MpCiAgICAgICAgY29udGludWUtb24tZXJyb3I6IHRydWUKICAgICAgICBydW46IHwKICAgICAgICAgIGRvY2tlciBydW4gLS1ybSAtdiAiJFBXRDovcmVwbyIgenJpY2V0aGV6YXYvZ2l0bGVha3M6bGF0ZXN0IGRldGVjdCBcCiAgICAgICAgICAgIC0tc291cmNlIC9yZXBvIFwKICAgICAgICAgICAgLS1yZXBvcnQtZm9ybWF0IGpzb24gXAogICAgICAgICAgICAtLXJlcG9ydC1wYXRoIC9yZXBvL2dpdGxlYWtzLXJlcG9ydC5qc29uIFwKICAgICAgICAgICAgLS1uby1iYW5uZXIgfHwgdHJ1ZQogICAgICAgICAgZWNobyAiR0lUTEVBS1NfRklORElOR1M9JChbIC1mIGdpdGxlYWtzLXJlcG9ydC5qc29uIF0gJiYganEgJ2xlbmd0aCcgZ2l0bGVha3MtcmVwb3J0Lmpzb24gfHwgZWNobyAwKSIgPj4gIiRHSVRIVUJfRU5WIgoKICAgICAgLSBuYW1lOiBVcGxvYWQgZ2l0bGVha3MgcmVwb3J0CiAgICAgICAgaWY6IGFsd2F5cygpCiAgICAgICAgdXNlczogYWN0aW9ucy91cGxvYWQtYXJ0aWZhY3RAdjQKICAgICAgICB3aXRoOgogICAgICAgICAgbmFtZTogZ2l0bGVha3MtcmVwb3J0CiAgICAgICAgICBwYXRoOiBnaXRsZWFrcy1yZXBvcnQuanNvbgogICAgICAgICAgaWYtbm8tZmlsZXMtZm91bmQ6IGlnbm9yZQoKICAgICAgLSBuYW1lOiBQdXNoIGltcG9ydCBicmFuY2gKICAgICAgICBydW46IGdpdCBwdXNoIC11IG9yaWdpbiBmZWF0L2ltcG9ydC1jeWNvbS1lcnAtY3lzaG9wCgogICAgICAtIG5hbWU6IE9wZW4gcHVsbCByZXF1ZXN0CiAgICAgICAgZW52OgogICAgICAgICAgR0hfVE9LRU46ICR7eyBzZWNyZXRzLkdJVEhVQl9UT0tFTiB9fQogICAgICAgIHJ1bjogfAogICAgICAgICAgOiA+IC90bXAvcHItYm9keS5tZAogICAgICAgICAgZWNobyAnIyMgQXV0b21hdGVkIGltcG9ydCB2aWEgZ2l0IHN1YnRyZWUnID4+IC90bXAvcHItYm9keS5tZAogICAgICAgICAgZWNobyAnJyA+PiAvdG1wL3ByLWJvZHkubWQKICAgICAgICAgIGVjaG8gJ01lcmdlcyB0d28gZXhpc3RpbmcgcHJvZHVjdCByZXBvc2l0b3JpZXMgaW50byB0aGlzIG1vbm9yZXBvIGFzIHNlbGYtY29udGFpbmVkLCBpbmRlcGVuZGVudGx5LWJ1aWxkYWJsZSBzdWJkaXJlY3RvcmllcywgcHJlc2VydmluZyBmdWxsIHVwc3RyZWFtIGNvbW1pdCBoaXN0b3J5IChgLS1zcXVhc2g9ZmFsc2VgKS4nID4+IC90bXAvcHItYm9keS5tZAogICAgICAgICAgZWNobyAnJyA+PiAvdG1wL3ByLWJvZHkubWQKICAgICAgICAgIGVjaG8gJy0gYGJhY2tlbmQvcHJvZHVjdHMvY3ljb20vYCA8LSBgZW5nOW15YW4vQ3lDb21gIChicmFuY2ggYG1haW5gKSAtIE9kb28gMTkgKyBQb3N0Z3JlcyAxNiBiYWNrZW5kLCA3NSsgY3VzdG9tIGFkZG9ucywgTmV4dC5qcyBzZXR1cC13aXphcmQgVUknID4+IC90bXAvcHItYm9keS5tZAogICAgICAgICAgZWNobyAnLSBgYmFja2VuZC9wcm9kdWN0cy9jeXNob3AvYCA8LSBgZW5nOW15YW4vQ3lzaG9wYCAoYnJhbmNoIGBtYWluYCkgLSBEamFuZ28gNiArIERSRiArIEdyYXBoUUwgYmFja2VuZCwgTmV4dC5qcyAxNCArIFZpdGUgZnJvbnRlbmRzJyA+PiAvdG1wL3ByLWJvZHkubWQKICAgICAgICAgIGVjaG8gJycgPj4gL3RtcC9wci1ib2R5Lm1kCiAgICAgICAgICBlY2hvICcjIyBTZWNyZXQgc2NhbicgPj4gL3RtcC9wci1ib2R5Lm1kCiAgICAgICAgICBlY2hvICcnID4+IC90bXAvcHItYm9keS5tZAogICAgICAgICAgZWNobyAiQSBmdWxsLWhpc3RvcnkgZ2l0bGVha3Mgc2NhbiByYW4gZHVyaW5nIHRoaXMgd29ya2Zsb3cuIEZpbmRpbmdzIGNvdW50OiBcYCR7R0lUTEVBS1NfRklORElOR1N9XGAuIFNlZSB0aGUgXGBnaXRsZWFrcy1yZXBvcnRcYCB3b3JrZmxvdyBhcnRpZmFjdCBmb3IgZGV0YWlscyBiZWZvcmUgbWVyZ2luZy4gSWYgZmluZGluZ3MgPiAwLCAqKmRvIG5vdCBtZXJnZSoqIHVudGlsIHJldmlld2VkIC0gaGlzdG9yeSBtYXkgbmVlZCB0byBiZSBzY3J1YmJlZCAoZS5nLiB3aXRoIGdpdCBmaWx0ZXItcmVwbykgcmF0aGVyIHRoYW4ganVzdCBmaXhlZCBnb2luZyBmb3J3YXJkLiIgPj4gL3RtcC9wci1ib2R5Lm1kCiAgICAgICAgICBlY2hvICcnID4+IC90bXAvcHItYm9keS5tZAogICAgICAgICAgZWNobyAnIyMgT3BlbiBxdWVzdGlvbnMgZm9yIHJldmlldycgPj4gL3RtcC9wci1ib2R5Lm1kCiAgICAgICAgICBlY2hvICcnID4+IC90bXAvcHItYm9keS5tZAogICAgICAgICAgZWNobyAnLSBgYmFja2VuZC9wcm9kdWN0cy9jeWNvbS9jeWNvbS1iYWNrZW5kLmFyY2hpdmUvYCAoYW4gdW51c2VkLCBhcmNoaXZlZCBGYXN0QVBJIGJhY2tlbmQpIHdhcyBpbXBvcnRlZCBhcy1pcyBwZXIgaW5zdHJ1Y3Rpb25zLiBDb25maXJtIHdoZXRoZXIgdG8gZHJvcCBpdCBpbiBhIGZvbGxvdy11cCBjbGVhbnVwLicgPj4gL3RtcC9wci1ib2R5Lm1kCiAgICAgICAgICBlY2hvICctIGAuZ2l0aWdub3JlYCB3YXMgZXh0ZW5kZWQgZm9yIGJvdGggcHJvZHVjdHMgY29tbW9uIGJ1aWxkIGFydGlmYWN0cyAtIHJldmlldyBmb3IgYW55dGhpbmcgcHJvZHVjdC1zcGVjaWZpYyBzdGlsbCBtaXNzaW5nIChlLmcuIE9kb28gZmlsZXN0b3JlIHBhdGhzLCBEamFuZ28gbWVkaWEvc3RhdGljIGRpcnMpLicgPj4gL3RtcC9wci1ib2R5Lm1kCiAgICAgICAgICBlY2hvICcnID4+IC90bXAvcHItYm9keS5tZAogICAgICAgICAgZWNobyAnVHJpZ2dlcmVkIG1hbnVhbGx5IHZpYSBgd29ya2Zsb3dfZGlzcGF0Y2hgLicgPj4gL3RtcC9wci1ib2R5Lm1kCiAgICAgICAgICBnaCBwciBjcmVhdGUgXAogICAgICAgICAgICAtLWJhc2UgbWFpbiBcCiAgICAgICAgICAgIC0taGVhZCBmZWF0L2ltcG9ydC1jeWNvbS1lcnAtY3lzaG9wIFwKICAgICAgICAgICAgLS10aXRsZSAiSW1wb3J0IEN5Q29tIEVSUCBhbmQgQ3lTaG9wIGFzIHBsYXRmb3JtIHByb2R1Y3QgbW9kdWxlcyIgXAogICAgICAgICAgICAtLWJvZHktZmlsZSAvdG1wL3ByLWJvZHkubWQK
+name: Import CyCom ERP and CyShop
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type "import" to run the subtree import into backend/products/'
+        required: true
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  import:
+    if: github.event.inputs.confirm == 'import'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout CyberCom-Platform
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Configure git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Create import branch
+        run: git checkout -b feat/import-cycom-erp-cyshop
+
+      - name: Verify git subtree is available
+        run: git subtree --help > /dev/null
+
+      - name: Import CyCom ERP via git subtree (preserves full history)
+        run: |
+          git remote add cycom-src https://github.com/eng9myan/CyCom.git
+          git fetch cycom-src main
+          git subtree add --prefix=backend/products/cycom cycom-src main --squash=false -m "feat(cycom): import CyCom ERP (Odoo + Next.js wizard UI)"
+          git remote remove cycom-src
+
+      - name: Import CyShop via git subtree (preserves full history)
+        run: |
+          git remote add cyshop-src https://github.com/eng9myan/Cyshop.git
+          git fetch cyshop-src main
+          git subtree add --prefix=backend/products/cyshop cyshop-src main --squash=false -m "feat(cyshop): import CyShop (Django + Next.js + Vite)"
+          git remote remove cyshop-src
+
+      - name: Extend .gitignore for imported products
+        run: |
+          {
+            echo ""
+            echo "# --- Imported CyCom ERP / CyShop build artifacts ---"
+            echo "backend/products/cycom/**/node_modules/"
+            echo "backend/products/cycom/**/.next/"
+            echo "backend/products/cycom/**/__pycache__/"
+            echo "backend/products/cycom/**/*.pyc"
+            echo "backend/products/cycom/**/filestore/"
+            echo "backend/products/cyshop/**/node_modules/"
+            echo "backend/products/cyshop/**/.next/"
+            echo "backend/products/cyshop/**/dist/"
+            echo "backend/products/cyshop/**/__pycache__/"
+            echo "backend/products/cyshop/**/*.pyc"
+          } >> .gitignore
+          git add .gitignore
+          git commit -m "chore: extend .gitignore for imported cycom/cyshop products" --allow-empty
+
+      - name: Full-history secret scan (gitleaks)
+        continue-on-error: true
+        run: |
+          docker run --rm -v "$PWD:/repo" zricethezav/gitleaks:latest detect \
+            --source /repo \
+            --report-format json \
+            --report-path /repo/gitleaks-report.json \
+            --no-banner || true
+          echo "GITLEAKS_FINDINGS=$([ -f gitleaks-report.json ] && jq 'length' gitleaks-report.json || echo 0)" >> "$GITHUB_ENV"
+
+      - name: Upload gitleaks report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: gitleaks-report
+          path: gitleaks-report.json
+          if-no-files-found: ignore
+
+      - name: Push import branch
+        run: git push -u origin feat/import-cycom-erp-cyshop
+
+      - name: Open pull request
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          : > /tmp/pr-body.md
+          echo '## Automated import via git subtree' >> /tmp/pr-body.md
+          echo '' >> /tmp/pr-body.md
+          echo 'Merges two existing product repositories into this monorepo as self-contained, independently-buildable subdirectories, preserving full upstream commit history (`--squash=false`).' >> /tmp/pr-body.md
+          echo '' >> /tmp/pr-body.md
+          echo '- `backend/products/cycom/` <- `eng9myan/CyCom` (branch `main`) - Odoo 19 + Postgres 16 backend, 75+ custom addons, Next.js setup-wizard UI' >> /tmp/pr-body.md
+          echo '- `backend/products/cyshop/` <- `eng9myan/Cyshop` (branch `main`) - Django 6 + DRF + GraphQL backend, Next.js 14 + Vite frontends' >> /tmp/pr-body.md
+          echo '' >> /tmp/pr-body.md
+          echo '## Secret scan' >> /tmp/pr-body.md
+          echo '' >> /tmp/pr-body.md
+          echo "A full-history gitleaks scan ran during this workflow. Findings count: \`${GITLEAKS_FINDINGS}\`. See the \`gitleaks-report\` workflow artifact for details before merging. If findings > 0, **do not merge** until reviewed." >> /tmp/pr-body.md
+          echo '' >> /tmp/pr-body.md
+          echo '## Open questions for review' >> /tmp/pr-body.md
+          echo '' >> /tmp/pr-body.md
+          echo '- `backend/products/cycom/cycom-backend.archive/` (an unused, archived FastAPI backend) was imported as-is. Confirm whether to drop it in a follow-up cleanup.' >> /tmp/pr-body.md
+          echo '- `.gitignore` was extended for both products common build artifacts - review for anything product-specific still missing.' >> /tmp/pr-body.md
+          echo '' >> /tmp/pr-body.md
+          echo 'Triggered manually via `workflow_dispatch`.' >> /tmp/pr-body.md
+          gh pr create \
+            --base main \
+            --head feat/import-cycom-erp-cyshop \
+            --title "Import CyCom ERP and CyShop as platform product modules" \
+            --body-file /tmp/pr-body.md
