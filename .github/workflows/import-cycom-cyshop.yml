@@ -36,14 +36,14 @@ jobs:
         run: |
           git remote add cycom-src https://github.com/eng9myan/CyCom.git
           git fetch cycom-src main
-          git subtree add --prefix=backend/products/cycom cycom-src main --squash=false -m "feat(cycom): import CyCom ERP (Odoo + Next.js wizard UI)"
+          git subtree add --prefix=backend/products/cycom cycom-src main -m "feat(cycom): import CyCom ERP (Odoo + Next.js wizard UI)"
           git remote remove cycom-src
 
       - name: Import CyShop via git subtree (preserves full history)
         run: |
           git remote add cyshop-src https://github.com/eng9myan/Cyshop.git
           git fetch cyshop-src main
-          git subtree add --prefix=backend/products/cyshop cyshop-src main --squash=false -m "feat(cyshop): import CyShop (Django + Next.js + Vite)"
+          git subtree add --prefix=backend/products/cyshop cyshop-src main -m "feat(cyshop): import CyShop (Django + Next.js + Vite)"
           git remote remove cyshop-src
 
       - name: Extend .gitignore for imported products
