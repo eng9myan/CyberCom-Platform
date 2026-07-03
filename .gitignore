@@ -101,3 +101,15 @@ tmp/
 temp/
 *.bak
 *.tmp
+
+# --- Imported CyCom ERP / CyShop build artifacts ---
+backend/products/cycom/**/node_modules/
+backend/products/cycom/**/.next/
+backend/products/cycom/**/__pycache__/
+backend/products/cycom/**/*.pyc
+backend/products/cycom/**/filestore/
+backend/products/cyshop/**/node_modules/
+backend/products/cyshop/**/.next/
+backend/products/cyshop/**/dist/
+backend/products/cyshop/**/__pycache__/
+backend/products/cyshop/**/*.pyc
