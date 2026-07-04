@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: cybercom-frontend
+  namespace: cybercom
+  labels:
+    app.kubernetes.io/name: cybercom-frontend
+    app.kubernetes.io/component: frontend
+spec:
+  type: ClusterIP
+  selector:
+    app: cybercom-frontend
+  ports:
+    - name: http
+      port: 80
+      targetPort: 3000
+      protocol: TCP

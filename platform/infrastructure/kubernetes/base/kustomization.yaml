@@ -8,6 +8,9 @@ resources:
   - serviceaccount.yaml
   - deployment.yaml
   - service.yaml
+  - deployment-frontend.yaml
+  - service-frontend.yaml
+  - ingress.yaml
 
 commonLabels:
   app.kubernetes.io/managed-by: kustomize

@@ -1,0 +1,103 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: cybercom-flagship-products
+  namespace: cybercom
+  labels:
+    app.kubernetes.io/name: cybercom-flagship-products
+    app.kubernetes.io/part-of: cybercom-platform
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - hospital.cy-com.com
+        - clinic.cy-com.com
+        - pharmacy.cy-com.com
+        - laboratory.cy-com.com
+        - imaging.cy-com.com
+        - erp.cy-com.com
+        - api.cy-com.com
+      secretName: cybercom-flagship-tls
+  rules:
+    # Five CyMed clinical products + CyCom ERP dashboard — one Next.js
+    # deployment, subdomain-to-route rewrite handled by frontend middleware.ts
+    - host: hospital.cy-com.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: cybercom-frontend
+                port:
+                  number: 80
+    - host: clinic.cy-com.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: cybercom-frontend
+                port:
+                  number: 80
+    - host: pharmacy.cy-com.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: cybercom-frontend
+                port:
+                  number: 80
+    - host: laboratory.cy-com.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: cybercom-frontend
+                port:
+                  number: 80
+    - host: imaging.cy-com.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: cybercom-frontend
+                port:
+                  number: 80
+    - host: erp.cy-com.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: cybercom-frontend
+                port:
+                  number: 80
+
+    # Shared Django API — all six products above call this same backend
+    - host: api.cy-com.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: cybercom-backend
+                port:
+                  number: 80
+
+# cyshop.cy-com.com is NOT routed here: Cyshop deploys as its own Docker
+# Compose stack behind its own Caddyfile (cyshop/Caddyfile), not this
+# Kubernetes cluster. Point DNS for cyshop.cy-com.com at that host directly,
+# and set PUBLIC_DOMAIN=cyshop.cy-com.com in its deploy environment.
