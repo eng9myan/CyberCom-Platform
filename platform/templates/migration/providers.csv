@@ -1,0 +1,4 @@
+provider_id,first_name,last_name,specialty_code,department,license_number,license_expiry,npi,email,role
+PRV-001,Ahmad,Al-Rashid,394810000,Internal Medicine,MED-12345,2027-12-31,,a.alrashid@clinic.com,physician
+PRV-002,Sarah,Johnson,394815000,Emergency Medicine,MED-67890,2026-06-30,1234567890,s.johnson@hospital.com,physician
+PRV-003,Nour,Hamdan,394780000,Pharmacy,PHARM-001,2028-03-15,,n.hamdan@pharmacy.com,pharmacist

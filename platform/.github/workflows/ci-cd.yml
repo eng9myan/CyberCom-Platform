@@ -1,0 +1,159 @@
+name: Unified CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - develop
+      - staging
+      - main
+  pull_request:
+    branches:
+      - develop
+      - staging
+      - main
+
+permissions:
+  contents: read
+  packages: write
+  id-token: write
+
+jobs:
+  # ── CI STAGE: LINT, TEST, SCAN ──────────────────────────────────────────────
+  ci-verification:
+    name: CI Verification & Security Scanning
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: "pip"
+
+      - name: Install System Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libpq-dev build-essential
+
+      - name: Install Project Dependencies
+        run: |
+          cd backend
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-django pytest-xdist flake8 black bandit
+
+      - name: Code Formatting Check (Black)
+        run: |
+          black --check backend/
+
+      - name: Code Linter Check (Flake8)
+        run: |
+          flake8 backend/ --max-line-length=120 --exclude=**/migrations/*
+
+      - name: Security Linter Check (Bandit)
+        run: |
+          bandit -r backend/ -x **/migrations/* -ll
+
+      - name: Run Backend Test Suite
+        run: |
+          cd backend
+          python -m pytest -v --tb=short --no-cov
+
+      - name: Container Image Vulnerability Scan (Trivy)
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: "fs"
+          ignore-unfixed: true
+          format: "table"
+          severity: "HIGH,CRITICAL"
+
+  # ── CD STAGE: BUILD, PUBLISH, DEPLOY, ROLLBACK ──────────────────────────────
+  cd-deployment:
+    name: CD Build & Deploy
+    needs: ci-verification
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # Determine environment
+      - name: Set Environment Context
+        id: set_env
+        run: |
+          if [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            echo "env=production" >> $GITHUB_OUTPUT
+            echo "ns=prod" >> $GITHUB_OUTPUT
+            echo "replica=5" >> $GITHUB_OUTPUT
+          elif [ "${{ github.ref }}" = "refs/heads/staging" ]; then
+            echo "env=staging" >> $GITHUB_OUTPUT
+            echo "ns=staging" >> $GITHUB_OUTPUT
+            echo "replica=3" >> $GITHUB_OUTPUT
+          else
+            echo "env=develop" >> $GITHUB_OUTPUT
+            echo "ns=dev" >> $GITHUB_OUTPUT
+            echo "replica=2" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # Build & Push Docker image
+      - name: Build and Push Backend Image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: infrastructure/Dockerfile.backend
+          push: true
+          tags: |
+            ghcr.io/eng9myan/cybercom-backend:${{ steps.set_env.outputs.env }}
+            ghcr.io/eng9myan/cybercom-backend:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # OCI CLI setup
+      - name: Configure Oracle Cloud CLI
+        uses: oracle-actions/setup-oci-cli@v1.2.0
+        with:
+          user: ${{ secrets.OCI_USER_OCID }}
+          fingerprint: ${{ secrets.OCI_FINGERPRINT }}
+          tenancy: ${{ secrets.OCI_TENANCY_OCID }}
+          region: ${{ secrets.OCI_REGION || 'me-dubai-1' }}
+          key_content: ${{ secrets.OCI_API_PRIVATE_KEY }}
+
+      # Get OKE Kubeconfig
+      - name: Get OKE Cluster Credentials
+        run: |
+          oci ce cluster create-kubeconfig \
+            --cluster-id ${{ secrets.OCI_OKE_CLUSTER_ID }} \
+            --file $HOME/.kube/config \
+            --region ${{ secrets.OCI_REGION || 'me-dubai-1' }} \
+            --token-version 2.0.0
+
+      # Deploy using Helm with rollback on failure (atomic)
+      - name: Run Helm Upgrade (Atomic Deploy)
+        run: |
+          helm upgrade --install cybercom-platform-${{ steps.set_env.outputs.env }} \
+            infrastructure/helm/cybercom-platform \
+            --namespace ${{ steps.set_env.outputs.ns }} \
+            --create-namespace \
+            --set backend.image.tag=${{ github.sha }} \
+            --set backend.replicaCount=${{ steps.set_env.outputs.replica }} \
+            --set global.imageRegistry=ghcr.io/eng9myan \
+            --atomic \
+            --timeout 10m0s
+
+      # Rollback notify hook (triggered if helm upgrade fails and rolls back)
+      - name: Notify on Deploy Failure
+        if: failure()
+        run: |
+          echo "Deployment failed and was automatically rolled back to the previous stable revision."

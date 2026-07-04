@@ -1,0 +1,33 @@
+# Gitleaks configuration. cicd_baseline §4.3, secrets_management_strategy.
+title = "CyberCom Gitleaks Config"
+
+[extend]
+useDefault = true
+
+[[rules]]
+id = "cybercom-jwt-key"
+description = "CyberCom JWT signing key"
+regex = '''(?i)(jwt[_-]?(signing|secret|private)[_-]?key)\s*[:=]\s*['""]?[a-zA-Z0-9+/=]{20,}'''
+tags = ["jwt", "secret", "cybercom"]
+
+[[rules]]
+id = "django-secret-key"
+description = "Django SECRET_KEY value"
+regex = '''SECRET_KEY\s*=\s*['"][^'"]{20,}['"]'''
+tags = ["django", "secret"]
+
+[allowlist]
+description = "Allow example/placeholder values"
+paths = [
+  '''\.env\.example$''',
+  '''\.env\.template$''',
+  '''docs/''',
+]
+regexes = [
+  '''your-secret-key''',
+  '''change-me''',
+  '''placeholder''',
+  '''dev-unsafe''',
+  '''dev-secret-key''',
+  '''ci-test-secret''',
+]

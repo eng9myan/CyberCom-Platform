@@ -1,0 +1,111 @@
+# CyberCom Platform Helm Values — default (override per environment)
+# ADR-0008, ADR-0010 (GitOps via ArgoCD)
+
+global:
+  imageRegistry: ghcr.io/cybercom
+  imagePullSecrets: []
+  storageClass: standard
+
+backend:
+  enabled: true
+  image:
+    repository: backend
+    tag: "0.1.0"
+    pullPolicy: IfNotPresent
+  replicaCount: 2
+  resources:
+    requests:
+      cpu: "250m"
+      memory: "512Mi"
+    limits:
+      cpu: "1"
+      memory: "1Gi"
+  service:
+    type: ClusterIP
+    port: 80
+    targetPort: 8000
+  autoscaling:
+    enabled: false
+    minReplicas: 2
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
+
+frontend:
+  enabled: true
+  image:
+    repository: frontend
+    tag: "0.1.0"
+    pullPolicy: IfNotPresent
+  replicaCount: 2
+  resources:
+    requests:
+      cpu: "100m"
+      memory: "256Mi"
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+  hosts:
+    - host: cybercom.local
+      paths:
+        - path: /api
+          pathType: Prefix
+          service: backend
+        - path: /
+          pathType: Prefix
+          service: frontend
+  tls: []
+
+postgresql:
+  enabled: true
+  auth:
+    database: cybercom
+    username: cybercom_app
+    existingSecret: postgres-credentials
+
+redis:
+  enabled: true
+  auth:
+    enabled: false
+  architecture: standalone
+
+kafka:
+  enabled: false
+
+keycloak:
+  enabled: true
+  auth:
+    adminUser: admin
+    existingSecret: keycloak-credentials
+
+serviceAccount:
+  create: true
+  name: cybercom-backend
+  annotations: {}
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 10001
+  fsGroup: 10001
+
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop:
+      - ALL
+
+networkPolicy:
+  enabled: true
+
+observability:
+  enabled: true
+  otel:
+    endpoint: http://otel-collector:4317
+  serviceMonitor:
+    enabled: false

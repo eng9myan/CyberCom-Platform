@@ -1,0 +1,4 @@
+drug_code,drug_name,brand_name,dosage_form,strength,route,atc_code,controlled_substance,controlled_schedule,formulary_status,unit_price,storage_conditions,high_alert
+rxnorm:723,amoxicillin,Amoxil,capsule,500mg,oral,J01CA04,false,,formulary,0.50,room_temp,false
+rxnorm:1049640,metformin,Glucophage,tablet,500mg,oral,A10BA02,false,,formulary,0.10,room_temp,false
+rxnorm:10582,warfarin,Coumadin,tablet,5mg,oral,B01AA03,false,,formulary,0.30,room_temp,true

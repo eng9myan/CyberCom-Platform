@@ -1,0 +1,33 @@
+{
+  "name": "cybercom-platform",
+  "version": "0.1.0",
+  "private": true,
+  "description": "CyberCom Enterprise Platform Monorepo",
+  "workspaces": [
+    "frontend",
+    "mobile",
+    "desktop",
+    "shared/types",
+    "shared/utils",
+    "shared/auth",
+    "shared/design-system"
+  ],
+  "scripts": {
+    "frontend:dev": "npm run dev --workspace=frontend",
+    "frontend:build": "npm run build --workspace=frontend",
+    "frontend:test": "npm run test --workspace=frontend",
+    "mobile:start": "npm run start --workspace=mobile",
+    "lint": "npm run lint --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "prepare": "pre-commit install || true"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^19.3.0",
+    "@commitlint/config-conventional": "^19.2.2"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
+  }
+}
