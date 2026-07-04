@@ -1611,11 +1611,40 @@ class CapacityService:
     @classmethod
     def get_capacity_forecast(cls, tenant_id: str, facility_id: str, hours_ahead: int = 24) -> dict:
         """
-        Returns simple projections of admissions and discharges based on history.
+        Projects admissions/discharges for the requested window from the trailing
+        7-day hourly rate, and derives a trend by comparing the last 24h to the
+        prior 6 days' average.
         """
+        from products.cymed.hospital.adt.models import Admission, DischargeSummary
+
+        tenant_uuid = uuid.UUID(str(tenant_id))
+        now = timezone.now()
+        window_start = now - timezone.timedelta(days=7)
+
+        admissions_qs = Admission.objects.filter(
+            tenant_id=tenant_uuid, admitted_at__gte=window_start, admitted_at__lte=now
+        )
+        discharges_qs = DischargeSummary.objects.filter(
+            tenant_id=tenant_uuid, discharged_at__gte=window_start, discharged_at__lte=now
+        )
+
+        total_hours = (now - window_start).total_seconds() / 3600.0
+        admission_rate_per_hour = admissions_qs.count() / total_hours if total_hours else 0.0
+        discharge_rate_per_hour = discharges_qs.count() / total_hours if total_hours else 0.0
+
+        last_24h_admissions = admissions_qs.filter(admitted_at__gte=now - timezone.timedelta(hours=24)).count()
+        prior_avg_daily_admissions = max(admissions_qs.count() - last_24h_admissions, 0) / 6.0
+
+        if last_24h_admissions > prior_avg_daily_admissions * 1.1:
+            trend = "increasing"
+        elif last_24h_admissions < prior_avg_daily_admissions * 0.9:
+            trend = "decreasing"
+        else:
+            trend = "stable"
+
         return {
-            "projected_admissions": 5,
-            "projected_discharges": 3,
-            "utilization_trend": "increasing",
+            "projected_admissions": round(admission_rate_per_hour * hours_ahead, 1),
+            "projected_discharges": round(discharge_rate_per_hour * hours_ahead, 1),
+            "utilization_trend": trend,
             "forecast_hours": hours_ahead,
         }

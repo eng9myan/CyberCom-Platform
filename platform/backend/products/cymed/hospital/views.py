@@ -1,6 +1,31 @@
-from rest_framework import viewsets
+from django.core.exceptions import ObjectDoesNotExist
+from rest_framework import status, viewsets
 from rest_framework.exceptions import PermissionDenied
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+
+
+def run_service_action(service_call, *, success_status=status.HTTP_200_OK):
+    """
+    Runs a hospital services.py workflow call and translates its outcome into
+    a DRF Response. Service layer raises ValueError for business-rule
+    violations (400) and Django's ObjectDoesNotExist for missing references (404).
+    """
+    try:
+        result = service_call()
+    except ObjectDoesNotExist as exc:
+        return Response({"detail": str(exc)}, status=status.HTTP_404_NOT_FOUND)
+    except ValueError as exc:
+        return Response({"detail": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+
+    if hasattr(result, "id"):
+        from django.forms.models import model_to_dict
+
+        data = model_to_dict(result)
+        data["id"] = str(result.id)
+    else:
+        data = result
+    return Response(data, status=success_status)
 
 
 class HospitalModelViewSet(viewsets.ModelViewSet):
