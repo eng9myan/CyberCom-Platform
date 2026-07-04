@@ -1,9 +1,9 @@
 # CyCom ERP — Enterprise Report (Phase 0: Architecture + Gap Analysis)
 
 **Status:** IN PROGRESS — architecture decided, gap identified, wiring/build work not started.
-**Decision (2026-07-04):** Product 7 (CyCom ERP) is built on `eng9myan/CyCom` — Odoo 19 Community ("Cycom 19" in-repo) + 75 Anabtawi custom addons + Next.js 16 wizard UI. This supersedes CyberCom-Platform's own "no Odoo" doctrine for this one product; the custom Django `backend/products/cycom/` in CyberCom-Platform is not the Product 7 foundation (may still be reused for CyMed↔CyCom bridges elsewhere — needs reconciliation later).
+**Decision (2026-07-04, revised same day):** Product 7 (CyCom ERP) is a **custom build**, extending the Django app already scaffolded at `CyberCom-Platform/backend/products/cycom/` (finance gl/ap/ar/budgeting/cost_accounting/treasury, procurement, hr, payroll, inventory, assets incl. fleet/biomedical/maintenance, crm, bi, retail/pos). **No Odoo runtime ships in production.** `eng9myan/CyCom` (Odoo 19 Community, renamed "Cycom 19" in-repo, + 75 Anabtawi addons + Next.js 16 wizard UI) is used **only as a feature/UX reference** — mine its wizard UI design and module behavior as a spec, do not deploy its Odoo container. This keeps the platform's original "no Odoo in production" rule intact for all products, including CyCom ERP.
 
-## What exists today (`eng9myan/CyCom`, branch develop)
+## What exists in the reference repo (`eng9myan/CyCom`, branch develop) — for spec-mining only
 
 | Layer | State |
 |---|---|
@@ -15,44 +15,35 @@
 | Setup wizards | 10 doctrine wizards shipped (Company, COA, Payroll, Warehouse, POS, Sales, Procurement, Manufacturing, HR Structure, Permissions) under `cycom-erp/app/setup/*` |
 | Archived | `cycom-backend.archive/` — abandoned FastAPI attempt, not used, safe to delete |
 
-## Gap vs vanilla Odoo 19 (Community vs Enterprise split)
+## Gap: reference repo vs vanilla Odoo 19 (used to scope what `products/cycom/` must build)
 
-Of the 26 Next.js module pages, mapped to Odoo edition:
+Of the 26 Next.js module pages in the reference repo, mapped to Odoo edition:
 
-**Community-covered (16)** — real Odoo model exists, just needs wiring: accounting, attendance, crm, discuss, expenses, fleet, hr, inventory, maintenance, pos, project, purchase, recruitment, sales, portal, dashboard.
+**Odoo Community-equivalent (16)** — `products/cycom/` should build native Django models/APIs covering the same ground: accounting, attendance, crm, discuss, expenses, fleet, hr, inventory, maintenance, pos, project, purchase, recruitment, sales, portal, dashboard. Several already scaffolded (finance, hr, inventory, crm, procurement, assets incl. fleet/maintenance, retail/pos) — need feature-completing against this list, not building from zero.
 
-**Enterprise-only in stock Odoo (10)** — no Community model, needs a paid Enterprise app, an OCA (Odoo Community Association) free module, or a custom build:
+**Odoo Enterprise-only in the reference repo (10)** — no free Odoo equivalent exists, so these need a fully custom `products/cycom/` module each, using the named OCA project only as a design reference (not a dependency) where one exists:
 
-| Module | Odoo Enterprise app | Free alternative |
+| Module | What Odoo Enterprise offers (reference only) | Build approach |
 |---|---|---|
-| Payroll | Payroll (full localization) | Already partially covered — Anabtawi custom modules (`base_payroll_account`, `cycom_payroll_overtime`, `payroll_extra_hours_adjustment`, `cycom_payslip_xlsx`) implement a custom payroll layer instead of Enterprise Payroll. Needs completing, not licensing. |
-| Helpdesk | Helpdesk | OCA `helpdesk_mgmt` (free) |
-| Documents | Documents | No good free equivalent — build custom on `mail`/attachments, or route through CyIntegrationHub document store |
-| Knowledge | Knowledge | OCA `document_page` (wiki-style, weaker UX) |
-| Marketing (automation) | Marketing Automation | Community "Email Marketing" covers basic campaigns only; automation flows need custom build |
-| Planning | Planning | No strong OCA equivalent — likely custom build |
-| PLM | PLM | OCA `product_lifecycle` (partial) |
-| Quality | Quality | OCA `quality_control` (manufacturing repo, partial) |
-| Sign | Sign | No free equivalent — 3rd-party e-sign via CyIntegrationHub (e.g. DocuSign adapter) |
-| Subscriptions | Subscriptions | No strong OCA equivalent — likely custom build |
+| Payroll | Full localization payroll engine | Extend existing `payroll/` app; Anabtawi's custom modules (overtime, payslip xlsx, base_payroll_account) are a good behavior spec to port |
+| Helpdesk | Ticket/SLA management | New `products/cycom/helpdesk/`; OCA `helpdesk_mgmt` as design reference |
+| Documents | Central document management | New module or route through CyIntegrationHub document store |
+| Knowledge | Internal wiki | New module; OCA `document_page` as reference |
+| Marketing Automation | Drip campaigns | New module in `crm/` or standalone |
+| Planning | Resource/shift scheduling | New module |
+| PLM | Product lifecycle/engineering change | New module; OCA `product_lifecycle` as reference |
+| Quality | Quality control/checks | New module; OCA `quality_control` as reference |
+| Sign | E-signatures | Route through CyIntegrationHub, 3rd-party e-sign API |
+| Subscriptions | Recurring billing | New module, likely bridges to `finance/ar/` |
 
 ## Licensing
 
-- Odoo Community core: LGPLv3 — must ship source for anything derived from Odoo core.
-- 75 Anabtawi modules: LGPL-3 per manifest — same obligation.
-- Next.js frontend (`cycom-erp/`): private, license unconfirmed — needs a decision before commercial sale.
-- No Enterprise license currently held. Selling "CyCom ERP" as Enterprise-parity requires either buying Enterprise, or building the 10 gap modules independently (safer long-term, avoids per-seat Enterprise cost).
-
-## Not yet verified (needs live environment)
-
-- Whether `cycom:19` Docker image actually boots clean in this environment (not attempted this session — static repo analysis only).
-- Whether all 75 Anabtawi modules install without dependency errors (pivot doc flags `hr_attendance_geofence_config` license-string mismatch as a known issue).
-- `hs_zk_attendance` needs `pip install pyzk` if real ZK biometric hardware is used — skipped so far.
+No Odoo code ships — LGPL obligations from Odoo core / Anabtawi modules do not apply. Reference-only use of a competitor's open-source product for feature scoping carries no licensing obligation. Next.js wizard UI design (`cycom-erp/`) can be reimplemented cleanly against the custom Django backend without carrying over Odoo's JSON-RPC bridge code.
 
 ## Recommendation
 
-Fill Enterprise gaps with custom modules / OCA substitutes rather than buying Odoo Enterprise — keeps CyCom ERP fully self-owned, avoids per-seat licensing, matches the "AI-powered, easier than Odoo" positioning instead of reselling Odoo Enterprise under a new name.
+Build all 26 modules natively in `products/cycom/`, using the reference repo purely as a checklist of what a modern ERP needs to cover (mirrors the "no Odoo in production" rule already enforced everywhere else on the platform). This avoids all LGPL/Enterprise entanglement and keeps CyCom ERP fully self-owned — consistent with the "AI-powered, easier than Odoo" positioning.
 
 ## Verdict
 
-**NOT READY** — architecture + gap analysis done. Build work (wire 24 remaining pages, close 10 Enterprise gaps, verify live boot) not started. This is Phase 7 of 7 in the phased build order; Hospital (Phase 1) starts first per mission order unless redirected.
+**NOT READY** — architecture finalized (custom, no Odoo runtime), gap/spec analysis done against the reference repo. Build work in `products/cycom/` (16 Community-equivalent modules to complete + 10 net-new modules) not started. This is Phase 7 of 7 in the phased build order; Hospital (Phase 1) starts first per mission order unless redirected.
