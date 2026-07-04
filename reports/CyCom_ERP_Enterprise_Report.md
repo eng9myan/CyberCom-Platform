@@ -48,6 +48,8 @@ No Odoo code ships — LGPL obligations from Odoo core / Anabtawi modules do not
 
 Build all 26 modules natively in `products/cycom/`, using the reference repo purely as a checklist of what a modern ERP needs to cover (mirrors the "no Odoo in production" rule already enforced everywhere else on the platform). This avoids all LGPL/Enterprise entanglement and keeps CyCom ERP fully self-owned — consistent with the "AI-powered, easier than Odoo" positioning.
 
+**Configurability requirement (confirmed 2026-07-04):** Every area Odoo 19 lets an admin configure, CyCom ERP must also let an admin configure — but simpler. Adopt the reference repo's own doctrine wholesale (`eng9myan/CyCom/CYCOM_PIVOT.md`, "Cycom Setup Experience Doctrine"): every configuration-heavy area (chart of accounts, payroll rules, warehouse/locations, POS config, sales pipeline, procurement, manufacturing, HR structure, permissions, company/multi-entity setup) ships as a **Smart Setup Wizard** — business-language questions → industry template defaults → AI configuration assistant (advisory, via CyAI) → always an escape hatch to raw manual configuration. Target: ≤20% of the manual-configuration click count. This is a Phase 7 deliverable, tracked here so it isn't lost before that phase starts.
+
 ## Verdict
 
 **NOT READY** — architecture finalized (custom, no Odoo runtime), gap/spec analysis done against the reference repo. Build work in `products/cycom/` (16 Community-equivalent modules to complete + 10 net-new modules) not started. This is Phase 7 of 7 in the phased build order; Hospital (Phase 1) starts first per mission order unless redirected.
