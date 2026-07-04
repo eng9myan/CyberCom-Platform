@@ -20,6 +20,7 @@ import uuid
 from typing import Any
 
 from django.db import transaction
+from django.db.models import Q
 from django.utils import timezone
 
 logger = logging.getLogger(__name__)
@@ -1648,3 +1649,236 @@ class CapacityService:
             "utilization_trend": trend,
             "forecast_hours": hours_ahead,
         }
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 9. Clinical Safety Service — code status, HAI device surveillance, VTE prophylaxis
+# ─────────────────────────────────────────────────────────────────────────────
+
+
+class ClinicalSafetyService:
+    """
+    Patient-safety tracking not covered elsewhere: resuscitation directives
+    (code status), central-line/catheter HAI surveillance (CLABSI/CAUTI), and
+    VTE prophylaxis ordering. These are standard hospital core-measure/quality
+    metrics benchmarked by every accreditation body (Joint Commission, CBAHI).
+    """
+
+    @classmethod
+    @transaction.atomic
+    def set_code_status(
+        cls,
+        tenant_id: str,
+        stay_id: str,
+        status: str,
+        ordered_by: str,
+        reason: str = "",
+        discussed_with_patient: bool = False,
+        discussed_with_family: bool = False,
+    ) -> Any:
+        """
+        Records a new code-status order (immutable audit entry) and updates
+        the stay's denormalized current status for fast safety-check reads.
+        """
+        from products.cymed.hospital.inpatient.models import CodeStatusOrder, HospitalStay
+
+        tenant_uuid = uuid.UUID(str(tenant_id))
+        stay_uuid = uuid.UUID(str(stay_id))
+        by_uuid = uuid.UUID(str(ordered_by))
+
+        stay = HospitalStay.objects.get(id=stay_uuid, tenant_id=tenant_uuid)
+
+        order = CodeStatusOrder.objects.create(
+            tenant_id=tenant_uuid,
+            stay=stay,
+            status=status,
+            ordered_by=by_uuid,
+            reason=reason,
+            discussed_with_patient=discussed_with_patient,
+            discussed_with_family=discussed_with_family,
+        )
+
+        stay.current_code_status = status
+        stay.save(update_fields=["current_code_status", "updated_at"])
+
+        payload = {
+            "stay_id": str(stay.id),
+            "status": status,
+            "ordered_by": str(ordered_by),
+        }
+        _emit_outbox_event(
+            tenant_id, "cymed.hospital.code_status.changed", "CodeStatusChanged", payload
+        )
+
+        return order
+
+    @classmethod
+    @transaction.atomic
+    def insert_device(
+        cls,
+        tenant_id: str,
+        stay_id: str,
+        device_type: str,
+        inserted_by: str,
+        insertion_site: str = "",
+        inserted_at: Any | None = None,
+    ) -> Any:
+        """Registers a central line / urinary catheter insertion (HAI surveillance start)."""
+        from products.cymed.hospital.inpatient.models import HospitalStay, IndwellingDevice
+
+        tenant_uuid = uuid.UUID(str(tenant_id))
+        stay_uuid = uuid.UUID(str(stay_id))
+        by_uuid = uuid.UUID(str(inserted_by))
+
+        stay = HospitalStay.objects.get(id=stay_uuid, tenant_id=tenant_uuid)
+
+        if isinstance(inserted_at, str):
+            ts = timezone.datetime.fromisoformat(inserted_at)
+        else:
+            ts = inserted_at or timezone.now()
+
+        device = IndwellingDevice.objects.create(
+            tenant_id=tenant_uuid,
+            stay=stay,
+            device_type=device_type,
+            insertion_site=insertion_site,
+            inserted_at=ts,
+            inserted_by=by_uuid,
+        )
+        return device
+
+    @classmethod
+    @transaction.atomic
+    def remove_device(cls, tenant_id: str, device_id: str, removal_reason: str = "") -> Any:
+        """Closes out an indwelling device's device-days window."""
+        from products.cymed.hospital.inpatient.models import IndwellingDevice
+
+        tenant_uuid = uuid.UUID(str(tenant_id))
+        device_uuid = uuid.UUID(str(device_id))
+
+        device = IndwellingDevice.objects.get(id=device_uuid, tenant_id=tenant_uuid)
+        device.removed_at = timezone.now()
+        device.removal_reason = removal_reason
+        device.save(update_fields=["removed_at", "removal_reason", "updated_at"])
+        return device
+
+    @classmethod
+    @transaction.atomic
+    def record_device_infection(
+        cls,
+        tenant_id: str,
+        device_id: str,
+        diagnosed_by: str,
+        organism: str = "",
+        notes: str = "",
+    ) -> Any:
+        """Records a confirmed CLABSI/CAUTI event attributable to a device."""
+        from products.cymed.hospital.inpatient.models import (
+            DeviceAssociatedInfection,
+            IndwellingDevice,
+        )
+
+        tenant_uuid = uuid.UUID(str(tenant_id))
+        device_uuid = uuid.UUID(str(device_id))
+        by_uuid = uuid.UUID(str(diagnosed_by))
+
+        device = IndwellingDevice.objects.get(id=device_uuid, tenant_id=tenant_uuid)
+
+        infection = DeviceAssociatedInfection.objects.create(
+            tenant_id=tenant_uuid,
+            device=device,
+            diagnosed_by=by_uuid,
+            organism=organism,
+            notes=notes,
+        )
+
+        payload = {
+            "device_id": str(device.id),
+            "device_type": device.device_type,
+            "stay_id": str(device.stay_id),
+            "organism": organism,
+        }
+        _emit_outbox_event(
+            tenant_id, "cymed.hospital.hai.detected", "DeviceAssociatedInfectionDetected", payload
+        )
+
+        return infection
+
+    @classmethod
+    @transaction.atomic
+    def order_vte_prophylaxis(
+        cls,
+        tenant_id: str,
+        stay_id: str,
+        method: str,
+        ordered_by: str,
+        contraindication_reason: str = "",
+    ) -> Any:
+        """Orders (or replaces) the VTE prophylaxis plan for a stay."""
+        from products.cymed.hospital.inpatient.models import HospitalStay, VTEProphylaxisOrder
+
+        tenant_uuid = uuid.UUID(str(tenant_id))
+        stay_uuid = uuid.UUID(str(stay_id))
+        by_uuid = uuid.UUID(str(ordered_by))
+
+        stay = HospitalStay.objects.get(id=stay_uuid, tenant_id=tenant_uuid)
+
+        order, _created = VTEProphylaxisOrder.objects.update_or_create(
+            stay=stay,
+            defaults={
+                "tenant_id": tenant_uuid,
+                "method": method,
+                "ordered_by": by_uuid,
+                "contraindication_reason": contraindication_reason,
+            },
+        )
+        return order
+
+    @classmethod
+    def get_hai_rates(cls, tenant_id: str, days: int = 30) -> dict:
+        """
+        Computes CLABSI/CAUTI rates per 1,000 device-days over the trailing
+        window -- the standard infection-control surveillance metric.
+        """
+        from products.cymed.hospital.inpatient.models import (
+            DeviceAssociatedInfection,
+            IndwellingDevice,
+        )
+
+        tenant_uuid = uuid.UUID(str(tenant_id))
+        window_start = timezone.now() - timezone.timedelta(days=days)
+        now = timezone.now()
+
+        rates = {}
+        for device_type, label in [
+            ("central_line", "clabsi"),
+            ("foley_catheter", "cauti"),
+        ]:
+            devices = IndwellingDevice.objects.filter(
+                tenant_id=tenant_uuid,
+                device_type=device_type,
+                inserted_at__lte=now,
+            ).filter(Q(removed_at__isnull=True) | Q(removed_at__gte=window_start))
+
+            device_days = 0.0
+            for d in devices:
+                window_in_start = max(d.inserted_at, window_start)
+                window_in_end = min(d.removed_at or now, now)
+                if window_in_end > window_in_start:
+                    device_days += (window_in_end - window_in_start).total_seconds() / 86400.0
+
+            infections = DeviceAssociatedInfection.objects.filter(
+                tenant_id=tenant_uuid,
+                device__device_type=device_type,
+                diagnosed_at__gte=window_start,
+                diagnosed_at__lte=now,
+            ).count()
+
+            rate = round((infections / device_days) * 1000, 2) if device_days > 0 else 0.0
+            rates[label] = {
+                "infections": infections,
+                "device_days": round(device_days, 1),
+                "rate_per_1000_device_days": rate,
+            }
+
+        return rates

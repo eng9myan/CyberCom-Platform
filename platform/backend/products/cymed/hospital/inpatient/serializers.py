@@ -2,11 +2,15 @@ from rest_framework import serializers
 
 from platform.events.models import OutboxEvent
 from products.cymed.hospital.inpatient.models import (
+    CodeStatusOrder,
     DailyRound,
+    DeviceAssociatedInfection,
     DischargePlanning,
     HospitalStay,
+    IndwellingDevice,
     InpatientCarePlan,
     ProgressReview,
+    VTEProphylaxisOrder,
 )
 
 
@@ -68,3 +72,30 @@ class DischargePlanningSerializer(serializers.ModelSerializer):
     class Meta:
         model = DischargePlanning
         fields = "__all__"
+
+
+class CodeStatusOrderSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CodeStatusOrder
+        fields = "__all__"
+        read_only_fields = ["ordered_at"]
+
+
+class IndwellingDeviceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = IndwellingDevice
+        fields = "__all__"
+
+
+class DeviceAssociatedInfectionSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DeviceAssociatedInfection
+        fields = "__all__"
+        read_only_fields = ["diagnosed_at"]
+
+
+class VTEProphylaxisOrderSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = VTEProphylaxisOrder
+        fields = "__all__"
+        read_only_fields = ["ordered_at"]

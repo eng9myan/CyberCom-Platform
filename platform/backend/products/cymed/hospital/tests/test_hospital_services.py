@@ -14,10 +14,12 @@ from products.cymed.hospital.adt.models import (
     DischargeDisposition,
     DischargeReason,
 )
+from products.cymed.hospital.inpatient.models import HospitalStay
 from products.cymed.hospital.services import (
     AdmissionService,
     BedManagementService,
     CapacityService,
+    ClinicalSafetyService,
     EmergencyService,
     ICUService,
     OperatingRoomService,
@@ -288,3 +290,102 @@ class TestHospitalServices:
             tenant_id=str(test_tenant_id), facility_id=str(setup_base_data["facility"].id)
         )
         assert res["alert_level"] is not None
+
+
+@pytest.mark.django_db
+class TestClinicalSafetyService:
+    def _admit(self, test_tenant_id, setup_base_data):
+        patient = setup_base_data["patient"]
+        encounter = setup_base_data["encounter"]
+        bed = setup_base_data["bed"]
+        reason = AdmissionReason.objects.create(
+            tenant_id=test_tenant_id, name="Sepsis", code="R-ADM-SAFE"
+        )
+        adm_type = AdmissionType.objects.create(
+            tenant_id=test_tenant_id, name="Emergency", code="T-ADM-SAFE"
+        )
+        physician_id = str(uuid.uuid4())
+        res = AdmissionService.admit_patient(
+            tenant_id=str(test_tenant_id),
+            patient_id=str(patient.id),
+            encounter_id=str(encounter.id),
+            admission_type_id=str(adm_type.id),
+            admission_reason_id=str(reason.id),
+            admitting_physician_id=physician_id,
+            bed_id=str(bed.id),
+        )
+        return HospitalStay.objects.get(id=res["stay_id"]), physician_id
+
+    def test_code_status_order_updates_stay_and_is_audited(self, test_tenant_id, setup_base_data):
+        stay, physician_id = self._admit(test_tenant_id, setup_base_data)
+        assert stay.current_code_status == HospitalStay.CodeStatus.FULL_CODE
+
+        order = ClinicalSafetyService.set_code_status(
+            tenant_id=str(test_tenant_id),
+            stay_id=str(stay.id),
+            status=HospitalStay.CodeStatus.DNR,
+            ordered_by=physician_id,
+            reason="Patient wish, discussed with family",
+            discussed_with_patient=True,
+            discussed_with_family=True,
+        )
+        stay.refresh_from_db()
+        assert stay.current_code_status == HospitalStay.CodeStatus.DNR
+        assert order.status == HospitalStay.CodeStatus.DNR
+        assert stay.code_status_orders.count() == 1
+
+        events = OutboxEvent.objects.filter(tenant_id=test_tenant_id, event_type="CodeStatusChanged")
+        assert events.exists()
+
+    def test_device_infection_and_hai_rate_calculation(self, test_tenant_id, setup_base_data):
+        stay, physician_id = self._admit(test_tenant_id, setup_base_data)
+
+        device = ClinicalSafetyService.insert_device(
+            tenant_id=str(test_tenant_id),
+            stay_id=str(stay.id),
+            device_type="central_line",
+            inserted_by=physician_id,
+            insertion_site="right subclavian",
+            inserted_at=timezone.now() - timezone.timedelta(days=10),
+        )
+
+        infection = ClinicalSafetyService.record_device_infection(
+            tenant_id=str(test_tenant_id),
+            device_id=str(device.id),
+            diagnosed_by=physician_id,
+            organism="Staphylococcus aureus",
+        )
+        assert infection.device_id == device.id
+
+        rates = ClinicalSafetyService.get_hai_rates(tenant_id=str(test_tenant_id), days=30)
+        assert rates["clabsi"]["infections"] == 1
+        assert rates["clabsi"]["device_days"] > 0
+        assert rates["clabsi"]["rate_per_1000_device_days"] > 0
+        assert rates["cauti"]["infections"] == 0
+
+        ClinicalSafetyService.remove_device(
+            tenant_id=str(test_tenant_id), device_id=str(device.id), removal_reason="no longer needed"
+        )
+        device.refresh_from_db()
+        assert device.removed_at is not None
+
+    def test_vte_prophylaxis_order_upserts(self, test_tenant_id, setup_base_data):
+        stay, physician_id = self._admit(test_tenant_id, setup_base_data)
+
+        order = ClinicalSafetyService.order_vte_prophylaxis(
+            tenant_id=str(test_tenant_id),
+            stay_id=str(stay.id),
+            method="mechanical",
+            ordered_by=physician_id,
+        )
+        assert order.method == "mechanical"
+
+        # Re-ordering replaces the single order for this stay (OneToOne)
+        order2 = ClinicalSafetyService.order_vte_prophylaxis(
+            tenant_id=str(test_tenant_id),
+            stay_id=str(stay.id),
+            method="both",
+            ordered_by=physician_id,
+        )
+        assert order2.id == order.id
+        assert order2.method == "both"
