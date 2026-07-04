@@ -1,0 +1,18 @@
+{{- if .Values.observability.enabled -}}
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: {{ .Release.Name }}-backend-monitor
+  labels:
+    app.kubernetes.io/instance: {{ .Release.Name }}
+    release: prometheus # standard label for Prometheus Operator detection
+spec:
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: {{ .Release.Name }}-backend
+  endpoints:
+    - port: http
+      path: /health
+      interval: 15s
+      scrapeTimeout: 10s
+{{- end }}

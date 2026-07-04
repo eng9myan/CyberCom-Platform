@@ -1,0 +1,5 @@
+test_code,loinc_code,test_name,specimen_type,specimen_volume_ml,tube_type,turnaround_hours,stat_turnaround_hours,critical_low,critical_high,reference_low,reference_high,units,category
+CBC,58410-2,Complete Blood Count,blood,3,EDTA,4,1,,,,,hematology
+HGB,718-7,Hemoglobin,blood,3,EDTA,4,1,6.0,20.0,12.0,17.0,g/dL,hematology
+GLU,2345-7,Glucose Random,blood,3,SST,2,0.5,2.2,27.8,3.9,6.1,mmol/L,biochemistry
+CREAT,2160-0,Creatinine,blood,3,SST,4,1,,,62,115,umol/L,biochemistry

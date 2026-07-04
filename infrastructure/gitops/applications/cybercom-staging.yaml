@@ -1,0 +1,28 @@
+# ArgoCD Application — CyberCom Platform (staging). ADR-0010.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: cybercom-platform-staging
+  namespace: argocd
+  labels:
+    cybercom.io/environment: staging
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  project: cybercom
+
+  source:
+    repoURL: https://github.com/eng9myan/CyberCom-Platform
+    targetRevision: release/0.1.0
+    path: infrastructure/kubernetes/overlays/staging
+
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: cybercom-staging
+
+  syncPolicy:
+    automated:
+      prune: false
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=true

@@ -1,0 +1,49 @@
+# CyberCom Frontend — Multi-stage Dockerfile. ADR-0001, cicd_baseline §5.
+# Non-root user, standalone Next.js output.
+
+# ── Stage 1: Deps ─────────────────────────────────────────────────────────────
+FROM node:20-alpine AS deps
+WORKDIR /app
+
+COPY frontend/package.json frontend/package-lock.json* ./
+RUN npm ci --omit=dev
+
+# ── Stage 2: Build ────────────────────────────────────────────────────────────
+FROM node:20-alpine AS builder
+WORKDIR /app
+
+COPY --from=deps /app/node_modules ./node_modules
+COPY frontend/ .
+
+ENV NEXT_TELEMETRY_DISABLED=1
+RUN npm run build
+
+# ── Stage 3: Runtime ──────────────────────────────────────────────────────────
+FROM node:20-alpine AS runtime
+
+LABEL org.opencontainers.image.title="cybercom-frontend"
+LABEL org.opencontainers.image.description="CyberCom Platform Next.js Frontend"
+LABEL org.opencontainers.image.licenses="Proprietary"
+
+WORKDIR /app
+
+RUN addgroup --system --gid 10001 cybercom \
+    && adduser --system --uid 10001 --ingroup cybercom cybercom
+
+COPY --from=builder --chown=cybercom:cybercom /app/.next/standalone ./
+COPY --from=builder --chown=cybercom:cybercom /app/.next/static ./.next/static
+COPY --from=builder --chown=cybercom:cybercom /app/public ./public
+
+USER cybercom
+
+ENV NODE_ENV=production \
+    NEXT_TELEMETRY_DISABLED=1 \
+    PORT=3000 \
+    HOSTNAME="0.0.0.0"
+
+EXPOSE 3000
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=20s --retries=3 \
+  CMD wget -qO- http://localhost:3000/health || exit 1
+
+CMD ["node", "server.js"]
