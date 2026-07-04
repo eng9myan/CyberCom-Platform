@@ -1,8 +1,44 @@
+import os
 import re
 import time
 from typing import Any
 
 from platform.cyai.models import GuardrailPolicy, InferenceLog, ModelConfig, PromptTemplate
+
+
+class ModelConfigError(Exception):
+    """Raised when a ModelConfig cannot be resolved to a usable, authenticated provider client."""
+
+
+def _resolve_api_key(config: ModelConfig) -> str:
+    """
+    Resolves the provider API key for a ModelConfig.
+
+    `api_key_ref` is a Vault path reference in production (ADR-0005 secrets
+    management uses HashiCorp Vault) -- there is no Vault client wired into
+    this service yet, so as an interim, documented step this treats
+    `api_key_ref` as an environment variable name first, then falls back to
+    the provider's conventional env var. Raises ModelConfigError rather than
+    silently returning an empty/fake key.
+    """
+    provider_env_defaults = {
+        "anthropic": "ANTHROPIC_API_KEY",
+        "openai": "OPENAI_API_KEY",
+        "gemini": "GEMINI_API_KEY",
+    }
+    if config.api_key_ref:
+        key = os.environ.get(config.api_key_ref)
+        if key:
+            return key
+    fallback_var = provider_env_defaults.get(config.provider.lower())
+    if fallback_var:
+        key = os.environ.get(fallback_var)
+        if key:
+            return key
+    raise ModelConfigError(
+        f"No API key resolvable for ModelConfig '{config.name}' (provider={config.provider}). "
+        f"Set {config.api_key_ref or fallback_var or 'the provider API key env var'}."
+    )
 
 
 class GuardrailEngine:
@@ -68,6 +104,61 @@ class ModelGateway:
     """
 
     @classmethod
+    def _call_provider(cls, config: ModelConfig, prompt: str) -> str:
+        """Dispatches to the real provider SDK/API for this ModelConfig. Raises on failure."""
+        provider = config.provider.lower()
+        temperature = float(config.temperature)
+
+        if provider == "anthropic":
+            import anthropic
+
+            client = anthropic.Anthropic(api_key=_resolve_api_key(config))
+            response = client.messages.create(
+                model=config.model_name,
+                max_tokens=4096,
+                temperature=temperature,
+                messages=[{"role": "user", "content": prompt}],
+            )
+            return "".join(block.text for block in response.content if hasattr(block, "text"))
+
+        if provider == "openai":
+            import openai
+
+            client = openai.OpenAI(api_key=_resolve_api_key(config))
+            response = client.chat.completions.create(
+                model=config.model_name,
+                temperature=temperature,
+                messages=[{"role": "user", "content": prompt}],
+            )
+            return response.choices[0].message.content or ""
+
+        if provider == "gemini":
+            from google import genai
+
+            client = genai.Client(api_key=_resolve_api_key(config))
+            response = client.models.generate_content(model=config.model_name, contents=prompt)
+            return response.text or ""
+
+        if provider == "ollama":
+            import requests
+
+            base_url = config.api_base_url or "http://localhost:11434"
+            resp = requests.post(
+                f"{base_url.rstrip('/')}/api/generate",
+                json={
+                    "model": config.model_name,
+                    "prompt": prompt,
+                    "stream": False,
+                    "options": {"temperature": temperature},
+                },
+                timeout=120,
+            )
+            resp.raise_for_status()
+            return resp.json().get("response", "")
+
+        raise ModelConfigError(f"Unsupported provider '{config.provider}' on ModelConfig '{config.name}'.")
+
+    @classmethod
     def generate_completion(
         cls,
         tenant_id: str,
@@ -105,22 +196,10 @@ class ModelGateway:
         verdict = "passed"
 
         try:
-            # Simulate external API call
-            provider = config.provider.lower()
-            if provider == "gemini":
-                response_text = (
-                    f"[Gemini {config.model_name}] Response to: {scrubbed_prompt[:40]}..."
-                )
-            elif provider == "openai":
-                response_text = f"[GPT {config.model_name}] Response to: {scrubbed_prompt[:40]}..."
-            elif provider == "anthropic":
-                response_text = (
-                    f"[Claude {config.model_name}] Response to: {scrubbed_prompt[:40]}..."
-                )
-            else:
-                response_text = (
-                    f"[Ollama {config.model_name}] Response to: {scrubbed_prompt[:40]}..."
-                )
+            response_text = cls._call_provider(config, scrubbed_prompt)
+        except ModelConfigError as exc:
+            error_msg = str(exc)
+            verdict = "config_error"
         except Exception as exc:
             error_msg = str(exc)
             verdict = "flagged"

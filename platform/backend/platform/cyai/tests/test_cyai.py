@@ -96,22 +96,57 @@ class TestGuardrailEngine:
 
 @pytest.mark.django_db
 class TestModelGatewayAndRAG:
-    def test_gateway_providers(self, test_tenant_id):
-        # OpenAI model config
+    def test_gateway_providers_without_api_key_fail_clean(self, test_tenant_id, monkeypatch):
+        """
+        ModelGateway calls real provider SDKs (no simulated responses). With no
+        API key configured, it must surface a clear config_error rather than
+        fabricate a fake completion.
+        """
+        monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+        monkeypatch.delenv("ANTHROPIC_API_KEY", raising=False)
+
         config_oa = ModelConfig.objects.create(
             name="OpenAI GPT", provider="openai", model_name="gpt-4o"
         )
         res_oa = ModelGateway.generate_completion(str(test_tenant_id), config_oa, "Tell me a story")
-        assert "[GPT gpt-4o]" in res_oa["text"]
+        assert res_oa["status"] == "config_error"
 
-        # Anthropic model config
         config_ant = ModelConfig.objects.create(
             name="Claude", provider="anthropic", model_name="claude-3"
         )
         res_ant = ModelGateway.generate_completion(
             str(test_tenant_id), config_ant, "Tell me a story"
         )
-        assert "[Claude claude-3]" in res_ant["text"]
+        assert res_ant["status"] == "config_error"
+
+    def test_gateway_calls_real_anthropic_provider(self, test_tenant_id, monkeypatch):
+        """With a resolvable API key, ModelGateway invokes the real Anthropic SDK client."""
+
+        class _FakeTextBlock:
+            text = "Hello from a real provider call."
+
+        class _FakeMessage:
+            content = [_FakeTextBlock()]
+
+        class _FakeMessages:
+            def create(self, **kwargs):
+                return _FakeMessage()
+
+        class _FakeAnthropicClient:
+            def __init__(self, api_key):
+                self.messages = _FakeMessages()
+
+        monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key-not-real")
+        import anthropic as anthropic_module
+
+        monkeypatch.setattr(anthropic_module, "Anthropic", _FakeAnthropicClient)
+
+        config = ModelConfig.objects.create(
+            name="Claude", provider="anthropic", model_name="claude-3"
+        )
+        res = ModelGateway.generate_completion(str(test_tenant_id), config, "Tell me a story")
+        assert res["status"] == "passed"
+        assert res["text"] == "Hello from a real provider call."
 
     def test_gateway_blocked_by_guardrail(self, test_tenant_id):
         config = ModelConfig.objects.create(
@@ -127,7 +162,15 @@ class TestModelGatewayAndRAG:
         assert res["status"] == "blocked"
         assert "Blocked by safety guardrail policies." in res["text"]
 
-    def test_rag_service(self, test_tenant_id):
+    def test_rag_service(self, test_tenant_id, monkeypatch):
+        """
+        RAGService's context retrieval is still a documented simulation (no
+        vector store wired up yet -- see AI_Report gap). It still passes the
+        retrieved context through to the real ModelGateway call, which
+        without a Gemini API key correctly reports config_error rather than
+        faking a completion.
+        """
+        monkeypatch.delenv("GEMINI_API_KEY", raising=False)
         config = ModelConfig.objects.create(
             name="Gemini Pro", provider="gemini", model_name="gemini-1.5-pro"
         )
@@ -143,7 +186,7 @@ class TestModelGatewayAndRAG:
             query="patient age",
             variables={},
         )
-        assert "[Context: Search result" in res["text"]
+        assert res["status"] == "config_error"
 
 
 @pytest.mark.django_db
