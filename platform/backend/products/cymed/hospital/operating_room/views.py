@@ -26,6 +26,12 @@ from products.cymed.hospital.views import HospitalModelViewSet, run_service_acti
 class SurgicalCaseViewSet(HospitalModelViewSet):
     queryset = SurgicalCase.objects.all()
     serializer_class = SurgicalCaseSerializer
+    action_required_roles = {
+        "schedule": {"physician"},
+        "start": {"physician", "nurse"},
+        "complete": {"physician"},
+        "consent": {"physician"},
+    }
 
     @action(detail=False, methods=["post"])
     def schedule(self, request):

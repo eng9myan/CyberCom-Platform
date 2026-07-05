@@ -56,29 +56,15 @@ def _rsa_keypair():
     return private_key, public_pem
 
 
-@pytest.fixture
-def auth_client(test_tenant_id, _rsa_keypair, monkeypatch):
-    from types import SimpleNamespace
-
-    private_key, public_pem = _rsa_keypair
-
-    # Bypass the real network JWKS fetch -- return our test keypair's public key instead,
-    # matching how CyIdentityAuthMiddleware's _get_jwks_client() would be used in production.
-    monkeypatch.setattr(
-        "shared.auth.auth_middleware._get_jwks_client",
-        lambda: SimpleNamespace(
-            get_signing_key_from_jwt=lambda token: SimpleNamespace(key=public_pem)
-        ),
-    )
-
+def _make_role_client(test_tenant_id, private_key, roles: list[str], sub: str = "33333333-3333-3333-3333-333333333333"):
     client = APIClient()
     now = int(time.time())
     payload = {
-        "sub": "33333333-3333-3333-3333-333333333333",
+        "sub": sub,
         "email": "doctor@cymed.io",
         "tenant_id": str(test_tenant_id),
-        "realm_access": {"roles": ["platform_admin"]},
-        "roles": ["platform_admin"],
+        "realm_access": {"roles": roles},
+        "roles": roles,
         "permissions": ["read", "write"],
         "iat": now,
         "exp": now + 3600,
@@ -91,6 +77,39 @@ def auth_client(test_tenant_id, _rsa_keypair, monkeypatch):
         HTTP_X_TENANT_ID=str(test_tenant_id),
     )
     return client
+
+
+@pytest.fixture
+def _mock_jwks(_rsa_keypair, monkeypatch):
+    from types import SimpleNamespace
+
+    _private_key, public_pem = _rsa_keypair
+    # Bypass the real network JWKS fetch -- return our test keypair's public key instead,
+    # matching how CyIdentityAuthMiddleware's _get_jwks_client() would be used in production.
+    monkeypatch.setattr(
+        "shared.auth.auth_middleware._get_jwks_client",
+        lambda: SimpleNamespace(
+            get_signing_key_from_jwt=lambda token: SimpleNamespace(key=public_pem)
+        ),
+    )
+
+
+@pytest.fixture
+def auth_client(test_tenant_id, _rsa_keypair, _mock_jwks):
+    private_key, _public_pem = _rsa_keypair
+    return _make_role_client(test_tenant_id, private_key, ["platform_admin"])
+
+
+@pytest.fixture
+def nurse_client(test_tenant_id, _rsa_keypair, _mock_jwks):
+    private_key, _public_pem = _rsa_keypair
+    return _make_role_client(test_tenant_id, private_key, ["nurse"], sub="44444444-4444-4444-4444-444444444444")
+
+
+@pytest.fixture
+def physician_client(test_tenant_id, _rsa_keypair, _mock_jwks):
+    private_key, _public_pem = _rsa_keypair
+    return _make_role_client(test_tenant_id, private_key, ["physician"], sub="55555555-5555-5555-5555-555555555555")
 
 
 @pytest.fixture
@@ -1197,3 +1216,80 @@ class TestHospitalEdition:
             format="json",
         )
         assert overflow_resp.status_code == 201
+
+
+@pytest.mark.django_db
+class TestHospitalActionRBAC:
+    """
+    Previously every hospital endpoint only required IsAuthenticated -- any
+    authenticated user of any role could call any action for their tenant
+    (HIPAA_Readiness_Report.md gap). These tests prove the per-action role
+    gate added to HospitalModelViewSet actually blocks the wrong role and
+    allows the right one, using real signed/verified JWTs (not mocked
+    permission classes).
+    """
+
+    def test_nurse_cannot_change_code_status_but_physician_can(
+        self, nurse_client, physician_client, test_tenant_id, setup_base_data
+    ):
+        from products.cymed.hospital.services import AdmissionService
+
+        patient = setup_base_data["patient"]
+        encounter = setup_base_data["encounter"]
+        bed = setup_base_data["bed"]
+
+        adm_reason = AdmissionReason.objects.create(
+            tenant_id=test_tenant_id, name="Chest Pain", code="R-ADM-RBAC"
+        )
+        adm_type = AdmissionType.objects.create(
+            tenant_id=test_tenant_id, name="Emergency", code="T-ADM-RBAC"
+        )
+        admit_res = AdmissionService.admit_patient(
+            tenant_id=str(test_tenant_id),
+            patient_id=str(patient.id),
+            encounter_id=str(encounter.id),
+            admission_type_id=str(adm_type.id),
+            admission_reason_id=str(adm_reason.id),
+            admitting_physician_id=str(uuid.uuid4()),
+            bed_id=str(bed.id),
+        )
+        stay_id = admit_res["stay_id"]
+
+        # Nurse: forbidden
+        nurse_resp = nurse_client.post(
+            f"/api/v1/hospital/inpatient/stays/{stay_id}/code_status/",
+            {"status": "dnr", "reason": "Family request"},
+            format="json",
+        )
+        assert nurse_resp.status_code == 403
+
+        # Physician: allowed
+        physician_resp = physician_client.post(
+            f"/api/v1/hospital/inpatient/stays/{stay_id}/code_status/",
+            {"status": "dnr", "reason": "Family request"},
+            format="json",
+        )
+        assert physician_resp.status_code == 201
+
+    def test_nurse_cannot_admit_patient(self, nurse_client, test_tenant_id, setup_base_data):
+        encounter = setup_base_data["encounter"]
+        bed = setup_base_data["bed"]
+        adm_reason = AdmissionReason.objects.create(
+            tenant_id=test_tenant_id, name="Fever", code="R-ADM-RBAC2"
+        )
+        adm_type = AdmissionType.objects.create(
+            tenant_id=test_tenant_id, name="Routine", code="T-ADM-RBAC2"
+        )
+
+        resp = nurse_client.post(
+            "/api/v1/hospital/adt/admissions/admit/",
+            {
+                "patient_id": str(setup_base_data["patient"].id),
+                "encounter_id": str(encounter.id),
+                "admission_type_id": str(adm_type.id),
+                "admission_reason_id": str(adm_reason.id),
+                "bed_id": str(bed.id),
+            },
+            format="json",
+        )
+        assert resp.status_code == 403

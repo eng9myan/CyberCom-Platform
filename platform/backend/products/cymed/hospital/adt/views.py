@@ -48,6 +48,11 @@ class DischargeDispositionViewSet(HospitalModelViewSet):
 class AdmissionViewSet(HospitalModelViewSet):
     queryset = Admission.objects.all()
     serializer_class = AdmissionSerializer
+    action_required_roles = {
+        "admit": {"physician"},
+        "discharge": {"physician"},
+        "transfer": {"physician", "nurse"},
+    }
 
     @action(detail=False, methods=["post"])
     def admit(self, request):

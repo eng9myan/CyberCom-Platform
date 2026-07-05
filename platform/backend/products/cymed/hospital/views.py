@@ -35,10 +35,20 @@ class HospitalModelViewSet(viewsets.ModelViewSet):
     `required_feature` (str) to activate per-endpoint feature checks.
     Bed-based and facility-based licensing limits are enforced at the
     service layer (not here) to keep views thin.
+
+    Role gating: subclasses declare `action_required_roles` (dict mapping
+    action name -> set of acceptable realm roles) to restrict specific
+    actions to specific clinical roles -- e.g. only physicians can change a
+    patient's code status. `platform_admin` always passes (matches the
+    existing convention in platform/api/permissions.py). Previously every
+    hospital endpoint only required IsAuthenticated -- any authenticated
+    user of any role could call any action for their tenant (see
+    HIPAA_Readiness_Report.md gap).
     """
 
     permission_classes = [IsAuthenticated]
     required_feature: str = ""
+    action_required_roles: dict = {}
 
     def get_queryset(self):
         tenant_id = getattr(self.request, "tenant_id", None)
@@ -50,6 +60,9 @@ class HospitalModelViewSet(viewsets.ModelViewSet):
         super().initial(request, *args, **kwargs)
         if self.required_feature:
             self._check_feature(request, self.required_feature)
+        required_roles = self.action_required_roles.get(self.action)
+        if required_roles:
+            self._check_roles(request, required_roles)
 
     def _check_feature(self, request, feature_code: str) -> None:
         from products.cymed.commercial.feature_flags.services import FeatureFlagService
@@ -60,6 +73,19 @@ class HospitalModelViewSet(viewsets.ModelViewSet):
         ):
             raise PermissionDenied(
                 detail=f"Feature '{feature_code}' is not enabled for your hospital edition."
+            )
+
+    def _check_roles(self, request, required_roles: set) -> None:
+        claims = getattr(request, "auth_claims", {}) or {}
+        user_roles = set(claims.get("realm_access", {}).get("roles", []))
+        if "platform_admin" in user_roles:
+            return
+        if not (user_roles & required_roles):
+            raise PermissionDenied(
+                detail=(
+                    f"This action requires one of the following roles: "
+                    f"{', '.join(sorted(required_roles))}."
+                )
             )
 
     def perform_create(self, serializer):

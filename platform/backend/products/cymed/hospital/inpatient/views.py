@@ -30,6 +30,7 @@ from products.cymed.hospital.views import HospitalModelViewSet, run_service_acti
 class HospitalStayViewSet(HospitalModelViewSet):
     queryset = HospitalStay.objects.all()
     serializer_class = HospitalStaySerializer
+    action_required_roles = {"code_status": {"physician"}}
 
     @action(detail=True, methods=["post"])
     def code_status(self, request, pk=None):
@@ -94,6 +95,7 @@ class CodeStatusOrderViewSet(HospitalModelViewSet):
 class IndwellingDeviceViewSet(HospitalModelViewSet):
     queryset = IndwellingDevice.objects.all()
     serializer_class = IndwellingDeviceSerializer
+    action_required_roles = {"insert": {"physician", "nurse"}, "remove": {"physician", "nurse"}}
 
     @action(detail=False, methods=["post"])
     def insert(self, request):
@@ -137,6 +139,7 @@ class IndwellingDeviceViewSet(HospitalModelViewSet):
 class DeviceAssociatedInfectionViewSet(HospitalModelViewSet):
     queryset = DeviceAssociatedInfection.objects.all()
     serializer_class = DeviceAssociatedInfectionSerializer
+    action_required_roles = {"record": {"physician"}}
 
     @action(detail=False, methods=["post"])
     def record(self, request):
@@ -157,6 +160,7 @@ class DeviceAssociatedInfectionViewSet(HospitalModelViewSet):
 class VTEProphylaxisOrderViewSet(HospitalModelViewSet):
     queryset = VTEProphylaxisOrder.objects.all()
     serializer_class = VTEProphylaxisOrderSerializer
+    action_required_roles = {"order": {"physician"}}
 
     @action(detail=False, methods=["post"])
     def order(self, request):
