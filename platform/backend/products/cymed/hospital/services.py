@@ -596,6 +596,106 @@ class EmergencyService:
         }
 
     @classmethod
+    def compute_news2_score(cls, vitals: dict) -> int:
+        """
+        NEWS2 (National Early Warning Score 2) — standard NHS/RCP point table.
+        Scale 1 (non-hypercapnic) SpO2 bands; no separate hypercapnic-scale
+        input is collected yet, so Scale 1 is used for every patient.
+        """
+        score = 0
+
+        resp_rate = vitals.get("resp_rate")
+        if resp_rate is not None:
+            if resp_rate <= 8 or resp_rate >= 25:
+                score += 3
+            elif 9 <= resp_rate <= 11:
+                score += 1
+            elif 21 <= resp_rate <= 24:
+                score += 2
+
+        spo2 = vitals.get("o2_sat")
+        if spo2 is not None:
+            if spo2 <= 91:
+                score += 3
+            elif 92 <= spo2 <= 93:
+                score += 2
+            elif 94 <= spo2 <= 95:
+                score += 1
+
+        if vitals.get("on_supplemental_oxygen"):
+            score += 2
+
+        sbp = vitals.get("systolic_bp")
+        if sbp is not None:
+            if sbp <= 90 or sbp >= 220:
+                score += 3
+            elif 91 <= sbp <= 100:
+                score += 2
+            elif 101 <= sbp <= 110:
+                score += 1
+
+        hr = vitals.get("heart_rate")
+        if hr is not None:
+            if hr <= 40 or hr >= 131:
+                score += 3
+            elif 111 <= hr <= 130:
+                score += 2
+            elif 41 <= hr <= 50 or 91 <= hr <= 110:
+                score += 1
+
+        consciousness = vitals.get("consciousness", "alert")
+        if consciousness != "alert":
+            score += 3
+
+        temp_c = vitals.get("temp_c")
+        if temp_c is not None:
+            if temp_c <= 35.0 or temp_c >= 39.1:
+                score += 3 if temp_c <= 35.0 else 2
+            elif 35.1 <= temp_c <= 36.0 or 38.1 <= temp_c <= 39.0:
+                score += 1
+
+        return score
+
+    @classmethod
+    def derive_esi_level(cls, vitals: dict, news2_score: int) -> int:
+        """
+        Simplified 5-level ESI (Emergency Severity Index) derivation from vitals
+        + NEWS2. This is advisory/computed-default only -- a triage nurse can
+        always override by passing esi_level explicitly; a computed suggestion
+        is safer than accepting an unvalidated number with no algorithm behind
+        it (the prior behavior, which just echoed back whatever was submitted).
+        """
+        consciousness = vitals.get("consciousness", "alert")
+        resp_rate = vitals.get("resp_rate")
+        hr = vitals.get("heart_rate")
+        spo2 = vitals.get("o2_sat")
+        sbp = vitals.get("systolic_bp")
+
+        # ESI 1: needs immediate life-saving intervention
+        if consciousness == "unresponsive" or (resp_rate is not None and resp_rate == 0):
+            return 1
+
+        # ESI 2: high-risk situation -- any single vital in the red zone, or
+        # NEWS2 in the high-risk band
+        red_zone = (
+            (resp_rate is not None and (resp_rate <= 8 or resp_rate >= 25))
+            or (spo2 is not None and spo2 <= 91)
+            or (sbp is not None and sbp <= 90)
+            or (hr is not None and (hr <= 40 or hr >= 131))
+            or consciousness in ("voice", "pain")
+            or vitals.get("severe_pain", False)
+        )
+        if red_zone or news2_score >= 7:
+            return 2
+
+        # ESI 3/4/5: by NEWS2 band, approximating predicted resource need
+        if news2_score >= 5:
+            return 3
+        if news2_score >= 1:
+            return 4
+        return 5
+
+    @classmethod
     @transaction.atomic
     def triage_patient(
         cls,
@@ -619,9 +719,19 @@ class EmergencyService:
 
         visit = EmergencyVisit.objects.get(id=visit_uuid, tenant_id=tenant_uuid)
 
-        # Simple algorithm to compute ESI level (1 to 5)
-        esi_level = int(triage_data.get("esi_level", 3))
-        news2_score = int(triage_data.get("news2_score", 0))
+        # NEWS2 and ESI are computed from vitals when not explicitly given --
+        # a nurse can always override either by passing them directly.
+        news2_score = triage_data.get("news2_score")
+        if news2_score is None:
+            news2_score = cls.compute_news2_score(triage_data)
+        else:
+            news2_score = int(news2_score)
+
+        esi_level = triage_data.get("esi_level")
+        if esi_level is None:
+            esi_level = cls.derive_esi_level(triage_data, news2_score)
+        else:
+            esi_level = int(esi_level)
 
         # Create triage record
         triage = EmergencyTriage.objects.create(
@@ -673,6 +783,7 @@ class EmergencyService:
         return {
             "triage_id": str(triage.id),
             "esi_level": esi_level,
+            "news2_score": news2_score,
             "visit_status": visit.status,
         }
 
@@ -1936,6 +2047,12 @@ class HospitalOperationsService:
     HospitalAIAssistant (natural-language Q&A) so the two never drift.
     """
 
+    # General acute ward target -- a real staffing model would be per-ward
+    # (ICU is typically 1:1-2, med-surg 1:4-6); this snapshot is tenant-wide,
+    # not ward-scoped, so a single general-ward benchmark is used until
+    # ward-level census/staffing is wired up (see command-center frontend gap).
+    NURSE_PATIENT_TARGET_RATIO = 5
+
     @classmethod
     def get_snapshot(cls, tenant_id: str) -> dict:
         from products.cymed.core.facilities.models import Bed
@@ -1996,6 +2113,9 @@ class HospitalOperationsService:
         nurse_patient_ratio = (
             round(total_admissions / nurses_on_duty_today, 2) if nurses_on_duty_today > 0 else None
         )
+        staffing_compliant = (
+            nurse_patient_ratio is not None and nurse_patient_ratio <= cls.NURSE_PATIENT_TARGET_RATIO
+        )
 
         hai_rates = ClinicalSafetyService.get_hai_rates(tenant_id=tenant_id)
 
@@ -2016,6 +2136,10 @@ class HospitalOperationsService:
             "staffing_compliance": {
                 "nurse_to_patient_ratio": (
                     f"1:{nurse_patient_ratio}" if nurse_patient_ratio is not None else "not_tracked"
+                ),
+                "nurse_to_patient_target": f"1:{cls.NURSE_PATIENT_TARGET_RATIO}",
+                "nurse_staffing_compliant": (
+                    staffing_compliant if nurse_patient_ratio is not None else None
                 ),
                 "physician_duty_hours_compliance": "not_tracked",
             },

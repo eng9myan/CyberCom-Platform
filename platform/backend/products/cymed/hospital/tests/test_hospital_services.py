@@ -189,6 +189,78 @@ class TestHospitalServices:
             tenant_id=test_tenant_id, event_type="CriticalAlertTriggered"
         ).exists()
 
+    def test_esi_and_news2_are_derived_from_vitals_when_not_overridden(
+        self, test_tenant_id, setup_base_data
+    ):
+        """
+        Previously esi_level/news2_score were accepted as raw, unvalidated
+        numbers with no algorithm behind them. Now both are computed from
+        vitals when the caller doesn't explicitly override them.
+        """
+        patient = setup_base_data["patient"]
+        nurse_id = str(uuid.uuid4())
+
+        # Stable vitals -> low acuity, no override given
+        stable_visit = EmergencyService.register_emergency_visit(
+            tenant_id=str(test_tenant_id),
+            patient_id=str(patient.id),
+            chief_complaint="Twisted ankle",
+            arrival_mode="walk_in",
+        )
+        stable_res = EmergencyService.triage_patient(
+            tenant_id=str(test_tenant_id),
+            visit_id=stable_visit["visit_id"],
+            triage_data={
+                "resp_rate": 16,
+                "heart_rate": 78,
+                "o2_sat": 98,
+                "systolic_bp": 120,
+                "temp_c": 36.8,
+                "consciousness": "alert",
+            },
+            triaged_by=nurse_id,
+        )
+        assert stable_res["esi_level"] == 5
+        assert stable_res["news2_score"] == 0
+
+        # Red-zone vitals -> high acuity, no override given
+        crashing_visit = EmergencyService.register_emergency_visit(
+            tenant_id=str(test_tenant_id),
+            patient_id=str(patient.id),
+            chief_complaint="Severe respiratory distress",
+            arrival_mode="ambulance",
+        )
+        crashing_res = EmergencyService.triage_patient(
+            tenant_id=str(test_tenant_id),
+            visit_id=crashing_visit["visit_id"],
+            triage_data={
+                "resp_rate": 30,
+                "heart_rate": 135,
+                "o2_sat": 88,
+                "systolic_bp": 82,
+                "temp_c": 38.5,
+                "consciousness": "voice",
+            },
+            triaged_by=nurse_id,
+        )
+        assert crashing_res["esi_level"] == 2
+        assert crashing_res["news2_score"] >= 7
+
+        # Explicit override still wins over the computed value
+        override_visit = EmergencyService.register_emergency_visit(
+            tenant_id=str(test_tenant_id),
+            patient_id=str(patient.id),
+            chief_complaint="Anxiety",
+            arrival_mode="walk_in",
+        )
+        override_res = EmergencyService.triage_patient(
+            tenant_id=str(test_tenant_id),
+            visit_id=override_visit["visit_id"],
+            triage_data={"resp_rate": 16, "heart_rate": 78, "o2_sat": 98, "esi_level": 1},
+            triaged_by=nurse_id,
+        )
+        assert override_res["esi_level"] == 1
+
     def test_bed_management_assign_and_release(self, test_tenant_id, setup_base_data):
         patient = setup_base_data["patient"]
         encounter = setup_base_data["encounter"]
@@ -494,3 +566,28 @@ class TestHospitalAIAssistant:
         )
         # The real snapshot numbers were actually sent to the model, not fabricated.
         assert str(snapshot["operational_census"]["active_admissions"]) in captured_prompts[0]
+
+
+@pytest.mark.django_db
+class TestStaffingCompliance:
+    def test_nurse_staffing_compliance_against_target_ratio(self, test_tenant_id, setup_base_data):
+        from products.cymed.hospital.nursing.models import NursingShift
+        from products.cymed.hospital.services import NursingService
+
+        ward = setup_base_data["ward"]
+        shift = NursingShift.objects.create(
+            tenant_id=test_tenant_id, name="Day", start_time="07:00", end_time="19:00"
+        )
+        NursingService.assign_nurse(
+            tenant_id=str(test_tenant_id),
+            nurse_id=str(uuid.uuid4()),
+            ward_id=str(ward.id),
+            shift_id=str(shift.id),
+            patients=[],
+        )
+
+        snapshot = HospitalOperationsService.get_snapshot(str(test_tenant_id))
+        staffing = snapshot["staffing_compliance"]
+        assert staffing["nurse_to_patient_target"] == f"1:{HospitalOperationsService.NURSE_PATIENT_TARGET_RATIO}"
+        # 0 admissions / 1 nurse on duty = compliant
+        assert staffing["nurse_staffing_compliant"] is True
