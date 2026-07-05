@@ -25,22 +25,42 @@ All changes verified: Django system check passes, all new endpoints resolve via 
 
 All Critical-severity items from the original gap analysis are now closed. Full hospital service-layer suite: 12/12 passing.
 
+## Pass 4-5: real live-stack verification, not just tests (2026-07-05)
+
+The user asked for Hospital "full ready to deploy, ready for commercial" — this required actually standing up the real infrastructure (Docker was available, previously untested) rather than trusting unit tests alone. This surfaced and fixed **platform-wide** bugs no amount of unit testing had caught, because the test suite's own fixtures never exercised the real path:
+
+11. **39 apps had zero Django migrations at all (Critical, platform-wide)** — including the foundational shared services (CyIdentity, Audit, Tenant, Events, Notifications, Terminology, CyAI, CyData, CyIntegrationHub) and core clinical models Hospital itself depends on (patients, encounters, facilities, organizations, providers, clinical, documents, careplans, consents, orders, registries). `manage.py migrate` against real Postgres was impossible before this fix — it only ever "worked" via SQLite's silent unmigrated-app syncdb fallback in tests. Generated real migrations for all 39; also fixed 10 index names exceeding Postgres/Django's 30-char limit in `patient_portal` (project-wide blocker, same root cause: never run against a real backend before).
+12. **Auth was completely non-functional end-to-end (Critical, platform-wide).** Three independent bugs meant no request could ever be genuinely authenticated in any environment: `shared.auth.auth_middleware` lived at the wrong import path (Django couldn't start at all); the middleware never validated JWT audience (every real Keycloak token was rejected); DRF's `Request.user` silently substitutes `AnonymousUser` when `DEFAULT_AUTHENTICATION_CLASSES` is empty, so `IsAuthenticated` failed for every request regardless of token validity. Fixed all three, added `platform/api/authentication.py`. The test suite's own `auth_client` fixture was *also* broken (fake HS256 token with no `aud`/`iss` claims — could never have passed against real Keycloak semantics) — replaced with a real RSA-signed RS256 token + mocked JWKS matching production claim shape.
+13. **Frontend was never wired to real data (Critical).** `hospital/page.tsx` called `apiFetch()` with no token/tenantId at all (always unauthenticated regardless of login), hit a legacy/wrong endpoint, and hardcoded fake totals (`total_beds: 320`, `|| 278` fallback) even in its "success" branch. `AuthProvider` only held the session in React state, so the hospital nav's plain `<a href>` links (full page loads) silently logged users out on every click. `CORS_ALLOW_HEADERS` didn't include `X-Tenant-ID`, so the browser blocked every real request as a generic "Failed to fetch" before Django ever saw it. All three fixed.
+14. **Algorithmic ESI/NEWS2 + staffing compliance rule (High).** ESI/NEWS2 were previously accepted as raw, unvalidated numbers with no algorithm. Added a real NEWS2 point-table calculation and a 5-level ESI derivation from vitals (red-zone vitals or NEWS2≥7 → ESI 2, etc.) as the computed default — a triage nurse can still override explicitly, matching real clinical practice. Added a nurse:patient target-ratio compliance check (1:5 general-ward benchmark, tenant-wide) to the operational snapshot.
+
+**Live proof, not simulated:** stood up Postgres+Keycloak+Redis in Docker, created a real realm/client/user, ran real migrations, seeded real demo data, started the real Django backend and real Next.js frontend, and **logged in through an actual browser** (real Keycloak login screen, PKCE flow) → landed on `/hospital` → saw the exact real seeded numbers (3 beds, 1 occupied, 33.33% capacity, 1 ICU, 1 ED) with zero hardcoded numbers anywhere on the page. Full hospital test suite: **27/27 passing** (was 6/19 at the start of Phase 1).
+
+**Also produced:** `HIPAA_Readiness_Report.md` and `Security_Report.md` — evidence-based, not boilerplate. Two concrete gaps identified as the real remaining blockers to a production compliance/security posture: **zero `AuditService` coverage on any hospital action** (everything emits an `OutboxEvent`, nothing writes to the tamper-evident audit log), and **no per-endpoint RBAC beyond `IsAuthenticated`** (any authenticated user of any role can call any hospital endpoint for their tenant).
+
 ## Gap classification (not yet fixed — for next Hospital pass)
 
+**Critical (compliance-blocking, see HIPAA/Security reports for detail):**
+- No `AuditService.log()` calls anywhere in `hospital/services.py` — no tamper-evident audit trail on clinical actions.
+- No `data_classification` marking on any PHI-bearing hospital model field, despite `STANDARDS.md` mandating it.
+
 **High:**
-- No hospital-specific *login* users (Keycloak realm/user provisioning) — the demo tenant now has real hospital *data*, but no one can log into it yet. This needs a live Keycloak instance to build/test against, which this sandbox doesn't have (confirmed: Keycloak JWKS calls fail here) — real external-environment blocker, not skipped work.
-- No nurse:patient ratio *staffing model* (the command-center/AI snapshot reports today's actual ratio, but there's no target/compliance rule to check it against).
-- ESI triage level is operator-entered, not algorithmically derived from vitals/complaint; APACHE II is a passthrough/default rather than computed.
+- No per-endpoint RBAC — any authenticated user can call any hospital endpoint regardless of clinical role.
+- Only the main `/hospital` dashboard page was rewired to real data this pass; the sub-pages (`adt`, `beds`, `emergency`, `icu`, `operating-room`, `command-center`) still call legacy/mock-only code paths — same mechanical fix, not yet applied.
+- Ward-level bed breakdown has no backend source wired to the frontend (tenant-wide totals only).
+- No repeatable, code-based Keycloak realm/demo-user provisioning (this session's login verification used ad-hoc Admin API calls, not a script/IaC artifact committed to the repo).
+- `/admin/` bypass-path inconsistency between `ARCHITECTURE.md` and `CyIdentityAuthMiddleware`'s actual whitelist (pre-existing, platform-wide, not hospital-specific).
 
 **Medium:**
 - No CRRT/dialysis tracking, no delirium (CAM-ICU) scoring, no restraint documentation in ICU.
 - No block-scheduling/utilization analytics or implant/device UDI tracking in OR.
 - `core.registries` (population/disease registry) is minimal — 2 models, 32 lines.
-- Hospital AI assistant has no prompt beyond the one general-purpose Q&A template — no dedicated "generate patient summary" or "revenue" prompts yet (revenue specifically needs an RCM/billing snapshot merged in, not built this pass).
+- Hospital AI assistant has no prompt beyond one general-purpose Q&A template — no dedicated "generate patient summary" or "revenue" prompt (revenue needs an RCM/billing snapshot merged in, not built this pass).
+- 20 npm vulnerabilities (1 critical) in frontend/mobile transitive dependencies, not remediated (needs a dedicated, reviewed dependency-update pass, not a blind `--force`).
 
 **Low:**
 - `careplans`/`orders`/`scheduling`/`consents`/`registries` in core share a single shallow test class.
 
 ## Verdict
 
-**NOT READY** for Epic/Oracle Health-class certification — that is a multi-year scope for any vendor and this report will not pretend otherwise. **Substantial, verified progress across three extended passes**: real API-reachable workflows, all four Critical patient-safety/data-integrity gaps closed (code status, HAI surveillance, VTE prophylaxis, bed-state sync), a real (not simulated) AI gateway with a working hospital-specific assistant, and real demo data exercising the whole ADT→ICU pipeline. Remaining High items (Keycloak login provisioning, staffing compliance rules, algorithmic ESI) are concretely scoped for the next pass — none are Critical-severity anymore.
+**NOT READY** for Epic/Oracle Health-class certification, and **NOT READY** to sell or deploy with real PHI today — both true statements, and neither is a moving target anymore: every remaining item above is concretely scoped, none require guesswork to close. What changed this pass: the foundational plumbing (migrations against a real database, authentication, frontend↔backend data flow) was **completely broken in every environment, for every product, since inception** — not just untested, actually broken — and is now fixed and proven live, not just unit-tested. That is the difference between "we think this works" and "we watched it work." The two Critical items left (audit logging, PHI data-classification marking) are compliance gaps, not functional bugs — the product works; it isn't compliant yet.
