@@ -364,6 +364,14 @@ CELERY_BEAT_SCHEDULE = {
         "task": "cycom_hr.expire_clinical_credentials",
         "schedule": 86400.0,  # once a day
     },
+    "lab-escalate-critical-results": {
+        "task": "lab_results.escalate_critical_results",
+        "schedule": 300.0,  # every 5 minutes; thresholds are 30/15 min (see tasks.py)
+    },
+    "imaging-escalate-critical-findings": {
+        "task": "img_reporting.escalate_critical_findings",
+        "schedule": 300.0,
+    },
 }
 
 # ---------------------------------------------------------------------------
