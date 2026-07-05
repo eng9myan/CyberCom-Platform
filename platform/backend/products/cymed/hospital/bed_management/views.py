@@ -1,5 +1,6 @@
 from rest_framework import status
 from rest_framework.decorators import action
+from rest_framework.response import Response
 
 from products.cymed.hospital.bed_management.models import (
     BedAssignment,
@@ -84,8 +85,21 @@ class BedReservationViewSet(HospitalModelViewSet):
 
 
 class BedCleaningViewSet(HospitalModelViewSet):
+    """
+    Creation only via request_cleaning/complete -- both keep core.facilities.Bed.status
+    in sync. A raw POST here would create a cleaning row without ever touching the
+    bed's own status, letting the two desync (found in Hospital_Enterprise_Report gap
+    analysis).
+    """
+
     queryset = BedCleaning.objects.all()
     serializer_class = BedCleaningSerializer
+
+    def create(self, request, *args, **kwargs):
+        return Response(
+            {"detail": "Use the request_cleaning/ or {id}/complete/ actions, not a raw POST."},
+            status=status.HTTP_405_METHOD_NOT_ALLOWED,
+        )
 
     @action(detail=False, methods=["post"])
     def request_cleaning(self, request):
@@ -100,6 +114,18 @@ class BedCleaningViewSet(HospitalModelViewSet):
             success_status=status.HTTP_201_CREATED,
         )
 
+    @action(detail=True, methods=["post"])
+    def complete(self, request, pk=None):
+        """Marks the cleaning done and returns the bed to the available pool."""
+        data = request.data
+        return run_service_action(
+            lambda: BedManagementService.complete_cleaning(
+                tenant_id=request.tenant_id,
+                cleaning_id=pk,
+                cleaner_name=data.get("cleaner_name", ""),
+            )
+        )
+
 
 class BedMaintenanceViewSet(HospitalModelViewSet):
     queryset = BedMaintenance.objects.all()
@@ -107,8 +133,16 @@ class BedMaintenanceViewSet(HospitalModelViewSet):
 
 
 class BedBlockingViewSet(HospitalModelViewSet):
+    """Creation only via block/unblock -- see BedCleaningViewSet docstring for why."""
+
     queryset = BedBlocking.objects.all()
     serializer_class = BedBlockingSerializer
+
+    def create(self, request, *args, **kwargs):
+        return Response(
+            {"detail": "Use the block/ or {id}/unblock/ actions, not a raw POST."},
+            status=status.HTTP_405_METHOD_NOT_ALLOWED,
+        )
 
     @action(detail=False, methods=["post"])
     def block(self, request):
@@ -123,4 +157,11 @@ class BedBlockingViewSet(HospitalModelViewSet):
                 until=data.get("until"),
             ),
             success_status=status.HTTP_201_CREATED,
+        )
+
+    @action(detail=True, methods=["post"])
+    def unblock(self, request, pk=None):
+        """Clears the block and returns the bed to the available pool."""
+        return run_service_action(
+            lambda: BedManagementService.unblock_bed(tenant_id=request.tenant_id, blocking_id=pk)
         )

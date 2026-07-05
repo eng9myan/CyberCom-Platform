@@ -14,6 +14,7 @@ from products.cymed.hospital.adt.models import (
     DischargeDisposition,
     DischargeReason,
 )
+from products.cymed.hospital.bed_management.models import BedCleaning
 from products.cymed.hospital.inpatient.models import HospitalStay
 from products.cymed.hospital.services import (
     AdmissionService,
@@ -213,6 +214,46 @@ class TestHospitalServices:
         assert success
         bed.refresh_from_db()
         assert bed.status == "available"
+
+    def test_bed_cleaning_and_blocking_full_cycle_stays_in_sync(
+        self, test_tenant_id, setup_base_data
+    ):
+        """
+        Regression test for the bed-state duality gap: cleaning/blocking must
+        always resolve back to Bed.status == "available", never leave a bed
+        stuck in "reserved"/"maintenance" with no way back.
+        """
+        bed = setup_base_data["bed"]
+
+        # Discharge-triggered cleaning: release_bed(reason="discharge") auto-requests it.
+        BedManagementService.release_bed(
+            tenant_id=str(test_tenant_id), bed_id=str(bed.id), reason="discharge"
+        )
+        bed.refresh_from_db()
+        assert bed.status == "reserved"
+
+        cleaning = BedCleaning.objects.get(bed=bed, status="scheduled")
+        BedManagementService.complete_cleaning(
+            tenant_id=str(test_tenant_id), cleaning_id=str(cleaning.id), cleaner_name="Housekeeping A"
+        )
+        bed.refresh_from_db()
+        assert bed.status == "available"
+        cleaning.refresh_from_db()
+        assert cleaning.status == "completed"
+
+        # Blocking / unblocking cycle
+        blocked_by = str(uuid.uuid4())
+        blocking = BedManagementService.block_bed(
+            tenant_id=str(test_tenant_id), bed_id=str(bed.id), reason="deep clean", blocked_by=blocked_by
+        )
+        bed.refresh_from_db()
+        assert bed.status == "maintenance"
+
+        BedManagementService.unblock_bed(tenant_id=str(test_tenant_id), blocking_id=str(blocking.id))
+        bed.refresh_from_db()
+        assert bed.status == "available"
+        blocking.refresh_from_db()
+        assert blocking.unblocked_at is not None
 
     def test_icu_sofa_score_calculation(self, test_tenant_id, setup_base_data):
         patient = setup_base_data["patient"]

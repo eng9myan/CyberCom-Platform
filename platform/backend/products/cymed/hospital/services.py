@@ -504,6 +504,46 @@ class BedManagementService:
         )
         return cleaning
 
+    @classmethod
+    @transaction.atomic
+    def complete_cleaning(cls, tenant_id: str, cleaning_id: str, cleaner_name: str = "") -> Any:
+        """Marks a cleaning task done and returns the bed to the available pool."""
+        from products.cymed.hospital.bed_management.models import BedCleaning
+
+        tenant_uuid = uuid.UUID(str(tenant_id))
+        cleaning_uuid = uuid.UUID(str(cleaning_id))
+
+        cleaning = BedCleaning.objects.select_related("bed").get(
+            id=cleaning_uuid, tenant_id=tenant_uuid
+        )
+        cleaning.status = "completed"
+        if cleaner_name:
+            cleaning.cleaner_name = cleaner_name
+        cleaning.save(update_fields=["status", "cleaner_name", "updated_at"])
+
+        cleaning.bed.status = "available"
+        cleaning.bed.save(update_fields=["status", "updated_at"])
+        return cleaning
+
+    @classmethod
+    @transaction.atomic
+    def unblock_bed(cls, tenant_id: str, blocking_id: str) -> Any:
+        """Clears a bed block and returns the bed to the available pool."""
+        from products.cymed.hospital.bed_management.models import BedBlocking
+
+        tenant_uuid = uuid.UUID(str(tenant_id))
+        blocking_uuid = uuid.UUID(str(blocking_id))
+
+        blocking = BedBlocking.objects.select_related("bed").get(
+            id=blocking_uuid, tenant_id=tenant_uuid
+        )
+        blocking.unblocked_at = timezone.now()
+        blocking.save(update_fields=["unblocked_at", "updated_at"])
+
+        blocking.bed.status = "available"
+        blocking.bed.save(update_fields=["status", "updated_at"])
+        return blocking
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # 3. EmergencyService
