@@ -26,12 +26,25 @@ class StockItem(BaseModel):
     quantity = models.DecimalField(max_digits=12, decimal_places=3, default=0)
     unit = models.CharField(max_length=20, default="pcs")
     unit_cost = models.DecimalField(max_digits=18, decimal_places=2, default=0)
+    reorder_level = models.DecimalField(
+        max_digits=12, decimal_places=3, default=0,
+        help_text="Reorder is triggered when quantity falls to or below this level. 0 disables auto-reorder.",
+    )
+    par_level = models.DecimalField(
+        max_digits=12, decimal_places=3, default=0,
+        help_text="Target stock level to replenish up to when a reorder is triggered.",
+    )
+    preferred_vendor_id = models.UUIDField(null=True, blank=True)
 
     class Meta:
         db_table = "cycom_inventory_stock_items"
 
     def __str__(self):
         return f"{self.sku} - {self.name}"
+
+    @property
+    def needs_reorder(self) -> bool:
+        return self.reorder_level > 0 and self.quantity <= self.reorder_level
 
 
 class StockMovement(BaseModel):
@@ -69,3 +82,29 @@ class StockMovement(BaseModel):
                 self.stock_item.quantity -= self.quantity
             self.stock_item.save(update_fields=["quantity"])
         super().save(*args, **kwargs)
+
+
+class ReorderAlert(BaseModel):
+    STATUS_CHOICES = [
+        ("open", "Open"),
+        ("requisitioned", "Requisitioned"),
+        ("dismissed", "Dismissed"),
+    ]
+
+    stock_item = models.ForeignKey(
+        StockItem,
+        on_delete=models.CASCADE,
+        related_name="reorder_alerts",
+    )
+    triggered_at = models.DateTimeField(auto_now_add=True)
+    quantity_at_trigger = models.DecimalField(max_digits=12, decimal_places=3)
+    reorder_level_at_trigger = models.DecimalField(max_digits=12, decimal_places=3)
+    suggested_order_quantity = models.DecimalField(max_digits=12, decimal_places=3)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="open")
+    requisition_id = models.UUIDField(null=True, blank=True)
+
+    class Meta:
+        db_table = "cycom_inventory_reorder_alerts"
+
+    def __str__(self):
+        return f"Reorder: {self.stock_item.sku} ({self.status})"
