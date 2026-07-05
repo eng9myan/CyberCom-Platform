@@ -98,6 +98,34 @@ def _fan_out_medication(order: ProviderOrderRequest) -> None:
     )
 
 
+def _build_and_dispatch_fhir_service_request(tenant_id, department_order, department: str) -> str:
+    """
+    Builds the real FHIR ServiceRequest for a fanned-out order and routes it
+    through CyIntegrationHub. Returns the resource id to store, or "" if the
+    build/dispatch failed -- never a fabricated id.
+    """
+    try:
+        if department == "laboratory":
+            from products.cymed.laboratory.services import FHIRLabService
+
+            resource = FHIRLabService.to_fhir_service_request(department_order)
+        else:
+            from products.cymed.imaging.services import FHIRImagingService
+
+            resource = FHIRImagingService.to_fhir_service_request(department_order)
+
+        from platform.cyintegrationhub.services import dispatch_fhir_resource
+
+        dispatch_result = dispatch_fhir_resource(tenant_id, resource)
+        if dispatch_result.get("fhir_status") == "sent":
+            response = dispatch_result.get("response") or {}
+            return response.get("id") or resource["id"]
+        return resource["id"]
+    except Exception:
+        # FHIR dispatch is a side channel; a failure here must not block CPOE fan-out.
+        return ""
+
+
 def _fan_out_laboratory(order: ProviderOrderRequest) -> None:
     from products.cymed.laboratory.orders.models import LabOrder, LabOrderItem, LabTest
 
@@ -139,8 +167,16 @@ def _fan_out_laboratory(order: ProviderOrderRequest) -> None:
             test=test,
             priority=order.priority,
         )
+
+    fhir_id = _build_and_dispatch_fhir_service_request(order.tenant_id, lab_order, "laboratory")
+    if fhir_id:
+        LabOrder.objects.filter(pk=lab_order.pk).update(fhir_service_request_id=fhir_id)
+
     ProviderOrderRequest.objects.filter(pk=order.pk).update(
-        status="acknowledged", cymed_lab_order_id=lab_order.id, acknowledged_at=timezone.now()
+        status="acknowledged",
+        cymed_lab_order_id=lab_order.id,
+        fhir_service_request_id=fhir_id or "",
+        acknowledged_at=timezone.now(),
     )
     OrderStatusUpdate.objects.create(
         tenant_id=order.tenant_id,
@@ -194,8 +230,16 @@ def _fan_out_imaging(order: ProviderOrderRequest) -> None:
             procedure=proc,
             contrast_required=proc.contrast_required,
         )
+
+    fhir_id = _build_and_dispatch_fhir_service_request(order.tenant_id, img_order, "imaging")
+    if fhir_id:
+        ImagingOrder.objects.filter(pk=img_order.pk).update(fhir_service_request_id=fhir_id)
+
     ProviderOrderRequest.objects.filter(pk=order.pk).update(
-        status="acknowledged", cymed_imaging_order_id=img_order.id, acknowledged_at=timezone.now()
+        status="acknowledged",
+        cymed_imaging_order_id=img_order.id,
+        fhir_service_request_id=fhir_id or "",
+        acknowledged_at=timezone.now(),
     )
     OrderStatusUpdate.objects.create(
         tenant_id=order.tenant_id,

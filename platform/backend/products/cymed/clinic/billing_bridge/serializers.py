@@ -9,6 +9,7 @@ from products.cymed.clinic.billing_bridge.models import (
     ClinicService,
     PriceList,
 )
+from products.cymed.clinic.billing_bridge.services import FHIRBillingService
 
 AR_ACCOUNT_CODE = "1200"
 CLINICAL_REVENUE_ACCOUNT_CODE = "4000"
@@ -50,7 +51,19 @@ class ChargeItemSerializer(serializers.ModelSerializer):
             charge_item.erp_transaction_id = str(journal_entry.id)
             charge_item.save(update_fields=["posted_to_erp", "erp_transaction_id"])
 
+        self._dispatch_fhir_claim(tenant_id, charge_item, journal_entry.total_debit)
         return charge_item
+
+    def _dispatch_fhir_claim(self, tenant_id, charge_item: ChargeItem, amount) -> None:
+        from platform.cyintegrationhub.services import dispatch_fhir_resource
+
+        claim = FHIRBillingService.to_fhir_claim(charge_item, amount)
+        try:
+            dispatch_fhir_resource(tenant_id, claim)
+        except Exception:
+            # FHIR interoperability dispatch is a side channel -- a down/misconfigured
+            # partner endpoint must never block the GL posting that already committed.
+            pass
 
     def _post_to_gl(self, tenant_id, charge_item: ChargeItem) -> JournalEntry:
         service = charge_item.service

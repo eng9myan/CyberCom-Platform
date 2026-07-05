@@ -3,9 +3,11 @@ import re
 import time
 from typing import Any
 
+import httpx
 from django.utils import timezone
 
 from platform.cyintegrationhub.models import (
+    ConnectorConfig,
     IntegrationPartner,
     MessageAuditLog,
     TransformationMapping,
@@ -287,6 +289,32 @@ class RoutingEngine:
             return False
 
 
+def dispatch_fhir_resource(tenant_id: str, resource: dict[str, Any]) -> dict[str, Any]:
+    """
+    Convenience entry point for clinical/billing code that has just built a FHIR
+    resource and wants it routed through CyIntegrationHub. Looks up the first
+    active fhir IntegrationPartner + its active fhir ConnectorConfig; if none is
+    configured, still logs the attempt and returns the built resource unsent.
+    """
+    partner = IntegrationPartner.objects.filter(protocol="fhir", active=True).first()
+    if partner is None:
+        logger.info("No active FHIR IntegrationPartner configured; resource built but not sent.")
+        return {"fhir_status": "not_sent", "reason": "no fhir partner configured", "resource": resource}
+
+    connector_config = ConnectorConfig.objects.filter(
+        partner=partner, connector_type="fhir", active=True
+    ).first()
+
+    return ConnectorFramework.execute_connector(
+        tenant_id=tenant_id,
+        partner=partner,
+        connector_type="fhir",
+        action="send",
+        payload=resource,
+        connector_config=connector_config,
+    )
+
+
 class ConnectorFramework:
     """
     Executes connections to external systems (FHIR, HL7, LDAP, SOAP, Keycloak, SMTP, etc.)
@@ -301,6 +329,7 @@ class ConnectorFramework:
         connector_type: str,
         action: str,
         payload: Any,
+        connector_config: "ConnectorConfig | None" = None,
     ) -> dict[str, Any]:
         start_time = time.monotonic()
         status = "success"
@@ -312,7 +341,7 @@ class ConnectorFramework:
         def _call_external():
             conn_type = connector_type.lower()
             if conn_type == "fhir":
-                return {"fhir_status": "synced", "records_found": 12, "resource": "Patient"}
+                return cls._send_fhir_resource(connector_config, payload)
 
             elif conn_type == "hl7v2":
                 transformed = TransformationEngine.transform(payload, "hl7v2")
@@ -357,6 +386,39 @@ class ConnectorFramework:
         )
 
         return result
+
+    @classmethod
+    def _send_fhir_resource(
+        cls, connector_config: "ConnectorConfig | None", resource: Any
+    ) -> dict[str, Any]:
+        """
+        Send a real FHIR resource to the partner's configured endpoint.
+        If no endpoint is configured, the resource is returned as built --
+        we never fabricate a "synced" status for a call that never happened.
+        """
+        if not isinstance(resource, dict) or "resourceType" not in resource:
+            raise ValueError(
+                "FHIR connector expects a built FHIR resource dict (with resourceType), "
+                "not a raw payload."
+            )
+
+        if connector_config is None or not connector_config.endpoint_url:
+            return {"fhir_status": "not_sent", "reason": "no endpoint configured", "resource": resource}
+
+        url = f"{connector_config.endpoint_url.rstrip('/')}/{resource['resourceType']}"
+        headers = {"Content-Type": "application/fhir+json", "Accept": "application/fhir+json"}
+        auth_token = (connector_config.auth_config or {}).get("bearer_token")
+        if auth_token:
+            headers["Authorization"] = f"Bearer {auth_token}"
+
+        response = httpx.post(url, json=resource, headers=headers, timeout=15)
+        response.raise_for_status()
+        return {
+            "fhir_status": "sent",
+            "http_status": response.status_code,
+            "location": response.headers.get("Location", ""),
+            "response": response.json() if response.content else {},
+        }
 
     @classmethod
     def parse_dicom_metadata(cls, payload: Any) -> dict[str, Any]:
