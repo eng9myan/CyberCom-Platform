@@ -1,47 +1,104 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent, waitFor } from "@testing-library/react";
 import RCMBilling from "./page";
+import { useAuth } from "@/contexts/auth";
+import { apiFetch } from "@/lib/api";
 
 vi.mock("@/lib/api", () => ({
-  apiFetch: vi.fn().mockRejectedValue(new Error("API unavailable")),
+  apiFetch: vi.fn(),
 }));
+
+vi.mock("@/contexts/auth", () => ({
+  useAuth: vi.fn(),
+}));
+
+const mockedApiFetch = vi.mocked(apiFetch);
+const mockedUseAuth = vi.mocked(useAuth);
+
+const SESSION = {
+  userId: "u1",
+  email: "billing@cy-com.com",
+  realm: "cybercom",
+  tenantId: "tenant-1",
+  roles: [],
+  permissions: [],
+  accessToken: "token",
+  tokenExpiresAt: Date.now() + 60_000,
+};
+
+function mockBillingResponses() {
+  mockedApiFetch.mockImplementation((path: string) => {
+    if (path.includes("patient-accounts")) {
+      return Promise.resolve({
+        count: 1,
+        results: [{ id: "acct-1", patient_id: "pat-1", account_number: "ACC-001", account_status: "active", outstanding_balance: "100.00" }],
+      });
+    }
+    if (path.includes("encounter-billings")) {
+      return Promise.resolve({
+        count: 1,
+        results: [{
+          id: "enc-1", patient_account: "acct-1", encounter_id: "e1", encounter_type: "outpatient",
+          encounter_date: "2026-07-01", billing_status: "open", total_charges: "500.00",
+          balance_due: "500.00", icd11_primary_diagnosis: "E11.9",
+        }],
+      });
+    }
+    if (path.includes("invoices")) {
+      return Promise.resolve({ count: 0, results: [] });
+    }
+    if (path.includes("/api/v1/patients/")) {
+      return Promise.resolve({
+        count: 1,
+        results: [{ id: "pat-1", first_name: "Ahmad", last_name: "Al-Rashidi", mrn: "MRN-001" }],
+      });
+    }
+    return Promise.reject(new Error(`unexpected path: ${path}`));
+  });
+}
 
 describe("RCMBilling", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it("renders without crashing", () => {
+  it("shows a sign-in prompt when unauthenticated", () => {
+    mockedUseAuth.mockReturnValue({ session: null, isAuthenticated: false, setSession: vi.fn(), logout: vi.fn() });
     render(<RCMBilling />);
-    expect(document.body).toBeTruthy();
+    expect(screen.getByText("Sign in required")).toBeInTheDocument();
   });
 
-  it("displays the page heading in English", () => {
+  it("loads and displays real encounter billing data when authenticated", async () => {
+    mockedUseAuth.mockReturnValue({ session: SESSION, isAuthenticated: true, setSession: vi.fn(), logout: vi.fn() });
+    mockBillingResponses();
     render(<RCMBilling />);
-    expect(screen.getByText("Billing & Charge Capture")).toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(screen.getByText("Ahmad Al-Rashidi (MRN-001)")).toBeInTheDocument();
+    });
+    expect(screen.getByText("E11.9")).toBeInTheDocument();
+    expect(screen.getByText("open")).toBeInTheDocument();
   });
 
-  it("shows mock patient Ahmad Al-Rashidi (ENC-001 unbilled) from ENCOUNTERS", () => {
+  it("shows an explicit error state when the API call fails, never falls back to mock data", async () => {
+    mockedUseAuth.mockReturnValue({ session: SESSION, isAuthenticated: true, setSession: vi.fn(), logout: vi.fn() });
+    mockedApiFetch.mockRejectedValue(new Error("API unavailable"));
     render(<RCMBilling />);
-    // Ahmad Al-Rashidi appears in multiple encounters; getAllByText to avoid error
-    const matches = screen.getAllByText("Ahmad Al-Rashidi");
-    expect(matches.length).toBeGreaterThan(0);
-  });
 
-  it("shows encounter ID ENC-001 from ENCOUNTERS", () => {
-    render(<RCMBilling />);
-    expect(screen.getByText("ENC-001")).toBeInTheDocument();
-  });
-
-  it("renders revenue metric cards including Unbilled, Billed, and A/R Days", () => {
-    render(<RCMBilling />);
-    expect(screen.getByText("Unbilled")).toBeInTheDocument();
-    expect(screen.getByText("Billed")).toBeInTheDocument();
-    expect(screen.getByText("A/R Days")).toBeInTheDocument();
+    await waitFor(() => {
+      expect(screen.getByText("Unable to load billing data")).toBeInTheDocument();
+    });
+    expect(screen.queryByText("Ahmad Al-Rashidi")).not.toBeInTheDocument();
   });
 
   it("language toggle switches heading to Arabic", async () => {
+    mockedUseAuth.mockReturnValue({ session: SESSION, isAuthenticated: true, setSession: vi.fn(), logout: vi.fn() });
+    mockBillingResponses();
     render(<RCMBilling />);
+
+    await waitFor(() => {
+      expect(screen.getByText("Billing & Charge Capture")).toBeInTheDocument();
+    });
     const langBtn = screen.getByText("العربية");
     fireEvent.click(langBtn);
     await waitFor(() => {
@@ -49,37 +106,18 @@ describe("RCMBilling", () => {
     });
   });
 
-  it("filtering by Unbilled shows only unbilled encounters", async () => {
+  it("filtering by status shows only matching encounters", async () => {
+    mockedUseAuth.mockReturnValue({ session: SESSION, isAuthenticated: true, setSession: vi.fn(), logout: vi.fn() });
+    mockBillingResponses();
     render(<RCMBilling />);
-    // ENC-002 is pending (Mariam Al-Harbi); ENC-001 is unbilled (Ahmad Al-Rashidi)
-    const unbilledBtn = screen.getByRole("button", { name: /Unbilled/i });
-    fireEvent.click(unbilledBtn);
-    await waitFor(() => {
-      // ENC-001 (unbilled) should be visible; ENC-002 (pending) should not
-      expect(screen.getByText("ENC-001")).toBeInTheDocument();
-      expect(screen.queryByText("ENC-002")).not.toBeInTheDocument();
-    });
-  });
 
-  it("selecting a checkbox shows header Submit button and clicking it clears selection", async () => {
-    render(<RCMBilling />);
-    // Multiple checkboxes exist (one per non-submitted encounter)
-    const checkboxes = screen.getAllByRole("checkbox");
-    expect(checkboxes.length).toBeGreaterThan(0);
-    // Select the first checkbox
-    fireEvent.click(checkboxes[0]);
     await waitFor(() => {
-      // Header Submit button includes "SAR" in its label; per-row buttons say just "Submit"
-      // This uniquely identifies the header bulk-submit button
-      const headerSubmit = screen.getByRole("button", { name: /SAR/ });
-      expect(headerSubmit).toBeInTheDocument();
+      expect(screen.getByText("Ahmad Al-Rashidi (MRN-001)")).toBeInTheDocument();
     });
-    // Click the header Submit button (contains "SAR" in its text)
-    const headerSubmit = screen.getByRole("button", { name: /SAR/ });
-    fireEvent.click(headerSubmit);
+    const paidBtn = screen.getByRole("button", { name: /^paid/i });
+    fireEvent.click(paidBtn);
     await waitFor(() => {
-      // After submit, selection is cleared so the header Submit button (with SAR) disappears
-      expect(screen.queryByRole("button", { name: /SAR/ })).not.toBeInTheDocument();
+      expect(screen.getByText(/No encounter billing records for this filter/)).toBeInTheDocument();
     });
   });
 });

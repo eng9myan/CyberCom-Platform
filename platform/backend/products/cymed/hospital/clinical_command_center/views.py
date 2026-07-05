@@ -41,6 +41,23 @@ class ClinicalCommandCenterTrendView(APIView):
         return Response(HospitalOperationsService.get_weekly_trend(tenant_id, days=days))
 
 
+class ClinicalCommandCenterModuleSummaryView(APIView):
+    """
+    Plain tenant-scoped counts backing the dashboard's ERP-embedded module
+    grid badges (patients, appointments, providers, billing, inventory,
+    HR, BI). See HospitalOperationsService.get_module_summary() docstring.
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        tenant_id = getattr(request, "tenant_id", None)
+        if not tenant_id:
+            return Response({"detail": "Tenant context required"}, status=400)
+
+        return Response(HospitalOperationsService.get_module_summary(tenant_id))
+
+
 class HospitalAIAssistantView(APIView):
     """
     Natural-language Q&A over the hospital's real operational snapshot

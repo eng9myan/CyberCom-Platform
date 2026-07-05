@@ -1,51 +1,78 @@
 "use client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { apiFetch } from "@/lib/api";
+import { useAuth } from "@/contexts/auth";
 
-interface LeaveRequest { id: string; employee: string; employee_ar: string; department: string; type: string; from: string; to: string; days: number; status: "pending" | "approved" | "rejected"; }
-const MOCK_DEPT = [
-  { dept: "Medical Staff", dept_ar: "الكادر الطبي", physicians: 120, nurses: 180, total: 300 },
-  { dept: "Administration", dept_ar: "الإدارة", physicians: 0, nurses: 0, total: 90 },
-  { dept: "Support Services", dept_ar: "الخدمات المساندة", physicians: 0, nurses: 0, total: 60 },
-];
-const MOCK_ONBOARDING = [
-  { name: "Dr. Layla Hassan", name_ar: "د. ليلى حسن", role: "Intensivist", start: "2026-07-15", progress: 60 },
-  { name: "Nora Al-Zahrani", name_ar: "نورة الزهراني", role: "Registered Nurse", start: "2026-07-10", progress: 80 },
-  { name: "Faisal Al-Ghamdi", name_ar: "فيصل الغامدي", role: "Medical Coder", start: "2026-07-08", progress: 95 },
-];
-const MOCK_LEAVES: LeaveRequest[] = [
-  { id: "lv01", employee: "Sara Al-Harbi", employee_ar: "سارة الحربي", department: "Nursing", type: "Annual Leave", from: "2026-07-10", to: "2026-07-17", days: 7, status: "pending" },
-  { id: "lv02", employee: "Khalid Al-Sayed", employee_ar: "خالد السيد", department: "Pharmacy", type: "Sick Leave", from: "2026-07-02", to: "2026-07-04", days: 3, status: "approved" },
-  { id: "lv03", employee: "Reem Al-Malki", employee_ar: "ريم المالكي", department: "Radiology", type: "Annual Leave", from: "2026-07-15", to: "2026-07-22", days: 7, status: "pending" },
-  { id: "lv04", employee: "Badr Al-Rashidi", employee_ar: "بدر الرشيدي", department: "ICU", type: "Emergency Leave", from: "2026-07-01", to: "2026-07-03", days: 2, status: "approved" },
-  { id: "lv05", employee: "Waleed Al-Bishi", employee_ar: "وليد البيشي", department: "Lab", type: "Annual Leave", from: "2026-08-01", to: "2026-08-15", days: 14, status: "pending" },
-  { id: "lv06", employee: "Dalal Al-Zahrani", employee_ar: "دلال الزهراني", department: "HR", type: "Maternity Leave", from: "2026-07-20", to: "2026-10-20", days: 90, status: "approved" },
-  { id: "lv07", employee: "Faris Al-Ghamdi", employee_ar: "فارس الغامدي", department: "Finance", type: "Annual Leave", from: "2026-07-25", to: "2026-07-29", days: 4, status: "rejected" },
-  { id: "lv08", employee: "Afnan Al-Otaibi", employee_ar: "أفنان العتيبي", department: "Clinic", type: "Sick Leave", from: "2026-07-01", to: "2026-07-01", days: 1, status: "approved" },
-  { id: "lv09", employee: "Mona Al-Harbi", employee_ar: "منى الحربي", department: "Administration", type: "Annual Leave", from: "2026-08-05", to: "2026-08-12", days: 7, status: "pending" },
-  { id: "lv10", employee: "Ibrahim Al-Harthy", employee_ar: "إبراهيم الحارثي", department: "Surgery", type: "Conference Leave", from: "2026-07-18", to: "2026-07-20", days: 3, status: "pending" },
-  { id: "lv11", employee: "Hessa Al-Mutairi", employee_ar: "حصة المطيري", department: "ED", type: "Sick Leave", from: "2026-07-02", to: "2026-07-02", days: 1, status: "approved" },
-  { id: "lv12", employee: "Tariq Al-Shammari", employee_ar: "طارق الشمري", department: "Orthopedics", type: "Annual Leave", from: "2026-09-01", to: "2026-09-14", days: 14, status: "pending" },
-];
+interface Department { id: string; name: string; code: string; }
+interface Employee { id: string; first_name: string; last_name: string; department: string | null; job_title: string; hire_date: string; status: string; }
+interface LeaveRequest { id: string; employee: string; leave_type: string; start_date: string; end_date: string; status: "pending" | "approved" | "rejected"; reason: string; }
+interface Paginated<T> { count: number; results: T[]; }
+
 const STATUS_COLOR: Record<string, string> = { pending: "#f59e0b", approved: "#22c55e", rejected: "#ef4444" };
 
 export default function HRPage() {
+  const { session, isAuthenticated } = useAuth();
   const [lang, setLang] = useState<"en" | "ar">("en");
-  const [leaves, setLeaves] = useState<LeaveRequest[]>(MOCK_LEAVES);
+  const [departments, setDepartments] = useState<Department[]>([]);
+  const [employees, setEmployees] = useState<Employee[] | null>(null);
+  const [leaves, setLeaves] = useState<LeaveRequest[]>([]);
   const [filter, setFilter] = useState("all");
-  const [loading, setLoading] = useState(false);
+  const [fetchError, setFetchError] = useState<string | null>(null);
   const isAr = lang === "ar";
 
-  useEffect(() => {
-    setLoading(true);
-    apiFetch<LeaveRequest[]>("/api/v1/erp/hr/leave-requests/").then(d => { if (d && d.length) setLeaves(d); }).catch(() => {}).finally(() => setLoading(false));
-  }, []);
+  const loadData = useCallback(async () => {
+    if (!session) return;
+    setFetchError(null);
+    try {
+      const opts = { token: session.accessToken, tenantId: session.tenantId };
+      const [deptPage, empPage, leavePage] = await Promise.all([
+        apiFetch<Paginated<Department>>("/api/v1/erp/hr/departments/", opts),
+        apiFetch<Paginated<Employee>>("/api/v1/erp/hr/employees/", opts),
+        apiFetch<Paginated<LeaveRequest>>("/api/v1/erp/hr/leave-requests/", opts),
+      ]);
+      setDepartments(deptPage.results);
+      setEmployees(empPage.results);
+      setLeaves(leavePage.results);
+    } catch (err) {
+      const detail = (err as { detail?: string })?.detail;
+      setFetchError(detail || (err instanceof Error ? err.message : "Failed to load HR data."));
+    }
+  }, [session]);
 
-  const handleLeave = async (id: string, action: "approve" | "reject") => {
-    try { await apiFetch(`/api/v1/erp/hr/leave-requests/${id}/${action}/`, { method: "POST" }); } catch {}
-    setLeaves(prev => prev.map(l => l.id === id ? { ...l, status: action === "approve" ? "approved" as const : "rejected" as const } : l));
+  useEffect(() => { void loadData(); }, [loadData]);
+
+  const handleLeave = async (id: string, status: "approved" | "rejected") => {
+    if (!session) return;
+    try {
+      await apiFetch(`/api/v1/erp/hr/leave-requests/${id}/`, {
+        method: "PATCH",
+        token: session.accessToken,
+        tenantId: session.tenantId,
+        body: JSON.stringify({ status }),
+      });
+      void loadData();
+    } catch (err) {
+      const detail = (err as { detail?: string })?.detail;
+      setFetchError(detail || "Failed to update leave request.");
+    }
   };
 
+  if (!isAuthenticated) {
+    return <div style={{ padding: "2rem", textAlign: "center", marginTop: "4rem" }}><h1 style={{ fontWeight: 700, fontSize: "1.25rem" }}>Sign in required</h1></div>;
+  }
+  if (fetchError) {
+    return <div style={{ padding: "2rem", textAlign: "center", marginTop: "4rem" }}><h1 style={{ fontWeight: 700, fontSize: "1.25rem", color: "#ef4444" }}>Unable to load HR data</h1><p style={{ color: "var(--color-text-muted)" }}>{fetchError}</p></div>;
+  }
+  if (employees === null) {
+    return <div style={{ padding: "2rem", textAlign: "center", marginTop: "4rem", color: "var(--color-text-muted)" }}>Loading live HR data...</div>;
+  }
+
+  const departmentName = (id: string | null) => departments.find(d => d.id === id)?.name || (isAr ? "غير محدد" : "Unassigned");
+  const headcountByDept = departments.map(d => ({ dept: d, count: employees.filter(e => e.department === d.id).length }));
+  const unassignedCount = employees.filter(e => !e.department).length;
+  const recentHires = employees
+    .filter(e => (Date.now() - new Date(e.hire_date).getTime()) / (1000 * 60 * 60 * 24) <= 30)
+    .sort((a, b) => b.hire_date.localeCompare(a.hire_date));
   const pending = leaves.filter(l => l.status === "pending");
   const filtered = filter === "all" ? leaves : leaves.filter(l => l.status === filter);
 
@@ -67,10 +94,9 @@ export default function HRPage() {
       <header style={s.header}>
         <div>
           <h1 style={s.h1}>{isAr ? "الموارد البشرية" : "Human Resources"}</h1>
-          <p style={{ color: "var(--color-text-muted)", fontSize: "0.875rem" }}>450 {isAr ? "موظف" : "staff"} · {pending.length} {isAr ? "طلب إجازة معلق" : "pending leave requests"}</p>
+          <p style={{ color: "var(--color-text-muted)", fontSize: "0.875rem" }}>{employees.length} {isAr ? "موظف" : "staff"} · {pending.length} {isAr ? "طلب إجازة معلق" : "pending leave requests"}</p>
         </div>
         <div style={{ display: "flex", gap: "0.75rem" }}>
-          {loading && <span style={{ color: "var(--color-text-muted)", fontSize: "0.8rem" }}>●</span>}
           <a href="/erp" style={s.btn}>{isAr ? "← نظام ERP" : "← ERP"}</a>
           <button style={s.btn} onClick={() => setLang(isAr ? "en" : "ar")}>{isAr ? "English" : "العربية"}</button>
         </div>
@@ -79,12 +105,24 @@ export default function HRPage() {
         <div>
           <div style={s.card}>
             <div style={s.sectionTitle}>{isAr ? "القوى العاملة حسب القسم" : "Headcount by Department"}</div>
-            {MOCK_DEPT.map(d => <div key={d.dept} style={{ display: "flex", justifyContent: "space-between", padding: "0.5rem 0", borderBottom: "1px solid var(--color-border)" }}><span style={{ fontSize: "0.875rem" }}>{isAr ? d.dept_ar : d.dept}</span><span style={{ fontWeight: 700, color: "#22D3EE" }}>{d.total}</span></div>)}
-            <div style={{ display: "flex", justifyContent: "space-between", padding: "0.5rem 0", fontWeight: 700 }}><span>{isAr ? "الإجمالي" : "Total"}</span><span style={{ color: "#22D3EE" }}>450</span></div>
+            {headcountByDept.length === 0 && unassignedCount === 0 && (
+              <p style={{ color: "var(--color-text-muted)", fontSize: "0.85rem" }}>{isAr ? "لا توجد بيانات" : "No department data yet."}</p>
+            )}
+            {headcountByDept.map(({ dept, count }) => <div key={dept.id} style={{ display: "flex", justifyContent: "space-between", padding: "0.5rem 0", borderBottom: "1px solid var(--color-border)" }}><span style={{ fontSize: "0.875rem" }}>{dept.name}</span><span style={{ fontWeight: 700, color: "#22D3EE" }}>{count}</span></div>)}
+            {unassignedCount > 0 && <div style={{ display: "flex", justifyContent: "space-between", padding: "0.5rem 0", borderBottom: "1px solid var(--color-border)" }}><span style={{ fontSize: "0.875rem" }}>{isAr ? "غير محدد" : "Unassigned"}</span><span style={{ fontWeight: 700, color: "#22D3EE" }}>{unassignedCount}</span></div>}
+            <div style={{ display: "flex", justifyContent: "space-between", padding: "0.5rem 0", fontWeight: 700 }}><span>{isAr ? "الإجمالي" : "Total"}</span><span style={{ color: "#22D3EE" }}>{employees.length}</span></div>
           </div>
           <div style={{ ...s.card, marginTop: "1rem" }}>
-            <div style={s.sectionTitle}>{isAr ? "التأهيل والانضمام" : "Onboarding"}</div>
-            {MOCK_ONBOARDING.map(e => <div key={e.name} style={{ marginBottom: "0.75rem" }}><div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}><div><div style={{ fontWeight: 600, fontSize: "0.875rem" }}>{isAr ? e.name_ar : e.name}</div><div style={{ fontSize: "0.75rem", color: "var(--color-text-muted)" }}>{e.role} · {e.start}</div></div><span style={{ fontWeight: 700, color: "#22D3EE" }}>{e.progress}%</span></div><div style={{ height: 6, background: "var(--color-background)", borderRadius: 3 }}><div style={{ width: `${e.progress}%`, height: "100%", background: "#22D3EE", borderRadius: 3 }} /></div></div>)}
+            <div style={s.sectionTitle}>{isAr ? "التوظيف الجديد (30 يوماً)" : "Recently Hired (last 30 days)"}</div>
+            {recentHires.length === 0 && <p style={{ color: "var(--color-text-muted)", fontSize: "0.85rem" }}>{isAr ? "لا يوجد موظفون جدد" : "No new hires in the last 30 days."}</p>}
+            {recentHires.map(e => (
+              <div key={e.id} style={{ display: "flex", justifyContent: "space-between", padding: "0.4rem 0", borderBottom: "1px solid var(--color-border)" }}>
+                <div>
+                  <div style={{ fontWeight: 600, fontSize: "0.875rem" }}>{e.first_name} {e.last_name}</div>
+                  <div style={{ fontSize: "0.75rem", color: "var(--color-text-muted)" }}>{e.job_title} · {e.hire_date}</div>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
         <div style={{ ...s.card, overflowX: "auto" }}>
@@ -95,8 +133,19 @@ export default function HRPage() {
             </div>
           </div>
           <table style={s.table}>
-            <thead><tr><th style={s.th}>{isAr ? "الموظف" : "Employee"}</th><th style={s.th}>{isAr ? "القسم" : "Dept"}</th><th style={s.th}>{isAr ? "النوع" : "Type"}</th><th style={s.th}>{isAr ? "الفترة" : "Period"}</th><th style={s.th}>{isAr ? "الحالة" : "Status"}</th><th style={s.th}></th></tr></thead>
-            <tbody>{filtered.map(l => <tr key={l.id}><td style={s.td}><div style={{ fontWeight: 600 }}>{isAr ? l.employee_ar : l.employee}</div></td><td style={s.td}>{l.department}</td><td style={s.td}>{l.type}</td><td style={s.td}><div style={{ fontSize: "0.78rem" }}>{l.from} → {l.to}</div><div style={{ fontSize: "0.72rem", color: "var(--color-text-muted)" }}>{l.days} {isAr ? "أيام" : "days"}</div></td><td style={s.td}><span style={{ background: `${STATUS_COLOR[l.status]}22`, color: STATUS_COLOR[l.status], border: `1px solid ${STATUS_COLOR[l.status]}55`, borderRadius: 4, padding: "1px 7px", fontSize: "0.73rem", fontWeight: 600 }}>{l.status}</span></td><td style={s.td}>{l.status === "pending" && <div style={{ display: "flex", gap: 4 }}><button onClick={() => handleLeave(l.id, "approve")} style={{ background: "#22c55e22", color: "#22c55e", border: "1px solid #22c55e55", borderRadius: 4, padding: "2px 8px", cursor: "pointer", fontSize: "0.72rem", fontWeight: 600 }}>✓</button><button onClick={() => handleLeave(l.id, "reject")} style={{ background: "#ef444422", color: "#ef4444", border: "1px solid #ef444455", borderRadius: 4, padding: "2px 8px", cursor: "pointer", fontSize: "0.72rem", fontWeight: 600 }}>✗</button></div>}</td></tr>)}</tbody>
+            <thead><tr><th style={s.th}>{isAr ? "الموظف" : "Employee"}</th><th style={s.th}>{isAr ? "النوع" : "Type"}</th><th style={s.th}>{isAr ? "الفترة" : "Period"}</th><th style={s.th}>{isAr ? "الحالة" : "Status"}</th><th style={s.th}></th></tr></thead>
+            <tbody>
+              {filtered.length === 0 && <tr><td colSpan={5} style={{ ...s.td, textAlign: "center", color: "var(--color-text-muted)" }}>{isAr ? "لا توجد طلبات إجازة" : "No leave requests."}</td></tr>}
+              {filtered.map(l => (
+                <tr key={l.id}>
+                  <td style={s.td}><div style={{ fontWeight: 600 }}>{employees.find(e => e.id === l.employee) ? `${employees.find(e => e.id === l.employee)!.first_name} ${employees.find(e => e.id === l.employee)!.last_name}` : "Unknown"}</div></td>
+                  <td style={s.td}>{l.leave_type}</td>
+                  <td style={s.td}><div style={{ fontSize: "0.78rem" }}>{l.start_date} → {l.end_date}</div></td>
+                  <td style={s.td}><span style={{ background: `${STATUS_COLOR[l.status]}22`, color: STATUS_COLOR[l.status], border: `1px solid ${STATUS_COLOR[l.status]}55`, borderRadius: 4, padding: "1px 7px", fontSize: "0.73rem", fontWeight: 600 }}>{l.status}</span></td>
+                  <td style={s.td}>{l.status === "pending" && <div style={{ display: "flex", gap: 4 }}><button onClick={() => handleLeave(l.id, "approved")} style={{ background: "#22c55e22", color: "#22c55e", border: "1px solid #22c55e55", borderRadius: 4, padding: "2px 8px", cursor: "pointer", fontSize: "0.72rem", fontWeight: 600 }}>✓</button><button onClick={() => handleLeave(l.id, "rejected")} style={{ background: "#ef444422", color: "#ef4444", border: "1px solid #ef444455", borderRadius: 4, padding: "2px 8px", cursor: "pointer", fontSize: "0.72rem", fontWeight: 600 }}>✗</button></div>}</td>
+                </tr>
+              ))}
+            </tbody>
           </table>
         </div>
       </div>

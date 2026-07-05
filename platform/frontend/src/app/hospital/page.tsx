@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import {
   ResponsiveContainer,
   LineChart,
@@ -11,8 +12,28 @@ import {
   Tooltip,
   Legend,
 } from "recharts";
+import {
+  UserPlus,
+  CalendarDays,
+  Stethoscope,
+  HeartPulse,
+  Receipt,
+  Package,
+  Users,
+  BarChart3,
+} from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { useAuth } from "@/contexts/auth";
+
+interface ModuleSummary {
+  patients_total: number;
+  appointments_today: number;
+  providers_active: number;
+  invoices_outstanding: number;
+  stock_items_out_of_stock: number;
+  leave_requests_pending: number;
+  bi_reports_active: number;
+}
 
 interface CommandCenterSnapshot {
   operational_census: {
@@ -67,6 +88,7 @@ export default function HospitalPortal() {
   const [lang, setLang] = useState<"en" | "ar">("en");
   const [metrics, setMetrics] = useState<HospitalMetrics | null>(null);
   const [trend, setTrend] = useState<TrendPoint[] | null>(null);
+  const [moduleSummary, setModuleSummary] = useState<ModuleSummary | null>(null);
   const [wards] = useState<WardSummary[]>([]);
   const [loading, setLoading] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
@@ -81,12 +103,16 @@ export default function HospitalPortal() {
       setLoading(true);
       setFetchError(null);
       try {
-        const [snapshot, trendSeries] = await Promise.all([
+        const [snapshot, trendSeries, summary] = await Promise.all([
           apiFetch<CommandCenterSnapshot>("/api/v1/hospital/command-center/metrics/", {
             token: session!.accessToken,
             tenantId: session!.tenantId,
           }),
           apiFetch<TrendPoint[]>("/api/v1/hospital/command-center/trend/", {
+            token: session!.accessToken,
+            tenantId: session!.tenantId,
+          }),
+          apiFetch<ModuleSummary>("/api/v1/hospital/command-center/module-summary/", {
             token: session!.accessToken,
             tenantId: session!.tenantId,
           }),
@@ -105,6 +131,7 @@ export default function HospitalPortal() {
           capacity_pct: snapshot.capacity_indicators.bed_occupancy_percentage,
         });
         setTrend(trendSeries);
+        setModuleSummary(summary);
       } catch (err) {
         // Real API errors surface here -- never silently substitute invented
         // numbers. The UI shows an explicit error state instead.
@@ -195,6 +222,38 @@ export default function HospitalPortal() {
             <p style={{ fontSize: "1.85rem", fontWeight: 700, color: m.color }}>{m.value}</p>
             <p style={{ fontSize: "0.8rem", color: "var(--color-text-muted)", marginTop: "0.5rem", fontWeight: 500 }}>{m.label}</p>
           </div>
+        ))}
+      </div>
+
+      {/* Module Grid */}
+      <h2 style={{ fontSize: "1.15rem", fontWeight: 700, marginBottom: "1rem" }}>
+        {lang === "en" ? "Modules" : "الوحدات"}
+      </h2>
+      <div className="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-4">
+        {[
+          { href: "/hospital/patients", label: "Patient Registration", icon: UserPlus, badge: moduleSummary?.patients_total, badgeLabel: "patients" },
+          { href: "/hospital/appointments", label: "Appointment Calendar", icon: CalendarDays, badge: moduleSummary?.appointments_today, badgeLabel: "today" },
+          { href: "/hospital/doctor-workspace", label: "Doctor Workspace", icon: Stethoscope, badge: moduleSummary?.providers_active, badgeLabel: "active providers" },
+          { href: "/hospital/icu", label: "Critical Care Overview", icon: HeartPulse, badge: metrics.icu_occupied, badgeLabel: "ICU occupied" },
+          { href: "/hospital/billing", label: "Billing & Invoicing", icon: Receipt, badge: moduleSummary?.invoices_outstanding, badgeLabel: "outstanding" },
+          { href: "/hospital/inventory", label: "Inventory Management", icon: Package, badge: moduleSummary?.stock_items_out_of_stock, badgeLabel: "out of stock" },
+          { href: "/hospital/hr", label: "HR & Payroll", icon: Users, badge: moduleSummary?.leave_requests_pending, badgeLabel: "pending leave" },
+          { href: "/hospital/reports", label: "Reports & Dashboards", icon: BarChart3, badge: moduleSummary?.bi_reports_active, badgeLabel: "active reports" },
+        ].map(({ href, label, icon: Icon, badge, badgeLabel }) => (
+          <Link
+            key={href}
+            href={href}
+            className="rounded-xl border p-4 transition-colors hover:border-brand-400/50 hover:bg-white/5"
+            style={{ background: "var(--color-surface)", borderColor: "var(--color-border)" }}
+          >
+            <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-lg bg-brand-500/15 text-brand-300">
+              <Icon size={18} />
+            </div>
+            <p className="text-sm font-semibold" style={{ color: "var(--color-text)" }}>{label}</p>
+            <p className="mt-1 text-xs" style={{ color: "var(--color-text-muted)" }}>
+              {badge === undefined ? "..." : badge} {badgeLabel}
+            </p>
+          </Link>
         ))}
       </div>
 

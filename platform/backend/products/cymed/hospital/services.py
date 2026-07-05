@@ -2363,6 +2363,50 @@ class HospitalOperationsService:
             )
         return series
 
+    @classmethod
+    def get_module_summary(cls, tenant_id: str) -> dict:
+        """
+        Plain tenant-scoped counts backing the dashboard's ERP-embedded
+        module grid badges. Every number is a direct ORM count against the
+        real shared apps (core.patients, core.scheduling, core.providers,
+        rcm.billing, cycom.inventory, cycom.hr, cycom.bi) -- no synthetic
+        thresholds or invented fields.
+        """
+        from products.cycom.bi.models import BIReport
+        from products.cycom.hr.models import LeaveRequest
+        from products.cycom.inventory.models import StockItem
+        from products.cymed.core.patients.models import Patient
+        from products.cymed.core.providers.models import Provider
+        from products.cymed.core.scheduling.models import Appointment
+        from products.cymed.rcm.billing.models import Invoice
+
+        tenant_uuid = uuid.UUID(str(tenant_id))
+        today = timezone.now().date()
+
+        return {
+            "patients_total": Patient.objects.filter(
+                tenant_id=tenant_uuid, is_deleted=False
+            ).count(),
+            "appointments_today": Appointment.objects.filter(
+                tenant_id=tenant_uuid, start_time__date=today
+            ).count(),
+            "providers_active": Provider.objects.filter(
+                tenant_id=tenant_uuid, is_active=True
+            ).count(),
+            "invoices_outstanding": Invoice.objects.filter(
+                tenant_id=tenant_uuid, status__in=["issued", "sent", "partial", "overdue"]
+            ).count(),
+            "stock_items_out_of_stock": StockItem.objects.filter(
+                tenant_id=tenant_uuid, quantity=0
+            ).count(),
+            "leave_requests_pending": LeaveRequest.objects.filter(
+                tenant_id=tenant_uuid, status="pending"
+            ).count(),
+            "bi_reports_active": BIReport.objects.filter(
+                tenant_id=tenant_uuid, active=True
+            ).count(),
+        }
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # 11. Hospital AI Assistant — advisory-only natural-language Q&A over the

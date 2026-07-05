@@ -10,6 +10,13 @@ import {
   HeartPulse,
   Scissors,
   BedDouble,
+  UserPlus,
+  CalendarDays,
+  Stethoscope,
+  Receipt,
+  Package,
+  Users,
+  BarChart3,
   Search,
   LogOut,
   Menu,
@@ -17,14 +24,24 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/contexts/auth";
 
-const NAV_ITEMS = [
+const CLINICAL_NAV_ITEMS = [
   { href: "/hospital", label: "Command Overview", icon: LayoutDashboard },
   { href: "/hospital/command-center", label: "Command Center", icon: LayoutDashboard },
+  { href: "/hospital/patients", label: "Patient Registration", icon: UserPlus },
+  { href: "/hospital/appointments", label: "Appointment Calendar", icon: CalendarDays },
+  { href: "/hospital/doctor-workspace", label: "Doctor Workspace", icon: Stethoscope },
   { href: "/hospital/adt", label: "Admissions (ADT)", icon: ClipboardList },
   { href: "/hospital/emergency", label: "Emergency", icon: Siren },
   { href: "/hospital/icu", label: "ICU", icon: HeartPulse },
   { href: "/hospital/operating-room", label: "Operating Room", icon: Scissors },
   { href: "/hospital/beds", label: "Bed Management", icon: BedDouble },
+];
+
+const ERP_NAV_ITEMS = [
+  { href: "/hospital/billing", label: "Billing & Invoicing", icon: Receipt },
+  { href: "/hospital/inventory", label: "Inventory Management", icon: Package },
+  { href: "/hospital/hr", label: "HR & Payroll", icon: Users },
+  { href: "/hospital/reports", label: "Reports & Dashboards", icon: BarChart3 },
 ];
 
 function initials(name: string): string {
@@ -65,11 +82,33 @@ export default function HospitalLayout({ children }: { children: React.ReactNode
           </button>
         </div>
 
-        <nav className="flex flex-col gap-1 p-3">
+        <nav className="flex flex-col gap-1 overflow-y-auto p-3" style={{ maxHeight: "calc(100vh - 4rem)" }}>
           <p className="px-3 pb-1 pt-2 text-xs font-semibold uppercase tracking-wider text-white/40">
             Clinical Operations
           </p>
-          {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
+          {CLINICAL_NAV_ITEMS.map(({ href, label, icon: Icon }) => {
+            const active = pathname === href;
+            return (
+              <Link
+                key={href}
+                href={href}
+                onClick={() => setMobileNavOpen(false)}
+                className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                  active
+                    ? "bg-brand-500/15 text-brand-200"
+                    : "text-white/70 hover:bg-white/5 hover:text-white"
+                }`}
+              >
+                <Icon size={18} strokeWidth={2} />
+                {label}
+              </Link>
+            );
+          })}
+
+          <p className="px-3 pb-1 pt-4 text-xs font-semibold uppercase tracking-wider text-white/40">
+            ERP & Operations
+          </p>
+          {ERP_NAV_ITEMS.map(({ href, label, icon: Icon }) => {
             const active = pathname === href;
             return (
               <Link
