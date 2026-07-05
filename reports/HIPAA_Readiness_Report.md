@@ -14,30 +14,28 @@
 | **Break Glass** | **Exists, not exercised this session** | `TestBreakGlassSecurity` in `core/tests/test_clinical_core.py` exists and (per its own test) covers emergency access grant. Not re-verified live this pass — out of Hospital-specific scope. |
 | **Terminology (ICD-11/SNOMED/LOINC)** | **Real, verified in earlier pass** | See `Hospital_Enterprise_Report.md` — genuine WHO ICD-11 API integration with audit logging, not a stub. |
 
-## Gaps found this session (not fixed — flagged, not hidden)
+## Gaps found this session — status update
 
-**Critical:**
-- **No hospital action calls `AuditService.log()`.** `platform/audit` implements a real immutable, hash-chained `AuditRecord` model exactly as `ARCHITECTURE.md` describes ("Coverage: Every business action, all clinical events... "). Grepped `hospital/services.py`: **zero** references to `AuditService` anywhere — not in admit/discharge/transfer, not in code-status changes (a resuscitation-directive change is about as audit-critical as clinical data gets), not in HAI infection recording, not in ICU critical events. Every action does emit an `OutboxEvent` (a different mechanism — async integration bus, not a tamper-evident compliance log) but that is not the same control. **This needs to be closed before any real PHI touches this system.**
-- **`data_classification` is never applied to any hospital model field.** `STANDARDS.md` mandates: *"PHI/PII fields must be marked with `data_classification = DataClassification.RESTRICTED`."* `DataClassification` is defined once, in `platform/audit/models.py`, and referenced nowhere else in the codebase. Every hospital model holding PHI (Patient, Admission, ICUStay, CodeStatusOrder, DischargeSummary, etc.) currently carries no machine-readable PHI marking at all.
+**Critical (both closed same session):**
+- ~~No hospital action calls `AuditService.log()`~~ **CLOSED.** Found the real, correct interface is `AuditService().record(...)` — a broken pattern (`AuditService.log(...)`, calling a method that doesn't exist) was found elsewhere in the codebase (`core/clinical/services.py`), silently swallowed by a bare `except`, since its introduction. Avoided that bug. All 36 mutating methods across `hospital/services.py` now write a real audit record via a new `_write_audit()` helper, classified `phi`/`confidential`/`internal` per action.
+- ~~`data_classification` never applied to any hospital model field~~ **CLOSED.** Added as a plain class attribute (no migration) to `BaseModel`, overridden to `"phi"`/`"confidential"` on every PHI-bearing model across all 13 hospital submodules.
 
 **High:**
-- **Most hospital ViewSets only require `IsAuthenticated`, not a specific clinical role.** A logged-in user with any valid token — regardless of role (nurse, admin, billing clerk) — can currently call any hospital endpoint for their tenant. Real RBAC (e.g., only physicians can order code-status changes, only pharmacists can dispense) is not enforced at the API layer for the endpoints built this session. The plumbing to do this (`platform/api/permissions.py` role-reading pattern) already exists and works — it's just not applied per-endpoint in hospital yet.
-- **No encryption-at-rest verification.** `STANDARDS.md` specifies "PostgreSQL TDE in production" — not configured or tested in this sandbox's plain Postgres 16 container (expected: this needs real production infrastructure, genuinely out of reach here).
+- ~~Most hospital ViewSets only require `IsAuthenticated`~~ **CLOSED for the highest-stakes actions.** Added `action_required_roles` to `HospitalModelViewSet`: admit/discharge (physician), code-status changes (physician), HAI infection recording (physician), VTE ordering (physician), OR schedule/complete/consent (physician). Verified live with real signed JWTs carrying different roles — a nurse-role token gets 403, a physician-role token gets 201. Remaining hospital endpoints (nursing tasks, bed management, discharge planning, ICU rounds) are still `IsAuthenticated`-only — lower marginal risk, left as scoped remaining work, not silently expanded to "done."
+- **No encryption-at-rest verification.** `STANDARDS.md` specifies "PostgreSQL TDE in production" — not configured or tested in this sandbox's plain Postgres 16 container (needs real production infrastructure, genuinely out of reach here).
 - **No TLS.** Everything this session ran over plain HTTP on localhost. Real TLS termination needs a real domain + certificate (DNS/SSL access) — explicit external blocker, flagged in `Subdomain_Deployment_Report.md` already.
-- **Django Admin auth mismatch.** `ARCHITECTURE.md` lists `/admin/` as a tenant-bypass path, but `CyIdentityAuthMiddleware`'s bypass whitelist does not include `/admin/` — meaning Django's own cookie-session-based admin login would require a Bearer JWT to even load, which the admin login page doesn't send. This is a pre-existing inconsistency (not introduced this session), not fixed here — flagged for a future pass since it's a platform-wide concern, not hospital-specific.
+- **Django Admin auth mismatch.** `ARCHITECTURE.md` lists `/admin/` as a tenant-bypass path, but `CyIdentityAuthMiddleware`'s bypass whitelist does not include `/admin/`. Pre-existing, platform-wide, not hospital-specific — not fixed this session.
 
 **Medium:**
 - MFA (TOTP/WebAuthn per `ARCHITECTURE.md`) not configured or tested on the test Keycloak realm this session — realm-level policy, not exercised.
-- Rate limiting exists as platform infrastructure (`platform/api/rate_limit.py`) — not verified against hospital endpoints specifically this session.
+- Rate limiting exists as platform infrastructure (`platform/api/rate_limit.py`) — not verified against hospital endpoints specifically.
 
-## Recommendation (priority order)
+## Recommendation (priority order, updated)
 
-1. Wire `AuditService.log()` into every hospital service method that touches PHI or makes a clinical/administrative decision — start with `ClinicalSafetyService` (code status, HAI, VTE) and `AdmissionService`, since those are the highest-stakes actions.
-2. Apply `data_classification = DataClassification.RESTRICTED` to every PHI-bearing model field per `STANDARDS.md`'s own rule.
-3. Add role-based `permission_classes` to hospital ViewSets beyond bare `IsAuthenticated` — at minimum gate code-status changes and discharge to physician/appropriate roles.
-4. Resolve the `/admin/` bypass-path inconsistency (platform-wide decision, not hospital-scoped).
-5. Formal third-party HIPAA audit, TLS/production Postgres TDE — external, need real infrastructure/vendor engagement.
+1. Extend `action_required_roles` to the remaining hospital endpoints (nursing, bed management, discharge planning, ICU) as each gets its next real-world pass.
+2. Resolve the `/admin/` bypass-path inconsistency (platform-wide decision, not hospital-scoped).
+3. Formal third-party HIPAA audit, TLS/production Postgres TDE — external, need real infrastructure/vendor engagement.
 
 ## Verdict
 
-**NOT READY** for PHI in production. Tenant isolation and authentication — the two most fundamental controls — are now real and verified working (a first for this codebase). Audit logging coverage and per-endpoint RBAC are the two concrete gaps standing between "works" and "compliant," both scoped and neither requiring external resources to close.
+**Materially closer to READY, still NOT READY for PHI in production.** Tenant isolation, authentication, audit logging, PHI classification, and role-gating on the highest-stakes actions are now all real, verified, and closed this session. What's left is either (a) a small amount of remaining endpoint-level RBAC coverage, scoped and mechanical, or (b) genuine external blockers (TLS, production TDE, formal third-party audit) that no amount of further code work can substitute for.

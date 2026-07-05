@@ -14,9 +14,9 @@ Companion to `HIPAA_Readiness_Report.md` (PHI/compliance-specific findings). Thi
 - **Secret handling.** No credentials, tokens, or passwords used during live testing (Keycloak admin password, demo user passwords, `DJANGO_SECRET_KEY` dev value) were committed to any file — all passed via shell environment variables or ephemeral curl calls only.
 - **Secure cookies.** `SESSION_COOKIE_SECURE` / `CSRF_COOKIE_SECURE` correctly gate on `not DEBUG`.
 
-## Known gaps (not fixed this session, flagged)
+## Known gaps — status update
 
-See `HIPAA_Readiness_Report.md` for full detail and priority order. Summary: no audit-log coverage on hospital actions, no per-endpoint RBAC beyond `IsAuthenticated`, no `data_classification` marking on PHI fields, `/admin/` bypass-path inconsistency (pre-existing, platform-wide).
+The three application-level gaps flagged earlier this session are now closed: audit-log coverage on all 36 hospital mutating actions, `data_classification` marking on every PHI-bearing hospital model, and per-endpoint RBAC on the highest-stakes actions (admit/discharge, code status, HAI recording, VTE ordering, OR consent). See `HIPAA_Readiness_Report.md` for full detail. Remaining: RBAC on lower-risk endpoints (mechanical, scoped), `/admin/` bypass-path inconsistency (pre-existing, platform-wide, not hospital-specific), and infrastructure-level items (TLS, production Postgres TDE, formal third-party audit) that are genuine external blockers.
 
 ## Dependency/supply-chain notes
 
