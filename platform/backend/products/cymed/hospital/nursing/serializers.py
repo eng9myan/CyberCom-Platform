@@ -46,6 +46,9 @@ class NursingAssessmentSerializer(serializers.ModelSerializer):
     class Meta:
         model = NursingAssessment
         fields = "__all__"
+        read_only_fields = [
+            "morse_fall_score", "fall_risk_level", "braden_score", "pressure_injury_risk_level",
+        ]
 
 
 class NursingCarePlanSerializer(serializers.ModelSerializer):

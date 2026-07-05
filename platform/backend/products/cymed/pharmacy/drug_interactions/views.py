@@ -7,8 +7,17 @@ from rest_framework.response import Response
 from platform.events.models import OutboxEvent
 
 from ..views import PharmacyModelViewSet
-from .models import DrugInteraction, InteractionAlert, InteractionRule, InteractionSeverity
+from .models import (
+    DoseRangeAlert,
+    DosingGuideline,
+    DrugInteraction,
+    InteractionAlert,
+    InteractionRule,
+    InteractionSeverity,
+)
 from .serializers import (
+    DoseRangeAlertSerializer,
+    DosingGuidelineSerializer,
     DrugInteractionSerializer,
     InteractionAlertSerializer,
     InteractionCheckSerializer,
@@ -16,7 +25,7 @@ from .serializers import (
     InteractionRuleSerializer,
     InteractionSeveritySerializer,
 )
-from .services import DrugInteractionService
+from .services import DosingCheckService, DrugInteractionService
 
 
 class InteractionRuleViewSet(PharmacyModelViewSet):
@@ -119,3 +128,41 @@ class InteractionAlertViewSet(PharmacyModelViewSet):
     serializer_class = InteractionAlertSerializer
     required_feature = "pharmacy.interactions"
     filterset_fields = ["channel", "recipient_id"]
+
+
+class DosingGuidelineViewSet(PharmacyModelViewSet):
+    queryset = DosingGuideline.objects.all()
+    serializer_class = DosingGuidelineSerializer
+    required_feature = "pharmacy.interactions"
+    filterset_fields = ["drug_code", "is_active", "weight_based"]
+    search_fields = ["drug_code", "drug_name"]
+
+
+class DoseRangeAlertViewSet(PharmacyModelViewSet):
+    queryset = DoseRangeAlert.objects.select_related("guideline")
+    serializer_class = DoseRangeAlertSerializer
+    required_feature = "pharmacy.interactions"
+    filterset_fields = ["status", "severity", "issue", "medication_order_id", "patient_id"]
+
+    @action(detail=True, methods=["post"], url_path="override")
+    def override(self, request, pk=None):
+        alert = self.get_object()
+        if alert.status == "overridden":
+            return Response(
+                {"detail": "This dose alert has already been overridden."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        serializer = InteractionOverrideSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        actor_id = request.user.id if hasattr(request, "user") else None
+        if actor_id is None:
+            return Response(
+                {"detail": "Authentication required to override a dose alert."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        updated = DosingCheckService.override_alert(
+            alert_id=alert.id,
+            prescriber_or_pharmacist_id=actor_id,
+            reason=serializer.validated_data["override_reason"],
+        )
+        return Response(DoseRangeAlertSerializer(updated).data)

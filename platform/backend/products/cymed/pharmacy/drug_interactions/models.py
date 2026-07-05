@@ -209,3 +209,70 @@ class InteractionAlert(BaseModel):
     class Meta:
         db_table = "cymed_rx_interaction_alerts"
         ordering = ["-sent_at"]
+
+
+class DosingGuideline(BaseModel):
+    """
+    Safe single/daily dose range for a drug. Seeded from clinical references
+    (same provenance as InteractionRule) via CyIntegrationHub -- not invented
+    per-tenant. weight_based guidelines additionally cap mg/kg for pediatric
+    or high-risk drugs when a recent patient weight observation is available.
+    """
+
+    drug_code = models.CharField(max_length=100, db_index=True)
+    drug_name = models.CharField(max_length=500)
+    route = models.CharField(max_length=100, blank=True)
+    dose_unit = models.CharField(max_length=50)
+    min_single_dose = models.DecimalField(max_digits=12, decimal_places=4, null=True, blank=True)
+    max_single_dose = models.DecimalField(max_digits=12, decimal_places=4, null=True, blank=True)
+    max_daily_dose = models.DecimalField(max_digits=12, decimal_places=4, null=True, blank=True)
+    weight_based = models.BooleanField(default=False)
+    max_dose_per_kg = models.DecimalField(max_digits=10, decimal_places=4, null=True, blank=True)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        db_table = "cymed_rx_dosing_guidelines"
+
+    def __str__(self):
+        return f"{self.drug_code} ({self.min_single_dose}-{self.max_single_dose} {self.dose_unit})"
+
+
+class DoseRangeAlert(BaseModel):
+    ISSUE_CHOICES = [
+        ("below_min", "Below Minimum Single Dose"),
+        ("above_max", "Above Maximum Single Dose"),
+        ("above_max_daily", "Above Maximum Daily Dose"),
+        ("above_weight_based_max", "Above Weight-Based Maximum"),
+    ]
+    SEVERITY_CHOICES = [
+        ("warning", "Warning"),
+        ("critical", "Critical"),
+    ]
+    STATUS_CHOICES = [
+        ("open", "Open"),
+        ("overridden", "Overridden"),
+    ]
+
+    medication_order_id = models.UUIDField(db_index=True)
+    patient_id = models.UUIDField(db_index=True)
+    guideline = models.ForeignKey(
+        DosingGuideline, on_delete=models.SET_NULL, null=True, blank=True, related_name="alerts"
+    )
+    drug_code = models.CharField(max_length=100)
+    drug_name = models.CharField(max_length=500)
+    ordered_dose = models.DecimalField(max_digits=12, decimal_places=4)
+    ordered_dose_unit = models.CharField(max_length=50)
+    issue = models.CharField(max_length=30, choices=ISSUE_CHOICES)
+    severity = models.CharField(max_length=20, choices=SEVERITY_CHOICES, default="warning")
+    guideline_limit = models.DecimalField(max_digits=12, decimal_places=4, null=True, blank=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="open")
+    overridden_by = models.UUIDField(null=True, blank=True)
+    overridden_at = models.DateTimeField(null=True, blank=True)
+    override_reason = models.TextField(blank=True)
+
+    class Meta:
+        db_table = "cymed_rx_dose_range_alerts"
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.drug_code} {self.issue} ({self.status})"

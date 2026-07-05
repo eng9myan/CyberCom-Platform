@@ -6,10 +6,11 @@ AI cannot dispense or approve prescriptions.
 """
 
 import uuid
+from decimal import Decimal, InvalidOperation
 
 import django.utils.timezone as tz
 
-from .models import DrugInteraction, InteractionRule, InteractionType
+from .models import DoseRangeAlert, DosingGuideline, DrugInteraction, InteractionRule, InteractionType
 
 
 class DrugInteractionService:
@@ -314,3 +315,83 @@ class DrugInteractionService:
             pass
 
         return interaction
+
+
+class DosingCheckService:
+    """
+    Checks an ordered dose against the drug's DosingGuideline range.
+    If the dose string doesn't parse as a plain number (e.g. "1-2 tabs PRN"),
+    or no guideline exists for the drug, the check is silently skipped --
+    we never fabricate a "safe" verdict for a drug we have no data on.
+    """
+
+    @classmethod
+    def check_dose(
+        cls,
+        drug_code: str,
+        drug_name: str,
+        dose: str,
+        dose_unit: str,
+        patient_id: uuid.UUID,
+        medication_order_id: uuid.UUID,
+        patient_weight_kg: Decimal | None = None,
+        tenant_id: uuid.UUID | None = None,
+    ) -> list[DoseRangeAlert]:
+        try:
+            dose_value = Decimal(str(dose).strip())
+        except (InvalidOperation, ValueError):
+            return []
+
+        guideline = DosingGuideline.objects.filter(
+            tenant_id=tenant_id, drug_code=drug_code, is_active=True
+        ).first()
+        if guideline is None or guideline.dose_unit != dose_unit:
+            return []
+
+        alerts = []
+
+        def _create(issue, severity, limit):
+            alert = DoseRangeAlert.objects.create(
+                tenant_id=tenant_id,
+                medication_order_id=medication_order_id,
+                patient_id=patient_id,
+                guideline=guideline,
+                drug_code=drug_code,
+                drug_name=drug_name,
+                ordered_dose=dose_value,
+                ordered_dose_unit=dose_unit,
+                issue=issue,
+                severity=severity,
+                guideline_limit=limit,
+            )
+            alerts.append(alert)
+
+        if guideline.min_single_dose is not None and dose_value < guideline.min_single_dose:
+            _create("below_min", "warning", guideline.min_single_dose)
+
+        if guideline.max_single_dose is not None and dose_value > guideline.max_single_dose:
+            _create("above_max", "critical", guideline.max_single_dose)
+
+        if guideline.max_daily_dose is not None and dose_value > guideline.max_daily_dose:
+            _create("above_max_daily", "critical", guideline.max_daily_dose)
+
+        if guideline.weight_based and guideline.max_dose_per_kg is not None and patient_weight_kg:
+            max_by_weight = guideline.max_dose_per_kg * patient_weight_kg
+            if dose_value > max_by_weight:
+                _create("above_weight_based_max", "critical", max_by_weight)
+
+        return alerts
+
+    @classmethod
+    def override_alert(
+        cls, alert_id: uuid.UUID, prescriber_or_pharmacist_id: uuid.UUID, reason: str
+    ) -> DoseRangeAlert:
+        alert = DoseRangeAlert.objects.get(id=alert_id)
+        alert.status = "overridden"
+        alert.overridden_by = prescriber_or_pharmacist_id
+        alert.overridden_at = tz.now()
+        alert.override_reason = reason
+        alert.save(
+            update_fields=["status", "overridden_by", "overridden_at", "override_reason"]
+        )
+        return alert

@@ -1,6 +1,13 @@
 from rest_framework import serializers
 
-from .models import DrugInteraction, InteractionAlert, InteractionRule, InteractionSeverity
+from .models import (
+    DoseRangeAlert,
+    DosingGuideline,
+    DrugInteraction,
+    InteractionAlert,
+    InteractionRule,
+    InteractionSeverity,
+)
 
 
 class InteractionRuleSerializer(serializers.ModelSerializer):
@@ -60,3 +67,21 @@ class InteractionOverrideSerializer(serializers.Serializer):
     """Request body for pharmacist override."""
 
     override_reason = serializers.CharField(min_length=10)
+
+
+class DosingGuidelineSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DosingGuideline
+        fields = "__all__"
+        read_only_fields = ["id", "tenant_id", "created_at", "updated_at"]
+
+
+class DoseRangeAlertSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = DoseRangeAlert
+        fields = "__all__"
+        read_only_fields = [
+            "id", "tenant_id", "medication_order_id", "patient_id", "guideline",
+            "drug_code", "drug_name", "ordered_dose", "ordered_dose_unit", "issue",
+            "severity", "guideline_limit", "created_at", "updated_at",
+        ]

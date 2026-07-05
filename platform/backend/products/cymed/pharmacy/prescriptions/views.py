@@ -117,7 +117,38 @@ class MedicationOrderViewSet(PharmacyModelViewSet):
     def perform_create(self, serializer):
         tenant_id = getattr(self.request, "tenant_id", None)
         order_number = f"MO-{str(uuid.uuid4()).upper()[:12]}"
-        serializer.save(tenant_id=tenant_id, order_number=order_number)
+        order = serializer.save(tenant_id=tenant_id, order_number=order_number)
+        self._run_dosing_check(order, tenant_id)
+
+    def _run_dosing_check(self, order: MedicationOrder, tenant_id):
+        from products.cymed.pharmacy.drug_interactions.services import DosingCheckService
+
+        patient_weight_kg = None
+        try:
+            from products.cymed.core.clinical.models import Observation
+
+            weight_obs = (
+                Observation.objects.filter(
+                    tenant_id=tenant_id, patient_id=order.patient_id, code="29463-7"
+                )
+                .order_by("-created_at")
+                .first()
+            )
+            if weight_obs and weight_obs.value_quantity and weight_obs.unit == "kg":
+                patient_weight_kg = weight_obs.value_quantity
+        except Exception:
+            patient_weight_kg = None
+
+        DosingCheckService.check_dose(
+            drug_code=order.drug_code,
+            drug_name=order.drug_name,
+            dose=order.dose,
+            dose_unit=order.dose_unit,
+            patient_id=order.patient_id,
+            medication_order_id=order.id,
+            patient_weight_kg=patient_weight_kg,
+            tenant_id=tenant_id,
+        )
 
     @action(detail=True, methods=["post"], url_path="verify")
     def verify(self, request, pk=None):
@@ -127,6 +158,21 @@ class MedicationOrderViewSet(PharmacyModelViewSet):
         from .models import MedicationOrderStatus
 
         order = self.get_object()
+
+        from products.cymed.pharmacy.drug_interactions.models import DoseRangeAlert
+
+        open_critical_alerts = DoseRangeAlert.objects.filter(
+            medication_order_id=order.id, severity="critical", status="open"
+        )
+        if open_critical_alerts.exists():
+            return Response(
+                {
+                    "detail": "Cannot verify: unresolved critical dose-range alert(s) on this order.",
+                    "alerts": [str(a.id) for a in open_critical_alerts],
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         previous_status = order.status
         order.status = "verified"
         order.verified_by = request.user.id if hasattr(request, "user") else None
