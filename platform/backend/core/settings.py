@@ -78,6 +78,8 @@ PRODUCT_APPS = [
     "products.cycom.finance.ar",
     "products.cycom.procurement.purchase_orders",
     "products.cycom.procurement.vendors",
+    "products.cycom.procurement.requisitions",
+    "products.cycom.procurement.invoices",
     "products.cycom.hr",
     "products.cycom.payroll",
     "products.cycom.inventory",

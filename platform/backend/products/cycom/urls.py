@@ -12,6 +12,10 @@ urlpatterns = [
         "procurement/purchase-orders/", include("products.cycom.procurement.purchase_orders.urls")
     ),
     path("procurement/vendors/", include("products.cycom.procurement.vendors.urls")),
+    path(
+        "procurement/requisitions/", include("products.cycom.procurement.requisitions.urls")
+    ),
+    path("procurement/invoices/", include("products.cycom.procurement.invoices.urls")),
     # HR
     path("hr/", include("products.cycom.hr.urls")),
     # Payroll
