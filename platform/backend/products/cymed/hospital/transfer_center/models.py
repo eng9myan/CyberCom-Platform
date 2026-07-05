@@ -14,6 +14,8 @@ class ReceivingFacility(BaseModel):
 
 
 class TransferCase(BaseModel):
+    data_classification = "phi"
+
     patient = models.ForeignKey(Patient, on_delete=models.CASCADE)
     source_hospital_name = models.CharField(max_length=255)
     target_facility = models.ForeignKey(ReceivingFacility, on_delete=models.PROTECT)
@@ -35,6 +37,8 @@ class TransferCase(BaseModel):
 
 
 class ExternalReferral(BaseModel):
+    data_classification = "phi"
+
     transfer_case = models.ForeignKey(TransferCase, on_delete=models.CASCADE)
     referring_physician_name = models.CharField(max_length=255)
     referral_document_url = models.URLField(max_length=500, blank=True)
@@ -44,6 +48,8 @@ class ExternalReferral(BaseModel):
 
 
 class AcceptanceReview(BaseModel):
+    data_classification = "confidential"
+
     transfer_case = models.OneToOneField(
         TransferCase, on_delete=models.CASCADE, related_name="review"
     )

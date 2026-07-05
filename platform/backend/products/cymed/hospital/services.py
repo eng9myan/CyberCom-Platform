@@ -41,6 +41,43 @@ def _emit_outbox_event(tenant_id: str, topic: str, event_type: str, payload: dic
         logger.error(f"Failed to emit OutboxEvent {event_type} on {topic}: {exc}")
 
 
+def _write_audit(
+    tenant_id: str,
+    action: str,
+    resource_type: str,
+    resource_id: str,
+    actor_user_id: str,
+    action_verb: str = "CREATE",
+    outcome_description: str = "",
+    data_classification: str = "phi",
+) -> None:
+    """
+    Writes to the platform's real, tamper-evident audit trail
+    (platform.audit.services.AuditService -- hash-chained per tenant,
+    ADR-0028). Every hospital action that touches clinical data or makes a
+    care decision must call this, per STANDARDS.md and the HIPAA readiness
+    report gap this closes. Uses the real AuditService().record() interface;
+    NOT the AuditService.log(...) call found (broken -- no such method
+    exists) elsewhere in the codebase.
+    """
+    try:
+        from platform.audit.services import AuditService
+
+        AuditService().record(
+            action=action,
+            action_verb=action_verb,
+            resource_type=resource_type,
+            resource_id=str(resource_id),
+            tenant_id=uuid.UUID(str(tenant_id)),
+            actor_user_id=str(actor_user_id),
+            category="clinical",
+            data_classification=data_classification,
+            outcome_description=outcome_description,
+        )
+    except Exception as exc:
+        logger.error(f"Failed to write audit record for {action} on {resource_type}: {exc}")
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 # 1. AdmissionService
 # ─────────────────────────────────────────────────────────────────────────────
@@ -130,6 +167,11 @@ class AdmissionService:
         }
         _emit_outbox_event(tenant_id, "cymed.charge.created", "ChargeCreated", charge_payload)
 
+        _write_audit(
+            tenant_id, "admission.created", "Admission", admission.id, admitting_physician_id,
+            outcome_description=f"Patient admitted, encounter {encounter_id}",
+        )
+
         return {
             "admission_id": str(admission.id),
             "stay_id": str(stay.id),
@@ -207,6 +249,11 @@ class AdmissionService:
         }
         _emit_outbox_event(
             tenant_id, "cymed.hospital.discharge.completed", "DischargeCompleted", payload
+        )
+
+        _write_audit(
+            tenant_id, "admission.discharged", "Admission", admission.id, discharged_by,
+            action_verb="UPDATE", outcome_description="Patient discharged",
         )
 
         return {
@@ -299,6 +346,11 @@ class AdmissionService:
         }
         _emit_outbox_event(tenant_id, "cymed.hospital.transfer.created", "TransferCreated", payload)
 
+        _write_audit(
+            tenant_id, "admission.transfer_requested", "TransferRequest", req.id, requested_by,
+            outcome_description=f"Transfer {status}: {reason}",
+        )
+
         return {
             "transfer_request_id": str(req.id),
             "status": status,
@@ -357,6 +409,12 @@ class BedManagementService:
         bed.status = "occupied"
         bed.save()
 
+        _write_audit(
+            tenant_id, "bed.assigned", "BedAssignment", assignment.id, assigned_by,
+            data_classification="confidential",
+            outcome_description=f"Bed {bed_id} assigned to patient {patient_id}",
+        )
+
         return assignment
 
     @classmethod
@@ -387,6 +445,12 @@ class BedManagementService:
         # Trigger cleaning if released via discharge
         if reason == "discharge":
             cls.request_cleaning(tenant_id=tenant_id, bed_id=bed_id, priority="routine")
+
+        _write_audit(
+            tenant_id, "bed.released", "Bed", bed_id, "system",
+            action_verb="UPDATE", data_classification="confidential",
+            outcome_description=f"Bed released, reason={reason}",
+        )
 
         return True
 
@@ -479,6 +543,10 @@ class BedManagementService:
             bed=bed,
             reason=reason,
         )
+        _write_audit(
+            tenant_id, "bed.blocked", "BedBlocking", blocking.id, blocked_by,
+            data_classification="internal", outcome_description=f"Bed blocked: {reason}",
+        )
         return blocking
 
     @classmethod
@@ -502,6 +570,10 @@ class BedManagementService:
             bed=bed,
             status="scheduled",
         )
+        _write_audit(
+            tenant_id, "bed.cleaning_requested", "BedCleaning", cleaning.id, "system",
+            data_classification="internal", outcome_description=f"Cleaning requested, priority={priority}",
+        )
         return cleaning
 
     @classmethod
@@ -523,6 +595,10 @@ class BedManagementService:
 
         cleaning.bed.status = "available"
         cleaning.bed.save(update_fields=["status", "updated_at"])
+        _write_audit(
+            tenant_id, "bed.cleaning_completed", "BedCleaning", cleaning.id, cleaner_name or "system",
+            action_verb="UPDATE", data_classification="internal",
+        )
         return cleaning
 
     @classmethod
@@ -542,6 +618,10 @@ class BedManagementService:
 
         blocking.bed.status = "available"
         blocking.bed.save(update_fields=["status", "updated_at"])
+        _write_audit(
+            tenant_id, "bed.unblocked", "BedBlocking", blocking.id, "system",
+            action_verb="UPDATE", data_classification="internal",
+        )
         return blocking
 
 
@@ -588,6 +668,11 @@ class EmergencyService:
             tenant_id=tenant_uuid,
             visit=visit,
             location_label="Triage Desk",
+        )
+
+        _write_audit(
+            tenant_id, "emergency_visit.registered", "EmergencyVisit", visit.id, "system",
+            outcome_description=f"ER registration, arrival={arrival_mode}",
         )
 
         return {
@@ -780,6 +865,11 @@ class EmergencyService:
                 tenant_id, "cymed.emergency.alert.critical", "CriticalAlertTriggered", alert_payload
             )
 
+        _write_audit(
+            tenant_id, "emergency_visit.triaged", "EmergencyTriage", triage.id, triaged_by,
+            outcome_description=f"ESI {esi_level}, NEWS2 {news2_score}",
+        )
+
         return {
             "triage_id": str(triage.id),
             "esi_level": esi_level,
@@ -832,6 +922,11 @@ class EmergencyService:
             left_at__isnull=True,
             tenant_id=tenant_uuid,
         ).update(left_at=timezone.now())
+
+        _write_audit(
+            tenant_id, "emergency_visit.disposition_assigned", "EmergencyDisposition", disp.id,
+            assigned_by, outcome_description=f"Disposition: {disposition_code}",
+        )
 
         return {
             "disposition_id": str(disp.id),
@@ -918,6 +1013,11 @@ class ICUService:
             assigned_by=admitted_by,
         )
 
+        _write_audit(
+            tenant_id, "icu.admitted", "ICUStay", icu_stay.id, admitted_by,
+            outcome_description=f"ICU admission: {admission_dx}",
+        )
+
         return {
             "icu_stay_id": str(icu_stay.id),
             "status": "admitted",
@@ -994,6 +1094,11 @@ class ICUService:
         }
         _emit_outbox_event(tenant_id, "cymed.icu.round.completed", "ICURoundCompleted", payload)
 
+        _write_audit(
+            tenant_id, "icu.round_completed", "ICURound", round_rec.id, rounded_by,
+            outcome_description=f"SOFA score {sofa_score}",
+        )
+
         return {
             "round_id": str(round_rec.id),
             "sofa_score": sofa_score,
@@ -1030,6 +1135,9 @@ class ICUService:
             peep=int(settings.get("peep", 5)),
             rate=int(settings.get("rate", 12)),
         )
+        _write_audit(
+            tenant_id, "icu.ventilator_started", "VentilatorRecord", rec.id, initiated_by,
+        )
         return rec
 
     @classmethod
@@ -1059,6 +1167,10 @@ class ICUService:
             event_type=event_type,
             details=description,
             actions_taken=f"Responded by {responded_by}. Severity level: {severity}",
+        )
+        _write_audit(
+            tenant_id, "icu.critical_event", "CriticalEvent", event.id, responded_by,
+            outcome_description=f"{event_type} ({severity})",
         )
         return event
 
@@ -1153,6 +1265,11 @@ class OperatingRoomService:
         }
         _emit_outbox_event(tenant_id, "cymed.or.case.scheduled", "SurgicalCaseScheduled", payload)
 
+        _write_audit(
+            tenant_id, "or_case.scheduled", "SurgicalCase", case.id, surgeon_id,
+            outcome_description=f"Scheduled: {procedure_codes}",
+        )
+
         return {
             "case_id": str(case.id),
             "status": case.status,
@@ -1188,6 +1305,10 @@ class OperatingRoomService:
             "started_at": timezone.now().isoformat(),
         }
         _emit_outbox_event(tenant_id, "cymed.or.case.started", "SurgicalCaseStarted", payload)
+
+        _write_audit(
+            tenant_id, "or_case.started", "SurgicalCase", case.id, started_by, action_verb="UPDATE",
+        )
 
         return {
             "case_id": str(case.id),
@@ -1235,6 +1356,11 @@ class OperatingRoomService:
         }
         _emit_outbox_event(tenant_id, "cymed.charge.created", "ChargeCreated", charge_payload)
 
+        _write_audit(
+            tenant_id, "or_case.completed", "SurgicalCase", case.id, completed_by,
+            action_verb="UPDATE", outcome_description=complications or "No complications noted",
+        )
+
         return {
             "case_id": str(case.id),
             "status": case.status,
@@ -1267,6 +1393,10 @@ class OperatingRoomService:
             surgical_case=case,
             patient_signature_blob=f"Consent to {procedure_name}. Risks discussed: {risk_summary}",
             witness_name=witness_id or "Clinic Witness",
+        )
+        _write_audit(
+            tenant_id, "or_case.consent_signed", "ProcedureConsent", consent.id, consented_by,
+            outcome_description=f"Consent for {procedure_name}",
         )
         return consent
 
@@ -1311,6 +1441,11 @@ class NursingService:
             assigned_date=timezone.now().date(),
         )
 
+        _write_audit(
+            tenant_id, "nursing.assigned", "NursingAssignment", assignment.id, nurse_id,
+            data_classification="internal",
+        )
+
         return assignment
 
     @classmethod
@@ -1340,6 +1475,9 @@ class NursingService:
             admission=admission,
             assessed_by=by_uuid,
             nursing_summary=findings.get("nursing_summary", "Routine assessment completed."),
+        )
+        _write_audit(
+            tenant_id, "nursing.assessment_completed", "NursingAssessment", assessment.id, assessed_by,
         )
         return assessment
 
@@ -1374,6 +1512,9 @@ class NursingService:
             admission=admission,
             goals=", ".join(goals),
             activities=", ".join(interventions),
+        )
+        _write_audit(
+            tenant_id, "nursing.care_plan_created", "NursingCarePlan", care_plan.id, created_by,
         )
         return care_plan
 
@@ -1418,6 +1559,10 @@ class NursingService:
             scheduled_at=due,
             status="pending",
         )
+        _write_audit(
+            tenant_id, "nursing.task_scheduled", "NursingTask", task.id, assigned_to,
+            data_classification="internal",
+        )
         return task
 
     @classmethod
@@ -1448,6 +1593,9 @@ class NursingService:
             incoming_nurse_id=uuid.UUID(str(incoming_nurse_id)),
             situation_background=handover_notes.get("situation", "SBAR situation summary"),
             assessment_recommendation=handover_notes.get("recommendation", "SBAR recommendations"),
+        )
+        _write_audit(
+            tenant_id, "nursing.handover_completed", "NursingHandover", handover.id, outgoing_nurse_id,
         )
         return handover
 
@@ -1493,6 +1641,9 @@ class DischargeService:
             barriers_to_discharge="None",
             is_cleared=False,
         )
+        _write_audit(
+            tenant_id, "discharge.planning_initiated", "DischargePlanning", plan.id, planned_by,
+        )
         return plan
 
     @classmethod
@@ -1519,6 +1670,9 @@ class DischargeService:
             stay=stay,
             task_name="Discharge Checklist Final Review",
             status="completed",
+        )
+        _write_audit(
+            tenant_id, "discharge.checklist_completed", "DischargeChecklist", checklist.id, completed_by,
         )
         return checklist
 
@@ -1551,6 +1705,10 @@ class DischargeService:
             medication_code=drug_name,
             reconciliation_action="new",
             notes=f"Dose: {dose}, Freq: {frequency}, Days: {duration_days}. Ins: {instructions}",
+        )
+        _write_audit(
+            tenant_id, "discharge.medication_reconciled", "DischargeMedication", med.id, "system",
+            outcome_description=f"{drug_name} {dose}",
         )
         return med
 
@@ -1586,6 +1744,9 @@ class DischargeService:
             specialty_code=specialty,
             target_date=t_date,
         )
+        _write_audit(
+            tenant_id, "discharge.follow_up_scheduled", "FollowUpAppointment", follow_up.id, provider_id,
+        )
         return follow_up
 
     @classmethod
@@ -1610,6 +1771,10 @@ class DischargeService:
             dietary_instructions="Low sodium diet",
             activity_restrictions="No heavy lifting for 2 weeks",
             warning_symptoms="Fever > 38.5C, severe chest pain, short of breath",
+        )
+
+        _write_audit(
+            tenant_id, "discharge.instructions_generated", "DischargeInstruction", instr.id, "system",
         )
 
         return {
@@ -1758,6 +1923,11 @@ class CapacityService:
             tenant_id, "cymed.hospital.surge.activated", "SurgePlanActivated", payload
         )
 
+        _write_audit(
+            tenant_id, "capacity.surge_activated", "SurgePlan", plan.id, activated_by,
+            data_classification="internal", outcome_description=f"Surge level {surge_level}",
+        )
+
         return plan
 
     @classmethod
@@ -1861,6 +2031,11 @@ class ClinicalSafetyService:
             tenant_id, "cymed.hospital.code_status.changed", "CodeStatusChanged", payload
         )
 
+        _write_audit(
+            tenant_id, "code_status.changed", "CodeStatusOrder", order.id, ordered_by,
+            outcome_description=f"New status: {status}. {reason}",
+        )
+
         return order
 
     @classmethod
@@ -1896,6 +2071,10 @@ class ClinicalSafetyService:
             inserted_at=ts,
             inserted_by=by_uuid,
         )
+        _write_audit(
+            tenant_id, "device.inserted", "IndwellingDevice", device.id, inserted_by,
+            outcome_description=f"{device_type} inserted at {insertion_site}",
+        )
         return device
 
     @classmethod
@@ -1911,6 +2090,10 @@ class ClinicalSafetyService:
         device.removed_at = timezone.now()
         device.removal_reason = removal_reason
         device.save(update_fields=["removed_at", "removal_reason", "updated_at"])
+        _write_audit(
+            tenant_id, "device.removed", "IndwellingDevice", device.id, "system",
+            action_verb="UPDATE", outcome_description=removal_reason,
+        )
         return device
 
     @classmethod
@@ -1953,6 +2136,11 @@ class ClinicalSafetyService:
             tenant_id, "cymed.hospital.hai.detected", "DeviceAssociatedInfectionDetected", payload
         )
 
+        _write_audit(
+            tenant_id, "device.infection_recorded", "DeviceAssociatedInfection", infection.id,
+            diagnosed_by, outcome_description=f"{device.device_type}: {organism}",
+        )
+
         return infection
 
     @classmethod
@@ -1982,6 +2170,10 @@ class ClinicalSafetyService:
                 "ordered_by": by_uuid,
                 "contraindication_reason": contraindication_reason,
             },
+        )
+        _write_audit(
+            tenant_id, "vte_prophylaxis.ordered", "VTEProphylaxisOrder", order.id, ordered_by,
+            action_verb="CREATE" if _created else "UPDATE", outcome_description=f"Method: {method}",
         )
         return order
 

@@ -5,6 +5,8 @@ from products.cymed.hospital.operating_room.models import SurgicalCase
 
 
 class AnesthesiaAssessment(BaseModel):
+    data_classification = "phi"
+
     surgical_case = models.OneToOneField(
         SurgicalCase, on_delete=models.CASCADE, related_name="anesthesia_assessment"
     )
@@ -18,6 +20,8 @@ class AnesthesiaAssessment(BaseModel):
 
 
 class AnesthesiaPlan(BaseModel):
+    data_classification = "phi"
+
     surgical_case = models.OneToOneField(
         SurgicalCase, on_delete=models.CASCADE, related_name="anesthesia_plan"
     )
@@ -29,6 +33,8 @@ class AnesthesiaPlan(BaseModel):
 
 
 class AnesthesiaRecord(BaseModel):
+    data_classification = "phi"
+
     surgical_case = models.OneToOneField(
         SurgicalCase, on_delete=models.CASCADE, related_name="anesthesia_record"
     )
@@ -43,6 +49,8 @@ class AnesthesiaRecord(BaseModel):
 
 
 class RecoveryAssessment(BaseModel):
+    data_classification = "phi"
+
     surgical_case = models.ForeignKey(SurgicalCase, on_delete=models.CASCADE)
     logged_at = models.DateTimeField(auto_now_add=True)
     aldrete_score = (

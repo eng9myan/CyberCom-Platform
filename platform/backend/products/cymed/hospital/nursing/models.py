@@ -24,6 +24,8 @@ class NursingAssignment(BaseModel):
 
 
 class NursingAssessment(BaseModel):
+    data_classification = "phi"
+
     admission = models.ForeignKey(Admission, on_delete=models.CASCADE)
     assessed_by = models.UUIDField()
     assessed_at = models.DateTimeField(auto_now_add=True)
@@ -34,6 +36,8 @@ class NursingAssessment(BaseModel):
 
 
 class NursingCarePlan(BaseModel):
+    data_classification = "phi"
+
     admission = models.ForeignKey(Admission, on_delete=models.CASCADE)
     goals = models.TextField()
     activities = models.TextField()
@@ -58,6 +62,8 @@ class NursingTask(BaseModel):
 
 
 class NursingHandover(BaseModel):
+    data_classification = "phi"
+
     admission = models.ForeignKey(Admission, on_delete=models.CASCADE)
     outgoing_nurse_id = models.UUIDField()
     incoming_nurse_id = models.UUIDField()

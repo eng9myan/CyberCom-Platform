@@ -5,6 +5,8 @@ from products.cymed.core.patients.models import Patient
 
 
 class EmergencyVisit(BaseModel):
+    data_classification = "phi"
+
     patient = models.ForeignKey(Patient, on_delete=models.CASCADE)
     arrival_time = models.DateTimeField(auto_now_add=True)
     arrival_method = models.CharField(max_length=100)  # ambulance, walk-in, police, flight
@@ -27,6 +29,8 @@ class EmergencyVisit(BaseModel):
 
 
 class EmergencyTriage(BaseModel):
+    data_classification = "phi"
+
     visit = models.OneToOneField(EmergencyVisit, on_delete=models.CASCADE, related_name="triage")
     esi_level = models.PositiveSmallIntegerField()  # Emergency Severity Index (1 to 5)
     chief_complaint = models.TextField()
@@ -38,6 +42,8 @@ class EmergencyTriage(BaseModel):
 
 
 class EmergencyAcuity(BaseModel):
+    data_classification = "phi"
+
     visit = models.ForeignKey(EmergencyVisit, on_delete=models.CASCADE)
     news2_score = models.PositiveIntegerField()
     calculated_at = models.DateTimeField(auto_now_add=True)
@@ -47,6 +53,8 @@ class EmergencyAcuity(BaseModel):
 
 
 class EmergencyDisposition(BaseModel):
+    data_classification = "phi"
+
     visit = models.OneToOneField(
         EmergencyVisit, on_delete=models.CASCADE, related_name="disposition"
     )
@@ -59,6 +67,8 @@ class EmergencyDisposition(BaseModel):
 
 
 class EmergencyObservation(BaseModel):
+    data_classification = "phi"
+
     visit = models.ForeignKey(EmergencyVisit, on_delete=models.CASCADE)
     observed_at = models.DateTimeField(auto_now_add=True)
     systolic_bp = models.PositiveIntegerField()
@@ -74,6 +84,8 @@ class EmergencyObservation(BaseModel):
 
 
 class EmergencyTracking(BaseModel):
+    data_classification = "confidential"
+
     visit = models.ForeignKey(EmergencyVisit, on_delete=models.CASCADE)
     location_label = models.CharField(max_length=100)  # Bed A1, Waiting Room, Triage Desk
     entered_at = models.DateTimeField(auto_now_add=True)

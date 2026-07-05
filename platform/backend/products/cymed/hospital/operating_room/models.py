@@ -5,6 +5,8 @@ from products.cymed.core.patients.models import Patient
 
 
 class SurgicalCase(BaseModel):
+    data_classification = "phi"
+
     patient = models.ForeignKey(Patient, on_delete=models.CASCADE)
     surgeon_id = models.UUIDField()
     procedure_code = models.CharField(max_length=100)  # validated via Terminology
@@ -28,6 +30,8 @@ class SurgicalCase(BaseModel):
 
 
 class SurgicalSchedule(BaseModel):
+    data_classification = "confidential"
+
     surgical_case = models.OneToOneField(
         SurgicalCase, on_delete=models.CASCADE, related_name="schedule"
     )
@@ -39,6 +43,8 @@ class SurgicalSchedule(BaseModel):
 
 
 class ProcedureBooking(BaseModel):
+    data_classification = "phi"
+
     surgical_case = models.ForeignKey(SurgicalCase, on_delete=models.CASCADE)
     priority = models.CharField(
         max_length=50,
@@ -51,6 +57,8 @@ class ProcedureBooking(BaseModel):
 
 
 class ProcedureConsent(BaseModel):
+    data_classification = "phi"
+
     surgical_case = models.OneToOneField(
         SurgicalCase, on_delete=models.CASCADE, related_name="consent"
     )
@@ -63,6 +71,8 @@ class ProcedureConsent(BaseModel):
 
 
 class ProcedureChecklist(BaseModel):
+    data_classification = "phi"
+
     surgical_case = models.OneToOneField(
         SurgicalCase, on_delete=models.CASCADE, related_name="checklist"
     )

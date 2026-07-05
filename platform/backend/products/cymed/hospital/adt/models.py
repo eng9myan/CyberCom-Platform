@@ -44,6 +44,8 @@ class DischargeDisposition(BaseModel):
 
 
 class Admission(BaseModel):
+    data_classification = "phi"
+
     encounter = models.OneToOneField(
         Encounter, on_delete=models.CASCADE, related_name="hospital_admission"
     )
@@ -62,6 +64,8 @@ class Admission(BaseModel):
 
 
 class TransferRequest(BaseModel):
+    data_classification = "phi"
+
     patient = models.ForeignKey(Patient, on_delete=models.CASCADE)
     encounter = models.ForeignKey(Encounter, on_delete=models.CASCADE)
     source_bed_id = models.UUIDField(null=True, blank=True)
@@ -80,6 +84,8 @@ class TransferRequest(BaseModel):
 
 
 class TransferApproval(BaseModel):
+    data_classification = "phi"
+
     transfer_request = models.OneToOneField(
         TransferRequest, on_delete=models.CASCADE, related_name="approval"
     )
@@ -92,6 +98,8 @@ class TransferApproval(BaseModel):
 
 
 class DischargeSummary(BaseModel):
+    data_classification = "phi"
+
     admission = models.OneToOneField(
         Admission, on_delete=models.CASCADE, related_name="discharge_details"
     )

@@ -12,6 +12,8 @@ class HospitalStay(BaseModel):
         DNR_DNI = "dnr_dni", "DNR/DNI"
         COMFORT_CARE = "comfort_care", "Comfort Care Only"
 
+    data_classification = "phi"
+
     admission = models.OneToOneField(Admission, on_delete=models.CASCADE, related_name="stay")
     care_team_leader_id = models.UUIDField()
     expected_length_of_stay = models.PositiveIntegerField(default=3)
@@ -31,6 +33,8 @@ class CodeStatusOrder(BaseModel):
     Immutable audit trail of code-status (resuscitation directive) changes.
     Never update in place -- each change is a new order, medico-legally.
     """
+
+    data_classification = "phi"
 
     stay = models.ForeignKey(HospitalStay, on_delete=models.CASCADE, related_name="code_status_orders")
     status = models.CharField(max_length=20, choices=HospitalStay.CodeStatus.choices)
@@ -57,6 +61,8 @@ class IndwellingDevice(BaseModel):
         ARTERIAL_LINE = "arterial_line", "Arterial Line"
         PICC = "picc", "PICC Line (CLABSI surveillance)"
 
+    data_classification = "phi"
+
     stay = models.ForeignKey(HospitalStay, on_delete=models.CASCADE, related_name="indwelling_devices")
     device_type = models.CharField(max_length=20, choices=DeviceType.choices)
     insertion_site = models.CharField(max_length=100, blank=True)
@@ -71,6 +77,8 @@ class IndwellingDevice(BaseModel):
 
 class DeviceAssociatedInfection(BaseModel):
     """CLABSI/CAUTI event -- a confirmed infection attributable to an IndwellingDevice."""
+
+    data_classification = "phi"
 
     device = models.ForeignKey(
         IndwellingDevice, on_delete=models.CASCADE, related_name="infections"
@@ -93,6 +101,8 @@ class VTEProphylaxisOrder(BaseModel):
         BOTH = "both", "Pharmacologic + Mechanical"
         CONTRAINDICATED = "contraindicated", "Contraindicated"
 
+    data_classification = "phi"
+
     stay = models.OneToOneField(
         HospitalStay, on_delete=models.CASCADE, related_name="vte_prophylaxis"
     )
@@ -106,6 +116,8 @@ class VTEProphylaxisOrder(BaseModel):
 
 
 class DailyRound(BaseModel):
+    data_classification = "phi"
+
     stay = models.ForeignKey(HospitalStay, on_delete=models.CASCADE, related_name="rounds")
     clinician_id = models.UUIDField()
     round_time = models.DateTimeField(auto_now_add=True)
@@ -119,6 +131,8 @@ class DailyRound(BaseModel):
 
 
 class ProgressReview(BaseModel):
+    data_classification = "phi"
+
     stay = models.ForeignKey(HospitalStay, on_delete=models.CASCADE)
     reviewed_at = models.DateTimeField(auto_now_add=True)
     reviewer_id = models.UUIDField()
@@ -129,6 +143,8 @@ class ProgressReview(BaseModel):
 
 
 class InpatientCarePlan(BaseModel):
+    data_classification = "phi"
+
     stay = models.ForeignKey(HospitalStay, on_delete=models.CASCADE)
     title = models.CharField(max_length=255)
     goals = models.TextField()
@@ -139,6 +155,8 @@ class InpatientCarePlan(BaseModel):
 
 
 class DischargePlanning(BaseModel):
+    data_classification = "phi"
+
     stay = models.OneToOneField(
         HospitalStay, on_delete=models.CASCADE, related_name="discharge_plan"
     )

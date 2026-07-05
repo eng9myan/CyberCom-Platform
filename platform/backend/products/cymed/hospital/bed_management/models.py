@@ -6,6 +6,8 @@ from products.cymed.core.patients.models import Patient
 
 
 class BedAssignment(BaseModel):
+    data_classification = "confidential"
+
     patient = models.ForeignKey(Patient, on_delete=models.CASCADE)
     bed = models.ForeignKey(Bed, on_delete=models.CASCADE)
     assigned_at = models.DateTimeField(auto_now_add=True)
@@ -25,6 +27,8 @@ class BedOccupancy(BaseModel):
 
 
 class BedReservation(BaseModel):
+    data_classification = "confidential"
+
     patient = models.ForeignKey(Patient, on_delete=models.CASCADE)
     bed = models.ForeignKey(Bed, on_delete=models.CASCADE)
     reserved_from = models.DateTimeField()

@@ -62,6 +62,14 @@ class BaseModel(UUIDPrimaryKeyMixin, TimestampMixin, TenantScopedMixin):
     Inherits: UUID pk, timestamps, tenant isolation.
     """
 
+    # STANDARDS.md: "PHI/PII fields must be marked with data_classification =
+    # DataClassification.RESTRICTED." This is a plain class attribute (not a
+    # model field -- no migration, no per-row storage) so every model can be
+    # introspected for its sensitivity level by audit/access-control/export
+    # tooling. Subclasses holding PHI must override to "phi"; see
+    # platform.audit.models.DataClassification for the full value set.
+    data_classification: str = "internal"
+
     class Meta:
         abstract = True
 

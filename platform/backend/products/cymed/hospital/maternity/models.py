@@ -5,6 +5,8 @@ from products.cymed.core.patients.models import Patient
 
 
 class Pregnancy(BaseModel):
+    data_classification = "phi"
+
     patient = models.ForeignKey(Patient, on_delete=models.CASCADE, related_name="pregnancies")
     estimated_delivery_date = models.DateField()
     gravidity = models.PositiveIntegerField()
@@ -16,6 +18,8 @@ class Pregnancy(BaseModel):
 
 
 class PrenatalEncounter(BaseModel):
+    data_classification = "phi"
+
     pregnancy = models.ForeignKey(Pregnancy, on_delete=models.CASCADE)
     encounter_date = models.DateTimeField(auto_now_add=True)
     gestational_weeks = models.DecimalField(max_digits=4, decimal_places=1)
@@ -29,6 +33,8 @@ class PrenatalEncounter(BaseModel):
 
 
 class LaborEpisode(BaseModel):
+    data_classification = "phi"
+
     pregnancy = models.OneToOneField(Pregnancy, on_delete=models.CASCADE, related_name="labor")
     admitted_at = models.DateTimeField(auto_now_add=True)
     stage_of_labor = models.PositiveSmallIntegerField(default=1)  # 1, 2, 3, 4
@@ -41,6 +47,8 @@ class LaborEpisode(BaseModel):
 
 
 class Delivery(BaseModel):
+    data_classification = "phi"
+
     labor_episode = models.ForeignKey(
         LaborEpisode, on_delete=models.CASCADE, related_name="deliveries"
     )
@@ -55,6 +63,8 @@ class Delivery(BaseModel):
 
 
 class NewbornRecord(BaseModel):
+    data_classification = "phi"
+
     delivery = models.ForeignKey(Delivery, on_delete=models.CASCADE, related_name="newborns")
     baby_patient = models.OneToOneField(Patient, on_delete=models.SET_NULL, null=True, blank=True)
     gender = models.CharField(max_length=10)  # male, female, unknown
@@ -67,6 +77,8 @@ class NewbornRecord(BaseModel):
 
 
 class PostpartumCare(BaseModel):
+    data_classification = "phi"
+
     pregnancy = models.ForeignKey(Pregnancy, on_delete=models.CASCADE)
     checked_at = models.DateTimeField(auto_now_add=True)
     checked_by = models.UUIDField()

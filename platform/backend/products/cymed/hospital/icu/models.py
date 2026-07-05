@@ -5,6 +5,8 @@ from products.cymed.hospital.inpatient.models import HospitalStay
 
 
 class ICUStay(BaseModel):
+    data_classification = "phi"
+
     stay = models.OneToOneField(HospitalStay, on_delete=models.CASCADE, related_name="icu_details")
     icu_admitted_at = models.DateTimeField(auto_now_add=True)
     icu_released_at = models.DateTimeField(null=True, blank=True)
@@ -18,6 +20,8 @@ class ICUStay(BaseModel):
 
 
 class ICURound(BaseModel):
+    data_classification = "phi"
+
     icu_stay = models.ForeignKey(ICUStay, on_delete=models.CASCADE, related_name="rounds")
     recorded_at = models.DateTimeField(auto_now_add=True)
     recorded_by = models.UUIDField()
@@ -32,6 +36,8 @@ class ICURound(BaseModel):
 
 
 class ICUAssessment(BaseModel):
+    data_classification = "phi"
+
     icu_stay = models.ForeignKey(ICUStay, on_delete=models.CASCADE)
     assessed_at = models.DateTimeField(auto_now_add=True)
     sofa_score = models.PositiveIntegerField()
@@ -43,6 +49,8 @@ class ICUAssessment(BaseModel):
 
 
 class VentilatorRecord(BaseModel):
+    data_classification = "phi"
+
     icu_stay = models.ForeignKey(ICUStay, on_delete=models.CASCADE)
     logged_at = models.DateTimeField(auto_now_add=True)
     logged_by = models.UUIDField()
@@ -56,6 +64,8 @@ class VentilatorRecord(BaseModel):
 
 
 class CriticalEvent(BaseModel):
+    data_classification = "phi"
+
     icu_stay = models.ForeignKey(ICUStay, on_delete=models.CASCADE)
     event_time = models.DateTimeField(auto_now_add=True)
     event_type = models.CharField(max_length=100)  # cardiac_arrest, intubation, line_displacement

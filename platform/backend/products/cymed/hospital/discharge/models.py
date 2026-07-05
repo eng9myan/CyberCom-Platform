@@ -5,6 +5,8 @@ from products.cymed.hospital.inpatient.models import HospitalStay
 
 
 class DischargeChecklist(BaseModel):
+    data_classification = "confidential"
+
     stay = models.ForeignKey(HospitalStay, on_delete=models.CASCADE)
     task_name = models.CharField(
         max_length=255
@@ -21,6 +23,8 @@ class DischargeChecklist(BaseModel):
 
 
 class DischargeMedication(BaseModel):
+    data_classification = "phi"
+
     stay = models.ForeignKey(HospitalStay, on_delete=models.CASCADE)
     medication_code = models.CharField(max_length=100)  # validated via Terminology
     reconciliation_action = models.CharField(max_length=100)  # continued, stopped, modified, new
@@ -31,6 +35,8 @@ class DischargeMedication(BaseModel):
 
 
 class FollowUpAppointment(BaseModel):
+    data_classification = "confidential"
+
     stay = models.ForeignKey(HospitalStay, on_delete=models.CASCADE)
     specialty_code = models.CharField(max_length=100)
     target_date = models.DateField()
@@ -41,6 +47,8 @@ class FollowUpAppointment(BaseModel):
 
 
 class DischargeInstruction(BaseModel):
+    data_classification = "phi"
+
     stay = models.OneToOneField(HospitalStay, on_delete=models.CASCADE, related_name="instructions")
     dietary_instructions = models.TextField(blank=True)
     activity_restrictions = models.TextField(blank=True)
