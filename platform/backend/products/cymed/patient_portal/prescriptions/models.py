@@ -101,7 +101,7 @@ class RefillRequest(BaseModel):
         indexes = [
             models.Index(
                 fields=["account_id", "status"],
-                name="refill_requests_acct_status_idx",
+                name="refill_req_acct_status_idx",
             ),
         ]
 
@@ -162,7 +162,7 @@ class MedicationAdherenceLog(BaseModel):
         indexes = [
             models.Index(
                 fields=["account_id", "status", "scheduled_time"],
-                name="adherence_logs_acct_status_time_idx",
+                name="adherence_acct_status_t_idx",
             ),
         ]
 

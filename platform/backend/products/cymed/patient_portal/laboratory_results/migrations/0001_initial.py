@@ -175,14 +175,14 @@ class Migration(migrations.Migration):
             model_name="labresultview",
             index=models.Index(
                 fields=["account_id", "result_status", "resulted_at"],
-                name="lab_results_acct_status_date_idx",
+                name="lr_acct_status_date_idx",
             ),
         ),
         migrations.AddIndex(
             model_name="labresultview",
             index=models.Index(
                 fields=["patient_id", "is_critical"],
-                name="lab_results_patient_critical_idx",
+                name="lr_patient_critical_idx",
             ),
         ),
         migrations.AlterUniqueTogether(

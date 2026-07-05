@@ -253,7 +253,7 @@ class Migration(migrations.Migration):
             model_name="healthtimelineevent",
             index=models.Index(
                 fields=["timeline", "event_date"],
-                name="timeline_events_timeline_date_idx",
+                name="hj_timeline_date_idx",
             ),
         ),
         migrations.AddIndex(
@@ -267,21 +267,21 @@ class Migration(migrations.Migration):
             model_name="patientjourney",
             index=models.Index(
                 fields=["account_id", "status"],
-                name="patient_journeys_acct_status_idx",
+                name="hj_journey_status_idx",
             ),
         ),
         migrations.AddIndex(
             model_name="healthmilestone",
             index=models.Index(
                 fields=["journey", "is_achieved"],
-                name="health_milestones_journey_achieved_idx",
+                name="hj_milestone_ach_idx",
             ),
         ),
         migrations.AddIndex(
             model_name="careepisode",
             index=models.Index(
                 fields=["account_id", "episode_type", "admission_date"],
-                name="care_episodes_acct_type_date_idx",
+                name="hj_care_ep_type_dt_idx",
             ),
         ),
     ]

@@ -56,7 +56,7 @@ class HealthTimelineEvent(BaseModel):
         indexes = [
             models.Index(
                 fields=["timeline", "event_date"],
-                name="timeline_events_timeline_date_idx",
+                name="hj_timeline_date_idx",
             ),
             models.Index(
                 fields=["account_id", "event_type"],
@@ -109,7 +109,7 @@ class PatientJourney(BaseModel):
         indexes = [
             models.Index(
                 fields=["account_id", "status"],
-                name="patient_journeys_acct_status_idx",
+                name="hj_journey_status_idx",
             ),
         ]
 
@@ -151,7 +151,7 @@ class HealthMilestone(BaseModel):
         indexes = [
             models.Index(
                 fields=["journey", "is_achieved"],
-                name="health_milestones_journey_achieved_idx",
+                name="hj_milestone_ach_idx",
             ),
         ]
 
@@ -195,7 +195,7 @@ class CareEpisode(BaseModel):
         indexes = [
             models.Index(
                 fields=["account_id", "episode_type", "admission_date"],
-                name="care_episodes_acct_type_date_idx",
+                name="hj_care_ep_type_dt_idx",
             ),
         ]
 

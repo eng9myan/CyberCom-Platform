@@ -186,14 +186,14 @@ class Migration(migrations.Migration):
             model_name="imagingresultview",
             index=models.Index(
                 fields=["account_id", "modality", "study_date"],
-                name="imaging_results_acct_mod_date_idx",
+                name="ir_acct_mod_date_idx",
             ),
         ),
         migrations.AddIndex(
             model_name="imagingresultview",
             index=models.Index(
                 fields=["patient_id", "report_status"],
-                name="imaging_results_patient_status_idx",
+                name="ir_patient_status_idx",
             ),
         ),
     ]
