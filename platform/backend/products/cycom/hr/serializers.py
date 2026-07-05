@@ -1,6 +1,13 @@
 from rest_framework import serializers
 
-from .models import Attendance, Department, Employee, LeaveRequest, PerformanceReview
+from .models import (
+    Attendance,
+    ClinicalCredential,
+    Department,
+    Employee,
+    LeaveRequest,
+    PerformanceReview,
+)
 
 
 class DepartmentSerializer(serializers.ModelSerializer):
@@ -23,6 +30,7 @@ class EmployeeSerializer(serializers.ModelSerializer):
             "job_title",
             "hire_date",
             "status",
+            "is_clinical_staff",
             "created_at",
             "updated_at",
         ]
@@ -52,6 +60,41 @@ class LeaveRequestSerializer(serializers.ModelSerializer):
             "updated_at",
         ]
         read_only_fields = ["id", "created_at", "updated_at"]
+
+
+class ClinicalCredentialSerializer(serializers.ModelSerializer):
+    employee_name = serializers.SerializerMethodField()
+    is_expired = serializers.BooleanField(read_only=True)
+    days_until_expiry = serializers.IntegerField(read_only=True)
+
+    class Meta:
+        model = ClinicalCredential
+        fields = [
+            "id",
+            "employee",
+            "employee_name",
+            "credential_type",
+            "license_number",
+            "issuing_body",
+            "issue_date",
+            "expiry_date",
+            "status",
+            "verified",
+            "verified_by",
+            "verified_at",
+            "document_ref",
+            "is_expired",
+            "days_until_expiry",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = [
+            "id", "status", "verified", "verified_by", "verified_at",
+            "created_at", "updated_at",
+        ]
+
+    def get_employee_name(self, obj):
+        return f"{obj.employee.first_name} {obj.employee.last_name}"
 
 
 class PerformanceReviewSerializer(serializers.ModelSerializer):

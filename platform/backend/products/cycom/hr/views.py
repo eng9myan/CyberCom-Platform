@@ -1,9 +1,15 @@
-from rest_framework import viewsets
-from rest_framework.permissions import IsAuthenticated
+from datetime import date, timedelta
 
-from .models import Attendance, Department, Employee, LeaveRequest, PerformanceReview
+from django.utils import timezone
+from rest_framework import viewsets
+from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+
+from .models import Attendance, ClinicalCredential, Department, Employee, LeaveRequest, PerformanceReview
 from .serializers import (
     AttendanceSerializer,
+    ClinicalCredentialSerializer,
     DepartmentSerializer,
     EmployeeSerializer,
     LeaveRequestSerializer,
@@ -46,3 +52,30 @@ class LeaveRequestViewSet(BaseHRViewSet):
 class PerformanceReviewViewSet(BaseHRViewSet):
     queryset = PerformanceReview.objects.all()
     serializer_class = PerformanceReviewSerializer
+
+
+class ClinicalCredentialViewSet(BaseHRViewSet):
+    queryset = ClinicalCredential.objects.all()
+    serializer_class = ClinicalCredentialSerializer
+
+    @action(detail=False, methods=["get"], url_path="expiring-soon")
+    def expiring_soon(self, request):
+        tenant_id = getattr(request, "tenant_id", None)
+        horizon_days = int(request.query_params.get("days", 60))
+        cutoff = date.today() + timedelta(days=horizon_days)
+        qs = ClinicalCredential.objects.filter(
+            tenant_id=tenant_id,
+            status="active",
+            expiry_date__lte=cutoff,
+        ).order_by("expiry_date")
+        return Response(ClinicalCredentialSerializer(qs, many=True).data)
+
+    @action(detail=True, methods=["post"])
+    def verify(self, request, pk=None):
+        credential = self.get_object()
+        claims = getattr(request, "auth_claims", {}) or {}
+        credential.verified = True
+        credential.verified_by = claims.get("sub") or None
+        credential.verified_at = timezone.now()
+        credential.save(update_fields=["verified", "verified_by", "verified_at"])
+        return Response(ClinicalCredentialSerializer(credential).data)

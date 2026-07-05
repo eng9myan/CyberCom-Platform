@@ -10,5 +10,8 @@ router.register("leave-requests", views.LeaveRequestViewSet, basename="leave-req
 router.register(
     "performance-reviews", views.PerformanceReviewViewSet, basename="performance-review"
 )
+router.register(
+    "clinical-credentials", views.ClinicalCredentialViewSet, basename="clinical-credential"
+)
 
 urlpatterns = router.urls

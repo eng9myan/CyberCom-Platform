@@ -360,6 +360,10 @@ CELERY_BEAT_SCHEDULE = {
         "task": "cyidentity.enforce_idle_timeout",
         "schedule": 300.0,  # every 5 minutes; threshold itself is 30 min (SessionService.IDLE_THRESHOLD_SECONDS)
     },
+    "cycom-hr-expire-clinical-credentials": {
+        "task": "cycom_hr.expire_clinical_credentials",
+        "schedule": 86400.0,  # once a day
+    },
 }
 
 # ---------------------------------------------------------------------------

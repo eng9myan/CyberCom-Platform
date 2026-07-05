@@ -1,3 +1,5 @@
+from datetime import date
+
 from django.db import models
 
 from platform.common.models import BaseModel
@@ -35,6 +37,10 @@ class Employee(BaseModel):
     job_title = models.CharField(max_length=150)
     hire_date = models.DateField()
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="active")
+    is_clinical_staff = models.BooleanField(
+        default=False,
+        help_text="Physicians, nurses, pharmacists, techs -- anyone whose license must be tracked.",
+    )
 
     class Meta:
         db_table = "cycom_hr_employees"
@@ -87,6 +93,57 @@ class LeaveRequest(BaseModel):
 
     class Meta:
         db_table = "cycom_hr_leave_requests"
+
+
+class ClinicalCredential(BaseModel):
+    CREDENTIAL_TYPE_CHOICES = [
+        ("medical_license", "Medical License"),
+        ("nursing_license", "Nursing License"),
+        ("pharmacy_license", "Pharmacy License"),
+        ("board_certification", "Board Certification"),
+        ("dea_registration", "DEA Registration"),
+        ("npi", "National Provider Identifier"),
+        ("bls_cpr", "BLS / CPR"),
+        ("acls", "ACLS"),
+        ("other", "Other"),
+    ]
+    STATUS_CHOICES = [
+        ("active", "Active"),
+        ("expired", "Expired"),
+        ("suspended", "Suspended"),
+        ("revoked", "Revoked"),
+    ]
+
+    employee = models.ForeignKey(
+        Employee,
+        on_delete=models.CASCADE,
+        related_name="credentials",
+    )
+    credential_type = models.CharField(max_length=30, choices=CREDENTIAL_TYPE_CHOICES)
+    license_number = models.CharField(max_length=100, blank=True)
+    issuing_body = models.CharField(max_length=200, blank=True)
+    issue_date = models.DateField(null=True, blank=True)
+    expiry_date = models.DateField()
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="active")
+    verified = models.BooleanField(default=False)
+    verified_by = models.UUIDField(null=True, blank=True)
+    verified_at = models.DateTimeField(null=True, blank=True)
+    document_ref = models.CharField(max_length=500, blank=True)
+
+    class Meta:
+        db_table = "cycom_hr_clinical_credentials"
+        ordering = ["expiry_date"]
+
+    def __str__(self):
+        return f"{self.employee} - {self.credential_type} (exp {self.expiry_date})"
+
+    @property
+    def is_expired(self) -> bool:
+        return date.today() > self.expiry_date
+
+    @property
+    def days_until_expiry(self) -> int:
+        return (self.expiry_date - date.today()).days
 
 
 class PerformanceReview(BaseModel):
