@@ -21,10 +21,11 @@ A full read of all 13 hospital submodules, the shared core foundation, the comme
 
 All changes verified: Django system check passes, all new endpoints resolve via the URL resolver, `makemigrations` produced clean migrations, full hospital service-layer suite is 11/11 passing (up from 6 at the start of this phase), cyai suite 10/10, demo seeder test passes end-to-end with real assertions on the new hospital state. Hospital API-level test suite fails identically on the unmodified baseline (confirmed via `git stash` — a pre-existing Keycloak JWKS sandbox limitation, not a regression from any of this work).
 
-## Gap classification (not yet fixed — for next Hospital pass)
+10. **Bed-state CRUD-bypass guard + cleaning/blocking lifecycle (Critical).** `BedCleaningViewSet`/`BedBlockingViewSet` allowed a raw `POST` that wrote a row without ever touching `core.facilities.Bed.status`, and neither had any way to *close* the cycle — a bed sent to cleaning or maintenance had no path back to `available` at all. Added `complete_cleaning()`/`unblock_bed()` to `BedManagementService`, disabled raw `create()` on both viewsets (405, points at the correct action), added `complete`/`unblock` actions. Regression test drives the full discharge→cleaning→complete and block→unblock cycles.
 
-**Critical:**
-- Dual, unsynchronized bed-state tracking: `core.facilities.Bed.status` vs. `hospital.bed_management`'s separate cleaning/blocking models can desync if a raw CRUD POST bypasses the service layer (the new action endpoints keep them in sync; direct `POST /beds/cleaning/` or `/beds/blocking/` still doesn't set `Bed.status`).
+All Critical-severity items from the original gap analysis are now closed. Full hospital service-layer suite: 12/12 passing.
+
+## Gap classification (not yet fixed — for next Hospital pass)
 
 **High:**
 - No hospital-specific *login* users (Keycloak realm/user provisioning) — the demo tenant now has real hospital *data*, but no one can log into it yet. This needs a live Keycloak instance to build/test against, which this sandbox doesn't have (confirmed: Keycloak JWKS calls fail here) — real external-environment blocker, not skipped work.
@@ -42,4 +43,4 @@ All changes verified: Django system check passes, all new endpoints resolve via 
 
 ## Verdict
 
-**NOT READY** for Epic/Oracle Health-class certification — that is a multi-year scope for any vendor and this report will not pretend otherwise. **Substantial, verified progress across two extended passes**: real API-reachable workflows, three Critical patient-safety gaps closed (code status, HAI surveillance, VTE prophylaxis), a real (not simulated) AI gateway with a working hospital-specific assistant, and real demo data exercising the whole ADT→ICU pipeline. Remaining Critical/High items (bed-state CRUD-bypass guard, Keycloak login provisioning, staffing compliance rules, algorithmic ESI) are concretely scoped for the next pass.
+**NOT READY** for Epic/Oracle Health-class certification — that is a multi-year scope for any vendor and this report will not pretend otherwise. **Substantial, verified progress across three extended passes**: real API-reachable workflows, all four Critical patient-safety/data-integrity gaps closed (code status, HAI surveillance, VTE prophylaxis, bed-state sync), a real (not simulated) AI gateway with a working hospital-specific assistant, and real demo data exercising the whole ADT→ICU pipeline. Remaining High items (Keycloak login provisioning, staffing compliance rules, algorithmic ESI) are concretely scoped for the next pass — none are Critical-severity anymore.
