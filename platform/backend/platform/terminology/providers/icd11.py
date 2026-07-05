@@ -15,8 +15,26 @@ logger = logging.getLogger("cybercom.terminology.icd11")
 # ---------------------------------------------------------------------------
 _CACHE_TTL = 3600  # seconds
 _search_cache: dict[str, tuple[list[dict[str, Any]], float]] = {}
+_lookup_cache: dict[str, tuple[dict[str, Any] | None, float]] = {}
+
+
+def _lookup_cache_get(key: str) -> tuple[bool, dict[str, Any] | None]:
+    """Returns (hit, value). hit=False means "not cached", not "not found"."""
+    entry = _lookup_cache.get(key)
+    if entry is not None:
+        value, expiry = entry
+        if time.monotonic() < expiry:
+            return True, value
+        del _lookup_cache[key]
+    return False, None
+
+
+def _lookup_cache_set(key: str, value: dict[str, Any] | None) -> None:
+    _lookup_cache[key] = (value, time.monotonic() + _CACHE_TTL)
 
 ICD11_SEARCH_URL = "https://id.who.int/icd/entity/search"
+ICD11_RELEASE = "2024-01"
+ICD11_CODEINFO_URL = f"https://id.who.int/icd/release/11/{ICD11_RELEASE}/mms/codeinfo"
 
 
 def _cache_get(key: str) -> list[dict[str, Any]] | None:
@@ -196,8 +214,8 @@ class ICD11Provider(TerminologyProvider):
             )
             return self._search_mock(query, limit)
 
-    def lookup(self, code: str, **kwargs) -> dict[str, Any] | None:
-        # Handle post-coordinated cluster (e.g. FA81&XY1Y&XS17)
+    def _lookup_mock(self, code: str) -> dict[str, Any] | None:
+        """Fallback lookup over hardcoded STEM_CODES/EXTENSION_CODES (post-coordination-aware)."""
         if "&" in code or "/" in code:
             parts = re.split(r"[&/]", code)
             stem_code = parts[0]
@@ -225,7 +243,6 @@ class ICD11Provider(TerminologyProvider):
                 "definition": stem_details["definition"],
             }
 
-        # Single code lookup (uses fallback data; WHO entity URI lookup would need separate mapping)
         if code in self.STEM_CODES:
             details = self.STEM_CODES[code]
             return {
@@ -244,17 +261,105 @@ class ICD11Provider(TerminologyProvider):
             }
         return None
 
+    def _lookup_live(self, stem_code: str, headers: dict[str, str]) -> dict[str, Any] | None:
+        """
+        Resolve a single ICD-11 stem code via the live WHO API:
+        codeinfo/{code} -> stemId (entity URI) -> GET that URI for title/definition.
+        """
+        cache_key = f"icd11_lookup|{stem_code}"
+        hit, cached = _lookup_cache_get(cache_key)
+        if hit:
+            return cached
+
+        try:
+            with httpx.Client(timeout=_get_timeout()) as client:
+                codeinfo_resp = client.get(
+                    f"{ICD11_CODEINFO_URL}/{stem_code}",
+                    headers=headers,
+                    params={"flexiblemode": "true"},
+                )
+                if codeinfo_resp.status_code != 200:
+                    return None
+                stem_uri = codeinfo_resp.json().get("stemId")
+                if not stem_uri:
+                    return None
+
+                entity_resp = client.get(stem_uri, headers=headers)
+                if entity_resp.status_code != 200:
+                    return None
+                entity = entity_resp.json()
+
+            title = (entity.get("title") or {}).get("@value", "")
+            definition = (entity.get("definition") or {}).get("@value", "")
+            if not title:
+                return None
+
+            result = {
+                "code": stem_code,
+                "display": title,
+                "is_post_coordinated": False,
+                "definition": definition,
+            }
+            _lookup_cache_set(cache_key, result)
+            return result
+        except Exception as exc:
+            logger.warning("ICD-11 live lookup failed for code '%s': %s", stem_code, exc)
+            return None
+
+    def lookup(self, code: str, **kwargs) -> dict[str, Any] | None:
+        token: str = getattr(settings, "ICD11_API_TOKEN", "")
+        if not token or not code:
+            return self._lookup_mock(code)
+
+        headers = {
+            "Authorization": f"Bearer {token}",
+            "Accept": "application/json",
+            "Accept-Language": "en",
+            "API-Version": "v2",
+        }
+
+        # Handle post-coordinated cluster (e.g. FA81&XY1Y&XS17): resolve the live
+        # stem, but extension codes still come from the local extension table --
+        # the extension code system needs a separate live lookup we don't call yet.
+        if "&" in code or "/" in code:
+            parts = re.split(r"[&/]", code)
+            stem_code = parts[0]
+            extensions = parts[1:]
+
+            stem_result = self._lookup_live(stem_code, headers)
+            if stem_result is None:
+                return self._lookup_mock(code)
+
+            display_parts = [stem_result["display"]]
+            extension_details = []
+            for ext in extensions:
+                if ext in self.EXTENSION_CODES:
+                    ext_info = self.EXTENSION_CODES[ext]
+                    display_parts.append(ext_info["display"])
+                    extension_details.append({"code": ext, **ext_info})
+
+            return {
+                "code": code,
+                "display": ", ".join(display_parts),
+                "is_post_coordinated": True,
+                "stem_code": stem_code,
+                "extensions": extension_details,
+                "definition": stem_result["definition"],
+            }
+
+        result = self._lookup_live(code, headers)
+        if result is not None:
+            return result
+        return self._lookup_mock(code)
+
     def validate(self, code: str, **kwargs) -> bool:
         if not code:
             return False
         parts = re.split(r"[&/]", code)
-        stem = parts[0]
-        if stem not in self.STEM_CODES:
-            return False
         for ext in parts[1:]:
             if ext not in self.EXTENSION_CODES:
                 return False
-        return True
+        return self.lookup(code, **kwargs) is not None
 
     def translate(self, code: str, target_system: str, **kwargs) -> dict[str, Any] | None:
         target_system = target_system.lower()

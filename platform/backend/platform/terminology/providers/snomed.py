@@ -14,6 +14,21 @@ logger = logging.getLogger("cybercom.terminology.snomed")
 # ---------------------------------------------------------------------------
 _CACHE_TTL = 3600  # seconds
 _search_cache: dict[str, tuple[list[dict[str, Any]], float]] = {}
+_lookup_cache: dict[str, tuple[dict[str, Any] | None, float]] = {}
+
+
+def _lookup_cache_get(key: str) -> tuple[bool, dict[str, Any] | None]:
+    entry = _lookup_cache.get(key)
+    if entry is not None:
+        value, expiry = entry
+        if time.monotonic() < expiry:
+            return True, value
+        del _lookup_cache[key]
+    return False, None
+
+
+def _lookup_cache_set(key: str, value: dict[str, Any] | None) -> None:
+    _lookup_cache[key] = (value, time.monotonic() + _CACHE_TTL)
 
 SNOWSTORM_BASE_URL = "https://browser.ihtsdotools.org/snowstorm/snomed-ct"
 SNOWSTORM_CONCEPTS_URL = f"{SNOWSTORM_BASE_URL}/MAIN/concepts"
@@ -184,7 +199,7 @@ class SNOMEDProvider(TerminologyProvider):
             )
             return self._search_mock(query, limit)
 
-    def lookup(self, code: str, **kwargs) -> dict[str, Any] | None:
+    def _lookup_mock(self, code: str) -> dict[str, Any] | None:
         if code in self.CONCEPTS:
             details = self.CONCEPTS[code]
             return {
@@ -195,8 +210,54 @@ class SNOMEDProvider(TerminologyProvider):
             }
         return None
 
+    def lookup(self, code: str, **kwargs) -> dict[str, Any] | None:
+        """
+        Live concept lookup via the Snowstorm Browser API (public, no auth).
+        Falls back to hardcoded concepts on any network/API failure.
+        """
+        if not code:
+            return None
+
+        cache_key = f"snomed_lookup|{code}"
+        hit, cached = _lookup_cache_get(cache_key)
+        if hit:
+            return cached
+
+        try:
+            headers = {"Accept": "application/json"}
+            with httpx.Client(timeout=_get_timeout()) as client:
+                response = client.get(f"{SNOWSTORM_CONCEPTS_URL}/{code}", headers=headers)
+
+            if response.status_code != 200:
+                return self._lookup_mock(code)
+
+            data = response.json()
+            if not data.get("active", True):
+                # Inactive concepts are real but shouldn't validate as usable codes.
+                return None
+
+            fsn = (data.get("fsn") or {}).get("term", "")
+            pt = (data.get("pt") or {}).get("term", "")
+            display = pt or fsn
+            if not display:
+                return self._lookup_mock(code)
+
+            result = {
+                "code": code,
+                "display": display,
+                "definition": fsn,
+                "active": data.get("active", True),
+            }
+            _lookup_cache_set(cache_key, result)
+            return result
+        except Exception as exc:
+            logger.warning("SNOMED live lookup failed for code '%s': %s", code, exc)
+            return self._lookup_mock(code)
+
     def validate(self, code: str, **kwargs) -> bool:
-        return code in self.CONCEPTS
+        if not code:
+            return False
+        return self.lookup(code, **kwargs) is not None
 
     def translate(self, code: str, target_system: str, **kwargs) -> dict[str, Any] | None:
         target_system = target_system.lower()
