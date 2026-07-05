@@ -400,6 +400,7 @@ class SurveillanceService:
         """
         Logs a surveillance case and triggers MoH mandatory alerts if needed.
         """
+        from platform.terminology.services import TerminologyService
         from products.cymed.population_health.surveillance.models import SurveillanceCase
 
         tenant_uuid = uuid.UUID(str(tenant_id))
@@ -410,11 +411,16 @@ class SurveillanceService:
         else:
             r_date = report_date
 
+        disease_entry = TerminologyService.lookup(
+            provider="icd11", code=disease_code, tenant_id=tenant_id, requested_by="population_health"
+        )
+        disease_name = disease_entry["display"] if disease_entry else disease_code
+
         case = SurveillanceCase.objects.create(
             tenant_id=tenant_uuid,
             patient_id=patient_uuid,
             disease_code=disease_code,
-            disease_name="Seasonal Influenza",
+            disease_name=disease_name,
             case_type="confirmed" if confirmed else "suspected",
             case_date=r_date,
             status="open",
@@ -443,37 +449,101 @@ class SurveillanceService:
         date_to: Any | None = None,
     ) -> dict:
         """
-        Returns curve coordinates.
+        Weekly new-case / cumulative-case curve for a disease, aggregated from
+        real SurveillanceCase rows -- no synthetic data points.
         """
-        return {
-            "trend": "rising",
-            "data_points": [
-                {"date": "2026-06-01", "new_cases": 12, "cumulative": 12},
-                {"date": "2026-06-08", "new_cases": 24, "cumulative": 36},
-                {"date": "2026-06-15", "new_cases": 45, "cumulative": 81},
-            ],
-        }
+        from django.db.models import Count
+        from django.db.models.functions import TruncWeek
+
+        from products.cymed.population_health.surveillance.models import SurveillanceCase
+
+        qs = SurveillanceCase.objects.filter(tenant_id=tenant_id, disease_code=disease_code)
+        if date_from:
+            qs = qs.filter(case_date__gte=date_from)
+        if date_to:
+            qs = qs.filter(case_date__lte=date_to)
+
+        weekly_counts = (
+            qs.annotate(week=TruncWeek("case_date"))
+            .values("week")
+            .annotate(new_cases=Count("id"))
+            .order_by("week")
+        )
+
+        data_points = []
+        cumulative = 0
+        for row in weekly_counts:
+            cumulative += row["new_cases"]
+            data_points.append(
+                {
+                    "date": row["week"].isoformat(),
+                    "new_cases": row["new_cases"],
+                    "cumulative": cumulative,
+                }
+            )
+
+        if len(data_points) >= 2 and data_points[-1]["new_cases"] > data_points[-2]["new_cases"]:
+            trend = "rising"
+        elif len(data_points) >= 2 and data_points[-1]["new_cases"] < data_points[-2]["new_cases"]:
+            trend = "falling"
+        else:
+            trend = "stable"
+
+        return {"trend": trend, "data_points": data_points}
 
     @classmethod
     def detect_outbreak(
         cls, tenant_id: str, disease_code: str, threshold: int = 3, window_days: int = 7
     ) -> dict:
         """
-        Detects clusters.
+        Flags a possible outbreak when real case count in the trailing window
+        meets/exceeds threshold. Location is the most common reporting_facility_id
+        among those cases (real data), or omitted if facility isn't recorded.
         """
-        return {"outbreak_detected": True, "cases_count": 5, "cluster_location": "Ward A"}
+        from collections import Counter
+
+        from products.cymed.population_health.surveillance.models import SurveillanceCase
+
+        window_start = timezone.now().date() - timezone.timedelta(days=window_days)
+        cases = list(
+            SurveillanceCase.objects.filter(
+                tenant_id=tenant_id, disease_code=disease_code, case_date__gte=window_start
+            )
+        )
+        cases_count = len(cases)
+        outbreak_detected = cases_count >= threshold
+
+        cluster_location = None
+        if outbreak_detected:
+            facility_ids = [str(c.reporting_facility_id) for c in cases if c.reporting_facility_id]
+            if facility_ids:
+                cluster_location = Counter(facility_ids).most_common(1)[0][0]
+
+        return {
+            "outbreak_detected": outbreak_detected,
+            "cases_count": cases_count,
+            "cluster_location": cluster_location,
+            "window_days": window_days,
+            "threshold": threshold,
+        }
 
     @classmethod
     def get_active_alerts(cls, tenant_id: str) -> list:
-        """
-        Active alerts.
-        """
+        """Real, currently-active OutbreakAlert rows -- no canned messages."""
+        from products.cymed.population_health.surveillance.models import OutbreakAlert
+
+        alerts = OutbreakAlert.objects.filter(
+            tenant_id=tenant_id, is_active=True
+        ).select_related("outbreak")
         return [
             {
-                "alert_id": str(uuid.uuid4()),
-                "message": "Seasonal Influenza cases increasing rapidly in Central Ward.",
-            },
-            {"alert_id": str(uuid.uuid4()), "message": "MoH notifiable TB case logged."},
+                "alert_id": str(a.id),
+                "alert_level": a.alert_level,
+                "message": a.description,
+                "outbreak_id": str(a.outbreak_id),
+                "disease_name": a.outbreak.disease_name,
+            }
+            for a in alerts
         ]
 
 

@@ -17,6 +17,7 @@ from .serializers import (
     ReportScheduleSerializer,
     ReportTemplateSerializer,
 )
+from .services import NationalReportGenerationService
 
 
 class PopulationHealthModelViewSet(viewsets.ModelViewSet):
@@ -43,6 +44,20 @@ class NationalReportViewSet(PopulationHealthModelViewSet):
     serializer_class = NationalReportSerializer
     filterset_fields = ["report_type", "status", "report_date"]
     ordering_fields = ["report_name", "report_date", "status", "created_at"]
+
+    @action(detail=True, methods=["post"])
+    def generate(self, request, pk=None):
+        """Aggregate real clinical data for the report's period into content."""
+        report = self.get_object()
+        if report.status not in ("draft", "in_review"):
+            return Response(
+                {"detail": "Report content can only be (re)generated while draft or in_review."},
+                status=400,
+            )
+        tenant_id = getattr(request, "tenant_id", None)
+        NationalReportGenerationService.generate(tenant_id, report)
+        serializer = self.get_serializer(report)
+        return Response(serializer.data)
 
     @action(detail=True, methods=["post"])
     def approve(self, request, pk=None):
