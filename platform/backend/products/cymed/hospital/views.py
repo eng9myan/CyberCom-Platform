@@ -91,3 +91,47 @@ class HospitalModelViewSet(viewsets.ModelViewSet):
     def perform_create(self, serializer):
         tenant_id = getattr(self.request, "tenant_id", None)
         serializer.save(tenant_id=tenant_id)
+
+    # -- PHI access auditing (HIPAA 164.312(b)) -----------------------------
+    # Every mutating action already calls _write_audit() (see services.py),
+    # but reads never did -- viewing a patient chart, ICU round, or OR case
+    # went completely unlogged. HIPAA requires auditing *access*, not just
+    # changes. Overridden here once, at the shared base class, rather than
+    # in every individual viewset, since every PHI-bearing hospital viewset
+    # already inherits from this class.
+    def retrieve(self, request, *args, **kwargs):
+        response = super().retrieve(request, *args, **kwargs)
+        if response.status_code == 200:
+            self._audit_read("viewed", str(kwargs.get("pk", "")))
+        return response
+
+    def list(self, request, *args, **kwargs):
+        response = super().list(request, *args, **kwargs)
+        if response.status_code == 200:
+            count = response.data.get("count") if isinstance(response.data, dict) else None
+            self._audit_read(
+                "listed", "bulk",
+                outcome_description=f"list, count={count}" if count is not None else "list",
+            )
+        return response
+
+    def _audit_read(self, action_past_tense: str, resource_id: str, outcome_description: str = "") -> None:
+        tenant_id = getattr(self.request, "tenant_id", None)
+        if not tenant_id:
+            return
+        claims = getattr(self.request, "auth_claims", {}) or {}
+        actor_user_id = claims.get("sub", "")
+        if not actor_user_id:
+            return
+        from products.cymed.hospital.services import _write_audit
+
+        model_name = self.queryset.model.__name__
+        _write_audit(
+            tenant_id,
+            f"{model_name.lower()}.{action_past_tense}",
+            model_name,
+            resource_id,
+            actor_user_id,
+            action_verb="READ",
+            outcome_description=outcome_description,
+        )
