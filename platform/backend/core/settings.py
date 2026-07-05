@@ -348,6 +348,17 @@ CELERY_TASK_TRACK_STARTED = True
 CELERY_TASK_TIME_LIMIT = int(os.environ.get("CELERY_TASK_TIME_LIMIT", "300"))
 CELERY_WORKER_MAX_TASKS_PER_CHILD = 100
 
+# HIPAA 164.312(a)(2)(iii): automatic session termination after inactivity.
+# platform/cyidentity/services.py's SessionService.enforce_idle_timeout()
+# and its Celery task (cyidentity.enforce_idle_timeout) already existed but
+# were never scheduled anywhere -- real logic with zero real callers.
+CELERY_BEAT_SCHEDULE = {
+    "cyidentity-enforce-idle-timeout": {
+        "task": "cyidentity.enforce_idle_timeout",
+        "schedule": 300.0,  # every 5 minutes; threshold itself is 30 min (SessionService.IDLE_THRESHOLD_SECONDS)
+    },
+}
+
 # ---------------------------------------------------------------------------
 # KAFKA (ADR-0004)
 # ---------------------------------------------------------------------------

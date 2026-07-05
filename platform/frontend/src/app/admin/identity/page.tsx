@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import Head from "next/head";
+import { apiFetch } from "@/lib/api";
+import { useAuth } from "@/contexts/auth";
 
 // --- Types & Interfaces ---
 interface Realm {
@@ -81,6 +83,8 @@ interface AuditLog {
 }
 
 export default function IdentityAdminPortal() {
+  const { session: authSession } = useAuth();
+
   // --- Internationalization (EN / AR) ---
   const [lang, setLang] = useState<"en" | "ar">("en");
   const [theme, setTheme] = useState<"dark" | "light">("dark");
@@ -370,9 +374,26 @@ export default function IdentityAdminPortal() {
     notify("Session revoked.");
   };
 
-  const handleEnforceIdleTimeout = () => {
-    setSessions(sessions.map(s => ({ ...s, status: "idle_timeout" as const })));
-    notify("Idle timeouts enforced across all active sessions.");
+  const handleEnforceIdleTimeout = async () => {
+    if (!authSession) {
+      notify("Sign in required to call the real enforcement endpoint.");
+      return;
+    }
+    try {
+      const result = await apiFetch<{ revoked_count: number }>(
+        "/api/v1/identity/sessions/enforce-idle-timeout/",
+        { method: "POST", token: authSession.accessToken, tenantId: authSession.tenantId }
+      );
+      // Reflects the real response -- SessionService.enforce_idle_timeout()
+      // only revokes sessions actually past the 30-minute inactivity
+      // threshold, not every active session, so the local demo list here
+      // is refreshed to show that count, not force-marked wholesale.
+      setSessions(sessions.map((s, i) => i < result.revoked_count ? { ...s, status: "idle_timeout" as const } : s));
+      notify(`${result.revoked_count} idle session(s) revoked by the server.`);
+    } catch (err) {
+      const detail = (err as { detail?: string })?.detail;
+      notify(detail || "Failed to reach the idle-timeout enforcement endpoint.");
+    }
   };
 
   const handleApproveBreakGlass = (e: React.FormEvent) => {

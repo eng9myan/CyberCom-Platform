@@ -346,6 +346,23 @@ class UserProfileViewSet(viewsets.ModelViewSet):
         user.save(update_fields=["locked_until", "failed_login_count", "updated_at"])
         return Response(UserProfileSerializer(user).data)
 
+    @action(detail=True, methods=["post"], url_path="sync-mfa")
+    def sync_mfa(self, request, pk=None):
+        """
+        Refreshes mfa_enrolled/mfa_methods from Keycloak's real credential
+        store (see UserProvisioningService.sync_mfa_status) instead of
+        trusting whatever was last written here.
+        """
+        user = self.get_object()
+        try:
+            user = UserProvisioningService().sync_mfa_status(user)
+        except KeycloakError as exc:
+            return Response(
+                {"detail": str(exc), "keycloak_status": exc.status_code},
+                status=status.HTTP_502_BAD_GATEWAY,
+            )
+        return Response(UserProfileSerializer(user).data)
+
 
 # ---------------------------------------------------------------------------
 # Sessions

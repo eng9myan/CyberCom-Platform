@@ -1,7 +1,11 @@
+import logging
+
 import jwt
 from jwt import PyJWKClient, ExpiredSignatureError, InvalidTokenError
 from django.http import JsonResponse
 from django.conf import settings
+
+logger = logging.getLogger("cybercom.auth.session")
 
 # JWKS client is module-level so the key set is cached across requests.
 _jwks_client: PyJWKClient | None = None
@@ -33,6 +37,60 @@ class CyIdentityUser:
 
     def __str__(self):
         return str(self.id)
+
+
+def _sync_session(payload: dict) -> "object | None":
+    """
+    Makes the already-built SessionService/idle-timeout machinery
+    (platform/cyidentity/services.py) actually bite: touches (or creates)
+    a real UserSession row keyed on the JWT's `session_state` claim (the
+    Keycloak SSO session id) on every authenticated request, and returns
+    that session if it has already been marked revoked/idle_timeout --
+    e.g. by the `cyidentity.enforce_idle_timeout` Celery task -- so the
+    caller can reject the request even though the JWT itself is still
+    cryptographically valid until its own (short) expiry.
+
+    Deliberately fails open: any error here (missing realm, DB hiccup) is
+    logged and swallowed, never blocks authentication. This is a
+    defense-in-depth / audit feature layered on top of JWT validation,
+    not a replacement for it -- a bug here must never lock out every
+    authenticated request platform-wide.
+    """
+    try:
+        from platform.cyidentity.models import IdentityRealm, UserProfile, UserSession
+
+        session_state = payload.get("session_state")
+        sub = payload.get("sub")
+        if not session_state or not sub:
+            return None
+
+        issuer = payload.get("iss", "")
+        realm_name = issuer.rstrip("/").rsplit("/realms/", 1)[-1] if "/realms/" in issuer else None
+        realm = IdentityRealm.objects.filter(realm_name=realm_name).first() if realm_name else None
+        if realm is None:
+            return None
+
+        profile, _ = UserProfile.objects.get_or_create(
+            keycloak_user_id=sub,
+            defaults={
+                "realm": realm,
+                "tenant_id": payload.get("tenant_id") or realm.tenant_id,
+                "username": payload.get("preferred_username") or sub,
+                "email": payload.get("email", ""),
+            },
+        )
+        session, created = UserSession.objects.get_or_create(
+            keycloak_session_id=session_state,
+            defaults={"tenant_id": profile.tenant_id, "user": profile},
+        )
+        if session.status != "active":
+            return session
+        if not created:
+            session.touch()
+        return None
+    except Exception:
+        logger.exception("Session sync failed (non-fatal, request proceeds)")
+        return None
 
 
 class CyIdentityAuthMiddleware:
@@ -74,6 +132,13 @@ class CyIdentityAuthMiddleware:
                 issuer=settings.CYIDENTITY_ISSUER,
                 options={"require": ["exp", "iat", "sub"]},
             )
+            stale_session = _sync_session(payload)
+            if stale_session is not None:
+                return JsonResponse(
+                    {"detail": "Session has been revoked or timed out. Please sign in again."},
+                    status=401,
+                )
+
             request.auth_claims = payload
             request.user = CyIdentityUser(payload)
             request.user_session = {

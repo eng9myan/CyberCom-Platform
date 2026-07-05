@@ -165,11 +165,19 @@ class KeycloakAdminClient:
     """
 
     def __init__(self, realm: IdentityRealm | None = None):
-        self.base_url = (
-            realm.admin_api_url.rstrip("/")
-            if realm and realm.admin_api_url
-            else getattr(settings, "CYIDENTITY_ISSUER", "http://localhost:8080").rstrip("/")
-        )
+        if realm and realm.admin_api_url:
+            self.base_url = realm.admin_api_url.rstrip("/")
+        else:
+            # CYIDENTITY_ISSUER is a full issuer URL (e.g.
+            # "http://host:8080/realms/cybercom") -- the admin API root has
+            # no realm segment (admin token requests always go to
+            # /realms/master/..., and other calls prepend
+            # /admin/realms/{realm_name}/... themselves), so strip it back
+            # to the Keycloak root here. Previously this fell straight
+            # through with the realm segment still attached, producing
+            # broken double-realm URLs like ".../realms/cybercom/realms/master/...".
+            issuer = getattr(settings, "CYIDENTITY_ISSUER", "http://localhost:8080").rstrip("/")
+            self.base_url = issuer.split("/realms/")[0] if "/realms/" in issuer else issuer
         self.realm_name = realm.realm_name if realm else "master"
         self.admin_token: str | None = None
         self.timeout_seconds: int = 10
@@ -346,6 +354,27 @@ class KeycloakAdminClient:
             raise KeycloakError(
                 f"assign_role failed: {resp.status_code}", resp.status_code, resp.text
             )
+
+    def get_user_credential_types(self, realm_name: str, user_id: str) -> list[str]:
+        """
+        Real MFA status check: queries Keycloak's own credential store rather
+        than trusting a locally-set flag. Returns the distinct credential
+        `type` values Keycloak has on file for this user (e.g. "password",
+        "otp", "webauthn") -- "otp" present means TOTP is genuinely enrolled,
+        not just requested.
+        """
+        if not getattr(settings, "KEYCLOAK_ENABLED", True):
+            return []
+        import httpx  # type: ignore
+
+        url = f"{self.base_url}/admin/realms/{realm_name}/users/{user_id}/credentials"
+        resp = httpx.get(url, headers=self._auth_headers(), timeout=self.timeout_seconds)
+        if resp.status_code >= 400:
+            raise KeycloakError(
+                f"get_user_credential_types failed: {resp.status_code}", resp.status_code, resp.text
+            )
+        credentials = resp.json()
+        return sorted({c["type"] for c in credentials if "type" in c})
 
     # --- Helpers ------------------------------------------------------------
     def _auth_headers(self) -> dict[str, str]:
@@ -717,6 +746,22 @@ class UserProvisioningService:
             kind="permission",
             granted_by=granted_by,
         )
+
+    def sync_mfa_status(self, user: UserProfile) -> UserProfile:
+        """
+        Refreshes UserProfile.mfa_enrolled/mfa_methods from Keycloak's real
+        credential store, instead of leaving them as fields nothing ever
+        writes to. "otp" in the credential list means TOTP is genuinely
+        enrolled and verified by Keycloak -- not merely requested.
+        """
+        credential_types = self.kc.get_user_credential_types(
+            user.realm.realm_name, str(user.keycloak_user_id)
+        )
+        mfa_methods = [c for c in credential_types if c in ("otp", "webauthn")]
+        user.mfa_methods = mfa_methods
+        user.mfa_enrolled = len(mfa_methods) > 0
+        user.save(update_fields=["mfa_methods", "mfa_enrolled"])
+        return user
 
 
 # ---------------------------------------------------------------------------
