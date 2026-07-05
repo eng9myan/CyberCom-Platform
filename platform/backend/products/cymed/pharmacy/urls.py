@@ -10,6 +10,8 @@ urlpatterns = [
     path("prescriptions/", include("products.cymed.pharmacy.prescriptions.urls")),
     # Dispensing
     path("dispensing/", include("products.cymed.pharmacy.dispensing.urls")),
+    # Medication Administration Record (eMAR)
+    path("administration/", include("products.cymed.pharmacy.administration.urls")),
     # Clinical Pharmacy
     path("clinical/", include("products.cymed.pharmacy.clinical_pharmacy.urls")),
     # Medication Reconciliation

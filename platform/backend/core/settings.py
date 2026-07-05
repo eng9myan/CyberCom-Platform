@@ -159,6 +159,7 @@ PRODUCT_APPS = [
     # CyMed Pharmacy Edition (Program 3.5)
     "products.cymed.pharmacy.prescriptions",
     "products.cymed.pharmacy.dispensing",
+    "products.cymed.pharmacy.administration",
     "products.cymed.pharmacy.clinical_pharmacy",
     "products.cymed.pharmacy.medication_reconciliation",
     "products.cymed.pharmacy.drug_interactions",
