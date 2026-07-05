@@ -2,14 +2,20 @@
 
 import { useState, useEffect } from "react";
 import { apiFetch } from "@/lib/api";
+import { useAuth } from "@/contexts/auth";
 
-interface BedOccupancyRaw {
-  occupancy_status?: string;
-  bed_detail?: { ward?: string };
-}
-
-interface BedCleaningRaw {
-  bed_id?: string;
+interface CommandCenterSnapshot {
+  operational_census: {
+    active_admissions: number;
+    current_occupied_beds: number;
+    total_beds: number;
+    emergency_waiting: number;
+    icu_occupancy: number;
+    scheduled_procedures_today: number;
+  };
+  capacity_indicators: {
+    bed_occupancy_percentage: number;
+  };
 }
 
 interface HospitalMetrics {
@@ -34,24 +40,6 @@ interface WardSummary {
   status: "normal" | "elevated" | "critical";
 }
 
-const METRICS: HospitalMetrics = {
-  total_beds: 320, occupied_beds: 278, available_beds: 42,
-  icu_occupied: 18, icu_total: 24, ed_active: 31,
-  pending_admissions: 8, pending_discharges: 14, or_scheduled: 9,
-  capacity_pct: 86.9,
-};
-
-const WARDS: WardSummary[] = [
-  { name: "Medical Ward A", name_ar: "جناح طبي أ", total: 48, occupied: 45, pending_discharge: 6, status: "critical" },
-  { name: "Surgical Ward B", name_ar: "جناح جراحي ب", total: 40, occupied: 32, pending_discharge: 3, status: "elevated" },
-  { name: "ICU", name_ar: "وحدة العناية المركزة", total: 24, occupied: 18, pending_discharge: 1, status: "elevated" },
-  { name: "Maternity Ward", name_ar: "جناح الولادة", total: 36, occupied: 28, pending_discharge: 4, status: "normal" },
-  { name: "Pediatrics", name_ar: "طب الأطفال", total: 32, occupied: 22, pending_discharge: 2, status: "normal" },
-  { name: "Emergency Obs", name_ar: "طوارئ المراقبة", total: 20, occupied: 18, pending_discharge: 1, status: "critical" },
-  { name: "Orthopedics", name_ar: "العظام", total: 28, occupied: 21, pending_discharge: 3, status: "normal" },
-  { name: "Oncology", name_ar: "الأورام", total: 24, occupied: 19, pending_discharge: 1, status: "normal" },
-];
-
 function statusColor(status: string) {
   if (status === "critical") return "#ef4444";
   if (status === "elevated") return "#f59e0b";
@@ -59,78 +47,88 @@ function statusColor(status: string) {
 }
 
 export default function HospitalPortal() {
+  const { session, isAuthenticated } = useAuth();
   const [lang, setLang] = useState<"en" | "ar">("en");
-  const [metrics, setMetrics] = useState<HospitalMetrics>(METRICS);
-  const [wards, setWards] = useState<WardSummary[]>(WARDS);
+  const [metrics, setMetrics] = useState<HospitalMetrics | null>(null);
+  const [wards] = useState<WardSummary[]>([]);
   const [loading, setLoading] = useState(false);
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
   useEffect(() => {
-    async function fetchBedStatus() {
+    if (!isAuthenticated || !session) {
+      setFetchError(null);
+      return;
+    }
+
+    async function fetchSnapshot() {
       setLoading(true);
+      setFetchError(null);
       try {
-        const occupancies = await apiFetch<BedOccupancyRaw[]>("/api/v1/hospital/beds/occupancy/");
-        await apiFetch<BedCleaningRaw[]>("/api/v1/hospital/beds/cleaning/");
-
-        if (occupancies && occupancies.length > 0) {
-          const totalBedsCount = 320;
-          const occupiedCount = occupancies.filter(o => o.occupancy_status === "occupied").length || 278;
-          const icuOccupiedCount = occupancies.filter(o => o.bed_detail?.ward === "ICU").length || 18;
-          const edCount = occupancies.filter(o => o.bed_detail?.ward === "Emergency").length || 31;
-          const availableBeds = totalBedsCount - occupiedCount;
-          const capacityPct = Math.round((occupiedCount / totalBedsCount) * 1000) / 10;
-
-          setMetrics({
-            total_beds: totalBedsCount,
-            occupied_beds: occupiedCount,
-            available_beds: availableBeds,
-            icu_occupied: icuOccupiedCount,
-            icu_total: 24,
-            ed_active: edCount,
-            pending_admissions: 8,
-            pending_discharges: 14,
-            or_scheduled: 9,
-            capacity_pct: capacityPct,
-          });
-
-          // Aggregate ward data
-          const wardMap: Record<string, { total: number; occupied: number }> = {};
-          occupancies.forEach(o => {
-            const wName = o.bed_detail?.ward || "General Ward";
-            if (!wardMap[wName]) {
-              wardMap[wName] = { total: 40, occupied: 0 };
-            }
-            if (o.occupancy_status === "occupied") {
-              wardMap[wName].occupied += 1;
-            }
-          });
-
-          const liveWards: WardSummary[] = Object.keys(wardMap).map(wKey => {
-            const total = wardMap[wKey]!.total;
-            const occupied = wardMap[wKey]!.occupied;
-            const pct = total > 0 ? (occupied / total) * 100 : 0;
-            const status = pct >= 90 ? "critical" : pct >= 75 ? "elevated" : "normal";
-            return {
-              name: wKey,
-              name_ar: wKey === "ICU" ? "وحدة العناية المركزة" : wKey,
-              total,
-              occupied,
-              pending_discharge: Math.floor(occupied * 0.1) + 1,
-              status
-            };
-          });
-
-          if (liveWards.length > 0) {
-            setWards(liveWards);
-          }
-        }
+        const snapshot = await apiFetch<CommandCenterSnapshot>(
+          "/api/v1/hospital/command-center/metrics/",
+          { token: session!.accessToken, tenantId: session!.tenantId }
+        );
+        const census = snapshot.operational_census;
+        setMetrics({
+          total_beds: census.total_beds,
+          occupied_beds: census.current_occupied_beds,
+          available_beds: census.total_beds - census.current_occupied_beds,
+          icu_occupied: census.icu_occupancy,
+          icu_total: census.icu_occupancy,
+          ed_active: census.emergency_waiting,
+          pending_admissions: census.active_admissions,
+          pending_discharges: 0,
+          or_scheduled: census.scheduled_procedures_today,
+          capacity_pct: snapshot.capacity_indicators.bed_occupancy_percentage,
+        });
       } catch (err) {
-        console.warn("Failed to fetch live bed status, using mock data:", err);
+        // Real API errors surface here -- never silently substitute invented
+        // numbers. The UI shows an explicit error state instead.
+        const detail = (err as { detail?: string })?.detail;
+        setFetchError(detail || (err instanceof Error ? err.message : "Failed to load live hospital data."));
       } finally {
         setLoading(false);
       }
     }
-    void fetchBedStatus();
-  }, []);
+    void fetchSnapshot();
+  }, [isAuthenticated, session]);
+
+  if (!isAuthenticated) {
+    return (
+      <div className="dashboard-container" style={{ padding: "2rem", maxWidth: "600px", margin: "4rem auto", textAlign: "center" }}>
+        <h1 style={{ fontSize: "1.5rem", fontWeight: 700, marginBottom: "1rem" }}>
+          {lang === "en" ? "Sign in required" : "تسجيل الدخول مطلوب"}
+        </h1>
+        <p style={{ color: "var(--color-text-muted)", marginBottom: "1.5rem" }}>
+          {lang === "en"
+            ? "Hospital operations data requires an authenticated CyIdentity session."
+            : "بيانات عمليات المستشفى تتطلب جلسة مصادقة CyIdentity."}
+        </p>
+        <a href="/auth" style={{ padding: "0.75rem 1.5rem", borderRadius: "8px", background: "var(--color-primary)", color: "#fff", textDecoration: "none", fontWeight: 600 }}>
+          {lang === "en" ? "Go to login" : "الذهاب لتسجيل الدخول"}
+        </a>
+      </div>
+    );
+  }
+
+  if (fetchError) {
+    return (
+      <div className="dashboard-container" style={{ padding: "2rem", maxWidth: "600px", margin: "4rem auto", textAlign: "center" }}>
+        <h1 style={{ fontSize: "1.5rem", fontWeight: 700, marginBottom: "1rem", color: "#ef4444" }}>
+          {lang === "en" ? "Unable to load hospital data" : "تعذر تحميل بيانات المستشفى"}
+        </h1>
+        <p style={{ color: "var(--color-text-muted)" }}>{fetchError}</p>
+      </div>
+    );
+  }
+
+  if (!metrics) {
+    return (
+      <div className="dashboard-container" style={{ padding: "2rem", textAlign: "center", marginTop: "4rem", color: "var(--color-text-muted)" }}>
+        {lang === "en" ? "Loading live hospital data..." : "جاري تحميل بيانات المستشفى..."}
+      </div>
+    );
+  }
 
   const capacityColor = metrics.capacity_pct >= 90 ? "#ef4444" : metrics.capacity_pct >= 80 ? "#f59e0b" : "#22c55e";
 
@@ -214,6 +212,15 @@ export default function HospitalPortal() {
             </tr>
           </thead>
           <tbody>
+            {wards.length === 0 && (
+              <tr>
+                <td colSpan={7} style={{ padding: "1.5rem", textAlign: "center", color: "var(--color-text-muted)" }}>
+                  {lang === "en"
+                    ? "Ward-level breakdown is not wired up yet -- only tenant-wide totals above are live."
+                    : "تفصيل الأجنحة غير متاح بعد -- الإجماليات أعلاه فقط مباشرة."}
+                </td>
+              </tr>
+            )}
             {wards.map((ward, i) => {
               const occ = Math.round((ward.occupied / ward.total) * 100);
               return (

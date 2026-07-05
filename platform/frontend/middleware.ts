@@ -19,10 +19,9 @@ const PASSTHROUGH_PREFIXES = ["/_next", "/api", "/static", "/favicon.ico"];
 
 function resolveSubdomain(host: string | null): string | null {
   if (!host) return null;
-  const hostname = host.split(":")[0];
+  const hostname = host.split(":")[0] ?? host;
   // production: hospital.cy-com.com ; local dev: hospital.localhost
-  const parts = hostname.split(".");
-  const candidate = parts[0];
+  const candidate = hostname.split(".")[0] ?? "";
   return candidate in SUBDOMAIN_TO_PATH ? candidate : null;
 }
 
@@ -39,7 +38,7 @@ export function middleware(request: NextRequest) {
   }
 
   const productBasePath = SUBDOMAIN_TO_PATH[subdomain];
-  if (pathname.startsWith(productBasePath)) {
+  if (!productBasePath || pathname.startsWith(productBasePath)) {
     return NextResponse.next();
   }
 
