@@ -1,5 +1,5 @@
-import { Database } from '@watermelondb/watermelondb';
-import SQLiteAdapter from '@watermelondb/watermelondb/adapters/sqlite';
+import { Database } from '@nozbe/watermelondb';
+import SQLiteAdapter from '@nozbe/watermelondb/adapters/sqlite';
 
 // Placeholder representing SQLCipher encrypted local database initialization
 // The database is encrypted via AES-256 using key material fetched from the secure enclave keychain.
