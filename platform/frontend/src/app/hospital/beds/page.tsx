@@ -229,23 +229,6 @@ export default function BedsPage() {
         </div>
       </header>
 
-      {/* Navigation */}
-      <nav style={{ display: "flex", gap: "0.5rem", marginBottom: "2rem", flexWrap: "wrap" }}>
-        <a href="/hospital" style={{ padding: "0.5rem 1rem", borderRadius: "6px", background: "var(--color-surface)", border: "1px solid #22D3EE", color: "#22D3EE", textDecoration: "none", fontSize: "0.8rem", fontWeight: 600 }}>
-          ← {lang === "en" ? "Hospital Portal" : "بوابة المستشفى"}
-        </a>
-        {[
-          { href: "/hospital/adt", label: lang === "en" ? "ADT" : "القبول والخروج" },
-          { href: "/hospital/emergency", label: lang === "en" ? "Emergency" : "الطوارئ" },
-          { href: "/hospital/icu", label: lang === "en" ? "ICU" : "العناية المركزة" },
-          { href: "/hospital/operating-room", label: lang === "en" ? "Operating Room" : "غرفة العمليات" },
-          { href: "/hospital/command-center", label: lang === "en" ? "Command Center" : "مركز القيادة" },
-        ].map(item => (
-          <a key={item.href} href={item.href} style={{ padding: "0.5rem 1rem", borderRadius: "6px", background: "var(--color-surface)", border: "1px solid var(--color-border)", color: "var(--color-text)", textDecoration: "none", fontSize: "0.8rem", fontWeight: 500 }}>
-            {item.label}
-          </a>
-        ))}
-      </nav>
 
       {/* Global Summary Metrics */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: "1rem", marginBottom: "2rem" }}>

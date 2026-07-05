@@ -2338,6 +2338,31 @@ class HospitalOperationsService:
             "infection_control": hai_rates,
         }
 
+    @classmethod
+    def get_weekly_trend(cls, tenant_id: str, days: int = 7) -> list[dict]:
+        """
+        Real per-day admission/discharge counts for the trailing window --
+        backs the dashboard trend chart. No synthetic data: a day with zero
+        admissions reports 0, not an interpolated or invented value.
+        """
+        from products.cymed.hospital.adt.models import Admission, DischargeSummary
+
+        tenant_uuid = uuid.UUID(str(tenant_id))
+        today = timezone.now().date()
+        series = []
+        for offset in range(days - 1, -1, -1):
+            day = today - timezone.timedelta(days=offset)
+            admissions = Admission.objects.filter(
+                tenant_id=tenant_uuid, admitted_at__date=day
+            ).count()
+            discharges = DischargeSummary.objects.filter(
+                tenant_id=tenant_uuid, discharged_at__date=day
+            ).count()
+            series.append(
+                {"date": day.isoformat(), "admissions": admissions, "discharges": discharges}
+            )
+        return series
+
 
 # ─────────────────────────────────────────────────────────────────────────────
 # 11. Hospital AI Assistant — advisory-only natural-language Q&A over the

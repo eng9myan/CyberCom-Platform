@@ -24,6 +24,23 @@ class ClinicalCommandCenterMetricsView(APIView):
         return Response(HospitalOperationsService.get_snapshot(tenant_id))
 
 
+class ClinicalCommandCenterTrendView(APIView):
+    """
+    Real per-day admission/discharge counts for the trailing window --
+    backs the dashboard trend chart. No synthetic data.
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        tenant_id = getattr(request, "tenant_id", None)
+        if not tenant_id:
+            return Response({"detail": "Tenant context required"}, status=400)
+
+        days = int(request.query_params.get("days", 7))
+        return Response(HospitalOperationsService.get_weekly_trend(tenant_id, days=days))
+
+
 class HospitalAIAssistantView(APIView):
     """
     Natural-language Q&A over the hospital's real operational snapshot

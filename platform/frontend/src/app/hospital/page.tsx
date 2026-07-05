@@ -1,6 +1,16 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import {
+  ResponsiveContainer,
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+} from "recharts";
 import { apiFetch } from "@/lib/api";
 import { useAuth } from "@/contexts/auth";
 
@@ -16,6 +26,12 @@ interface CommandCenterSnapshot {
   capacity_indicators: {
     bed_occupancy_percentage: number;
   };
+}
+
+interface TrendPoint {
+  date: string;
+  admissions: number;
+  discharges: number;
 }
 
 interface HospitalMetrics {
@@ -50,6 +66,7 @@ export default function HospitalPortal() {
   const { session, isAuthenticated } = useAuth();
   const [lang, setLang] = useState<"en" | "ar">("en");
   const [metrics, setMetrics] = useState<HospitalMetrics | null>(null);
+  const [trend, setTrend] = useState<TrendPoint[] | null>(null);
   const [wards] = useState<WardSummary[]>([]);
   const [loading, setLoading] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
@@ -60,14 +77,20 @@ export default function HospitalPortal() {
       return;
     }
 
-    async function fetchSnapshot() {
+    async function fetchDashboardData() {
       setLoading(true);
       setFetchError(null);
       try {
-        const snapshot = await apiFetch<CommandCenterSnapshot>(
-          "/api/v1/hospital/command-center/metrics/",
-          { token: session!.accessToken, tenantId: session!.tenantId }
-        );
+        const [snapshot, trendSeries] = await Promise.all([
+          apiFetch<CommandCenterSnapshot>("/api/v1/hospital/command-center/metrics/", {
+            token: session!.accessToken,
+            tenantId: session!.tenantId,
+          }),
+          apiFetch<TrendPoint[]>("/api/v1/hospital/command-center/trend/", {
+            token: session!.accessToken,
+            tenantId: session!.tenantId,
+          }),
+        ]);
         const census = snapshot.operational_census;
         setMetrics({
           total_beds: census.total_beds,
@@ -81,6 +104,7 @@ export default function HospitalPortal() {
           or_scheduled: census.scheduled_procedures_today,
           capacity_pct: snapshot.capacity_indicators.bed_occupancy_percentage,
         });
+        setTrend(trendSeries);
       } catch (err) {
         // Real API errors surface here -- never silently substitute invented
         // numbers. The UI shows an explicit error state instead.
@@ -90,12 +114,12 @@ export default function HospitalPortal() {
         setLoading(false);
       }
     }
-    void fetchSnapshot();
+    void fetchDashboardData();
   }, [isAuthenticated, session]);
 
   if (!isAuthenticated) {
     return (
-      <div className="dashboard-container" style={{ padding: "2rem", maxWidth: "600px", margin: "4rem auto", textAlign: "center" }}>
+      <div style={{ padding: "2rem", maxWidth: "600px", margin: "4rem auto", textAlign: "center" }}>
         <h1 style={{ fontSize: "1.5rem", fontWeight: 700, marginBottom: "1rem" }}>
           {lang === "en" ? "Sign in required" : "تسجيل الدخول مطلوب"}
         </h1>
@@ -113,7 +137,7 @@ export default function HospitalPortal() {
 
   if (fetchError) {
     return (
-      <div className="dashboard-container" style={{ padding: "2rem", maxWidth: "600px", margin: "4rem auto", textAlign: "center" }}>
+      <div style={{ padding: "2rem", maxWidth: "600px", margin: "4rem auto", textAlign: "center" }}>
         <h1 style={{ fontSize: "1.5rem", fontWeight: 700, marginBottom: "1rem", color: "#ef4444" }}>
           {lang === "en" ? "Unable to load hospital data" : "تعذر تحميل بيانات المستشفى"}
         </h1>
@@ -124,7 +148,7 @@ export default function HospitalPortal() {
 
   if (!metrics) {
     return (
-      <div className="dashboard-container" style={{ padding: "2rem", textAlign: "center", marginTop: "4rem", color: "var(--color-text-muted)" }}>
+      <div style={{ padding: "2rem", textAlign: "center", marginTop: "4rem", color: "var(--color-text-muted)" }}>
         {lang === "en" ? "Loading live hospital data..." : "جاري تحميل بيانات المستشفى..."}
       </div>
     );
@@ -133,14 +157,15 @@ export default function HospitalPortal() {
   const capacityColor = metrics.capacity_pct >= 90 ? "#ef4444" : metrics.capacity_pct >= 80 ? "#f59e0b" : "#22c55e";
 
   return (
-    <div className="dashboard-container" style={{ padding: "2rem", maxWidth: "1200px", margin: "0 auto" }}>
-      <header className="dashboard-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "2rem" }}>
+    <div style={{ maxWidth: "1300px", margin: "0 auto" }}>
+      <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "2rem" }}>
         <div>
-          <h1 style={{ fontSize: "2rem", fontWeight: 700, color: "var(--color-primary)" }}>
-            {lang === "en" ? "CyMed Hospital" : "مستشفى سايمد"}
+          <h1 style={{ fontSize: "1.75rem", fontWeight: 700 }}>
+            {lang === "en" ? "Command Overview" : "نظرة عامة على القيادة"}
           </h1>
-          <p style={{ color: "var(--color-text-muted)", fontSize: "1rem", marginTop: "0.25rem" }}>
-            {lang === "en" ? "Hospital Operations Management" : "إدارة عمليات المستشفى"}
+          <p style={{ color: "var(--color-text-muted)", fontSize: "0.95rem", marginTop: "0.25rem" }}>
+            {lang === "en" ? "Live hospital operations" : "عمليات المستشفى المباشرة"}
+            {loading && <span style={{ marginLeft: "0.75rem" }}>Updating...</span>}
           </p>
         </div>
         <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
@@ -154,24 +179,8 @@ export default function HospitalPortal() {
         </div>
       </header>
 
-      {/* Navigation */}
-      <nav style={{ display: "flex", gap: "0.75rem", marginBottom: "2rem", flexWrap: "wrap" }}>
-        {[
-          { href: "/hospital/adt", label: lang === "en" ? "ADT" : "القبول والخروج" },
-          { href: "/hospital/beds", label: lang === "en" ? "Bed Management" : "إدارة الأسرة" },
-          { href: "/hospital/emergency", label: lang === "en" ? "Emergency" : "الطوارئ" },
-          { href: "/hospital/icu", label: lang === "en" ? "ICU" : "العناية المركزة" },
-          { href: "/hospital/operating-room", label: lang === "en" ? "Operating Room" : "غرفة العمليات" },
-          { href: "/hospital/command-center", label: lang === "en" ? "Command Center" : "مركز القيادة" },
-        ].map(item => (
-          <a key={item.href} href={item.href} style={{ padding: "0.6rem 1.2rem", borderRadius: "6px", background: "var(--color-surface)", border: "1px solid var(--color-border)", color: "var(--color-text)", textDecoration: "none", fontSize: "0.875rem", fontWeight: 600 }}>
-            {item.label}
-          </a>
-        ))}
-      </nav>
-
       {/* Key Metrics Row */}
-      <div className="metrics-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: "1rem", marginBottom: "2.5rem" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: "1rem", marginBottom: "2rem" }}>
         {[
           { label: lang === "en" ? "Total Beds" : "إجمالي الأسرة", value: metrics.total_beds, color: "#6366f1" },
           { label: lang === "en" ? "Occupied" : "مشغولة", value: metrics.occupied_beds, color: "#ef4444" },
@@ -189,10 +198,35 @@ export default function HospitalPortal() {
         ))}
       </div>
 
+      {/* Weekly Trend */}
+      <h2 style={{ fontSize: "1.15rem", fontWeight: 700, marginBottom: "1rem" }}>
+        {lang === "en" ? "Admissions vs. Discharges (7 days)" : "القبول مقابل الخروج (7 أيام)"}
+      </h2>
+      <div style={{ background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: "12px", padding: "1.25rem", marginBottom: "2.5rem", height: "300px" }}>
+        {trend && trend.length > 0 ? (
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={trend}>
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
+              <XAxis dataKey="date" stroke="var(--color-text-muted)" fontSize={12} />
+              <YAxis stroke="var(--color-text-muted)" fontSize={12} allowDecimals={false} />
+              <Tooltip
+                contentStyle={{ background: "var(--color-surface-elevated)", border: "1px solid var(--color-border)", borderRadius: "8px" }}
+              />
+              <Legend />
+              <Line type="monotone" dataKey="admissions" stroke="#6366f1" strokeWidth={2} name={lang === "en" ? "Admissions" : "القبول"} />
+              <Line type="monotone" dataKey="discharges" stroke="#14b8a6" strokeWidth={2} name={lang === "en" ? "Discharges" : "الخروج"} />
+            </LineChart>
+          </ResponsiveContainer>
+        ) : (
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", color: "var(--color-text-muted)" }}>
+            {lang === "en" ? "Loading trend data..." : "جاري تحميل بيانات الاتجاه..."}
+          </div>
+        )}
+      </div>
+
       {/* Ward Census */}
-      <h2 style={{ fontSize: "1.25rem", fontWeight: 700, marginBottom: "1.25rem" }}>
+      <h2 style={{ fontSize: "1.15rem", fontWeight: 700, marginBottom: "1rem" }}>
         {lang === "en" ? "Ward Census" : "إحصاء الأجنحة"}
-        {loading && <span style={{ marginLeft: "1rem", fontSize: "0.875rem", color: "var(--color-text-muted)", fontWeight: 400 }}>Updating...</span>}
       </h2>
       <div style={{ background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: "12px", overflow: "hidden", boxShadow: "0 4px 6px rgba(0, 0, 0, 0.05)" }}>
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
