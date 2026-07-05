@@ -2,6 +2,7 @@ from django.db import models
 from django.utils import timezone
 
 from platform.common.models import BaseModel, SoftDeleteMixin
+from platform.common.security.encryption import EncryptedTextField
 from products.cymed.core.encounters.models import Encounter
 from products.cymed.core.patients.models import Patient
 
@@ -109,7 +110,7 @@ class Observation(BaseModel):
     code = models.CharField(max_length=100, db_index=True)  # LOINC code
     display = models.CharField(max_length=255)
     value_quantity = models.DecimalField(max_digits=12, decimal_places=4, null=True, blank=True)
-    value_string = models.TextField(blank=True)
+    value_string = EncryptedTextField(blank=True)
     unit = models.CharField(max_length=50, blank=True)
     reference_range = models.CharField(max_length=100, blank=True)
     status = models.CharField(

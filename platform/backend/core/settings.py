@@ -31,6 +31,11 @@ SECURE_HSTS_PRELOAD = not DEBUG
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = "DENY"
 SECURE_REFERRER_POLICY = "strict-origin-when-cross-origin"
+# HIPAA Security Rule 164.312(e)(1) -- enforce TLS for all traffic in production.
+# Gated on DEBUG (not a separate env var) so local/dev HTTP keeps working without
+# extra config, matching the pattern already used for the other SECURE_* settings.
+SECURE_SSL_REDIRECT = not DEBUG
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https") if not DEBUG else None
 
 # ---------------------------------------------------------------------------
 # APPLICATIONS
@@ -303,6 +308,11 @@ DATABASES = {
         "OPTIONS": {
             "connect_timeout": 10,
             "options": "-c search_path=public",
+            # HIPAA Security Rule 164.312(e)(1) -- encrypt DB connections in
+            # transit. "disable" only for local dev containers without a
+            # cert; production must set DB_SSL_MODE=require (or verify-full
+            # once a CA cert is provisioned).
+            "sslmode": os.environ.get("DB_SSL_MODE", "disable" if DEBUG else "require"),
         },
         "CONN_MAX_AGE": int(os.environ.get("DB_CONN_MAX_AGE", "60")),
         "CONN_HEALTH_CHECKS": True,

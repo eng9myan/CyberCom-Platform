@@ -2,6 +2,11 @@ from django.db import models
 from django.utils import timezone
 
 from platform.common.models import BaseModel, SoftDeleteMixin
+from platform.common.security.encryption import (
+    EncryptedCharField,
+    EncryptedEmailField,
+    EncryptedTextField,
+)
 
 
 class GenderType(models.TextChoices):
@@ -60,7 +65,7 @@ class PatientContact(BaseModel):
             ("sms", "SMS"),
         ],
     )
-    telecom_value = models.CharField(max_length=255)
+    telecom_value = EncryptedCharField(max_length=500)
     use = models.CharField(
         max_length=20,
         choices=[("home", "Home"), ("work", "Work"), ("mobile", "Mobile"), ("old", "Old")],
@@ -73,11 +78,11 @@ class PatientContact(BaseModel):
 
 class PatientAddress(BaseModel):
     patient = models.ForeignKey(Patient, on_delete=models.CASCADE, related_name="addresses")
-    line1 = models.CharField(max_length=255)
-    line2 = models.CharField(max_length=255, blank=True)
-    city = models.CharField(max_length=100)
+    line1 = EncryptedCharField(max_length=500)
+    line2 = EncryptedCharField(max_length=500, blank=True)
+    city = EncryptedCharField(max_length=300)
     state = models.CharField(max_length=100, blank=True)
-    postal_code = models.CharField(max_length=20, blank=True)
+    postal_code = EncryptedCharField(max_length=200, blank=True)
     country = models.CharField(max_length=100)
     use = models.CharField(
         max_length=20,
@@ -103,10 +108,10 @@ class PatientEmergencyContact(BaseModel):
     patient = models.ForeignKey(
         Patient, on_delete=models.CASCADE, related_name="emergency_contacts"
     )
-    name = models.CharField(max_length=255)
+    name = EncryptedCharField(max_length=500)
     relationship_code = models.CharField(max_length=100)  # e.g., "spouse", "parent"
-    phone = models.CharField(max_length=50)
-    email = models.EmailField(blank=True)
+    phone = EncryptedCharField(max_length=200)
+    email = EncryptedEmailField(blank=True)
 
     class Meta:
         db_table = "cymed_patient_emergency_contacts"
@@ -114,10 +119,10 @@ class PatientEmergencyContact(BaseModel):
 
 class PatientRelationship(BaseModel):
     patient = models.ForeignKey(Patient, on_delete=models.CASCADE, related_name="relationships")
-    related_person_name = models.CharField(max_length=255)
+    related_person_name = EncryptedCharField(max_length=500)
     relationship_type = models.CharField(max_length=100)  # e.g., "relative", "guardian"
-    telecom = models.CharField(max_length=255, blank=True)
-    address = models.TextField(blank=True)
+    telecom = EncryptedCharField(max_length=500, blank=True)
+    address = EncryptedTextField(blank=True)
 
     class Meta:
         db_table = "cymed_patient_relationships"
