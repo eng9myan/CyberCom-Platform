@@ -1,7 +1,11 @@
+import time
 import uuid
 
 import jwt
 import pytest
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import rsa
+from django.conf import settings
 from django.utils import timezone
 from rest_framework.test import APIClient
 
@@ -34,9 +38,41 @@ def test_tenant_id():
     return uuid.uuid4()
 
 
+@pytest.fixture(scope="session")
+def _rsa_keypair():
+    """
+    A real RSA keypair used to sign test JWTs with RS256 -- CyIdentityAuthMiddleware
+    requires RS256 (real Keycloak tokens are RS256-signed); the old fixture used
+    HS256 with a dummy secret, which no real deployment's middleware ever accepts
+    (confirmed against a live Keycloak: it fails with "Unable to find a signing
+    key" / algorithm mismatch, not a network error as it appeared in a sandbox
+    with no reachable Keycloak at all).
+    """
+    private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+    public_pem = private_key.public_key().public_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PublicFormat.SubjectPublicKeyInfo,
+    )
+    return private_key, public_pem
+
+
 @pytest.fixture
-def auth_client(test_tenant_id):
+def auth_client(test_tenant_id, _rsa_keypair, monkeypatch):
+    from types import SimpleNamespace
+
+    private_key, public_pem = _rsa_keypair
+
+    # Bypass the real network JWKS fetch -- return our test keypair's public key instead,
+    # matching how CyIdentityAuthMiddleware's _get_jwks_client() would be used in production.
+    monkeypatch.setattr(
+        "shared.auth.auth_middleware._get_jwks_client",
+        lambda: SimpleNamespace(
+            get_signing_key_from_jwt=lambda token: SimpleNamespace(key=public_pem)
+        ),
+    )
+
     client = APIClient()
+    now = int(time.time())
     payload = {
         "sub": "33333333-3333-3333-3333-333333333333",
         "email": "doctor@cymed.io",
@@ -44,8 +80,12 @@ def auth_client(test_tenant_id):
         "realm_access": {"roles": ["platform_admin"]},
         "roles": ["platform_admin"],
         "permissions": ["read", "write"],
+        "iat": now,
+        "exp": now + 3600,
+        "aud": settings.CYIDENTITY_CLIENT_ID,
+        "iss": settings.CYIDENTITY_ISSUER,
     }
-    token = jwt.encode(payload, "dummy-secret", algorithm="HS256")
+    token = jwt.encode(payload, private_key, algorithm="RS256")
     client.credentials(
         HTTP_AUTHORIZATION=f"Bearer {token}",
         HTTP_X_TENANT_ID=str(test_tenant_id),
@@ -251,13 +291,29 @@ class TestHospitalEdition:
         )
         assert res_resp.status_code == 201
 
-        # Bed Cleaning
-        clean_resp = auth_client.post(
+        # Bed Cleaning -- raw POST is deliberately blocked (405) so cleaning always
+        # syncs core.facilities.Bed.status; must go through the request_cleaning action.
+        raw_clean_resp = auth_client.post(
             "/api/v1/hospital/beds/cleaning/",
             {"bed": bed.id, "status": "cleaning", "cleaner_name": "Maria"},
             format="json",
         )
+        assert raw_clean_resp.status_code == 405
+
+        clean_resp = auth_client.post(
+            "/api/v1/hospital/beds/cleaning/request_cleaning/",
+            {"bed_id": str(bed.id), "priority": "routine"},
+            format="json",
+        )
         assert clean_resp.status_code == 201
+        cleaning_id = clean_resp.data["id"]
+
+        complete_resp = auth_client.post(
+            f"/api/v1/hospital/beds/cleaning/{cleaning_id}/complete/",
+            {"cleaner_name": "Maria"},
+            format="json",
+        )
+        assert complete_resp.status_code == 200
 
         # Bed Maintenance
         maint_resp = auth_client.post(
@@ -271,13 +327,27 @@ class TestHospitalEdition:
         )
         assert maint_resp.status_code == 201
 
-        # Bed Blocking
-        block_resp = auth_client.post(
+        # Bed Blocking -- same raw-POST guard as cleaning.
+        raw_block_resp = auth_client.post(
             "/api/v1/hospital/beds/blocking/",
             {"bed": bed.id, "reason": "Infection control"},
             format="json",
         )
+        assert raw_block_resp.status_code == 405
+
+        block_resp = auth_client.post(
+            "/api/v1/hospital/beds/blocking/block/",
+            {"bed_id": str(bed.id), "reason": "Infection control", "blocked_by": str(uuid.uuid4())},
+            format="json",
+        )
         assert block_resp.status_code == 201
+        blocking_id = block_resp.data["id"]
+
+        unblock_resp = auth_client.post(
+            f"/api/v1/hospital/beds/blocking/{blocking_id}/unblock/",
+            format="json",
+        )
+        assert unblock_resp.status_code == 200
 
     def test_emergency_visit_triage_acuity_and_alerts(
         self, auth_client, test_tenant_id, setup_base_data

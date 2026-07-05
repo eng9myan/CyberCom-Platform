@@ -13,10 +13,37 @@ def _get_jwks_client() -> PyJWKClient:
     return _jwks_client
 
 
+class CyIdentityUser:
+    """
+    Lightweight authenticated-principal wrapper around a validated JWT's claims.
+    Not a Django ORM User -- CyIdentity/Keycloak is the identity source of
+    truth, there is no local user table to join against. str(request.user)
+    returns the Keycloak subject (UUID), matching the `str(request.user)`
+    convention used as the acting-user id throughout the product view layers.
+    """
+
+    is_authenticated = True
+    is_anonymous = False
+
+    def __init__(self, claims: dict):
+        self.claims = claims
+        self.id = claims.get("sub")
+        self.pk = self.id
+        self.email = claims.get("email")
+
+    def __str__(self):
+        return str(self.id)
+
+
 class CyIdentityAuthMiddleware:
     """
     Validates RS256 JWT tokens issued by CyIdentity/Keycloak via JWKS.
-    Injects request.user_session containing roles, permissions, and tenant ID.
+    Injects request.user_session containing roles, permissions, and tenant ID,
+    and sets request.user to a CyIdentityUser so DRF's IsAuthenticated (which
+    checks request.user.is_authenticated) recognizes the request as
+    authenticated -- Django's own AuthenticationMiddleware only ever produces
+    AnonymousUser here since there is no session, and DEFAULT_AUTHENTICATION_CLASSES
+    is intentionally empty (auth happens here, not in DRF).
     """
     def __init__(self, get_response):
         self.get_response = get_response
@@ -43,9 +70,12 @@ class CyIdentityAuthMiddleware:
                 token,
                 signing_key.key,
                 algorithms=['RS256'],
+                audience=settings.CYIDENTITY_CLIENT_ID,
+                issuer=settings.CYIDENTITY_ISSUER,
                 options={"require": ["exp", "iat", "sub"]},
             )
             request.auth_claims = payload
+            request.user = CyIdentityUser(payload)
             request.user_session = {
                 "user_id": payload.get("sub"),
                 "email": payload.get("email"),
