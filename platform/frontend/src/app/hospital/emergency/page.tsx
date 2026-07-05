@@ -1,74 +1,26 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { Siren } from "lucide-react";
 import { apiFetch } from "@/lib/api";
-
-// ─── Interfaces ──────────────────────────────────────────────────────────────
+import { useAuth } from "@/contexts/auth";
 
 type ESILevel = 1 | 2 | 3 | 4 | 5;
-type Disposition = "treat_and_release" | "admit" | "discharge" | "transfer" | "awaiting";
-type EDStatus = "awaiting_triage" | "in_triage" | "in_treatment" | "awaiting_results" | "boarding" | "ready_dc";
+type VisitStatus = "triage" | "fast_track" | "resuscitation" | "observation" | "admitted" | "discharged";
 
-interface EDPatient {
+interface EmergencyVisit {
   id: string;
-  mrn: string;
-  name: string;
-  name_ar: string;
-  age: number;
-  gender: "M" | "F";
-  esi: ESILevel;
-  chief_complaint: string;
-  chief_complaint_ar: string;
+  patient: string;
   arrival_time: string;
-  wait_minutes: number;
-  status: EDStatus;
-  disposition: Disposition;
-  physician?: string;
-  room?: string;
-  bp?: string;
-  hr?: number;
-  spo2?: number;
-  temp?: number;
+  arrival_method: string;
+  presenting_complaint: string;
+  status: VisitStatus;
 }
-
-interface EDMetrics {
-  total_patients: number;
-  awaiting_triage: number;
-  in_treatment: number;
-  boarding: number;
-  avg_wait_minutes: number;
-  esi1_count: number;
-  esi2_count: number;
-  esi3_count: number;
-  esi4_count: number;
-  esi5_count: number;
-  treated_last_hour: number;
-}
-
-// ─── Mock Data ────────────────────────────────────────────────────────────────
-
-const MOCK_PATIENTS: EDPatient[] = [
-  { id: "ED001", mrn: "MRN-30001", name: "Fahad Al-Qahtani", name_ar: "فهد القحطاني", age: 58, gender: "M", esi: 1, chief_complaint: "STEMI — Acute chest pain, radiating to left arm, diaphoresis", chief_complaint_ar: "احتشاء عضلة القلب — ألم صدري حاد يمتد للذراع الأيسر", arrival_time: "06:02", wait_minutes: 0, status: "in_treatment", disposition: "admit", physician: "Dr. Khalid Mansour", room: "Resus-1", bp: "90/60", hr: 112, spo2: 94, temp: 37.1 },
-  { id: "ED002", mrn: "MRN-30002", name: "Hessa Al-Enezi", name_ar: "حصة العنزي", age: 34, gender: "F", esi: 1, chief_complaint: "Anaphylaxis — generalized urticaria, bronchospasm post-bee sting", chief_complaint_ar: "صدمة تحسسية — شرى عام، تقلص قصبي بعد لسعة نحلة", arrival_time: "07:18", wait_minutes: 0, status: "in_treatment", disposition: "admit", physician: "Dr. Reem Al-Jabri", room: "Resus-2", bp: "80/50", hr: 128, spo2: 91, temp: 37.5 },
-  { id: "ED003", mrn: "MRN-30003", name: "Omar Al-Rasheed", name_ar: "عمر الرشيد", age: 72, gender: "M", esi: 2, chief_complaint: "Acute stroke — sudden right-sided weakness, speech slurring, 1.5h onset", chief_complaint_ar: "سكتة دماغية حادة — ضعف الجانب الأيمن، صعوبة نطق، منذ 1.5 ساعة", arrival_time: "06:45", wait_minutes: 5, status: "in_treatment", disposition: "admit", physician: "Dr. Basel Naser", room: "CT-Bay", bp: "178/100", hr: 88, spo2: 97, temp: 36.9 },
-  { id: "ED004", mrn: "MRN-30004", name: "Nadia Al-Zahrani", name_ar: "نادية الزهراني", age: 44, gender: "F", esi: 2, chief_complaint: "Hypertensive emergency — BP 220/130, severe headache, visual changes", chief_complaint_ar: "طوارئ ارتفاع الضغط — ضغط 220/130، صداع شديد، تغيرات بصرية", arrival_time: "07:30", wait_minutes: 3, status: "in_treatment", disposition: "admit", physician: "Dr. Khalid Mansour", room: "Bay-3", bp: "220/130", hr: 96, spo2: 99, temp: 36.8 },
-  { id: "ED005", mrn: "MRN-30005", name: "Salem Al-Dossari", name_ar: "سالم الدوسري", age: 29, gender: "M", esi: 2, chief_complaint: "Seizure — witnessed tonic-clonic, first episode, post-ictal", chief_complaint_ar: "نوبة صرع — شاهد عليها، أولى، مرحلة ما بعد النوبة", arrival_time: "07:55", wait_minutes: 8, status: "awaiting_results", disposition: "admit", physician: "Dr. Basel Naser", room: "Bay-5", bp: "135/85", hr: 102, spo2: 98, temp: 37.0 },
-  { id: "ED006", mrn: "MRN-30006", name: "Asmaa Al-Harbi", name_ar: "أسماء الحربي", age: 63, gender: "F", esi: 2, chief_complaint: "Acute pulmonary edema — severe dyspnea, bilateral crackles, reduced O2", chief_complaint_ar: "وذمة رئوية حادة — ضيق تنفسي شديد، فرقعة ثنائية", arrival_time: "08:10", wait_minutes: 0, status: "in_treatment", disposition: "admit", physician: "Dr. Reem Al-Jabri", room: "Bay-2", bp: "155/95", hr: 118, spo2: 88, temp: 36.7 },
-  { id: "ED007", mrn: "MRN-30007", name: "Tariq Bin Salim", name_ar: "طارق بن سالم", age: 47, gender: "M", esi: 3, chief_complaint: "Diabetic ketoacidosis — known T1DM, vomiting x 2 days, blood glucose 28", chief_complaint_ar: "حماض كيتوني سكري — سكري نوع 1، قيء يومين، جلوكوز 28", arrival_time: "07:00", wait_minutes: 22, status: "in_treatment", disposition: "admit", physician: "Dr. Khalid Mansour", room: "Bay-6", bp: "110/70", hr: 108, spo2: 97, temp: 37.2 },
-  { id: "ED008", mrn: "MRN-30008", name: "Rania Al-Khatib", name_ar: "رانيا الخطيب", age: 28, gender: "F", esi: 3, chief_complaint: "Appendicitis — RLQ pain, nausea, fever, positive Rovsing's", chief_complaint_ar: "التهاب الزائدة الدودية — ألم ربع سفلي أيمن، غثيان، حمى", arrival_time: "07:40", wait_minutes: 35, status: "awaiting_results", disposition: "admit", physician: "Dr. Tariq Farouk", room: "Bay-8", bp: "120/78", hr: 95, spo2: 99, temp: 38.3 },
-  { id: "ED009", mrn: "MRN-30009", name: "Jassim Al-Sulaiti", name_ar: "جاسم السليطي", age: 55, gender: "M", esi: 3, chief_complaint: "Chest pain — atypical, rule out ACS, troponin pending", chief_complaint_ar: "ألم صدري غير نمطي، استبعاد متلازمة تاجية، انتظار تروبونين", arrival_time: "08:00", wait_minutes: 42, status: "awaiting_results", disposition: "awaiting", physician: "Dr. Khalid Mansour", room: "Bay-7", bp: "140/88", hr: 82, spo2: 98, temp: 36.9 },
-  { id: "ED010", mrn: "MRN-30010", name: "Mona Al-Sabah", name_ar: "منى الصباح", age: 38, gender: "F", esi: 3, chief_complaint: "Urinary tract infection with fever, possible pyelonephritis", chief_complaint_ar: "التهاب مسالك بولية مع حمى، احتمال التهاب حويضة", arrival_time: "08:25", wait_minutes: 18, status: "in_treatment", disposition: "treat_and_release", physician: "Dr. Lina Qasim", room: "Bay-9", bp: "118/76", hr: 98, spo2: 99, temp: 38.7 },
-  { id: "ED011", mrn: "MRN-30011", name: "Turki Al-Mutairi", name_ar: "تركي المطيري", age: 67, gender: "M", esi: 2, chief_complaint: "GI bleed — hematemesis, melena, known peptic ulcer disease", chief_complaint_ar: "نزيف معدي معوي — قيء دموي، براز أسود، قرحة هضمية", arrival_time: "08:45", wait_minutes: 0, status: "in_treatment", disposition: "admit", physician: "Dr. Tariq Farouk", room: "Bay-4", bp: "96/58", hr: 122, spo2: 96, temp: 36.6 },
-  { id: "ED012", mrn: "MRN-30012", name: "Wafa Al-Balushi", name_ar: "وفاء البلوشي", age: 22, gender: "F", esi: 4, chief_complaint: "Migraine — recurrent severe headache, photophobia, nausea", chief_complaint_ar: "صداع نصفي — صداع شديد متكرر، رهاب الضوء، غثيان", arrival_time: "09:00", wait_minutes: 65, status: "in_treatment", disposition: "treat_and_release", physician: "Dr. Lina Qasim", room: "Bay-10", bp: "115/72", hr: 78, spo2: 99, temp: 36.8 },
-  { id: "ED013", mrn: "MRN-30013", name: "Fahad Al-Ruwaili", name_ar: "فهد الرويلي", age: 33, gender: "M", esi: 3, chief_complaint: "Asthma exacerbation — moderate, PEFR 55%, nebulized treatment underway", chief_complaint_ar: "نوبة ربو متوسطة، ذروة تدفق 55%، علاج استنشاقي جارٍ", arrival_time: "09:10", wait_minutes: 25, status: "in_treatment", disposition: "awaiting", physician: "Dr. Reem Al-Jabri", room: "Bay-11", bp: "128/82", hr: 104, spo2: 93, temp: 37.1 },
-  { id: "ED014", mrn: "MRN-30014", name: "Dalal Al-Najdi", name_ar: "دلال النجدي", age: 51, gender: "F", esi: 2, chief_complaint: "Septic shock — fever 39.8, hypotension, altered consciousness, source unknown", chief_complaint_ar: "صدمة إنتانية — حمى 39.8، انخفاض ضغط، اضطراب وعي", arrival_time: "09:20", wait_minutes: 0, status: "in_treatment", disposition: "admit", physician: "Dr. Khalid Mansour", room: "Resus-3", bp: "82/48", hr: 134, spo2: 93, temp: 39.8 },
-  { id: "ED015", mrn: "MRN-30015", name: "Hussain Al-Bakr", name_ar: "حسين البكر", age: 41, gender: "M", esi: 3, chief_complaint: "Renal colic — left flank pain, hematuria, stone on ultrasound", chief_complaint_ar: "مغص كلوي — ألم خاصرة يسار، بول دموي، حصى في الصدى", arrival_time: "09:35", wait_minutes: 45, status: "in_treatment", disposition: "treat_and_release", physician: "Dr. Tariq Farouk", room: "Bay-12", bp: "130/84", hr: 88, spo2: 99, temp: 37.0 },
-  { id: "ED016", mrn: "MRN-30016", name: "Latifa Al-Mansouri", name_ar: "لطيفة المنصوري", age: 78, gender: "F", esi: 2, chief_complaint: "Fall and hip injury — right hip pain, unable to bear weight, ?NOF", chief_complaint_ar: "سقوط وإصابة ورك — ألم ورك أيمن، عدم القدرة على الوقوف", arrival_time: "09:40", wait_minutes: 12, status: "awaiting_results", disposition: "admit", physician: "Dr. Samer Khalil", room: "Xray-Bay", bp: "145/88", hr: 92, spo2: 97, temp: 36.7 },
-  { id: "ED017", mrn: "MRN-30017", name: "Naif Al-Qahtani", name_ar: "نايف القحطاني", age: 19, gender: "M", esi: 4, chief_complaint: "Laceration — 4cm right forearm from glass, requires suturing", chief_complaint_ar: "جرح — 4 سم في الساعد الأيمن من الزجاج، يحتاج خياطة", arrival_time: "09:50", wait_minutes: 80, status: "awaiting_triage", disposition: "treat_and_release" },
-  { id: "ED018", mrn: "MRN-30018", name: "Aisha Al-Najjar", name_ar: "عائشة النجار", age: 3, gender: "F", esi: 2, chief_complaint: "Paediatric ingestion — suspected medication ingestion, 3-year-old, drowsy", chief_complaint_ar: "ابتلاع دواء مشتبه به لطفلة 3 سنوات، نعاس", arrival_time: "10:00", wait_minutes: 5, status: "in_triage", disposition: "admit", physician: "Dr. Lina Qasim", room: "Paeds-Bay" },
-  { id: "ED019", mrn: "MRN-30019", name: "Walid Al-Ghamdi", name_ar: "وليد الغامدي", age: 45, gender: "M", esi: 2, chief_complaint: "Boarding — admitted to Medical Ward A, awaiting bed", chief_complaint_ar: "انتظار قبول في الجناح الطبي أ", arrival_time: "06:00", wait_minutes: 270, status: "boarding", disposition: "admit", physician: "Dr. Khalid Mansour", room: "Boarding" },
-  { id: "ED020", mrn: "MRN-30020", name: "Nura Al-Harbi", name_ar: "نورة الحربي", age: 62, gender: "F", esi: 3, chief_complaint: "Boarding — awaiting surgical ward bed post-admission", chief_complaint_ar: "انتظار سرير في الجناح الجراحي بعد القبول", arrival_time: "05:30", wait_minutes: 295, status: "boarding", disposition: "admit", physician: "Dr. Tariq Farouk", room: "Boarding" },
-];
+interface EmergencyTriage { id: string; visit: string; esi_level: ESILevel; chief_complaint: string; logged_at: string; }
+interface EmergencyObservation { id: string; visit: string; observed_at: string; systolic_bp: number; diastolic_bp: number; heart_rate: number; resp_rate: number; temp_c: string; o2_sat: number; }
+interface EmergencyTracking { id: string; visit: string; location_label: string; left_at: string | null; }
+interface Patient { id: string; first_name: string; last_name: string; mrn: string; dob: string; gender: string; }
+interface Paginated<T> { count: number; results: T[]; }
 
 const ESI_COLORS: Record<ESILevel, { bg: string; text: string; border: string; label: string }> = {
   1: { bg: "#1f0808", border: "#dc2626", text: "#fca5a5", label: "ESI-1 Resuscitation" },
@@ -78,272 +30,240 @@ const ESI_COLORS: Record<ESILevel, { bg: string; text: string; border: string; l
   5: { bg: "#0a0a1a", border: "#3b82f6", text: "#93c5fd", label: "ESI-5 Non-Urgent" },
 };
 
-const STATUS_LABELS: Record<EDStatus, { en: string; ar: string; color: string }> = {
-  awaiting_triage:   { en: "Awaiting Triage",   ar: "انتظار الفرز",      color: "#f59e0b" },
-  in_triage:         { en: "In Triage",          ar: "قيد الفرز",         color: "#f97316" },
-  in_treatment:      { en: "In Treatment",       ar: "تحت العلاج",        color: "#22D3EE" },
-  awaiting_results:  { en: "Awaiting Results",   ar: "انتظار النتائج",    color: "#6366f1" },
-  boarding:          { en: "Boarding",           ar: "انتظار سرير",       color: "#ef4444" },
-  ready_dc:          { en: "Ready DC",           ar: "جاهز للخروج",       color: "#22c55e" },
+const STATUS_LABELS: Record<VisitStatus, { en: string; ar: string; color: string }> = {
+  triage: { en: "Triage", ar: "الفرز", color: "#f59e0b" },
+  fast_track: { en: "Fast Track", ar: "المسار السريع", color: "#3b82f6" },
+  resuscitation: { en: "Resuscitation", ar: "إنعاش", color: "#ef4444" },
+  observation: { en: "Observation", ar: "ملاحظة", color: "#22D3EE" },
+  admitted: { en: "Admitted", ar: "مقبول", color: "#8b5cf6" },
+  discharged: { en: "Discharged", ar: "خروج", color: "#22c55e" },
 };
 
-const DISPOSITION_LABELS: Record<Disposition, { en: string; ar: string }> = {
-  treat_and_release: { en: "Treat & Release", ar: "علاج وخروج" },
-  admit:             { en: "Admit",            ar: "قبول" },
-  discharge:         { en: "Discharge",        ar: "خروج" },
-  transfer:          { en: "Transfer",         ar: "نقل" },
-  awaiting:          { en: "Awaiting",         ar: "انتظار قرار" },
-};
-
-// ─── Component ────────────────────────────────────────────────────────────────
+function calcAge(dob: string): number {
+  const birth = new Date(dob);
+  const now = new Date();
+  let age = now.getFullYear() - birth.getFullYear();
+  if (now.getMonth() < birth.getMonth() || (now.getMonth() === birth.getMonth() && now.getDate() < birth.getDate())) age--;
+  return age;
+}
 
 export default function EmergencyPage() {
+  const { session, isAuthenticated } = useAuth();
   const [lang, setLang] = useState<"en" | "ar">("en");
-  const [patients, setPatients] = useState<EDPatient[]>(MOCK_PATIENTS);
-  const [loading, setLoading] = useState(false);
+  const [visits, setVisits] = useState<EmergencyVisit[] | null>(null);
+  const [triages, setTriages] = useState<EmergencyTriage[]>([]);
+  const [observations, setObservations] = useState<EmergencyObservation[]>([]);
+  const [tracking, setTracking] = useState<EmergencyTracking[]>([]);
+  const [patients, setPatients] = useState<Patient[]>([]);
+  const [fetchError, setFetchError] = useState<string | null>(null);
   const [filterESI, setFilterESI] = useState<ESILevel | "all">("all");
-  const [filterStatus, setFilterStatus] = useState<EDStatus | "all">("all");
-  const [selectedPatient, setSelectedPatient] = useState<EDPatient | null>(null);
-
-  useEffect(() => {
-    async function fetchData() {
-      setLoading(true);
-      try {
-        const data = await apiFetch<EDPatient[]>("/api/v1/hospital/emergency/patients/");
-        if (data && data.length > 0) setPatients(data);
-      } catch {
-        // silently use mock data
-      } finally {
-        setLoading(false);
-      }
-    }
-    void fetchData();
-  }, []);
-
+  const [filterStatus, setFilterStatus] = useState<VisitStatus | "all">("all");
+  const [selectedVisit, setSelectedVisit] = useState<EmergencyVisit | null>(null);
   const dir = lang === "ar" ? "rtl" : "ltr";
 
-  const metrics: EDMetrics = {
-    total_patients: patients.length,
-    awaiting_triage: patients.filter(p => p.status === "awaiting_triage" || p.status === "in_triage").length,
-    in_treatment: patients.filter(p => p.status === "in_treatment" || p.status === "awaiting_results").length,
-    boarding: patients.filter(p => p.status === "boarding").length,
-    avg_wait_minutes: Math.round(patients.reduce((sum, p) => sum + p.wait_minutes, 0) / patients.length),
-    esi1_count: patients.filter(p => p.esi === 1).length,
-    esi2_count: patients.filter(p => p.esi === 2).length,
-    esi3_count: patients.filter(p => p.esi === 3).length,
-    esi4_count: patients.filter(p => p.esi === 4).length,
-    esi5_count: patients.filter(p => p.esi === 5).length,
-    treated_last_hour: 7,
-  };
+  const loadData = useCallback(async () => {
+    if (!session) return;
+    setFetchError(null);
+    try {
+      const opts = { token: session.accessToken, tenantId: session.tenantId };
+      const [visitPage, triagePage, obsPage, trackingPage, patientPage] = await Promise.all([
+        apiFetch<Paginated<EmergencyVisit>>("/api/v1/hospital/emergency/visits/", opts),
+        apiFetch<Paginated<EmergencyTriage>>("/api/v1/hospital/emergency/triage/", opts),
+        apiFetch<Paginated<EmergencyObservation>>("/api/v1/hospital/emergency/observations/", opts),
+        apiFetch<Paginated<EmergencyTracking>>("/api/v1/hospital/emergency/tracking/", opts),
+        apiFetch<Paginated<Patient>>("/api/v1/patients/", opts),
+      ]);
+      setVisits(visitPage.results);
+      setTriages(triagePage.results);
+      setObservations(obsPage.results);
+      setTracking(trackingPage.results);
+      setPatients(patientPage.results);
+    } catch (err) {
+      const detail = (err as { detail?: string })?.detail;
+      setFetchError(detail || (err instanceof Error ? err.message : "Failed to load emergency department data."));
+    }
+  }, [session]);
 
-  let filtered = patients;
-  if (filterESI !== "all") filtered = filtered.filter(p => p.esi === filterESI);
-  if (filterStatus !== "all") filtered = filtered.filter(p => p.status === filterStatus);
+  useEffect(() => { void loadData(); }, [loadData]);
+
+  if (!isAuthenticated) {
+    return <div style={{ padding: "2rem", textAlign: "center", marginTop: "4rem" }}><h1 style={{ fontWeight: 700, fontSize: "1.25rem" }}>Sign in required</h1></div>;
+  }
+  if (fetchError) {
+    return <div style={{ padding: "2rem", textAlign: "center", marginTop: "4rem" }}><h1 style={{ fontWeight: 700, fontSize: "1.25rem", color: "#ef4444" }}>Unable to load emergency department data</h1><p style={{ color: "var(--color-text-muted)" }}>{fetchError}</p></div>;
+  }
+  if (visits === null) {
+    return <div style={{ padding: "2rem", textAlign: "center", marginTop: "4rem", color: "var(--color-text-muted)" }}>Loading live ED data...</div>;
+  }
+
+  const activeVisits = visits.filter(v => v.status !== "discharged");
+  const patientFor = (id: string) => patients.find(p => p.id === id);
+  const triageFor = (visitId: string) => triages.find(t => t.visit === visitId);
+  const latestObsFor = (visitId: string) => observations.filter(o => o.visit === visitId).sort((a, b) => b.observed_at.localeCompare(a.observed_at))[0];
+  const locationFor = (visitId: string) => tracking.filter(t => t.visit === visitId && !t.left_at)[0]?.location_label;
+  const waitMinutes = (arrivalTime: string) => Math.round((Date.now() - new Date(arrivalTime).getTime()) / (1000 * 60));
+
+  const esiCounts: Record<ESILevel, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 };
+  for (const v of activeVisits) {
+    const esi = triageFor(v.id)?.esi_level;
+    if (esi) esiCounts[esi]++;
+  }
+  const avgWait = activeVisits.length ? Math.round(activeVisits.reduce((s, v) => s + waitMinutes(v.arrival_time), 0) / activeVisits.length) : 0;
+
+  let filtered = activeVisits;
+  if (filterESI !== "all") filtered = filtered.filter(v => triageFor(v.id)?.esi_level === filterESI);
+  if (filterStatus !== "all") filtered = filtered.filter(v => v.status === filterStatus);
 
   return (
-    <div dir={dir} style={{ padding: "2rem", maxWidth: "1400px", margin: "0 auto" }}>
-      {/* Header */}
-      <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
+    <div dir={dir} style={{ maxWidth: "1400px", margin: "0 auto" }}>
+      <header className="mb-6 flex items-center justify-between">
         <div>
-          <h1 style={{ fontSize: "1.75rem", fontWeight: 700, color: "#22D3EE", margin: 0 }}>
-            {lang === "en" ? "Emergency Department" : "قسم الطوارئ"}
-          </h1>
-          <p style={{ color: "var(--color-text-muted)", fontSize: "0.9rem", marginTop: "0.25rem" }}>
-            {lang === "en" ? "Live patient census, triage, and disposition tracking" : "جرد المرضى الفوري والفرز وتتبع الوجهة"}
-          </p>
+          <h1 className="flex items-center gap-2 text-2xl font-bold"><Siren size={22} /> {lang === "en" ? "Emergency Department" : "قسم الطوارئ"}</h1>
+          <p className="mt-1 text-sm text-white/50">{lang === "en" ? "Live patient census, triage, and disposition tracking" : "جرد المرضى الفوري والفرز وتتبع الوجهة"}</p>
         </div>
-        <div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
-          {metrics.boarding > 0 && (
-            <div style={{ background: "#1f0a0a", border: "2px solid #ef4444", borderRadius: "8px", padding: "0.4rem 0.875rem" }}>
-              <span style={{ fontSize: "0.8rem", fontWeight: 700, color: "#ef4444" }}>⚠ {metrics.boarding} {lang === "en" ? "Boarding" : "انتظار"}</span>
-            </div>
-          )}
-          {loading && <span style={{ fontSize: "0.8rem", color: "var(--color-text-muted)" }}>Syncing...</span>}
-          <button
-            onClick={() => setLang(l => l === "en" ? "ar" : "en")}
-            style={{ padding: "0.5rem 1rem", borderRadius: "8px", border: "1px solid var(--color-border)", cursor: "pointer", background: "var(--color-surface)", color: "var(--color-text)", fontSize: "0.875rem", fontWeight: 500 }}
-          >
-            {lang === "en" ? "العربية" : "English"}
-          </button>
-        </div>
+        <button onClick={() => setLang(l => l === "en" ? "ar" : "en")} className="rounded-lg border border-white/10 bg-surface-overlay px-4 py-2 text-sm font-medium hover:bg-white/5">
+          {lang === "en" ? "العربية" : "English"}
+        </button>
       </header>
 
-
-      {/* Metrics Row */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: "1rem", marginBottom: "2rem" }}>
+      <div className="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
         {[
-          { label: lang === "en" ? "Total Patients" : "إجمالي المرضى", value: metrics.total_patients, color: "#22D3EE" },
-          { label: lang === "en" ? "Awaiting Triage" : "انتظار الفرز", value: metrics.awaiting_triage, color: "#f59e0b" },
-          { label: lang === "en" ? "In Treatment" : "تحت العلاج", value: metrics.in_treatment, color: "#22c55e" },
-          { label: lang === "en" ? "Boarding" : "انتظار سرير", value: metrics.boarding, color: "#ef4444" },
-          { label: lang === "en" ? "Avg Wait (min)" : "متوسط الانتظار (دقيقة)", value: metrics.avg_wait_minutes, color: "#6366f1" },
-          { label: lang === "en" ? "Treated/Hour" : "علاج/الساعة", value: metrics.treated_last_hour, color: "#22c55e" },
+          { label: lang === "en" ? "Active Patients" : "مرضى نشطون", value: activeVisits.length, color: "#22D3EE" },
+          { label: lang === "en" ? "Triage" : "الفرز", value: activeVisits.filter(v => v.status === "triage").length, color: "#f59e0b" },
+          { label: lang === "en" ? "Resuscitation" : "إنعاش", value: activeVisits.filter(v => v.status === "resuscitation").length, color: "#ef4444" },
+          { label: lang === "en" ? "Avg Wait (min)" : "متوسط الانتظار", value: avgWait, color: "#6366f1" },
         ].map(card => (
-          <div key={card.label} style={{ background: "var(--color-surface)", border: `1px solid ${card.color}44`, borderRadius: "12px", padding: "1.25rem", textAlign: "center" }}>
-            <div style={{ fontSize: "2rem", fontWeight: 800, color: card.color }}>{card.value}</div>
-            <div style={{ fontSize: "0.78rem", color: "var(--color-text-muted)", marginTop: "0.25rem", fontWeight: 500 }}>{card.label}</div>
+          <div key={card.label} className="rounded-xl border p-4 text-center" style={{ background: "var(--color-surface)", borderColor: `${card.color}44` }}>
+            <div className="text-2xl font-bold" style={{ color: card.color }}>{card.value}</div>
+            <div className="mt-1 text-xs text-white/50">{card.label}</div>
           </div>
         ))}
       </div>
 
-      {/* ESI Level Summary */}
-      <div style={{ background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: "12px", padding: "1.25rem", marginBottom: "2rem" }}>
-        <h3 style={{ fontSize: "0.9rem", fontWeight: 700, color: "var(--color-text-muted)", marginBottom: "1rem" }}>
-          {lang === "en" ? "ESI Triage Level Distribution" : "توزيع مستويات الفرز"}
-        </h3>
-        <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
+      <div className="mb-6 rounded-xl border border-white/10 bg-surface-raised p-5">
+        <h3 className="mb-3 text-sm font-semibold text-white/50">{lang === "en" ? "ESI Triage Level Distribution" : "توزيع مستويات الفرز"}</h3>
+        <div className="flex flex-wrap gap-3">
           {([1, 2, 3, 4, 5] as ESILevel[]).map(level => {
             const esi = ESI_COLORS[level];
-            const count = [metrics.esi1_count, metrics.esi2_count, metrics.esi3_count, metrics.esi4_count, metrics.esi5_count][level - 1];
             return (
-              <div key={level} style={{ background: esi.bg, border: `2px solid ${esi.border}`, borderRadius: "10px", padding: "0.75rem 1.25rem", textAlign: "center", minWidth: "110px" }}>
-                <div style={{ fontSize: "1.5rem", fontWeight: 800, color: esi.text }}>{count}</div>
-                <div style={{ fontSize: "0.7rem", color: esi.text, opacity: 0.85, fontWeight: 600, marginTop: "2px" }}>
-                  {lang === "en" ? esi.label : `مستوى ${level}`}
-                </div>
+              <div key={level} className="min-w-[110px] rounded-lg border-2 p-3 text-center" style={{ background: esi.bg, borderColor: esi.border }}>
+                <div className="text-xl font-bold" style={{ color: esi.text }}>{esiCounts[level]}</div>
+                <div className="mt-0.5 text-xs font-semibold opacity-85" style={{ color: esi.text }}>{lang === "en" ? esi.label : `مستوى ${level}`}</div>
               </div>
             );
           })}
         </div>
       </div>
 
-      {/* Filter Row */}
-      <div style={{ display: "flex", gap: "1rem", marginBottom: "1rem", flexWrap: "wrap", alignItems: "center" }}>
-        <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap" }}>
-          <span style={{ fontSize: "0.78rem", fontWeight: 600, color: "var(--color-text-muted)", alignSelf: "center" }}>ESI:</span>
+      <div className="mb-4 flex flex-wrap items-center gap-4">
+        <div className="flex flex-wrap gap-1.5">
+          <span className="self-center text-xs font-semibold text-white/50">ESI:</span>
           {(["all", 1, 2, 3, 4, 5] as (ESILevel | "all")[]).map(e => (
-            <button key={e} onClick={() => setFilterESI(e)} style={{ padding: "0.3rem 0.75rem", borderRadius: "20px", border: filterESI === e ? "2px solid #22D3EE" : "1px solid var(--color-border)", background: filterESI === e ? "#22D3EE22" : "var(--color-surface)", color: filterESI === e ? "#22D3EE" : "var(--color-text-muted)", fontWeight: 600, fontSize: "0.78rem", cursor: "pointer" }}>
+            <button key={e} onClick={() => setFilterESI(e)} className={`rounded-full px-3 py-1 text-xs font-semibold ${filterESI === e ? "border-2 border-brand-400 bg-brand-500/15 text-brand-200" : "border border-white/10 bg-surface-overlay text-white/50"}`}>
               {e === "all" ? (lang === "en" ? "All" : "الكل") : `ESI ${e}`}
             </button>
           ))}
         </div>
-        <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap" }}>
-          <span style={{ fontSize: "0.78rem", fontWeight: 600, color: "var(--color-text-muted)", alignSelf: "center" }}>{lang === "en" ? "Status:" : "الحالة:"}</span>
-          {(["all", "awaiting_triage", "in_treatment", "boarding"] as (EDStatus | "all")[]).map(s => (
-            <button key={s} onClick={() => setFilterStatus(s)} style={{ padding: "0.3rem 0.75rem", borderRadius: "20px", border: filterStatus === s ? "2px solid #22D3EE" : "1px solid var(--color-border)", background: filterStatus === s ? "#22D3EE22" : "var(--color-surface)", color: filterStatus === s ? "#22D3EE" : "var(--color-text-muted)", fontWeight: 600, fontSize: "0.78rem", cursor: "pointer" }}>
-              {s === "all" ? (lang === "en" ? "All" : "الكل") : STATUS_LABELS[s]?.[lang] ?? s}
+        <div className="flex flex-wrap gap-1.5">
+          <span className="self-center text-xs font-semibold text-white/50">{lang === "en" ? "Status:" : "الحالة:"}</span>
+          {(["all", "triage", "resuscitation", "observation", "admitted"] as (VisitStatus | "all")[]).map(s => (
+            <button key={s} onClick={() => setFilterStatus(s)} className={`rounded-full px-3 py-1 text-xs font-semibold ${filterStatus === s ? "border-2 border-brand-400 bg-brand-500/15 text-brand-200" : "border border-white/10 bg-surface-overlay text-white/50"}`}>
+              {s === "all" ? (lang === "en" ? "All" : "الكل") : STATUS_LABELS[s].en}
             </button>
           ))}
         </div>
       </div>
 
-      {/* Patient Table */}
-      <div style={{ background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: "12px", overflow: "auto" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse", minWidth: "950px" }}>
-          <thead>
-            <tr style={{ borderBottom: "2px solid var(--color-border)" }}>
-              {[
-                lang === "en" ? "ESI" : "المستوى",
-                lang === "en" ? "Patient" : "المريض",
-                lang === "en" ? "Age/Sex" : "العمر/الجنس",
-                lang === "en" ? "Chief Complaint" : "الشكوى الرئيسية",
-                lang === "en" ? "Arrival" : "الوصول",
-                lang === "en" ? "Wait" : "الانتظار",
-                lang === "en" ? "Status" : "الحالة",
-                lang === "en" ? "Room" : "الغرفة",
-                lang === "en" ? "Vitals" : "العلامات الحيوية",
-                lang === "en" ? "Disposition" : "الوجهة",
-              ].map(h => (
-                <th key={h} style={{ padding: "0.875rem 1rem", textAlign: "left", fontSize: "0.78rem", fontWeight: 600, color: "var(--color-text-muted)" }}>{h}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map((p, i) => {
-              const esi = ESI_COLORS[p.esi];
-              const stl = STATUS_LABELS[p.status];
-              const disp = DISPOSITION_LABELS[p.disposition];
-              return (
-                <tr
-                  key={p.id}
-                  onClick={() => setSelectedPatient(selectedPatient?.id === p.id ? null : p)}
-                  style={{ borderBottom: "1px solid var(--color-border)", background: selectedPatient?.id === p.id ? "#22D3EE11" : i % 2 === 0 ? "transparent" : "rgba(255,255,255,0.02)", cursor: "pointer" }}
-                >
-                  <td style={{ padding: "0.75rem 1rem" }}>
-                    <div style={{ background: esi.bg, border: `2px solid ${esi.border}`, borderRadius: "6px", padding: "0.2rem 0.5rem", textAlign: "center", display: "inline-block", minWidth: "44px" }}>
-                      <span style={{ fontSize: "0.8rem", fontWeight: 800, color: esi.text }}>ESI {p.esi}</span>
-                    </div>
-                  </td>
-                  <td style={{ padding: "0.75rem 1rem" }}>
-                    <div style={{ fontWeight: 600, color: "var(--color-text)", fontSize: "0.875rem" }}>{lang === "ar" ? p.name_ar : p.name}</div>
-                    <div style={{ fontSize: "0.72rem", color: "var(--color-text-muted)" }}>{p.mrn}</div>
-                  </td>
-                  <td style={{ padding: "0.75rem 1rem", fontSize: "0.875rem", color: "var(--color-text)", whiteSpace: "nowrap" }}>
-                    {p.age}y {p.gender === "M" ? (lang === "en" ? "M" : "ذ") : (lang === "en" ? "F" : "أ")}
-                  </td>
-                  <td style={{ padding: "0.75rem 1rem", fontSize: "0.8rem", color: "var(--color-text-muted)", maxWidth: "220px" }}>
-                    {lang === "ar" ? p.chief_complaint_ar : p.chief_complaint}
-                  </td>
-                  <td style={{ padding: "0.75rem 1rem", fontSize: "0.8rem", color: "var(--color-text)", whiteSpace: "nowrap" }}>{p.arrival_time}</td>
-                  <td style={{ padding: "0.75rem 1rem", fontSize: "0.875rem", fontWeight: 700, color: p.wait_minutes > 120 ? "#ef4444" : p.wait_minutes > 60 ? "#f59e0b" : "#22c55e", whiteSpace: "nowrap" }}>
-                    {p.wait_minutes > 0 ? `${p.wait_minutes}m` : "<1m"}
-                  </td>
-                  <td style={{ padding: "0.75rem 1rem" }}>
-                    <span style={{ padding: "0.2rem 0.6rem", borderRadius: "20px", fontSize: "0.72rem", fontWeight: 700, background: stl.color + "22", color: stl.color, whiteSpace: "nowrap" }}>
-                      {stl[lang]}
-                    </span>
-                  </td>
-                  <td style={{ padding: "0.75rem 1rem", fontSize: "0.8rem", color: "#22D3EE", fontWeight: 600 }}>{p.room ?? "—"}</td>
-                  <td style={{ padding: "0.75rem 1rem", fontSize: "0.75rem", color: "var(--color-text-muted)", whiteSpace: "nowrap" }}>
-                    {p.bp ? (
-                      <div>
-                        <div>BP: <span style={{ color: p.hr && p.hr > 110 ? "#f59e0b" : "var(--color-text)" }}>{p.bp}</span></div>
-                        <div>HR: <span style={{ color: p.hr && p.hr > 110 ? "#f59e0b" : "var(--color-text)" }}>{p.hr}</span></div>
-                        {p.spo2 && <div>SpO2: <span style={{ color: p.spo2 < 94 ? "#ef4444" : "var(--color-text)" }}>{p.spo2}%</span></div>}
-                      </div>
-                    ) : "—"}
-                  </td>
-                  <td style={{ padding: "0.75rem 1rem" }}>
-                    <span style={{ padding: "0.2rem 0.6rem", borderRadius: "20px", fontSize: "0.72rem", fontWeight: 600, background: "rgba(255,255,255,0.06)", color: "var(--color-text-muted)", whiteSpace: "nowrap" }}>
-                      {disp[lang]}
-                    </span>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+      <div className="overflow-hidden rounded-xl border border-white/10 bg-surface-raised">
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[900px] border-collapse text-sm">
+            <thead>
+              <tr className="border-b border-white/10 bg-white/5">
+                {["ESI", lang === "en" ? "Patient" : "المريض", lang === "en" ? "Age/Sex" : "العمر/الجنس", lang === "en" ? "Complaint" : "الشكوى", lang === "en" ? "Wait" : "الانتظار", lang === "en" ? "Status" : "الحالة", lang === "en" ? "Location" : "الموقع", lang === "en" ? "Vitals" : "العلامات"].map(h => (
+                  <th key={h} className="px-4 py-3 text-left font-semibold text-white/50">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.length === 0 && (
+                <tr><td colSpan={8} className="px-4 py-6 text-center text-white/50">No active ED patients for this filter.</td></tr>
+              )}
+              {filtered.map(v => {
+                const patient = patientFor(v.patient);
+                const triage = triageFor(v.id);
+                const obs = latestObsFor(v.id);
+                const stl = STATUS_LABELS[v.status];
+                const wait = waitMinutes(v.arrival_time);
+                return (
+                  <tr key={v.id} onClick={() => setSelectedVisit(selectedVisit?.id === v.id ? null : v)} className={`cursor-pointer border-b border-white/5 ${selectedVisit?.id === v.id ? "bg-brand-500/10" : ""}`}>
+                    <td className="px-4 py-3">
+                      {triage ? (
+                        <div className="inline-block min-w-[44px] rounded-md border-2 px-2 py-0.5 text-center" style={{ background: ESI_COLORS[triage.esi_level].bg, borderColor: ESI_COLORS[triage.esi_level].border }}>
+                          <span className="text-xs font-bold" style={{ color: ESI_COLORS[triage.esi_level].text }}>ESI {triage.esi_level}</span>
+                        </div>
+                      ) : "—"}
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="font-medium">{patient ? `${patient.first_name} ${patient.last_name}` : "Unknown"}</div>
+                      <div className="text-xs text-white/50">{patient?.mrn}</div>
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap text-white/60">{patient ? `${calcAge(patient.dob)}y ${patient.gender[0]?.toUpperCase()}` : "—"}</td>
+                    <td className="max-w-[220px] px-4 py-3 text-xs text-white/60">{v.presenting_complaint}</td>
+                    <td className="px-4 py-3 font-semibold whitespace-nowrap" style={{ color: wait > 120 ? "#ef4444" : wait > 60 ? "#f59e0b" : "#22c55e" }}>{wait}m</td>
+                    <td className="px-4 py-3">
+                      <span className="whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-bold" style={{ background: `${stl.color}22`, color: stl.color }}>{lang === "en" ? stl.en : stl.ar}</span>
+                    </td>
+                    <td className="px-4 py-3 font-semibold text-brand-300">{locationFor(v.id) ?? "—"}</td>
+                    <td className="px-4 py-3 text-xs text-white/50">
+                      {obs ? (
+                        <div>
+                          <div>BP: {obs.systolic_bp}/{obs.diastolic_bp}</div>
+                          <div>HR: {obs.heart_rate}</div>
+                          <div style={{ color: obs.o2_sat < 94 ? "#ef4444" : undefined }}>SpO2: {obs.o2_sat}%</div>
+                        </div>
+                      ) : "—"}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
       </div>
 
-      {/* Patient Detail Panel */}
-      {selectedPatient && (
-        <div style={{ marginTop: "1.5rem", background: "var(--color-surface)", border: `2px solid ${ESI_COLORS[selectedPatient.esi].border}`, borderRadius: "12px", padding: "1.5rem" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "1rem" }}>
-            <div>
-              <h2 style={{ fontSize: "1.1rem", fontWeight: 700, color: "var(--color-text)", margin: "0 0 0.25rem 0" }}>
-                {lang === "ar" ? selectedPatient.name_ar : selectedPatient.name} — {selectedPatient.mrn}
-              </h2>
-              <p style={{ fontSize: "0.8rem", color: "var(--color-text-muted)", margin: 0 }}>
-                {lang === "ar" ? selectedPatient.chief_complaint_ar : selectedPatient.chief_complaint}
-              </p>
-            </div>
-            <button onClick={() => setSelectedPatient(null)} style={{ background: "none", border: "none", color: "var(--color-text-muted)", cursor: "pointer", fontSize: "1.5rem", lineHeight: 1 }}>×</button>
-          </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: "1rem" }}>
-            {selectedPatient.bp && [
-              { label: "BP", value: selectedPatient.bp },
-              { label: "HR", value: `${selectedPatient.hr} bpm` },
-              { label: "SpO2", value: `${selectedPatient.spo2}%` },
-              { label: lang === "en" ? "Temp" : "الحرارة", value: `${selectedPatient.temp}°C` },
-              { label: lang === "en" ? "Room" : "الغرفة", value: selectedPatient.room ?? "—" },
-              { label: lang === "en" ? "Physician" : "الطبيب", value: selectedPatient.physician ?? "—" },
-            ].map(item => (
-              <div key={item.label} style={{ background: "rgba(255,255,255,0.04)", borderRadius: "8px", padding: "0.75rem 1rem" }}>
-                <div style={{ fontSize: "0.72rem", color: "var(--color-text-muted)", marginBottom: "0.25rem" }}>{item.label}</div>
-                <div style={{ fontSize: "1rem", fontWeight: 700, color: "var(--color-text)" }}>{item.value}</div>
+      {selectedVisit && (() => {
+        const patient = patientFor(selectedVisit.patient);
+        const triage = triageFor(selectedVisit.id);
+        const obs = latestObsFor(selectedVisit.id);
+        return (
+          <div className="mt-6 rounded-xl border-2 bg-surface-raised p-6" style={{ borderColor: triage ? ESI_COLORS[triage.esi_level].border : "var(--color-border)" }}>
+            <div className="mb-4 flex items-start justify-between">
+              <div>
+                <h2 className="text-lg font-semibold">{patient ? `${patient.first_name} ${patient.last_name} — ${patient.mrn}` : "Unknown patient"}</h2>
+                <p className="mt-1 text-sm text-white/50">{selectedVisit.presenting_complaint}</p>
               </div>
-            ))}
+              <button onClick={() => setSelectedVisit(null)} className="text-2xl leading-none text-white/50 hover:text-white">×</button>
+            </div>
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
+              {obs && [
+                { label: "BP", value: `${obs.systolic_bp}/${obs.diastolic_bp}` },
+                { label: "HR", value: `${obs.heart_rate} bpm` },
+                { label: "SpO2", value: `${obs.o2_sat}%` },
+                { label: "Temp", value: `${obs.temp_c}°C` },
+              ].map(item => (
+                <div key={item.label} className="rounded-lg bg-white/5 p-3">
+                  <div className="text-xs text-white/50">{item.label}</div>
+                  <div className="text-base font-semibold">{item.value}</div>
+                </div>
+              ))}
+            </div>
+            <div className="mt-4 flex gap-3">
+              <a href="/hospital/adt" className="rounded-lg bg-brand-500 px-4 py-2 text-sm font-semibold hover:bg-brand-600">{lang === "en" ? "Admit to Ward" : "قبول في الجناح"}</a>
+              <a href="/hospital/beds" className="rounded-lg border border-brand-400 bg-brand-500/10 px-4 py-2 text-sm font-semibold text-brand-200 hover:bg-brand-500/20">{lang === "en" ? "Find Bed" : "البحث عن سرير"}</a>
+            </div>
           </div>
-          <div style={{ display: "flex", gap: "0.75rem", marginTop: "1rem" }}>
-            <a href="/hospital/adt" style={{ padding: "0.5rem 1.25rem", background: "#22D3EE", color: "#0f172a", borderRadius: "8px", fontWeight: 700, fontSize: "0.83rem", textDecoration: "none" }}>
-              {lang === "en" ? "Admit to Ward" : "قبول في الجناح"}
-            </a>
-            <a href="/hospital/beds" style={{ padding: "0.5rem 1.25rem", background: "rgba(34,211,238,0.12)", border: "1px solid #22D3EE", color: "#22D3EE", borderRadius: "8px", fontWeight: 700, fontSize: "0.83rem", textDecoration: "none" }}>
-              {lang === "en" ? "Find Bed" : "البحث عن سرير"}
-            </a>
-          </div>
-        </div>
-      )}
+        );
+      })()}
     </div>
   );
 }

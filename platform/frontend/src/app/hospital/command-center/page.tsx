@@ -1,339 +1,274 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { LayoutDashboard, Send } from "lucide-react";
 import { apiFetch } from "@/lib/api";
+import { useAuth } from "@/contexts/auth";
 
-// ─── Interfaces ──────────────────────────────────────────────────────────────
+interface CapacityRule { id: string; rule_name: string; metric_source: string; threshold_value: number; action_plan_name: string; }
+interface CapacityThreshold { id: string; rule: string; current_value: number; status_level: "normal" | "warning" | "critical"; updated_at: string; }
+interface SurgePlan { id: string; name: string; trigger_condition: string; allocated_beds_count: number; is_active: boolean; }
+interface OverflowUnit { id: string; name: string; temporary_capacity: number; current_occupancy: number; is_open: boolean; }
+interface Paginated<T> { count: number; results: T[]; }
 
-type AlertSeverity = "critical" | "high" | "medium" | "low";
-type AlertStatus = "active" | "acknowledged" | "resolved";
-
-interface CapacityAlert {
-  id: string;
-  category: string;
-  category_ar: string;
-  title: string;
-  title_ar: string;
-  description: string;
-  description_ar: string;
-  severity: AlertSeverity;
-  status: AlertStatus;
-  ward?: string;
-  ward_ar?: string;
-  value?: number;
-  threshold?: number;
-  unit?: string;
-  time_raised: string;
-  owner: string;
+interface CommandCenterSnapshot {
+  operational_census: {
+    active_admissions: number;
+    current_occupied_beds: number;
+    total_beds: number;
+    emergency_waiting: number;
+    icu_occupancy: number;
+    scheduled_procedures_today: number;
+  };
+  capacity_indicators: { bed_occupancy_percentage: number };
 }
 
-interface PendingAction {
-  id: string;
-  action: string;
-  action_ar: string;
-  patient?: string;
-  patient_ar?: string;
-  mrn?: string;
-  ward: string;
-  ward_ar: string;
-  priority: "urgent" | "routine" | "deferred";
-  due: string;
-  assigned_to: string;
-  completed: boolean;
-}
+interface AskResult { answer: string; }
 
-interface KPI {
-  label: string;
-  label_ar: string;
-  value: string | number;
-  unit?: string;
-  trend: "up" | "down" | "stable";
-  trend_value: string;
-  good_direction: "up" | "down";
-  color: string;
-}
-
-// ─── Mock Data ────────────────────────────────────────────────────────────────
-
-const MOCK_ALERTS: CapacityAlert[] = [
-  { id: "ALT001", category: "Capacity", category_ar: "الطاقة", title: "Medical Ward A — Critical Occupancy", title_ar: "الجناح الطبي أ — إشغال حرج", description: "Medical Ward A is at 95% occupancy (19/20 beds). No available beds for new admissions.", description_ar: "الجناح الطبي أ عند 95% إشغال (19/20 سرير). لا أسرة متاحة.", severity: "critical", status: "active", ward: "Medical Ward A", ward_ar: "الجناح الطبي أ", value: 95, threshold: 90, unit: "%", time_raised: "2026-06-30 08:10", owner: "Bed Management" },
-  { id: "ALT002", category: "Capacity", category_ar: "الطاقة", title: "Emergency Obs — Full Capacity", title_ar: "طوارئ المراقبة — مكتملة", description: "Emergency Observation is at 100% capacity. 3 ED patients boarding, awaiting ward beds.", description_ar: "طوارئ المراقبة مكتملة. 3 مرضى طوارئ ينتظرون أسرة في الأجنحة.", severity: "critical", status: "active", ward: "Emergency Obs", ward_ar: "طوارئ المراقبة", value: 100, threshold: 90, unit: "%", time_raised: "2026-06-30 07:45", owner: "Emergency Dept" },
-  { id: "ALT003", category: "Discharge", category_ar: "الخروج", title: "14 Pending Discharges — >6 Hours", title_ar: "14 خروجاً معلقاً أكثر من 6 ساعات", description: "14 patients have discharge orders older than 6 hours pending. Bed turnover is delayed.", description_ar: "14 مريضاً لديهم أوامر خروج منذ أكثر من 6 ساعات معلقة.", severity: "high", status: "active", value: 14, threshold: 10, unit: "patients", time_raised: "2026-06-30 07:00", owner: "Discharge Coordination" },
-  { id: "ALT004", category: "Emergency", category_ar: "الطوارئ", title: "ED Boarding: 6 Patients Awaiting Admission", title_ar: "6 مرضى طوارئ ينتظرون القبول", description: "6 ED patients have been boarded for over 4 hours. Average boarding time: 5.2 hours.", description_ar: "6 مرضى في الطوارئ ينتظرون منذ أكثر من 4 ساعات. متوسط وقت الانتظار: 5.2 ساعة.", severity: "high", status: "acknowledged", value: 5.2, threshold: 4, unit: "hours", time_raised: "2026-06-30 05:30", owner: "ED Charge Nurse" },
-  { id: "ALT005", category: "OR", category_ar: "غرفة العمليات", title: "OR-4 Schedule Delay — 45 Minutes", title_ar: "تأخر برنامج غرفة العمليات 4 — 45 دقيقة", description: "OR Room 4 is running 45 minutes behind schedule. 2 afternoon cases affected.", description_ar: "غرفة العمليات 4 متأخرة 45 دقيقة عن البرنامج. 2 حالات بعد الظهر متأثرة.", severity: "medium", status: "active", ward: "OR Block", ward_ar: "وحدة العمليات", value: 45, threshold: 30, unit: "min delay", time_raised: "2026-06-30 09:00", owner: "OR Coordinator" },
-  { id: "ALT006", category: "ICU", category_ar: "العناية المركزة", title: "ICU at 87.5% — Approaching Threshold", title_ar: "العناية المركزة عند 87.5% — نحو العتبة الحرجة", description: "ICU is at 87.5% occupancy (21/24 beds). Consider step-down protocols.", description_ar: "العناية المركزة عند 87.5% (21/24 سرير). يُوصى بتطبيق بروتوكول التنزيل.", severity: "medium", status: "active", ward: "ICU", ward_ar: "العناية المركزة", value: 87.5, threshold: 85, unit: "%", time_raised: "2026-06-30 08:30", owner: "ICU Charge Nurse" },
-  { id: "ALT007", category: "Staffing", category_ar: "الكوادر", title: "Night Shift Nurse Shortage — Medical Ward B", title_ar: "نقص ممرضات ليلي — الجناح الطبي ب", description: "Night shift on Medical Ward B is 2 nurses short of required ratio.", description_ar: "نوبة الليل في الجناح الطبي ب تفتقر لممرضتين عن النسبة المطلوبة.", severity: "medium", status: "acknowledged", time_raised: "2026-06-30 06:00", owner: "Nursing Supervisor" },
-  { id: "ALT008", category: "Throughput", category_ar: "الإنتاجية", title: "Radiology Turnaround > 90 min", title_ar: "وقت استجابة الأشعة أكثر من 90 دقيقة", description: "Average radiology report turnaround has risen to 92 minutes. Target is <60 minutes.", description_ar: "متوسط وقت استجابة الأشعة ارتفع إلى 92 دقيقة. الهدف أقل من 60 دقيقة.", severity: "low", status: "resolved", value: 92, threshold: 60, unit: "minutes", time_raised: "2026-06-30 07:20", owner: "Radiology Dept" },
-];
-
-const MOCK_ACTIONS: PendingAction[] = [
-  { id: "ACT001", action: "Expedite discharge — Ibrahim Al-Shammari", action_ar: "تسريع خروج إبراهيم الشمري", patient: "Ibrahim Al-Shammari", patient_ar: "إبراهيم الشمري", mrn: "MRN-09812", ward: "Medical Ward A", ward_ar: "الجناح الطبي أ", priority: "urgent", due: "10:00", assigned_to: "Dr. Khalid Mansour", completed: false },
-  { id: "ACT002", action: "Identify step-down candidate from ICU", action_ar: "تحديد مرشح للتنزيل من العناية المركزة", ward: "ICU", ward_ar: "العناية المركزة", priority: "urgent", due: "11:00", assigned_to: "Dr. Reem Al-Jabri", completed: false },
-  { id: "ACT003", action: "Arrange transfer of 3 ED boarding patients", action_ar: "ترتيب نقل 3 مرضى طوارئ منتظرين", ward: "Emergency Obs", ward_ar: "طوارئ المراقبة", priority: "urgent", due: "10:30", assigned_to: "Bed Management Team", completed: false },
-  { id: "ACT004", action: "Schedule Environmental Services for Ward A beds", action_ar: "جدولة خدمات البيئة لأسرة الجناح أ", ward: "Medical Ward A", ward_ar: "الجناح الطبي أ", priority: "routine", due: "12:00", assigned_to: "EVS Supervisor", completed: false },
-  { id: "ACT005", action: "Reassign OR-4 afternoon cases to OR-6", action_ar: "إعادة جدولة حالات غرفة 4 إلى غرفة 6", ward: "OR Block", ward_ar: "وحدة العمليات", priority: "urgent", due: "11:30", assigned_to: "OR Coordinator", completed: false },
-  { id: "ACT006", action: "Obtain Discharge orders — Maryam Al-Balushi", action_ar: "الحصول على أوامر خروج مريم البلوشي", patient: "Maryam Al-Balushi", patient_ar: "مريم البلوشي", mrn: "MRN-09956", ward: "Maternity Ward", ward_ar: "جناح الولادة", priority: "routine", due: "12:00", assigned_to: "Dr. Nour Al-Hassan", completed: true },
-  { id: "ACT007", action: "Request additional portering for patient transfers", action_ar: "طلب عمال نقل إضافيين", ward: "All Wards", ward_ar: "جميع الأجنحة", priority: "routine", due: "14:00", assigned_to: "Patient Services", completed: false },
-  { id: "ACT008", action: "Night shift coverage — Medical Ward B", action_ar: "تغطية نوبة ليلي — الجناح الطبي ب", ward: "Medical Ward B", ward_ar: "الجناح الطبي ب", priority: "deferred", due: "18:00", assigned_to: "Nursing Supervisor", completed: false },
-];
-
-const MOCK_KPIS: KPI[] = [
-  { label: "Overall Capacity", label_ar: "الطاقة الكلية", value: 86.9, unit: "%", trend: "up", trend_value: "+2.1% vs yesterday", good_direction: "down", color: "#f59e0b" },
-  { label: "ED Door-to-Doctor", label_ar: "وقت الطوارئ للطبيب", value: 38, unit: "min", trend: "down", trend_value: "-5 min vs last week", good_direction: "down", color: "#22c55e" },
-  { label: "ED Boarding Time", label_ar: "وقت انتظار الطوارئ", value: "5.2", unit: "hrs avg", trend: "up", trend_value: "+1.1h vs target", good_direction: "down", color: "#ef4444" },
-  { label: "Discharge Before Noon", label_ar: "خروج قبل الظهر", value: 42, unit: "%", trend: "down", trend_value: "-8% vs target (60%)", good_direction: "up", color: "#ef4444" },
-  { label: "ALOS (All Wards)", label_ar: "متوسط مدة الإقامة", value: 4.3, unit: "days", trend: "stable", trend_value: "Target ≤4.5 days", good_direction: "down", color: "#22c55e" },
-  { label: "OR Utilization", label_ar: "استخدام غرف العمليات", value: 78, unit: "%", trend: "down", trend_value: "-4% from target (85%)", good_direction: "up", color: "#f59e0b" },
-  { label: "Patient Throughput", label_ar: "معدل إنجاز المرضى", value: 31, unit: "today", trend: "up", trend_value: "+3 vs yesterday", good_direction: "up", color: "#22c55e" },
-  { label: "Pending Discharges", label_ar: "خروج معلق", value: 14, unit: "patients", trend: "up", trend_value: "+4 vs 10:00", good_direction: "down", color: "#ef4444" },
-];
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-
-const SEVERITY_STYLE: Record<AlertSeverity, { bg: string; border: string; badge: string; badgeBg: string }> = {
-  critical: { bg: "#1f0a0a", border: "#ef4444", badge: "#ef4444", badgeBg: "#fee2e222" },
-  high:     { bg: "#1c110a", border: "#f97316", badge: "#f97316", badgeBg: "#fff7ed22" },
-  medium:   { bg: "#1c1610", border: "#f59e0b", badge: "#f59e0b", badgeBg: "#fef3c722" },
-  low:      { bg: "#0d1117", border: "#6b7280", badge: "#9ca3af", badgeBg: "#f3f4f622" },
-};
-
-const STATUS_STYLE: Record<AlertStatus, { color: string; label_en: string; label_ar: string }> = {
-  active:       { color: "#ef4444", label_en: "Active", label_ar: "نشط" },
-  acknowledged: { color: "#f59e0b", label_en: "Acknowledged", label_ar: "مُسجَّل" },
-  resolved:     { color: "#22c55e", label_en: "Resolved", label_ar: "محلول" },
-};
-
-const PRIORITY_COLOR = { urgent: "#ef4444", routine: "#f59e0b", deferred: "#6b7280" };
-
-// ─── Component ────────────────────────────────────────────────────────────────
+const STATUS_COLOR: Record<string, string> = { normal: "#22c55e", warning: "#f59e0b", critical: "#ef4444" };
 
 export default function CommandCenterPage() {
+  const { session, isAuthenticated } = useAuth();
   const [lang, setLang] = useState<"en" | "ar">("en");
-  const [alerts, setAlerts] = useState<CapacityAlert[]>(MOCK_ALERTS);
-  const [actions, setActions] = useState<PendingAction[]>(MOCK_ACTIONS);
-  const [kpis] = useState<KPI[]>(MOCK_KPIS);
-  const [loading, setLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState<"alerts" | "actions" | "kpis">("alerts");
-  const [filterSeverity, setFilterSeverity] = useState<"all" | AlertSeverity>("all");
-
-  useEffect(() => {
-    async function fetchData() {
-      setLoading(true);
-      try {
-        const alertData = await apiFetch<CapacityAlert[]>("/api/v1/hospital/command-center/alerts/");
-        if (alertData && alertData.length > 0) setAlerts(alertData);
-        const actionData = await apiFetch<PendingAction[]>("/api/v1/hospital/command-center/actions/");
-        if (actionData && actionData.length > 0) setActions(actionData);
-      } catch {
-        // silently use mock data
-      } finally {
-        setLoading(false);
-      }
-    }
-    void fetchData();
-  }, []);
-
+  const [snapshot, setSnapshot] = useState<CommandCenterSnapshot | null>(null);
+  const [rules, setRules] = useState<CapacityRule[]>([]);
+  const [thresholds, setThresholds] = useState<CapacityThreshold[]>([]);
+  const [surgePlans, setSurgePlans] = useState<SurgePlan[]>([]);
+  const [overflowUnits, setOverflowUnits] = useState<OverflowUnit[]>([]);
+  const [fetchError, setFetchError] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<"thresholds" | "surge" | "ai">("thresholds");
+  const [question, setQuestion] = useState("");
+  const [asking, setAsking] = useState(false);
+  const [answer, setAnswer] = useState<string | null>(null);
+  const [askError, setAskError] = useState<string | null>(null);
   const dir = lang === "ar" ? "rtl" : "ltr";
 
-  const activeAlerts = alerts.filter(a => a.status === "active").length;
-  const criticalAlerts = alerts.filter(a => a.severity === "critical" && a.status === "active").length;
-  const pendingActions = actions.filter(a => !a.completed).length;
-  const urgentActions = actions.filter(a => a.priority === "urgent" && !a.completed).length;
+  const loadData = useCallback(async () => {
+    if (!session) return;
+    setFetchError(null);
+    try {
+      const opts = { token: session.accessToken, tenantId: session.tenantId };
+      const [snap, rulePage, thresholdPage, surgePage, overflowPage] = await Promise.all([
+        apiFetch<CommandCenterSnapshot>("/api/v1/hospital/command-center/metrics/", opts),
+        apiFetch<Paginated<CapacityRule>>("/api/v1/hospital/capacity/rules/", opts),
+        apiFetch<Paginated<CapacityThreshold>>("/api/v1/hospital/capacity/thresholds/", opts),
+        apiFetch<Paginated<SurgePlan>>("/api/v1/hospital/capacity/surge-plans/", opts),
+        apiFetch<Paginated<OverflowUnit>>("/api/v1/hospital/capacity/overflow-units/", opts),
+      ]);
+      setSnapshot(snap);
+      setRules(rulePage.results);
+      setThresholds(thresholdPage.results);
+      setSurgePlans(surgePage.results);
+      setOverflowUnits(overflowPage.results);
+    } catch (err) {
+      const detail = (err as { detail?: string })?.detail;
+      setFetchError(detail || (err instanceof Error ? err.message : "Failed to load command center data."));
+    }
+  }, [session]);
 
-  const filteredAlerts = filterSeverity === "all" ? alerts : alerts.filter(a => a.severity === filterSeverity);
+  useEffect(() => { void loadData(); }, [loadData]);
 
-  function acknowledgeAlert(id: string) {
-    setAlerts(prev => prev.map(a => a.id === id && a.status === "active" ? { ...a, status: "acknowledged" } : a));
+  async function askAssistant() {
+    if (!session || !question.trim()) return;
+    setAsking(true);
+    setAskError(null);
+    setAnswer(null);
+    try {
+      const result = await apiFetch<AskResult>("/api/v1/hospital/command-center/ai/ask/", {
+        method: "POST",
+        token: session.accessToken,
+        tenantId: session.tenantId,
+        body: JSON.stringify({ question }),
+      });
+      setAnswer(result.answer);
+    } catch (err) {
+      const detail = (err as { detail?: string })?.detail;
+      setAskError(detail || (err instanceof Error ? err.message : "Failed to reach the AI assistant."));
+    } finally {
+      setAsking(false);
+    }
   }
 
-  function resolveAlert(id: string) {
-    setAlerts(prev => prev.map(a => a.id === id ? { ...a, status: "resolved" } : a));
+  if (!isAuthenticated) {
+    return <div style={{ padding: "2rem", textAlign: "center", marginTop: "4rem" }}><h1 style={{ fontWeight: 700, fontSize: "1.25rem" }}>Sign in required</h1></div>;
+  }
+  if (fetchError) {
+    return <div style={{ padding: "2rem", textAlign: "center", marginTop: "4rem" }}><h1 style={{ fontWeight: 700, fontSize: "1.25rem", color: "#ef4444" }}>Unable to load command center data</h1><p style={{ color: "var(--color-text-muted)" }}>{fetchError}</p></div>;
+  }
+  if (snapshot === null) {
+    return <div style={{ padding: "2rem", textAlign: "center", marginTop: "4rem", color: "var(--color-text-muted)" }}>Loading live command center data...</div>;
   }
 
-  function toggleAction(id: string) {
-    setActions(prev => prev.map(a => a.id === id ? { ...a, completed: !a.completed } : a));
-  }
+  const ruleFor = (id: string) => rules.find(r => r.id === id);
+  const criticalCount = thresholds.filter(t => t.status_level === "critical").length;
+  const warningCount = thresholds.filter(t => t.status_level === "warning").length;
+  const activeSurgePlans = surgePlans.filter(p => p.is_active).length;
+  const openOverflowUnits = overflowUnits.filter(u => u.is_open).length;
+  const census = snapshot.operational_census;
 
   return (
-    <div dir={dir} style={{ padding: "2rem", maxWidth: "1300px", margin: "0 auto" }}>
-      {/* Header */}
-      <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
+    <div dir={dir} style={{ maxWidth: "1300px", margin: "0 auto" }}>
+      <header className="mb-6 flex items-center justify-between">
         <div>
-          <h1 style={{ fontSize: "1.75rem", fontWeight: 700, color: "#22D3EE", margin: 0 }}>
-            {lang === "en" ? "Clinical Command Center" : "مركز القيادة السريرية"}
-          </h1>
-          <p style={{ color: "var(--color-text-muted)", fontSize: "0.9rem", marginTop: "0.25rem" }}>
-            {lang === "en" ? "Real-time capacity, alerts and operational KPIs" : "الطاقة الفورية والتنبيهات ومؤشرات الأداء"}
-          </p>
+          <h1 className="flex items-center gap-2 text-2xl font-bold"><LayoutDashboard size={22} /> {lang === "en" ? "Clinical Command Center" : "مركز القيادة السريرية"}</h1>
+          <p className="mt-1 text-sm text-white/50">{lang === "en" ? "Real-time capacity thresholds, surge status, and AI assistant" : "عتبات الطاقة الفورية وحالة التصعيد والمساعد الذكي"}</p>
         </div>
-        <div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
-          {criticalAlerts > 0 && (
-            <div style={{ background: "#fee2e2", border: "2px solid #ef4444", borderRadius: "8px", padding: "0.4rem 0.875rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
-              <span style={{ width: "8px", height: "8px", background: "#ef4444", borderRadius: "50%", display: "inline-block", animation: "pulse 1.5s infinite" }} />
-              <span style={{ fontSize: "0.8rem", fontWeight: 700, color: "#b91c1c" }}>{criticalAlerts} {lang === "en" ? "CRITICAL" : "حرجة"}</span>
+        <div className="flex items-center gap-3">
+          {criticalCount > 0 && (
+            <div className="rounded-lg border-2 border-red-500 bg-red-950/40 px-3.5 py-1.5">
+              <span className="text-xs font-bold text-red-400">{criticalCount} {lang === "en" ? "CRITICAL" : "حرجة"}</span>
             </div>
           )}
-          {loading && <span style={{ fontSize: "0.8rem", color: "var(--color-text-muted)" }}>Live...</span>}
-          <button
-            onClick={() => setLang(l => l === "en" ? "ar" : "en")}
-            style={{ padding: "0.5rem 1rem", borderRadius: "8px", border: "1px solid var(--color-border)", cursor: "pointer", background: "var(--color-surface)", color: "var(--color-text)", fontSize: "0.875rem", fontWeight: 500 }}
-          >
+          <button onClick={() => setLang(l => l === "en" ? "ar" : "en")} className="rounded-lg border border-white/10 bg-surface-overlay px-4 py-2 text-sm font-medium hover:bg-white/5">
             {lang === "en" ? "العربية" : "English"}
           </button>
         </div>
       </header>
 
-
-      {/* Summary Row */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "1rem", marginBottom: "2rem" }}>
+      <div className="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
         {[
-          { label: lang === "en" ? "Active Alerts" : "تنبيهات نشطة", value: activeAlerts, color: "#ef4444" },
-          { label: lang === "en" ? "Critical Alerts" : "تنبيهات حرجة", value: criticalAlerts, color: "#ef4444" },
-          { label: lang === "en" ? "Pending Actions" : "إجراءات معلقة", value: pendingActions, color: "#f59e0b" },
-          { label: lang === "en" ? "Urgent Actions" : "إجراءات عاجلة", value: urgentActions, color: "#f97316" },
+          { label: lang === "en" ? "Bed Occupancy" : "إشغال الأسرة", value: `${snapshot.capacity_indicators.bed_occupancy_percentage}%`, color: "#f59e0b" },
+          { label: lang === "en" ? "Critical Thresholds" : "عتبات حرجة", value: criticalCount, color: "#ef4444" },
+          { label: lang === "en" ? "Warning Thresholds" : "عتبات تحذير", value: warningCount, color: "#f59e0b" },
+          { label: lang === "en" ? "Active Surge Plans" : "خطط تصعيد نشطة", value: activeSurgePlans, color: "#8b5cf6" },
         ].map(card => (
-          <div key={card.label} style={{ background: "var(--color-surface)", border: `1px solid ${card.color}44`, borderRadius: "12px", padding: "1.25rem", textAlign: "center" }}>
-            <div style={{ fontSize: "2.25rem", fontWeight: 800, color: card.color }}>{card.value}</div>
-            <div style={{ fontSize: "0.8rem", color: "var(--color-text-muted)", marginTop: "0.25rem", fontWeight: 500 }}>{card.label}</div>
+          <div key={card.label} className="rounded-xl border p-4 text-center" style={{ background: "var(--color-surface)", borderColor: `${card.color}44` }}>
+            <div className="text-2xl font-bold" style={{ color: card.color }}>{card.value}</div>
+            <div className="mt-1 text-xs text-white/50">{card.label}</div>
           </div>
         ))}
       </div>
 
-      {/* Tabs */}
-      <div style={{ display: "flex", gap: "0.5rem", marginBottom: "1.5rem", borderBottom: "2px solid var(--color-border)" }}>
-        {(["alerts", "actions", "kpis"] as const).map(tab => (
+      <div className="mb-6 flex gap-2 border-b border-white/10">
+        {(["thresholds", "surge", "ai"] as const).map(tab => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
-            style={{ padding: "0.625rem 1.25rem", border: "none", borderBottom: activeTab === tab ? "3px solid #22D3EE" : "3px solid transparent", background: "transparent", color: activeTab === tab ? "#22D3EE" : "var(--color-text-muted)", fontWeight: 600, fontSize: "0.875rem", cursor: "pointer", marginBottom: "-2px" }}
+            className={`-mb-0.5 border-b-2 px-5 py-2.5 text-sm font-semibold ${activeTab === tab ? "border-brand-400 text-brand-300" : "border-transparent text-white/50"}`}
           >
-            {tab === "alerts" ? (lang === "en" ? "Capacity Alerts" : "تنبيهات الطاقة") :
-             tab === "actions" ? (lang === "en" ? "Pending Actions" : "الإجراءات المعلقة") :
-             (lang === "en" ? "KPIs & Metrics" : "مؤشرات الأداء")}
+            {tab === "thresholds" ? (lang === "en" ? "Capacity Thresholds" : "عتبات الطاقة") :
+             tab === "surge" ? (lang === "en" ? "Surge & Overflow" : "التصعيد والفائض") :
+             (lang === "en" ? "AI Assistant" : "المساعد الذكي")}
           </button>
         ))}
       </div>
 
-      {/* ALERTS TAB */}
-      {activeTab === "alerts" && (
-        <div>
-          <div style={{ display: "flex", gap: "0.5rem", marginBottom: "1rem", flexWrap: "wrap" }}>
-            {(["all", "critical", "high", "medium", "low"] as const).map(s => (
-              <button
-                key={s}
-                onClick={() => setFilterSeverity(s)}
-                style={{ padding: "0.35rem 0.875rem", borderRadius: "20px", border: filterSeverity === s ? "2px solid #22D3EE" : "1px solid var(--color-border)", background: filterSeverity === s ? "#22D3EE22" : "var(--color-surface)", color: filterSeverity === s ? "#22D3EE" : "var(--color-text-muted)", fontWeight: 600, fontSize: "0.78rem", cursor: "pointer" }}
-              >
-                {s === "all" ? (lang === "en" ? "All" : "الكل") : s.charAt(0).toUpperCase() + s.slice(1)}
-              </button>
-            ))}
-          </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: "0.875rem" }}>
-            {filteredAlerts.map(alert => {
-              const sty = SEVERITY_STYLE[alert.severity];
-              const sts = STATUS_STYLE[alert.status];
-              return (
-                <div key={alert.id} style={{ background: sty.bg, border: `1px solid ${sty.border}`, borderRadius: "12px", padding: "1.25rem", display: "flex", gap: "1.5rem", alignItems: "flex-start" }}>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", marginBottom: "0.5rem", flexWrap: "wrap" }}>
-                      <span style={{ fontSize: "0.72rem", fontWeight: 700, padding: "0.2rem 0.6rem", borderRadius: "20px", background: sty.badgeBg, color: sty.badge, textTransform: "uppercase" }}>
-                        {alert.severity}
-                      </span>
-                      <span style={{ fontSize: "0.72rem", fontWeight: 600, padding: "0.2rem 0.6rem", borderRadius: "20px", background: "rgba(255,255,255,0.05)", color: "var(--color-text-muted)" }}>
-                        {lang === "ar" ? alert.category_ar : alert.category}
-                      </span>
-                      <span style={{ fontSize: "0.72rem", fontWeight: 600, color: sts.color }}>● {lang === "ar" ? sts.label_ar : sts.label_en}</span>
-                    </div>
-                    <h3 style={{ fontSize: "0.95rem", fontWeight: 700, color: "var(--color-text)", margin: "0 0 0.35rem 0" }}>
-                      {lang === "ar" ? alert.title_ar : alert.title}
-                    </h3>
-                    <p style={{ fontSize: "0.83rem", color: "var(--color-text-muted)", margin: "0 0 0.5rem 0", lineHeight: 1.5 }}>
-                      {lang === "ar" ? alert.description_ar : alert.description}
-                    </p>
-                    <div style={{ display: "flex", gap: "1.25rem", fontSize: "0.78rem", color: "var(--color-text-muted)", flexWrap: "wrap" }}>
-                      <span>{lang === "en" ? "Raised" : "أُثيرت"}: {alert.time_raised}</span>
-                      <span>{lang === "en" ? "Owner" : "المسؤول"}: {alert.owner}</span>
-                      {alert.value !== undefined && <span>{lang === "en" ? "Current" : "الحالي"}: <span style={{ color: sty.badge, fontWeight: 700 }}>{alert.value}{alert.unit}</span> ({lang === "en" ? "threshold" : "العتبة"}: {alert.threshold}{alert.unit})</span>}
-                    </div>
-                  </div>
-                  {alert.status !== "resolved" && (
-                    <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", flexShrink: 0 }}>
-                      {alert.status === "active" && (
-                        <button onClick={() => acknowledgeAlert(alert.id)} style={{ padding: "0.4rem 0.875rem", background: "#f59e0b22", border: "1px solid #f59e0b", borderRadius: "6px", color: "#f59e0b", fontWeight: 600, fontSize: "0.78rem", cursor: "pointer", whiteSpace: "nowrap" }}>
-                          {lang === "en" ? "Acknowledge" : "تسجيل"}
-                        </button>
-                      )}
-                      <button onClick={() => resolveAlert(alert.id)} style={{ padding: "0.4rem 0.875rem", background: "#052e1622", border: "1px solid #22c55e", borderRadius: "6px", color: "#22c55e", fontWeight: 600, fontSize: "0.78rem", cursor: "pointer", whiteSpace: "nowrap" }}>
-                        {lang === "en" ? "Resolve" : "حل"}
-                      </button>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* ACTIONS TAB */}
-      {activeTab === "actions" && (
-        <div style={{ background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: "12px", overflow: "auto" }}>
-          <table style={{ width: "100%", borderCollapse: "collapse", minWidth: "800px" }}>
-            <thead>
-              <tr style={{ borderBottom: "2px solid var(--color-border)" }}>
-                {[lang === "en" ? "Done" : "منجز", lang === "en" ? "Priority" : "الأولوية", lang === "en" ? "Action" : "الإجراء", lang === "en" ? "Ward" : "الجناح", lang === "en" ? "Due" : "الموعد", lang === "en" ? "Assigned To" : "المكلف"].map(h => (
-                  <th key={h} style={{ padding: "0.875rem 1rem", textAlign: "left", fontSize: "0.8rem", fontWeight: 600, color: "var(--color-text-muted)" }}>{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {actions.map((act, i) => (
-                <tr key={act.id} style={{ borderBottom: "1px solid var(--color-border)", background: act.completed ? "rgba(34,197,94,0.04)" : i % 2 === 0 ? "transparent" : "rgba(255,255,255,0.02)", opacity: act.completed ? 0.6 : 1 }}>
-                  <td style={{ padding: "0.875rem 1rem" }}>
-                    <input type="checkbox" checked={act.completed} onChange={() => toggleAction(act.id)} style={{ width: "16px", height: "16px", cursor: "pointer", accentColor: "#22D3EE" }} />
-                  </td>
-                  <td style={{ padding: "0.875rem 1rem" }}>
-                    <span style={{ padding: "0.25rem 0.625rem", borderRadius: "20px", fontSize: "0.72rem", fontWeight: 700, background: PRIORITY_COLOR[act.priority] + "22", color: PRIORITY_COLOR[act.priority] }}>
-                      {lang === "en" ? act.priority.toUpperCase() : act.priority === "urgent" ? "عاجل" : act.priority === "routine" ? "اعتيادي" : "مؤجل"}
-                    </span>
-                  </td>
-                  <td style={{ padding: "0.875rem 1rem", fontWeight: 500, color: act.completed ? "var(--color-text-muted)" : "var(--color-text)", fontSize: "0.875rem", textDecoration: act.completed ? "line-through" : "none" }}>
-                    {lang === "ar" ? act.action_ar : act.action}
-                    {act.mrn && <div style={{ fontSize: "0.75rem", color: "#22D3EE", marginTop: "2px" }}>{act.mrn}</div>}
-                  </td>
-                  <td style={{ padding: "0.875rem 1rem", fontSize: "0.8rem", color: "var(--color-text-muted)" }}>{lang === "ar" ? act.ward_ar : act.ward}</td>
-                  <td style={{ padding: "0.875rem 1rem", fontSize: "0.875rem", fontWeight: 600, color: "var(--color-text)" }}>{act.due}</td>
-                  <td style={{ padding: "0.875rem 1rem", fontSize: "0.8rem", color: "var(--color-text-muted)" }}>{act.assigned_to}</td>
+      {activeTab === "thresholds" && (
+        <div className="overflow-hidden rounded-xl border border-white/10 bg-surface-raised">
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse text-sm">
+              <thead>
+                <tr className="border-b border-white/10 bg-white/5">
+                  {[lang === "en" ? "Rule" : "القاعدة", lang === "en" ? "Metric Source" : "مصدر المقياس", lang === "en" ? "Current" : "الحالي", lang === "en" ? "Threshold" : "العتبة", lang === "en" ? "Status" : "الحالة", lang === "en" ? "Action Plan" : "خطة الإجراء"].map(h => (
+                    <th key={h} className="px-4 py-3 text-left font-semibold text-white/50">{h}</th>
+                  ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {thresholds.length === 0 && (
+                  <tr><td colSpan={6} className="px-4 py-6 text-center text-white/50">No capacity rules configured for this tenant yet.</td></tr>
+                )}
+                {thresholds.map(t => {
+                  const rule = ruleFor(t.rule);
+                  return (
+                    <tr key={t.id} className="border-b border-white/5">
+                      <td className="px-4 py-3 font-medium">{rule?.rule_name ?? "—"}</td>
+                      <td className="px-4 py-3 text-white/60">{rule?.metric_source ?? "—"}</td>
+                      <td className="px-4 py-3 font-semibold">{t.current_value}</td>
+                      <td className="px-4 py-3 text-white/60">{rule?.threshold_value ?? "—"}</td>
+                      <td className="px-4 py-3">
+                        <span className="rounded-full px-2 py-0.5 text-xs font-bold uppercase" style={{ background: `${STATUS_COLOR[t.status_level]}22`, color: STATUS_COLOR[t.status_level] }}>{t.status_level}</span>
+                      </td>
+                      <td className="px-4 py-3 text-white/60">{rule?.action_plan_name ?? "—"}</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
-      {/* KPIs TAB */}
-      {activeTab === "kpis" && (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: "1rem" }}>
-          {kpis.map(kpi => {
-            const isBad = kpi.trend !== "stable" && ((kpi.good_direction === "down" && kpi.trend === "up") || (kpi.good_direction === "up" && kpi.trend === "down"));
-            const trendColor = kpi.trend === "stable" ? "#6b7280" : isBad ? "#ef4444" : "#22c55e";
-            const trendIcon = kpi.trend === "up" ? "↑" : kpi.trend === "down" ? "↓" : "→";
-            return (
-              <div key={kpi.label} style={{ background: "var(--color-surface)", border: `1px solid ${kpi.color}44`, borderRadius: "12px", padding: "1.5rem" }}>
-                <div style={{ fontSize: "0.8rem", fontWeight: 600, color: "var(--color-text-muted)", marginBottom: "0.75rem" }}>
-                  {lang === "ar" ? kpi.label_ar : kpi.label}
+      {activeTab === "surge" && (
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+          <div>
+            <h3 className="mb-3 text-sm font-semibold text-white/50">{lang === "en" ? "Surge Plans" : "خطط التصعيد"}</h3>
+            <div className="space-y-3">
+              {surgePlans.length === 0 && <p className="text-sm text-white/50">No surge plans configured.</p>}
+              {surgePlans.map(p => (
+                <div key={p.id} className="rounded-xl border border-white/10 bg-surface-raised p-4">
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium">{p.name}</span>
+                    <span className={`rounded-full px-2 py-0.5 text-xs font-bold ${p.is_active ? "bg-red-500/15 text-red-400" : "bg-white/10 text-white/50"}`}>
+                      {p.is_active ? (lang === "en" ? "ACTIVE" : "نشط") : (lang === "en" ? "Inactive" : "غير نشط")}
+                    </span>
+                  </div>
+                  <p className="mt-1 text-xs text-white/50">{p.trigger_condition}</p>
+                  <p className="mt-1 text-xs text-white/40">{p.allocated_beds_count} {lang === "en" ? "beds allocated" : "سرير مخصص"}</p>
                 </div>
-                <div style={{ display: "flex", alignItems: "baseline", gap: "0.5rem", marginBottom: "0.5rem" }}>
-                  <span style={{ fontSize: "2.25rem", fontWeight: 800, color: kpi.color }}>{kpi.value}</span>
-                  {kpi.unit && <span style={{ fontSize: "0.875rem", color: "var(--color-text-muted)", fontWeight: 500 }}>{kpi.unit}</span>}
+              ))}
+            </div>
+          </div>
+          <div>
+            <h3 className="mb-3 text-sm font-semibold text-white/50">{lang === "en" ? "Overflow Units" : "وحدات الفائض"} ({openOverflowUnits} {lang === "en" ? "open" : "مفتوحة"})</h3>
+            <div className="space-y-3">
+              {overflowUnits.length === 0 && <p className="text-sm text-white/50">No overflow units configured.</p>}
+              {overflowUnits.map(u => (
+                <div key={u.id} className="rounded-xl border border-white/10 bg-surface-raised p-4">
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium">{u.name}</span>
+                    <span className={`rounded-full px-2 py-0.5 text-xs font-bold ${u.is_open ? "bg-green-500/15 text-green-400" : "bg-white/10 text-white/50"}`}>
+                      {u.is_open ? (lang === "en" ? "OPEN" : "مفتوح") : (lang === "en" ? "Closed" : "مغلق")}
+                    </span>
+                  </div>
+                  <p className="mt-1 text-xs text-white/50">{u.current_occupancy} / {u.temporary_capacity} {lang === "en" ? "occupied" : "مشغول"}</p>
                 </div>
-                <div style={{ display: "flex", alignItems: "center", gap: "0.375rem" }}>
-                  <span style={{ fontSize: "0.875rem", fontWeight: 700, color: trendColor }}>{trendIcon}</span>
-                  <span style={{ fontSize: "0.78rem", color: trendColor }}>{kpi.trend_value}</span>
+              ))}
+            </div>
+          </div>
+          <div className="lg:col-span-2 rounded-xl border border-white/10 bg-surface-raised p-4">
+            <h3 className="mb-2 text-sm font-semibold text-white/50">{lang === "en" ? "Live Operational Census" : "الإحصاء التشغيلي المباشر"}</h3>
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+              {[
+                { label: "Active Admissions", value: census.active_admissions },
+                { label: "Occupied / Total Beds", value: `${census.current_occupied_beds}/${census.total_beds}` },
+                { label: "ED Waiting", value: census.emergency_waiting },
+                { label: "ICU Occupancy", value: census.icu_occupancy },
+                { label: "OR Scheduled Today", value: census.scheduled_procedures_today },
+              ].map(m => (
+                <div key={m.label}>
+                  <div className="text-lg font-bold text-brand-300">{m.value}</div>
+                  <div className="text-xs text-white/50">{m.label}</div>
                 </div>
-              </div>
-            );
-          })}
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {activeTab === "ai" && (
+        <div className="rounded-xl border border-white/10 bg-surface-raised p-5">
+          <p className="mb-4 text-sm text-white/50">
+            {lang === "en"
+              ? "Ask about admissions, beds, staffing, or infection control — grounded in this tenant's real operational data. Advisory only."
+              : "اسأل عن القبول أو الأسرة أو الكوادر أو مكافحة العدوى — بناءً على بيانات هذا المستأجر الحقيقية. للاستشارة فقط."}
+          </p>
+          <div className="flex gap-2">
+            <input
+              value={question}
+              onChange={e => setQuestion(e.target.value)}
+              onKeyDown={e => e.key === "Enter" && askAssistant()}
+              placeholder={lang === "en" ? "e.g. What is our current bed capacity?" : "مثال: ما هي طاقة الأسرة الحالية؟"}
+              className="flex-1 rounded-lg border border-white/10 bg-surface-overlay px-3 py-2 text-sm focus:border-brand-400 focus:outline-none"
+            />
+            <button onClick={askAssistant} disabled={asking || !question.trim()} className="flex items-center gap-2 rounded-lg bg-brand-500 px-4 py-2 text-sm font-semibold hover:bg-brand-600 disabled:opacity-40">
+              <Send size={16} /> {asking ? "..." : lang === "en" ? "Ask" : "اسأل"}
+            </button>
+          </div>
+          {askError && <p className="mt-3 text-sm text-red-400">{askError}</p>}
+          {answer && (
+            <div className="mt-4 rounded-lg bg-white/5 p-4 text-sm whitespace-pre-wrap">{answer}</div>
+          )}
         </div>
       )}
     </div>
