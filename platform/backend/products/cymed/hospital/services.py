@@ -1882,3 +1882,179 @@ class ClinicalSafetyService:
             }
 
         return rates
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 10. Hospital Operations Service — shared real-time snapshot
+# ─────────────────────────────────────────────────────────────────────────────
+
+
+class HospitalOperationsService:
+    """
+    Single source of truth for the hospital's real-time operational snapshot.
+    Used by both ClinicalCommandCenterMetricsView (dashboard) and
+    HospitalAIAssistant (natural-language Q&A) so the two never drift.
+    """
+
+    @classmethod
+    def get_snapshot(cls, tenant_id: str) -> dict:
+        from products.cymed.core.facilities.models import Bed
+        from products.cymed.hospital.adt.models import Admission, DischargeSummary
+        from products.cymed.hospital.bed_management.models import BedAssignment
+        from products.cymed.hospital.emergency.models import EmergencyVisit
+        from products.cymed.hospital.icu.models import ICUStay
+        from products.cymed.hospital.inpatient.models import DischargePlanning
+        from products.cymed.hospital.nursing.models import NursingAssignment
+        from products.cymed.hospital.operating_room.models import SurgicalCase
+
+        tenant_uuid = uuid.UUID(str(tenant_id))
+
+        total_admissions = Admission.objects.filter(tenant_id=tenant_uuid, status="admitted").count()
+        active_bed_assignments = BedAssignment.objects.filter(
+            tenant_id=tenant_uuid, released_at__isnull=True
+        ).count()
+        active_ed_visits = EmergencyVisit.objects.filter(
+            tenant_id=tenant_uuid,
+            status__in=["triage", "fast_track", "resuscitation", "observation"],
+        ).count()
+        active_icu_stays = ICUStay.objects.filter(
+            tenant_id=tenant_uuid, icu_released_at__isnull=True
+        ).count()
+        scheduled_surgeries = SurgicalCase.objects.filter(
+            tenant_id=tenant_uuid, status="scheduled"
+        ).count()
+
+        total_beds = Bed.objects.filter(tenant_id=tenant_uuid).count()
+        bed_occupancy_pct = (
+            round(active_bed_assignments / total_beds * 100.0, 2) if total_beds > 0 else 0.0
+        )
+
+        window_start = timezone.now() - timezone.timedelta(days=30)
+        planned = DischargePlanning.objects.filter(
+            tenant_id=tenant_uuid, created_at__gte=window_start
+        ).select_related("stay__admission")
+        on_time = 0
+        evaluated = 0
+        for plan in planned:
+            summary = DischargeSummary.objects.filter(
+                admission=plan.stay.admission, tenant_id=tenant_uuid
+            ).first()
+            if summary:
+                evaluated += 1
+                if summary.discharged_at.date() <= plan.target_discharge_date:
+                    on_time += 1
+        discharge_efficiency_index = round(on_time / evaluated, 2) if evaluated > 0 else None
+
+        nurses_on_duty_today = (
+            NursingAssignment.objects.filter(
+                tenant_id=tenant_uuid, assigned_date=timezone.now().date()
+            )
+            .values("nurse_id")
+            .distinct()
+            .count()
+        )
+        nurse_patient_ratio = (
+            round(total_admissions / nurses_on_duty_today, 2) if nurses_on_duty_today > 0 else None
+        )
+
+        hai_rates = ClinicalSafetyService.get_hai_rates(tenant_id=tenant_id)
+
+        return {
+            "operational_census": {
+                "active_admissions": total_admissions,
+                "current_occupied_beds": active_bed_assignments,
+                "total_beds": total_beds,
+                "emergency_waiting": active_ed_visits,
+                "icu_occupancy": active_icu_stays,
+                "scheduled_procedures_today": scheduled_surgeries,
+            },
+            "capacity_indicators": {
+                "bed_occupancy_percentage": bed_occupancy_pct,
+                "icu_ventilator_utilization": active_icu_stays,
+                "discharge_efficiency_index": discharge_efficiency_index,
+            },
+            "staffing_compliance": {
+                "nurse_to_patient_ratio": (
+                    f"1:{nurse_patient_ratio}" if nurse_patient_ratio is not None else "not_tracked"
+                ),
+                "physician_duty_hours_compliance": "not_tracked",
+            },
+            "infection_control": hai_rates,
+        }
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 11. Hospital AI Assistant — advisory-only natural-language Q&A over the
+#     real operational snapshot. Routes through CyAI (platform/cyai), never
+#     reimplements provider calls or guardrails here (architecture rule:
+#     "AI Prompts, Providers, Guardrails -> CyAI -> never duplicate").
+# ─────────────────────────────────────────────────────────────────────────────
+
+
+class HospitalAIAssistant:
+    """
+    Answers operational questions (admissions, beds, staffing, infection
+    control) grounded in HospitalOperationsService's real snapshot -- never
+    the model's own knowledge. Advisory only: it reports what the data shows,
+    it does not make or suggest clinical decisions.
+    """
+
+    PROMPT_NAME = "Hospital Operations Assistant"
+
+    SYSTEM_INSTRUCTIONS = (
+        "You are the CyberCom Hospital Operations Assistant. Answer the user's question "
+        "using ONLY the JSON operational snapshot provided below -- never invent numbers, "
+        "never use outside knowledge, and never suggest a clinical or treatment decision. "
+        "If the snapshot doesn't contain what's needed to answer, say so plainly. "
+        "Be concise and cite the specific figures you used.\n\n"
+        "Operational snapshot:\n{snapshot_json}\n\n"
+        "Question: {question}"
+    )
+
+    @classmethod
+    def _get_prompt_template(cls):
+        from platform.cyai.models import PromptTemplate
+
+        template, _ = PromptTemplate.objects.get_or_create(
+            name=cls.PROMPT_NAME,
+            defaults={
+                "template_text": cls.SYSTEM_INSTRUCTIONS,
+                "variables": ["snapshot_json", "question"],
+                "active": True,
+            },
+        )
+        return template
+
+    @classmethod
+    def ask(cls, tenant_id: str, question: str, model_config_id: str | None = None) -> dict:
+        import json
+
+        from platform.cyai.models import ModelConfig
+        from platform.cyai.services import ModelGateway
+
+        if model_config_id:
+            config = ModelConfig.objects.get(id=uuid.UUID(str(model_config_id)), active=True)
+        else:
+            config = ModelConfig.objects.filter(active=True).first()
+            if not config:
+                raise ValueError(
+                    "No active CyAI ModelConfig configured -- an administrator must add one "
+                    "before the hospital AI assistant can answer questions."
+                )
+
+        snapshot = HospitalOperationsService.get_snapshot(tenant_id)
+        template = cls._get_prompt_template()
+
+        result = ModelGateway.generate_completion(
+            tenant_id=str(tenant_id),
+            config=config,
+            prompt=template.template_text,
+            variables={"snapshot_json": json.dumps(snapshot), "question": question},
+        )
+
+        return {
+            "answer": result["text"],
+            "status": result["status"],
+            "snapshot_used": snapshot,
+            "log_id": result.get("log_id"),
+        }

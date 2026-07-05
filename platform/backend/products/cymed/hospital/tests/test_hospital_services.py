@@ -21,6 +21,8 @@ from products.cymed.hospital.services import (
     CapacityService,
     ClinicalSafetyService,
     EmergencyService,
+    HospitalAIAssistant,
+    HospitalOperationsService,
     ICUService,
     OperatingRoomService,
 )
@@ -389,3 +391,65 @@ class TestClinicalSafetyService:
         )
         assert order2.id == order.id
         assert order2.method == "both"
+
+
+@pytest.mark.django_db
+class TestHospitalAIAssistant:
+    def test_ask_without_model_config_raises_clean_error(self, test_tenant_id):
+        from platform.cyai.models import ModelConfig
+
+        ModelConfig.objects.filter(active=True).update(active=False)
+        with pytest.raises(ValueError):
+            HospitalAIAssistant.ask(tenant_id=str(test_tenant_id), question="How many beds are free?")
+
+    def test_ask_grounds_answer_in_real_snapshot(self, test_tenant_id, setup_base_data, monkeypatch):
+        """
+        The assistant must build its context from HospitalOperationsService
+        (real counts), then hand that off to the real CyAI gateway -- not
+        answer from the model's own made-up numbers.
+        """
+        from platform.cyai.models import ModelConfig
+
+        config = ModelConfig.objects.create(
+            name="Hospital Assistant Model", provider="anthropic", model_name="claude-sonnet-5"
+        )
+
+        captured_prompts = []
+
+        class _FakeTextBlock:
+            def __init__(self, text):
+                self.text = text
+
+        class _FakeMessage:
+            def __init__(self, text):
+                self.content = [_FakeTextBlock(text)]
+
+        class _FakeMessages:
+            def create(self, **kwargs):
+                prompt = kwargs["messages"][0]["content"]
+                captured_prompts.append(prompt)
+                return _FakeMessage("There are 0 active admissions right now.")
+
+        class _FakeAnthropicClient:
+            def __init__(self, api_key):
+                self.messages = _FakeMessages()
+
+        monkeypatch.setenv("ANTHROPIC_API_KEY", "test-key-not-real")
+        import anthropic as anthropic_module
+
+        monkeypatch.setattr(anthropic_module, "Anthropic", _FakeAnthropicClient)
+
+        snapshot = HospitalOperationsService.get_snapshot(str(test_tenant_id))
+        result = HospitalAIAssistant.ask(
+            tenant_id=str(test_tenant_id),
+            question="How many active admissions are there right now?",
+            model_config_id=str(config.id),
+        )
+
+        assert result["status"] == "passed"
+        assert "0" in result["answer"]
+        assert result["snapshot_used"]["operational_census"]["active_admissions"] == (
+            snapshot["operational_census"]["active_admissions"]
+        )
+        # The real snapshot numbers were actually sent to the model, not fabricated.
+        assert str(snapshot["operational_census"]["active_admissions"]) in captured_prompts[0]
