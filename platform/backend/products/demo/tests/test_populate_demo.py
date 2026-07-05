@@ -13,6 +13,10 @@ from products.cymed.core.facilities.models import Bed, Department, Facility, Roo
 from products.cymed.core.organizations.models import Organization
 from products.cymed.core.patients.models import Patient
 from products.cymed.core.providers.models import Provider
+from products.cymed.hospital.adt.models import Admission
+from products.cymed.hospital.icu.models import CriticalEvent, ICUStay
+from products.cymed.hospital.inpatient.models import HospitalStay, VTEProphylaxisOrder
+from products.cymed.hospital.nursing.models import NursingAssignment, NursingHandover
 from products.cymed.imaging.orders.models import ImagingOrder
 from products.cymed.laboratory.orders.models import LabOrder
 from products.cymed.pharmacy.prescriptions.models import Prescription
@@ -99,4 +103,26 @@ class TestPopulateDemoCommand(TestCase):
         # BI Dashboard metrics
         self.assertTrue(
             DashboardMetric.objects.filter(name="average_er_wait_time_minutes").exists()
+        )
+
+        # 11. Assert Hospital ADT/ICU/Nursing workflow (Phase 5) -- exercises the real
+        # hospital services, not raw model rows, so this proves the wired API endpoints work.
+        pat_faisal = Patient.objects.get(mrn="MRN-PAT-002")
+        admission = Admission.objects.get(encounter__patient=pat_faisal)
+        self.assertEqual(admission.status, "admitted")
+
+        stay = HospitalStay.objects.get(admission=admission)
+        self.assertEqual(stay.current_code_status, "full_code")
+        self.assertEqual(stay.code_status_orders.count(), 1)
+
+        vte_order = VTEProphylaxisOrder.objects.get(stay=stay)
+        self.assertEqual(vte_order.method, "mechanical")
+
+        self.assertTrue(NursingAssignment.objects.filter(tenant_id=tenant.id).exists())
+        self.assertTrue(NursingHandover.objects.filter(admission=admission).exists())
+
+        icu_stay = ICUStay.objects.get(stay=stay)
+        self.assertTrue(icu_stay.rounds.exists())
+        self.assertEqual(
+            CriticalEvent.objects.filter(icu_stay=icu_stay).count(), 1
         )

@@ -40,6 +40,22 @@ from products.cymed.core.organizations.models import Organization
 from products.cymed.core.patients.models import Patient, PatientAddress, PatientContact
 from products.cymed.core.providers.models import Provider, ProviderCredential, ProviderSpecialty
 
+# Hospital (ADT, ICU, nursing, clinical safety)
+from products.cymed.hospital.adt.models import (
+    AdmissionReason,
+    AdmissionType,
+    DischargeDisposition,
+    DischargeReason,
+)
+from products.cymed.hospital.nursing.models import NursingShift
+from products.cymed.hospital.services import (
+    AdmissionService,
+    ClinicalSafetyService,
+    EmergencyService,
+    ICUService,
+    NursingService,
+)
+
 # Imaging
 from products.cymed.imaging.orders.models import (
     ImagingOrder,
@@ -788,6 +804,152 @@ class Command(BaseCommand):
                 )
                 EncounterParticipant.objects.create(
                     tenant_id=t_id, encounter=enc_inpatient, provider=phys_er, role="lead"
+                )
+
+                # ---------------------------------------------------------------------------
+                # Phase 5: Seeding Hospital ADT/ICU/Nursing Workflow (real service calls,
+                # not raw model rows -- exercises the same code path the hospital.cy-com.com
+                # subdomain's API uses, so the demo tenant reflects real workflow states)
+                # ---------------------------------------------------------------------------
+                self.stdout.write("Phase 5: Seeding Hospital ADT/ICU/Nursing Workflow...")
+
+                dept_icu, _ = CymedDepartment.objects.get_or_create(
+                    tenant_id=t_id,
+                    facility=hosp,
+                    code="DEPT-ICU",
+                    defaults={"name": "Intensive Care Unit"},
+                )
+                ward_icu, _ = Ward.objects.get_or_create(
+                    tenant_id=t_id,
+                    department=dept_icu,
+                    code="WARD-ICU",
+                    defaults={"name": "ICU"},
+                )
+                room_icu, _ = Room.objects.get_or_create(
+                    tenant_id=t_id,
+                    ward=ward_icu,
+                    room_number="ICU-01",
+                    defaults={"room_type": "icu"},
+                )
+                bed_icu, _ = Bed.objects.get_or_create(
+                    tenant_id=t_id,
+                    room=room_icu,
+                    bed_number="ICU-BED-1",
+                    defaults={"status": "available"},
+                )
+
+                adm_type_er, _ = AdmissionType.objects.get_or_create(
+                    tenant_id=t_id, code="T-EMERGENCY", defaults={"name": "Emergency"}
+                )
+                adm_reason_acs, _ = AdmissionReason.objects.get_or_create(
+                    tenant_id=t_id,
+                    code="R-ACS",
+                    defaults={"name": "Suspected Acute Coronary Syndrome"},
+                )
+                DischargeReason.objects.get_or_create(
+                    tenant_id=t_id, code="R-DIS-RECOVERED", defaults={"name": "Recovered"}
+                )
+                DischargeDisposition.objects.get_or_create(
+                    tenant_id=t_id, code="D-DIS-HOME", defaults={"name": "Home"}
+                )
+
+                # 1. ER registration + triage (ESI 2 -- urgent, matches chest-pain presentation)
+                er_visit = EmergencyService.register_emergency_visit(
+                    tenant_id=str(t_id),
+                    patient_id=str(pat_faisal.id),
+                    chief_complaint="Acute substernal chest pain, radiating to left arm",
+                    arrival_mode="ambulance",
+                )
+                EmergencyService.triage_patient(
+                    tenant_id=str(t_id),
+                    visit_id=er_visit["visit_id"],
+                    triage_data={"esi_level": 2, "news2_score": 5},
+                    triaged_by=str(nurse_er.user_id),
+                )
+
+                # 2. Admit to the cardiology/medical ward
+                admit_res = AdmissionService.admit_patient(
+                    tenant_id=str(t_id),
+                    patient_id=str(pat_faisal.id),
+                    encounter_id=str(enc_inpatient.id),
+                    admission_type_id=str(adm_type_er.id),
+                    admission_reason_id=str(adm_reason_acs.id),
+                    admitting_physician_id=str(phys_er.user_id),
+                    bed_id=str(bed_med.id),
+                )
+
+                # 3. Code status + VTE prophylaxis (standard admission safety orders)
+                ClinicalSafetyService.set_code_status(
+                    tenant_id=str(t_id),
+                    stay_id=admit_res["stay_id"],
+                    status="full_code",
+                    ordered_by=str(phys_er.user_id),
+                    reason="Standard admission code status discussion",
+                    discussed_with_patient=True,
+                    discussed_with_family=False,
+                )
+                ClinicalSafetyService.order_vte_prophylaxis(
+                    tenant_id=str(t_id),
+                    stay_id=admit_res["stay_id"],
+                    method="mechanical",
+                    ordered_by=str(phys_er.user_id),
+                )
+
+                # 4. Nursing assignment + SBAR handover
+                shift_day, _ = NursingShift.objects.get_or_create(
+                    tenant_id=t_id,
+                    name="Day Shift",
+                    defaults={"start_time": "07:00", "end_time": "19:00"},
+                )
+                NursingService.assign_nurse(
+                    tenant_id=str(t_id),
+                    nurse_id=str(nurse_er.user_id),
+                    ward_id=str(ward_med.id),
+                    shift_id=str(shift_day.id),
+                    patients=[str(pat_faisal.id)],
+                )
+                NursingService.complete_handover(
+                    tenant_id=str(t_id),
+                    outgoing_nurse_id=str(nurse_er.user_id),
+                    incoming_nurse_id=str(nurse_er.user_id),
+                    ward_id=str(ward_med.id),
+                    handover_notes={
+                        "admission_id": admit_res["admission_id"],
+                        "situation": "Post-admission for suspected ACS, hemodynamically stable",
+                        "recommendation": "Continue telemetry, serial troponins, cardiology consult",
+                    },
+                )
+
+                # 5. Overnight deterioration -> ICU escalation (demo narrative: shows the
+                # full acuity range a real hospital dashboard needs to visualize)
+                icu_res = ICUService.admit_to_icu(
+                    tenant_id=str(t_id),
+                    encounter_id=str(enc_inpatient.id),
+                    bed_id=str(bed_icu.id),
+                    admission_dx="Suspected ACS with hemodynamic instability",
+                    admitted_by=str(phys_er.user_id),
+                )
+                ICUService.complete_icu_round(
+                    tenant_id=str(t_id),
+                    icu_stay_id=icu_res["icu_stay_id"],
+                    round_data={
+                        "heart_rate": 112,
+                        "mean_arterial_pressure": 68,
+                        "temp_c": 37.8,
+                        "resp_rate": 22,
+                        "o2_sat": 93,
+                        "pao2_fio2": 220,
+                        "glasgow_coma_scale": 14,
+                    },
+                    rounded_by=str(nurse_er.user_id),
+                )
+                ICUService.record_critical_event(
+                    tenant_id=str(t_id),
+                    icu_stay_id=icu_res["icu_stay_id"],
+                    event_type="hemodynamic_instability",
+                    description="Transient hypotension, MAP 68, responded to fluid bolus",
+                    severity="HIGH",
+                    responded_by=str(phys_er.user_id),
                 )
 
                 # ---------------------------------------------------------------------------
