@@ -99,9 +99,14 @@ export default function ErpPage() {
 
   const SUB_MODULES = [
     { href: "/erp/finance", label: isAr ? "المالية" : "Finance & GL" },
+    { href: "/erp/finance/ar", label: isAr ? "الذمم المدينة" : "Accounts Receivable" },
     { href: "/erp/hr", label: isAr ? "الموارد البشرية" : "Human Resources" },
+    { href: "/erp/payroll", label: isAr ? "الرواتب" : "Payroll" },
     { href: "/erp/inventory", label: isAr ? "المخزون" : "Inventory" },
     { href: "/erp/procurement", label: isAr ? "المشتريات" : "Procurement" },
+    { href: "/erp/procurement/requisitions", label: isAr ? "طلبات الشراء" : "Requisitions" },
+    { href: "/erp/procurement/invoices", label: isAr ? "فواتير الموردين" : "Vendor Invoices" },
+    { href: "/erp/assets", label: isAr ? "الأصول" : "Assets" },
   ];
 
   const s: Record<string, React.CSSProperties> = {
