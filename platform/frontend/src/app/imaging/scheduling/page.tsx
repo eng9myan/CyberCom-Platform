@@ -1,99 +1,178 @@
 "use client";
-import { useState, useEffect } from "react";
-import { apiFetch } from "@/lib/api";
 
-interface Slot { id: string; time: string; room: string; modality: string; patient: string | null; patient_ar: string | null; procedure: string | null; duration_min: number; }
-const MOCK: Slot[] = [
-  { id: "sl-01", time: "07:00", room: "CT-1", modality: "CT", patient: "Fatima Al-Harbi", patient_ar: "فاطمة الحربي", procedure: "Chest CT", duration_min: 30 },
-  { id: "sl-02", time: "07:30", room: "CT-1", modality: "CT", patient: null, patient_ar: null, procedure: null, duration_min: 30 },
-  { id: "sl-03", time: "08:00", room: "CT-1", modality: "CT", patient: "Khalid Al-Sayed", patient_ar: "خالد السيد", procedure: "Head CT", duration_min: 30 },
-  { id: "sl-04", time: "08:30", room: "CT-1", modality: "CT", patient: "Faris Al-Ghamdi", patient_ar: "فارس الغامدي", procedure: "Coronary CTA", duration_min: 60 },
-  { id: "sl-05", time: "07:00", room: "MRI-1", modality: "MRI", patient: "Yousef Al-Otaibi", patient_ar: "يوسف العتيبي", procedure: "Brain MRI", duration_min: 45 },
-  { id: "sl-06", time: "07:45", room: "MRI-1", modality: "MRI", patient: null, patient_ar: null, procedure: null, duration_min: 45 },
-  { id: "sl-07", time: "08:30", room: "MRI-1", modality: "MRI", patient: "Afnan Al-Otaibi", patient_ar: "أفنان العتيبي", procedure: "Pelvic MRI", duration_min: 60 },
-  { id: "sl-08", time: "07:00", room: "XR-1", modality: "X-Ray", patient: "Ibrahim Al-Harthy", patient_ar: "إبراهيم الحارثي", procedure: "Chest PA/Lat", duration_min: 15 },
-  { id: "sl-09", time: "07:15", room: "XR-1", modality: "X-Ray", patient: "Badr Al-Rashidi", patient_ar: "بدر الرشيدي", procedure: "Right Knee AP/Lat", duration_min: 15 },
-  { id: "sl-10", time: "07:30", room: "XR-1", modality: "X-Ray", patient: null, patient_ar: null, procedure: null, duration_min: 15 },
-  { id: "sl-11", time: "07:45", room: "XR-1", modality: "X-Ray", patient: "Nora Al-Qahtani", patient_ar: "نورة القحطاني", procedure: "Spine AP/Lat", duration_min: 15 },
-  { id: "sl-12", time: "07:00", room: "US-1", modality: "Ultrasound", patient: "Mariam Al-Ghamdi", patient_ar: "مريم الغامدي", procedure: "Abdominal US", duration_min: 30 },
-  { id: "sl-13", time: "07:30", room: "US-1", modality: "Ultrasound", patient: "Waleed Al-Bishi", patient_ar: "وليد البيشي", procedure: "Thyroid US", duration_min: 30 },
-  { id: "sl-14", time: "08:00", room: "US-1", modality: "Ultrasound", patient: null, patient_ar: null, procedure: null, duration_min: 30 },
-  { id: "sl-15", time: "07:00", room: "MAMM-1", modality: "Mammogram", patient: "Sara Al-Harbi", patient_ar: "سارة الحربي", procedure: "Screening Mammogram", duration_min: 30 },
-];
-const MOD_COLOR: Record<string, string> = { CT: "#a78bfa", MRI: "#22D3EE", "X-Ray": "#22c55e", Ultrasound: "#60a5fa", Mammogram: "#f472b6" };
-const ROOMS = Array.from(new Set(MOCK.map(s => s.room)));
+import { useState, useEffect, useCallback } from "react";
+import { apiFetch } from "@/lib/api";
+import { useAuth } from "@/contexts/auth";
+
+interface AppointmentRaw {
+  id: string;
+  patient_id: string;
+  room: string | null;
+  scheduled_start: string;
+  scheduled_end: string;
+  status: string;
+}
+
+interface RoomRaw {
+  id: string;
+  name: string;
+  modality_type: string;
+}
+
+interface PatientRaw {
+  id: string;
+  first_name: string;
+  last_name: string;
+  mrn: string;
+}
+
+interface Paginated<T> {
+  count: number;
+  results: T[];
+}
+
+function unwrap<T>(data: Paginated<T> | T[]): T[] {
+  return Array.isArray(data) ? data : data.results;
+}
+
+const STATUS_COLORS: Record<string, string> = {
+  scheduled: "#3b82f6",
+  confirmed: "#3b82f6",
+  arrived: "#f59e0b",
+  in_progress: "#f59e0b",
+  completed: "#22c55e",
+  cancelled: "#ef4444",
+  no_show: "#ef4444",
+  rescheduled: "#6b7280",
+};
 
 export default function ImagingSchedulingPage() {
+  const { session, isAuthenticated } = useAuth();
   const [lang, setLang] = useState<"en" | "ar">("en");
-  const [slots, setSlots] = useState<Slot[]>(MOCK);
+  const [appointments, setAppointments] = useState<AppointmentRaw[] | null>(null);
+  const [rooms, setRooms] = useState<Record<string, RoomRaw>>({});
+  const [patients, setPatients] = useState<Record<string, PatientRaw>>({});
   const [loading, setLoading] = useState(false);
-  const isAr = lang === "ar";
+  const [fetchError, setFetchError] = useState<string | null>(null);
+
+  const loadData = useCallback(async () => {
+    if (!session) return;
+    setLoading(true);
+    setFetchError(null);
+    const opts = { token: session.accessToken, tenantId: session.tenantId };
+    try {
+      const [apptData, roomsData, patientsData] = await Promise.all([
+        apiFetch<Paginated<AppointmentRaw> | AppointmentRaw[]>("/api/v1/imaging/scheduling/appointments/", opts),
+        apiFetch<Paginated<RoomRaw> | RoomRaw[]>("/api/v1/imaging/scheduling/rooms/", opts),
+        apiFetch<Paginated<PatientRaw> | PatientRaw[]>("/api/v1/patients/", opts),
+      ]);
+      setAppointments(unwrap(apptData));
+      const roomMap: Record<string, RoomRaw> = {};
+      for (const r of unwrap(roomsData)) roomMap[r.id] = r;
+      setRooms(roomMap);
+      const patientMap: Record<string, PatientRaw> = {};
+      for (const p of unwrap(patientsData)) patientMap[p.id] = p;
+      setPatients(patientMap);
+    } catch (err) {
+      const detail = (err as { detail?: string })?.detail;
+      setFetchError(detail || (err instanceof Error ? err.message : "Failed to load schedule."));
+    } finally {
+      setLoading(false);
+    }
+  }, [session]);
 
   useEffect(() => {
-    setLoading(true);
-    apiFetch<Slot[]>("/api/v1/imaging/scheduling/slots/").then(d => { if (d && d.length) setSlots(d); }).catch(() => {}).finally(() => setLoading(false));
-  }, []);
+    void loadData();
+  }, [loadData]);
 
-  const booked = slots.filter(s => s.patient).length;
-  const available = slots.filter(s => !s.patient).length;
+  const t = (en: string, ar: string) => lang === "en" ? en : ar;
 
-  const s: Record<string, React.CSSProperties> = {
-    page: { padding: "2rem", maxWidth: 1200, margin: "0 auto", direction: isAr ? "rtl" : "ltr" },
-    header: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem", borderBottom: "2px solid rgba(34,211,238,0.3)", paddingBottom: "1rem" },
-    h1: { fontSize: "1.6rem", fontWeight: 700, color: "#22D3EE" },
-    btn: { background: "var(--color-surface)", border: "1px solid var(--color-border)", color: "var(--color-text)", padding: "0.4rem 1rem", borderRadius: 6, cursor: "pointer", fontWeight: 600, textDecoration: "none" as const },
-    metricGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px,1fr))", gap: "1rem", marginBottom: "1.5rem" },
-    metricCard: { background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: 8, padding: "1rem" },
-  };
+  if (!isAuthenticated) {
+    return (
+      <div style={{ padding: "4rem", textAlign: "center" }}>
+        <h1 style={{ fontSize: "1.25rem", fontWeight: 700 }}>Sign in required</h1>
+      </div>
+    );
+  }
+
+  const sorted = [...(appointments || [])].sort((a, b) => a.scheduled_start.localeCompare(b.scheduled_start));
 
   return (
-    <div style={s.page}>
-      <header style={s.header}>
+    <div style={{ padding: "2rem", maxWidth: "1400px", margin: "0 auto", direction: lang === "ar" ? "rtl" : "ltr", background: "var(--color-background)", minHeight: "100vh", color: "var(--color-text)" }}>
+      <header style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "1.5rem" }}>
         <div>
-          <h1 style={s.h1}>{isAr ? "جدولة الأشعة" : "Imaging Scheduling"}</h1>
-          <p style={{ color: "var(--color-text-muted)", fontSize: "0.875rem" }}>{isAr ? "جدول اليوم لجميع الطرائق" : "Today's schedule across all modalities"}</p>
+          <a href="/imaging" style={{ color: "#22D3EE", textDecoration: "none", fontSize: "0.875rem" }}>{t("← Imaging", "← الأشعة")}</a>
+          <h1 style={{ fontSize: "1.75rem", fontWeight: 700, color: "#22D3EE" }}>{t("Imaging Schedule", "جدول الأشعة")}</h1>
+          <p style={{ color: "var(--color-text-muted)", fontSize: "0.875rem", marginTop: "0.25rem" }}>
+            {t("Real room/modality appointment schedule", "جدول مواعيد حقيقي للغرف والأجهزة")}
+          </p>
         </div>
-        <div style={{ display: "flex", gap: "0.75rem" }}>
-          {loading && <span style={{ color: "var(--color-text-muted)", fontSize: "0.8rem" }}>●</span>}
-          <a href="/imaging" style={s.btn}>{isAr ? "← الأشعة" : "← Imaging"}</a>
-          <button style={s.btn} onClick={() => setLang(isAr ? "en" : "ar")}>{isAr ? "English" : "العربية"}</button>
-        </div>
+        <button onClick={() => setLang(l => l === "en" ? "ar" : "en")} style={{ padding: "0.4rem 0.8rem", borderRadius: "4px", border: "1px solid var(--color-border)", cursor: "pointer", background: "var(--color-surface)", color: "var(--color-text)", fontSize: "0.8rem" }}>
+          {lang === "en" ? "العربية" : "English"}
+        </button>
       </header>
-      <div style={s.metricGrid}>
+
+      <nav style={{ display: "flex", gap: "0.5rem", marginBottom: "1.5rem", flexWrap: "wrap" }}>
         {[
-          { label: isAr ? "إجمالي الفتحات" : "Total Slots", value: slots.length, color: "#22D3EE" },
-          { label: isAr ? "محجوزة" : "Booked", value: booked, color: "#f59e0b" },
-          { label: isAr ? "متاحة" : "Available", value: available, color: "#22c55e" },
-          { label: isAr ? "الغرف" : "Rooms", value: ROOMS.length, color: "#a78bfa" },
-        ].map(m => (
-          <div key={m.label} style={s.metricCard}>
-            <div style={{ fontSize: "1.8rem", fontWeight: 700, color: m.color }}>{m.value}</div>
-            <div style={{ fontSize: "0.8rem", color: "var(--color-text-muted)", marginTop: 4 }}>{m.label}</div>
-          </div>
+          { href: "/imaging", label: t("Overview", "نظرة عامة") },
+          { href: "/imaging/orders", label: t("Orders", "الطلبات") },
+          { href: "/imaging/scheduling", label: t("Scheduling", "الجدولة") },
+          { href: "/imaging/reports", label: t("Reports", "التقارير") },
+          { href: "/imaging/pacs", label: t("PACS", "PACS") },
+        ].map(item => (
+          <a key={item.href} href={item.href} style={{ padding: "0.4rem 1rem", borderRadius: "4px", background: item.href === "/imaging/scheduling" ? "#22D3EE22" : "var(--color-surface)", border: `1px solid ${item.href === "/imaging/scheduling" ? "#22D3EE" : "var(--color-border)"}`, color: item.href === "/imaging/scheduling" ? "#22D3EE" : "var(--color-text)", textDecoration: "none", fontSize: "0.875rem", fontWeight: 500 }}>
+            {item.label}
+          </a>
         ))}
-      </div>
-      <div style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
-        {ROOMS.map(room => {
-          const roomSlots = slots.filter(sl => sl.room === room);
-          const mod = roomSlots[0]?.modality ?? "Unknown";
-          return (
-            <div key={room} style={{ background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: 8, overflow: "hidden" }}>
-              <div style={{ background: `${MOD_COLOR[mod] ?? "#6b7280"}18`, padding: "0.75rem 1rem", borderBottom: "1px solid var(--color-border)", display: "flex", alignItems: "center", gap: "0.75rem" }}>
-                <span style={{ color: MOD_COLOR[mod] ?? "#6b7280", fontWeight: 700 }}>{room}</span>
-                <span style={{ background: `${MOD_COLOR[mod] ?? "#6b7280"}22`, color: MOD_COLOR[mod] ?? "#6b7280", border: `1px solid ${MOD_COLOR[mod] ?? "#6b7280"}55`, borderRadius: 4, padding: "1px 8px", fontSize: "0.75rem", fontWeight: 700 }}>{mod}</span>
-                <span style={{ color: "var(--color-text-muted)", fontSize: "0.8rem" }}>{roomSlots.filter(sl => sl.patient).length}/{roomSlots.length} {isAr ? "محجوز" : "booked"}</span>
-              </div>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", padding: "0.75rem" }}>
-                {roomSlots.map(sl => (
-                  <div key={sl.id} style={{ background: sl.patient ? `${MOD_COLOR[mod] ?? "#6b7280"}15` : "transparent", border: `1px solid ${sl.patient ? MOD_COLOR[mod] ?? "#6b7280" : "var(--color-border)"}55`, borderRadius: 6, padding: "0.5rem 0.75rem", minWidth: 160, opacity: sl.patient ? 1 : 0.6 }}>
-                    <div style={{ fontFamily: "monospace", fontSize: "0.8rem", color: "#22D3EE" }}>{sl.time}</div>
-                    {sl.patient ? (<><div style={{ fontWeight: 600, fontSize: "0.82rem", marginTop: 2 }}>{isAr ? sl.patient_ar : sl.patient}</div><div style={{ fontSize: "0.75rem", color: "var(--color-text-muted)" }}>{sl.procedure}</div></>) : (<div style={{ fontSize: "0.78rem", color: "var(--color-text-muted)", marginTop: 2 }}>{isAr ? "متاح" : "Available"} ({sl.duration_min}min)</div>)}
-                  </div>
-                ))}
-              </div>
-            </div>
-          );
-        })}
+      </nav>
+
+      {fetchError && (
+        <div style={{ background: "#fee2e2", border: "1px solid #fca5a5", color: "#b91c1c", padding: "0.9rem 1rem", borderRadius: "8px", marginBottom: "1.5rem", fontSize: "0.88rem" }}>
+          {fetchError}
+        </div>
+      )}
+
+      {loading && <p style={{ color: "var(--color-text-muted)", fontSize: "0.85rem", marginBottom: "1rem" }}>{t("Loading…", "جارٍ التحميل…")}</p>}
+
+      <div style={{ background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: "10px", overflowX: "auto" }}>
+        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          <thead>
+            <tr style={{ borderBottom: "2px solid var(--color-border)" }}>
+              {[t("Time", "الوقت"), t("Room", "الغرفة"), t("Patient", "المريض"), t("Status", "الحالة")].map(h => (
+                <th key={h} style={{ padding: "0.75rem 0.875rem", textAlign: lang === "ar" ? "right" : "left", fontSize: "0.72rem", fontWeight: 600, color: "var(--color-text-muted)", textTransform: "uppercase" }}>{h}</th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {!loading && sorted.length === 0 && (
+              <tr><td colSpan={4} style={{ padding: "2rem", textAlign: "center", color: "var(--color-text-muted)" }}>
+                {t("No imaging appointments scheduled for this tenant yet.", "لا توجد مواعيد أشعة مجدولة لهذا المستأجر بعد.")}
+              </td></tr>
+            )}
+            {sorted.map((appt, i) => {
+              const room = appt.room ? rooms[appt.room] : null;
+              const patient = patients[appt.patient_id];
+              const patientLabel = patient ? `${patient.first_name} ${patient.last_name}` : `Patient ${appt.patient_id.slice(0, 8)}`;
+              return (
+                <tr key={appt.id} style={{ borderBottom: "1px solid var(--color-border)", background: i % 2 === 0 ? "transparent" : "var(--color-background)" }}>
+                  <td style={{ padding: "0.75rem 0.875rem", fontSize: "0.85rem", whiteSpace: "nowrap" }}>
+                    {new Date(appt.scheduled_start).toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
+                  </td>
+                  <td style={{ padding: "0.75rem 0.875rem", fontSize: "0.85rem" }}>{room ? `${room.name} (${room.modality_type})` : "—"}</td>
+                  <td style={{ padding: "0.75rem 0.875rem" }}>
+                    <div style={{ fontWeight: 500, fontSize: "0.875rem" }}>{patientLabel}</div>
+                    {patient?.mrn && <div style={{ fontSize: "0.72rem", color: "var(--color-text-muted)" }}>{patient.mrn}</div>}
+                  </td>
+                  <td style={{ padding: "0.75rem 0.875rem" }}>
+                    <span style={{ padding: "0.2rem 0.55rem", borderRadius: "12px", fontSize: "0.72rem", fontWeight: 600, background: (STATUS_COLORS[appt.status] || "#6b7280") + "22", color: STATUS_COLORS[appt.status] || "#6b7280" }}>
+                      {appt.status}
+                    </span>
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
       </div>
     </div>
   );
