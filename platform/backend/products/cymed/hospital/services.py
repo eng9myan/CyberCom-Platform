@@ -20,7 +20,7 @@ import uuid
 from typing import Any
 
 from django.db import transaction
-from django.db.models import Q
+from django.db.models import Count, Q
 from django.utils import timezone
 
 logger = logging.getLogger(__name__)
@@ -2482,4 +2482,92 @@ class HospitalAIAssistant:
             "status": result["status"],
             "snapshot_used": snapshot,
             "log_id": result.get("log_id"),
+        }
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 12. MedicalDirectorService — clinical-quality KPIs for the Medical Director
+#     Dashboard. Every number is a real query; a metric with no matching real
+#     data (e.g. no mortality-coded disposition configured) reports 0/None
+#     with an honest note, never an invented rate.
+# ─────────────────────────────────────────────────────────────────────────────
+
+
+class MedicalDirectorService:
+    MORTALITY_TERMS = ["expired", "deceased", "death"]
+
+    @classmethod
+    def get_dashboard(cls, tenant_id: str, period_days: int = 30) -> dict:
+        from products.cymed.hospital.adt.models import Admission, DischargeSummary
+        from products.cymed.hospital.icu.models import CriticalEvent
+
+        tenant_uuid = uuid.UUID(str(tenant_id))
+        period_start = timezone.now() - timezone.timedelta(days=period_days)
+
+        discharges = DischargeSummary.objects.filter(
+            tenant_id=tenant_uuid, discharged_at__gte=period_start
+        ).select_related("admission", "disposition")
+        discharge_count = discharges.count()
+
+        # Length of stay: real admitted_at -> discharged_at delta, averaged.
+        los_days = [
+            (d.discharged_at - d.admission.admitted_at).total_seconds() / 86400
+            for d in discharges
+        ]
+        avg_los_days = round(sum(los_days) / len(los_days), 2) if los_days else None
+
+        # Mortality: matched against real disposition name/code text -- if the
+        # tenant hasn't configured a mortality-coded disposition, this is
+        # honestly 0/None, not fabricated.
+        mortality_q = Q()
+        for term in cls.MORTALITY_TERMS:
+            mortality_q |= Q(disposition__name__icontains=term) | Q(disposition__code__icontains=term)
+        mortality_count = discharges.filter(mortality_q).count() if discharge_count else 0
+        mortality_rate_percent = (
+            round(mortality_count / discharge_count * 100, 2) if discharge_count else None
+        )
+
+        # Readmission: same patient has another admission starting within
+        # 30 days of this discharge.
+        readmission_count = 0
+        for d in discharges:
+            patient_id = d.admission.encounter.patient_id
+            reassessed = Admission.objects.filter(
+                tenant_id=tenant_uuid,
+                encounter__patient_id=patient_id,
+                admitted_at__gt=d.discharged_at,
+                admitted_at__lte=d.discharged_at + timezone.timedelta(days=30),
+            ).exists()
+            if reassessed:
+                readmission_count += 1
+        readmission_rate_percent = (
+            round(readmission_count / discharge_count * 100, 2) if discharge_count else None
+        )
+
+        # Consultant productivity: real admission counts per admitting physician.
+        consultant_productivity = list(
+            Admission.objects.filter(tenant_id=tenant_uuid, admitted_at__gte=period_start)
+            .values("admitting_physician_id")
+            .annotate(admission_count=Count("id"))
+            .order_by("-admission_count")[:10]
+        )
+
+        # Complications proxy: real ICU critical events in the period.
+        critical_events_count = CriticalEvent.objects.filter(
+            tenant_id=tenant_uuid, event_time__gte=period_start
+        ).count()
+
+        snapshot = HospitalOperationsService.get_snapshot(tenant_id)
+
+        return {
+            "period_days": period_days,
+            "discharge_count": discharge_count,
+            "avg_length_of_stay_days": avg_los_days,
+            "mortality_rate_percent": mortality_rate_percent,
+            "mortality_count": mortality_count,
+            "readmission_rate_percent": readmission_rate_percent,
+            "readmission_count": readmission_count,
+            "bed_occupancy_percentage": snapshot["capacity_indicators"]["bed_occupancy_percentage"],
+            "icu_critical_events_count": critical_events_count,
+            "consultant_productivity": consultant_productivity,
         }

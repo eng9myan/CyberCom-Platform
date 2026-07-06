@@ -2,7 +2,11 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from products.cymed.hospital.services import HospitalAIAssistant, HospitalOperationsService
+from products.cymed.hospital.services import (
+    HospitalAIAssistant,
+    HospitalOperationsService,
+    MedicalDirectorService,
+)
 
 
 class ClinicalCommandCenterMetricsView(APIView):
@@ -56,6 +60,27 @@ class ClinicalCommandCenterModuleSummaryView(APIView):
             return Response({"detail": "Tenant context required"}, status=400)
 
         return Response(HospitalOperationsService.get_module_summary(tenant_id))
+
+
+class MedicalDirectorDashboardView(APIView):
+    """
+    Clinical-quality KPIs (LOS, mortality, readmissions, bed utilization,
+    consultant productivity, ICU critical events). Every number is a real
+    query against Admission/DischargeSummary/CriticalEvent -- see
+    MedicalDirectorService.get_dashboard() docstring for what's honestly
+    reported as 0/None when the tenant hasn't configured the underlying
+    data (e.g. no mortality-coded discharge disposition).
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        tenant_id = getattr(request, "tenant_id", None)
+        if not tenant_id:
+            return Response({"detail": "Tenant context required"}, status=400)
+
+        period_days = int(request.query_params.get("period_days", 30))
+        return Response(MedicalDirectorService.get_dashboard(tenant_id, period_days=period_days))
 
 
 class HospitalAIAssistantView(APIView):

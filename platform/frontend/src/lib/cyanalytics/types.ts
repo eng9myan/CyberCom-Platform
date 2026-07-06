@@ -51,6 +51,20 @@ export interface HospitalModuleSummary {
   bi_reports_active: number;
 }
 
+/** Mirrors MedicalDirectorService.get_dashboard(). */
+export interface MedicalDirectorDashboard {
+  period_days: number;
+  discharge_count: number;
+  avg_length_of_stay_days: number | null;
+  mortality_rate_percent: number | null;
+  mortality_count: number;
+  readmission_rate_percent: number | null;
+  readmission_count: number;
+  bed_occupancy_percentage: number;
+  icu_critical_events_count: number;
+  consultant_productivity: { admitting_physician_id: string; admission_count: number }[];
+}
+
 /** Mirrors HealthGroupSerializer. */
 export interface HealthGroupSummary {
   id: string;
