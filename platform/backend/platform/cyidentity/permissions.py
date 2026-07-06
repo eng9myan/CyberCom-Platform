@@ -94,6 +94,56 @@ class HasFinanceAccess(permissions.BasePermission):
         return bool(roles & FINANCE_ROLES)
 
 
+HR_ROLES = {
+    "platform_admin",
+    "hospital_admin",
+    "hr_admin",
+    "hr_director",
+    "payroll_admin",
+}
+
+
+class HasHRAccess(permissions.BasePermission):
+    """
+    Gates HR/payroll endpoints (employee records, leave, salary data) to
+    staff with an explicit HR mandate. Clinical roles carry no HR-data
+    access by default -- payroll in particular is employee PII.
+    """
+
+    message = "HR/payroll role required."
+
+    def has_permission(self, request, view) -> bool:
+        token = getattr(request, "auth_claims", None) or {}
+        roles = set(token.get("realm_access", {}).get("roles", []) or [])
+        return bool(roles & HR_ROLES)
+
+
+PROCUREMENT_ROLES = {
+    "platform_admin",
+    "hospital_admin",
+    "procurement_admin",
+    "inventory_admin",
+    "warehouse_manager",
+    "finance_admin",
+    "group_cfo",
+}
+
+
+class HasProcurementAccess(permissions.BasePermission):
+    """
+    Gates procurement/inventory/asset endpoints (purchase orders,
+    requisitions, vendor invoices, stock, fixed assets) to staff with an
+    explicit operations/finance mandate.
+    """
+
+    message = "Procurement/inventory role required."
+
+    def has_permission(self, request, view) -> bool:
+        token = getattr(request, "auth_claims", None) or {}
+        roles = set(token.get("realm_access", {}).get("roles", []) or [])
+        return bool(roles & PROCUREMENT_ROLES)
+
+
 class TokenHasScope(permissions.BasePermission):
     required_scope: str = ""
 

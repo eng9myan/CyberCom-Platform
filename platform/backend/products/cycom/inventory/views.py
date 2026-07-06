@@ -1,6 +1,6 @@
+from platform.cyidentity.permissions import HasProcurementAccess
 from rest_framework import viewsets
 from rest_framework.decorators import action
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from .models import ReorderAlert, StockItem, StockMovement, Warehouse
@@ -13,7 +13,7 @@ from .serializers import (
 
 
 class BaseInventoryViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [HasProcurementAccess]
 
     def get_queryset(self):
         tenant_id = getattr(self.request, "tenant_id", None)

@@ -1,12 +1,12 @@
+from platform.cyidentity.permissions import HasHRAccess
 from rest_framework import viewsets
-from rest_framework.permissions import IsAuthenticated
 
 from .models import PayrollRun, Payslip
 from .serializers import PayrollRunSerializer, PayslipSerializer
 
 
 class BasePayrollViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [HasHRAccess]
 
     def get_queryset(self):
         tenant_id = getattr(self.request, "tenant_id", None)

@@ -1,6 +1,6 @@
 from django.shortcuts import get_object_or_404
 from rest_framework import status
-from rest_framework.permissions import IsAuthenticated
+from platform.cyidentity.permissions import HasFinanceAccess
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -19,7 +19,7 @@ from .serializers import (
 
 
 class CustomerListView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [HasFinanceAccess]
 
     def get(self, request):
         tenant_id = getattr(request, "tenant_id", None)
@@ -36,7 +36,7 @@ class CustomerListView(APIView):
 
 
 class CustomerDetailView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [HasFinanceAccess]
 
     def _get_object(self, pk, tenant_id):
         return get_object_or_404(Customer, pk=pk, tenant_id=tenant_id)
@@ -75,7 +75,7 @@ class CustomerDetailView(APIView):
 
 
 class InvoiceListView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [HasFinanceAccess]
 
     def get(self, request):
         tenant_id = getattr(request, "tenant_id", None)
@@ -97,7 +97,7 @@ class InvoiceListView(APIView):
 
 
 class InvoiceDetailView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [HasFinanceAccess]
 
     def _get_object(self, pk, tenant_id):
         return get_object_or_404(Invoice, pk=pk, tenant_id=tenant_id)
@@ -136,7 +136,7 @@ class InvoiceDetailView(APIView):
 
 
 class InvoiceLineListView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [HasFinanceAccess]
 
     def get(self, request):
         tenant_id = getattr(request, "tenant_id", None)
@@ -157,7 +157,7 @@ class InvoiceLineListView(APIView):
 
 
 class InvoiceLineDetailView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [HasFinanceAccess]
 
     def _get_object(self, pk, tenant_id):
         return get_object_or_404(InvoiceLine, pk=pk, tenant_id=tenant_id)
@@ -196,7 +196,7 @@ class InvoiceLineDetailView(APIView):
 
 
 class PaymentListView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [HasFinanceAccess]
 
     def get(self, request):
         tenant_id = getattr(request, "tenant_id", None)
@@ -217,7 +217,7 @@ class PaymentListView(APIView):
 
 
 class PaymentDetailView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [HasFinanceAccess]
 
     def _get_object(self, pk, tenant_id):
         return get_object_or_404(Payment, pk=pk, tenant_id=tenant_id)
@@ -256,7 +256,7 @@ class PaymentDetailView(APIView):
 
 
 class ARAgingBucketListView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [HasFinanceAccess]
 
     def get(self, request):
         tenant_id = getattr(request, "tenant_id", None)
@@ -277,7 +277,7 @@ class ARAgingBucketListView(APIView):
 
 
 class ARAgingBucketDetailView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [HasFinanceAccess]
 
     def _get_object(self, pk, tenant_id):
         return get_object_or_404(ARAgingBucket, pk=pk, tenant_id=tenant_id)

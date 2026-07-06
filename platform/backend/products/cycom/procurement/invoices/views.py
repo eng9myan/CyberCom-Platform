@@ -4,7 +4,7 @@ from django.db.models import Sum
 from django.utils import timezone
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
-from rest_framework.permissions import IsAuthenticated
+from platform.cyidentity.permissions import HasProcurementAccess
 from rest_framework.response import Response
 
 from .models import VendorInvoice, VendorInvoiceLine
@@ -16,7 +16,7 @@ PRICE_TOLERANCE = Decimal("0.01")
 class VendorInvoiceViewSet(viewsets.ModelViewSet):
     queryset = VendorInvoice.objects.all()
     serializer_class = VendorInvoiceSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [HasProcurementAccess]
 
     def get_queryset(self):
         tenant_id = getattr(self.request, "tenant_id", None)

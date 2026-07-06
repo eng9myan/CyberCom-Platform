@@ -2,7 +2,7 @@ from django.db import transaction
 from django.utils import timezone
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
-from rest_framework.permissions import IsAuthenticated
+from platform.cyidentity.permissions import HasProcurementAccess
 from rest_framework.response import Response
 
 from products.cycom.procurement.purchase_orders.models import PurchaseOrder, POLine
@@ -14,7 +14,7 @@ from .serializers import PurchaseRequisitionSerializer, RequisitionLineSerialize
 class PurchaseRequisitionViewSet(viewsets.ModelViewSet):
     queryset = PurchaseRequisition.objects.all()
     serializer_class = PurchaseRequisitionSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [HasProcurementAccess]
 
     def get_queryset(self):
         tenant_id = getattr(self.request, "tenant_id", None)
@@ -117,7 +117,7 @@ class PurchaseRequisitionViewSet(viewsets.ModelViewSet):
 class RequisitionLineViewSet(viewsets.ModelViewSet):
     queryset = RequisitionLine.objects.all()
     serializer_class = RequisitionLineSerializer
-    permission_classes = [IsAuthenticated]
+    permission_classes = [HasProcurementAccess]
 
     def get_queryset(self):
         tenant_id = getattr(self.request, "tenant_id", None)

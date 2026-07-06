@@ -1,6 +1,6 @@
 from django.shortcuts import get_object_or_404
 from rest_framework import status
-from rest_framework.permissions import IsAuthenticated
+from platform.cyidentity.permissions import HasProcurementAccess
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -14,7 +14,7 @@ from .serializers import (
 
 
 class PurchaseOrderListView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [HasProcurementAccess]
 
     def get(self, request):
         tenant_id = getattr(request, "tenant_id", None)
@@ -32,7 +32,7 @@ class PurchaseOrderListView(APIView):
 
 
 class PurchaseOrderDetailView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [HasProcurementAccess]
 
     def get_object(self, pk, tenant_id):
         return get_object_or_404(PurchaseOrder, pk=pk, tenant_id=tenant_id)
@@ -64,7 +64,7 @@ class PurchaseOrderDetailView(APIView):
 
 
 class POLineListView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [HasProcurementAccess]
 
     def get(self, request):
         tenant_id = getattr(request, "tenant_id", None)
@@ -85,7 +85,7 @@ class POLineListView(APIView):
 
 
 class POLineDetailView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [HasProcurementAccess]
 
     def get_object(self, pk, tenant_id):
         return get_object_or_404(POLine, pk=pk, tenant_id=tenant_id)
@@ -117,7 +117,7 @@ class POLineDetailView(APIView):
 
 
 class GoodsReceiptListView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [HasProcurementAccess]
 
     def get(self, request):
         tenant_id = getattr(request, "tenant_id", None)
@@ -138,7 +138,7 @@ class GoodsReceiptListView(APIView):
 
 
 class GoodsReceiptDetailView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [HasProcurementAccess]
 
     def get_object(self, pk, tenant_id):
         return get_object_or_404(GoodsReceipt, pk=pk, tenant_id=tenant_id)
@@ -170,7 +170,7 @@ class GoodsReceiptDetailView(APIView):
 
 
 class GoodsReceiptLineListView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [HasProcurementAccess]
 
     def get(self, request):
         tenant_id = getattr(request, "tenant_id", None)
@@ -191,7 +191,7 @@ class GoodsReceiptLineListView(APIView):
 
 
 class GoodsReceiptLineDetailView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [HasProcurementAccess]
 
     def get_object(self, pk, tenant_id):
         return get_object_or_404(GoodsReceiptLine, pk=pk, tenant_id=tenant_id)

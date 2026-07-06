@@ -1,9 +1,9 @@
+from platform.cyidentity.permissions import HasHRAccess
 from datetime import date, timedelta
 
 from django.utils import timezone
 from rest_framework import viewsets
 from rest_framework.decorators import action
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from .models import Attendance, ClinicalCredential, Department, Employee, LeaveRequest, PerformanceReview
@@ -18,7 +18,7 @@ from .serializers import (
 
 
 class BaseHRViewSet(viewsets.ModelViewSet):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [HasHRAccess]
 
     def get_queryset(self):
         tenant_id = getattr(self.request, "tenant_id", None)
