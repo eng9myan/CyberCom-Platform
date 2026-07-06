@@ -4,46 +4,47 @@
  */
 
 :root {
-  /* ── Brand Palette ──────────────────────────────────────────────────── */
-  --color-brand-50: hsl(220, 100%, 97%);
-  --color-brand-100: hsl(220, 96%, 93%);
-  --color-brand-200: hsl(220, 95%, 85%);
-  --color-brand-300: hsl(220, 92%, 73%);
-  --color-brand-400: hsl(220, 90%, 61%);
-  --color-brand-500: hsl(220, 85%, 50%);
-  --color-brand-600: hsl(220, 82%, 40%);
-  --color-brand-700: hsl(220, 80%, 32%);
-  --color-brand-800: hsl(220, 75%, 24%);
-  --color-brand-900: hsl(220, 70%, 16%);
+  /* ── Brand Palette (CyMed/CyShop unified system) ──────────────────────── */
+  --color-brand-50: #fff4ea;
+  --color-brand-100: #ffe4c7;
+  --color-brand-200: #ffc98c;
+  --color-brand-300: #ffa94d;
+  --color-brand-400: #ff8a2a;
+  --color-brand-500: #ed6c00;
+  --color-brand-600: #c25900;
+  --color-brand-700: #9a4700;
+  --color-brand-800: #723500;
+  --color-brand-900: #4a2300;
 
   /* ── Semantic Color Tokens ──────────────────────────────────────────── */
   --color-primary: var(--color-brand-500);
   --color-primary-light: var(--color-brand-400);
   --color-primary-dark: var(--color-brand-700);
-  --color-secondary: hsl(280, 70%, 50%);
-  --color-secondary-light: hsl(280, 70%, 60%);
+  --color-secondary: #59c3e1;
+  --color-secondary-light: #7dd3ea;
+  --color-secondary-dark: #0e7c9b;
 
   /* ── Surface / Background ───────────────────────────────────────────── */
-  --color-background: hsl(220, 20%, 10%);
-  --color-surface: hsl(220, 18%, 14%);
-  --color-surface-raised: hsl(220, 16%, 18%);
-  --color-surface-elevated: hsl(220, 16%, 18%);   /* alias used by module pages */
-  --color-surface-overlay: hsl(220, 14%, 22%);
+  --color-background: #0a0a0f;
+  --color-surface: #0f0f1a;
+  --color-surface-raised: #1e293b;
+  --color-surface-elevated: #1e293b;   /* alias used by module pages */
+  --color-surface-overlay: #263449;
 
   /* ── Border ─────────────────────────────────────────────────────────── */
   --color-border: rgba(255, 255, 255, 0.08);
 
   /* ── Text ───────────────────────────────────────────────────────────── */
-  --color-text: hsl(220, 10%, 95%);
-  --color-foreground: hsl(220, 10%, 95%);          /* alias used by root page.tsx */
-  --color-text-muted: hsl(220, 8%, 60%);
-  --color-text-subtle: hsl(220, 6%, 40%);
+  --color-text: #f1f5f9;
+  --color-foreground: #f1f5f9;          /* alias used by root page.tsx */
+  --color-text-muted: #94a3b8;
+  --color-text-subtle: #475569;
 
   /* ── Status ─────────────────────────────────────────────────────────── */
-  --color-success: hsl(142, 70%, 45%);
-  --color-warning: hsl(38, 90%, 50%);
-  --color-error: hsl(0, 75%, 55%);
-  --color-info: hsl(200, 80%, 50%);
+  --color-success: #16a34a;
+  --color-warning: #f59e0b;
+  --color-error: #dc2626;
+  --color-info: #59c3e1;
 
   /* ── Clinical Colors ────────────────────────────────────────────────── */
   --color-clinical: hsl(210, 80%, 22%);
@@ -51,12 +52,13 @@
 
   /* ── Glassmorphism ──────────────────────────────────────────────────── */
   --glass-background: rgba(255, 255, 255, 0.04);
-  --glass-blur: blur(12px);
+  --glass-blur: blur(20px);
   --glass-border: 1px solid rgba(255, 255, 255, 0.08);
-  --glass-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+  --glass-shadow: 0 0 0 1px rgba(255, 255, 255, 0.06), 0 8px 32px rgba(0, 0, 0, 0.4);
 
   /* ── Typography ─────────────────────────────────────────────────────── */
-  --font-family-latin: "Inter", system-ui, -apple-system, sans-serif;
+  --font-family-latin: "Source Sans 3", system-ui, -apple-system, sans-serif;
+  --font-family-heading: "Lexend", "Source Sans 3", sans-serif;
   --font-family-arabic: "IBM Plex Arabic", "Noto Sans Arabic", sans-serif;
   --font-size-xs: 0.75rem;
   --font-size-sm: 0.875rem;

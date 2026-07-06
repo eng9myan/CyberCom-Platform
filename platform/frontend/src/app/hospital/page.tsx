@@ -11,6 +11,9 @@ import {
   CartesianGrid,
   Tooltip,
   Legend,
+  PieChart,
+  Pie,
+  Cell,
 } from "recharts";
 import {
   UserPlus,
@@ -21,6 +24,10 @@ import {
   Package,
   Users,
   BarChart3,
+  BedDouble,
+  Siren,
+  Activity,
+  type LucideIcon,
 } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { useAuth } from "@/contexts/auth";
@@ -81,6 +88,22 @@ function statusColor(status: string) {
   if (status === "critical") return "#ef4444";
   if (status === "elevated") return "#f59e0b";
   return "#22c55e";
+}
+
+function KpiTile({
+  label, value, icon: Icon, accent = "orange",
+}: { label: string; value: string | number; icon: LucideIcon; accent?: "orange" | "cyan" | "danger" }) {
+  const accentBg = accent === "cyan" ? "rgba(89,195,225,.15)" : accent === "danger" ? "rgba(220,38,38,.12)" : "rgba(237,108,0,.10)";
+  const accentFg = accent === "cyan" ? "#59C3E1" : accent === "danger" ? "#f87171" : "#ED6C00";
+  return (
+    <div className="cy-card p-5">
+      <div className="flex h-10 w-10 items-center justify-center rounded-xl" style={{ background: accentBg, color: accentFg }}>
+        <Icon size={18} />
+      </div>
+      <div className="mt-4 text-xs uppercase tracking-[0.18em] text-white/40">{label}</div>
+      <div className="mt-1 font-heading text-3xl font-black tracking-tight tabular-nums">{value}</div>
+    </div>
+  );
 }
 
 export default function HospitalPortal() {
@@ -182,54 +205,92 @@ export default function HospitalPortal() {
   }
 
   const capacityColor = metrics.capacity_pct >= 90 ? "#ef4444" : metrics.capacity_pct >= 80 ? "#f59e0b" : "#22c55e";
+  const occupancyData = [
+    { name: "Occupied", value: metrics.occupied_beds, color: capacityColor },
+    { name: "Available", value: Math.max(metrics.available_beds, 0), color: "rgba(255,255,255,0.08)" },
+  ];
 
   return (
-    <div style={{ maxWidth: "1300px", margin: "0 auto" }}>
-      <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "2rem" }}>
+    <div className="mx-auto max-w-[1400px]">
+      <header className="mb-6 flex items-center justify-between">
         <div>
-          <h1 style={{ fontSize: "1.75rem", fontWeight: 700 }}>
+          <h1 className="font-heading text-2xl font-bold tracking-tight">
             {lang === "en" ? "Command Overview" : "نظرة عامة على القيادة"}
           </h1>
-          <p style={{ color: "var(--color-text-muted)", fontSize: "0.95rem", marginTop: "0.25rem" }}>
+          <p className="mt-1 text-sm text-white/50">
             {lang === "en" ? "Live hospital operations" : "عمليات المستشفى المباشرة"}
-            {loading && <span style={{ marginLeft: "0.75rem" }}>Updating...</span>}
+            {loading && <span className="ml-3 text-brand-400">Updating…</span>}
           </p>
         </div>
-        <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
-          <div style={{ background: capacityColor + "22", border: `2px solid ${capacityColor}`, borderRadius: "8px", padding: "0.5rem 1rem", textAlign: "center" }}>
-            <div style={{ fontSize: "1.5rem", fontWeight: 700, color: capacityColor }}>{metrics.capacity_pct}%</div>
-            <div style={{ fontSize: "0.75rem", color: "var(--color-text-muted)", fontWeight: 500 }}>{lang === "en" ? "Capacity" : "الطاقة"}</div>
-          </div>
-          <button onClick={() => setLang(l => l === "en" ? "ar" : "en")} style={{ padding: "0.5rem 1rem", borderRadius: "8px", border: "1px solid var(--color-border)", cursor: "pointer", background: "var(--color-surface)", color: "var(--color-text)", fontSize: "0.875rem", fontWeight: 500 }}>
-            {lang === "en" ? "العربية" : "English"}
-          </button>
-        </div>
+        <button onClick={() => setLang(l => l === "en" ? "ar" : "en")} className="cy-btn cy-btn-ghost !min-h-0 !py-2 !px-4 text-sm">
+          {lang === "en" ? "العربية" : "English"}
+        </button>
       </header>
 
       {/* Key Metrics Row */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: "1rem", marginBottom: "2rem" }}>
-        {[
-          { label: lang === "en" ? "Total Beds" : "إجمالي الأسرة", value: metrics.total_beds, color: "#6366f1" },
-          { label: lang === "en" ? "Occupied" : "مشغولة", value: metrics.occupied_beds, color: "#ef4444" },
-          { label: lang === "en" ? "Available" : "متاحة", value: metrics.available_beds, color: "#22c55e" },
-          { label: lang === "en" ? "ICU Occupied" : "عناية مركزة", value: `${metrics.icu_occupied}/${metrics.icu_total}`, color: "#f59e0b" },
-          { label: lang === "en" ? "ED Active" : "طوارئ نشطة", value: metrics.ed_active, color: "#ec4899" },
-          { label: lang === "en" ? "Pending Admit" : "انتظار قبول", value: metrics.pending_admissions, color: "#8b5cf6" },
-          { label: lang === "en" ? "Pending DC" : "انتظار خروج", value: metrics.pending_discharges, color: "#14b8a6" },
-          { label: lang === "en" ? "OR Scheduled" : "عمليات مجدولة", value: metrics.or_scheduled, color: "#3b82f6" },
-        ].map(m => (
-          <div key={m.label} style={{ background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: "12px", textAlign: "center", padding: "1.25rem", boxShadow: "0 4px 6px rgba(0, 0, 0, 0.05)" }}>
-            <p style={{ fontSize: "1.85rem", fontWeight: 700, color: m.color }}>{m.value}</p>
-            <p style={{ fontSize: "0.8rem", color: "var(--color-text-muted)", marginTop: "0.5rem", fontWeight: 500 }}>{m.label}</p>
+      <div className="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+        <KpiTile label={lang === "en" ? "Total Beds" : "إجمالي الأسرة"} value={metrics.total_beds} icon={BedDouble} accent="cyan" />
+        <KpiTile label={lang === "en" ? "Occupied" : "مشغولة"} value={metrics.occupied_beds} icon={Activity} accent="orange" />
+        <KpiTile label={lang === "en" ? "ED Active" : "طوارئ نشطة"} value={metrics.ed_active} icon={Siren} accent="danger" />
+        <KpiTile label={lang === "en" ? "ICU Occupied" : "عناية مركزة"} value={`${metrics.icu_occupied}/${metrics.icu_total}`} icon={HeartPulse} accent="orange" />
+      </div>
+
+      {/* Bed Occupancy donut + Weekly Trend */}
+      <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <div className="cy-card p-5">
+          <h3 className="font-heading text-lg font-bold">{lang === "en" ? "Bed Occupancy" : "إشغال الأسرة"}</h3>
+          <p className="text-xs text-white/40">{lang === "en" ? "Tenant-wide, live" : "على مستوى المستأجر"}</p>
+          <div className="relative mx-auto mt-2 h-56 w-56">
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie data={occupancyData} dataKey="value" innerRadius={70} outerRadius={95} startAngle={90} endAngle={-270} stroke="none">
+                  {occupancyData.map((d, i) => <Cell key={i} fill={d.color} />)}
+                </Pie>
+              </PieChart>
+            </ResponsiveContainer>
+            <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+              <span className="font-heading text-3xl font-black tabular-nums" style={{ color: capacityColor }}>{metrics.capacity_pct}%</span>
+              <span className="text-xs text-white/40">{lang === "en" ? "capacity" : "الطاقة"}</span>
+            </div>
           </div>
-        ))}
+          <div className="mt-4 flex justify-center gap-6 text-xs">
+            <span className="flex items-center gap-1.5 text-white/60"><span className="h-2 w-2 rounded-full" style={{ background: capacityColor }} />{lang === "en" ? "Occupied" : "مشغول"} {metrics.occupied_beds}</span>
+            <span className="flex items-center gap-1.5 text-white/60"><span className="h-2 w-2 rounded-full bg-white/15" />{lang === "en" ? "Available" : "متاح"} {metrics.available_beds}</span>
+          </div>
+        </div>
+
+        <div className="cy-card p-5 lg:col-span-2">
+          <div className="mb-1 flex items-center justify-between">
+            <div>
+              <h3 className="font-heading text-lg font-bold">{lang === "en" ? "Admissions vs. Discharges" : "القبول مقابل الخروج"}</h3>
+              <p className="text-xs text-white/40">{lang === "en" ? "Last 7 days · live" : "آخر 7 أيام"}</p>
+            </div>
+          </div>
+          <div className="mt-3 h-64">
+            {trend && trend.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={trend}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" vertical={false} />
+                  <XAxis dataKey="date" stroke="rgba(255,255,255,0.4)" fontSize={12} tickLine={false} axisLine={false} />
+                  <YAxis stroke="rgba(255,255,255,0.4)" fontSize={12} allowDecimals={false} tickLine={false} axisLine={false} />
+                  <Tooltip contentStyle={{ background: "#1e293b", border: "1px solid rgba(255,255,255,0.08)", borderRadius: "12px", fontSize: 12 }} />
+                  <Legend />
+                  <Line type="monotone" dataKey="admissions" stroke="#ED6C00" strokeWidth={2.5} name={lang === "en" ? "Admissions" : "القبول"} dot={false} />
+                  <Line type="monotone" dataKey="discharges" stroke="#59C3E1" strokeWidth={2.5} name={lang === "en" ? "Discharges" : "الخروج"} dot={false} />
+                </LineChart>
+              </ResponsiveContainer>
+            ) : (
+              <div className="flex h-full items-center justify-center text-sm text-white/40">
+                {lang === "en" ? "Loading trend data..." : "جاري تحميل بيانات الاتجاه..."}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
 
       {/* Module Grid */}
-      <h2 style={{ fontSize: "1.15rem", fontWeight: 700, marginBottom: "1rem" }}>
-        {lang === "en" ? "Modules" : "الوحدات"}
-      </h2>
-      <div className="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-4">
+      <h2 className="mb-3 font-heading text-lg font-bold">{lang === "en" ? "Modules" : "الوحدات"}</h2>
+      <div className="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
         {[
           { href: "/hospital/patients", label: "Patient Registration", icon: UserPlus, badge: moduleSummary?.patients_total, badgeLabel: "patients" },
           { href: "/hospital/appointments", label: "Appointment Calendar", icon: CalendarDays, badge: moduleSummary?.appointments_today, badgeLabel: "today" },
@@ -240,57 +301,25 @@ export default function HospitalPortal() {
           { href: "/hospital/hr", label: "HR & Payroll", icon: Users, badge: moduleSummary?.leave_requests_pending, badgeLabel: "pending leave" },
           { href: "/hospital/reports", label: "Reports & Dashboards", icon: BarChart3, badge: moduleSummary?.bi_reports_active, badgeLabel: "active reports" },
         ].map(({ href, label, icon: Icon, badge, badgeLabel }) => (
-          <Link
-            key={href}
-            href={href}
-            className="rounded-xl border p-4 transition-colors hover:border-brand-400/50 hover:bg-white/5"
-            style={{ background: "var(--color-surface)", borderColor: "var(--color-border)" }}
-          >
-            <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-lg bg-brand-500/15 text-brand-300">
+          <Link key={href} href={href} className="cy-card block p-4">
+            <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-lg bg-brand-500/10 text-brand-400">
               <Icon size={18} />
             </div>
-            <p className="text-sm font-semibold" style={{ color: "var(--color-text)" }}>{label}</p>
-            <p className="mt-1 text-xs" style={{ color: "var(--color-text-muted)" }}>
-              {badge === undefined ? "..." : badge} {badgeLabel}
+            <p className="text-sm font-semibold text-white">{label}</p>
+            <p className="mt-1 text-xs text-white/40">
+              {badge === undefined ? "…" : badge} {badgeLabel}
             </p>
           </Link>
         ))}
       </div>
 
-      {/* Weekly Trend */}
-      <h2 style={{ fontSize: "1.15rem", fontWeight: 700, marginBottom: "1rem" }}>
-        {lang === "en" ? "Admissions vs. Discharges (7 days)" : "القبول مقابل الخروج (7 أيام)"}
-      </h2>
-      <div style={{ background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: "12px", padding: "1.25rem", marginBottom: "2.5rem", height: "300px" }}>
-        {trend && trend.length > 0 ? (
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={trend}>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
-              <XAxis dataKey="date" stroke="var(--color-text-muted)" fontSize={12} />
-              <YAxis stroke="var(--color-text-muted)" fontSize={12} allowDecimals={false} />
-              <Tooltip
-                contentStyle={{ background: "var(--color-surface-elevated)", border: "1px solid var(--color-border)", borderRadius: "8px" }}
-              />
-              <Legend />
-              <Line type="monotone" dataKey="admissions" stroke="#6366f1" strokeWidth={2} name={lang === "en" ? "Admissions" : "القبول"} />
-              <Line type="monotone" dataKey="discharges" stroke="#14b8a6" strokeWidth={2} name={lang === "en" ? "Discharges" : "الخروج"} />
-            </LineChart>
-          </ResponsiveContainer>
-        ) : (
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "100%", color: "var(--color-text-muted)" }}>
-            {lang === "en" ? "Loading trend data..." : "جاري تحميل بيانات الاتجاه..."}
-          </div>
-        )}
-      </div>
-
       {/* Ward Census */}
-      <h2 style={{ fontSize: "1.15rem", fontWeight: 700, marginBottom: "1rem" }}>
-        {lang === "en" ? "Ward Census" : "إحصاء الأجنحة"}
-      </h2>
-      <div style={{ background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: "12px", overflow: "hidden", boxShadow: "0 4px 6px rgba(0, 0, 0, 0.05)" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+      <h2 className="mb-3 font-heading text-lg font-bold">{lang === "en" ? "Ward Census" : "إحصاء الأجنحة"}</h2>
+      <div className="cy-card overflow-hidden">
+        <div className="overflow-x-auto">
+        <table className="w-full border-collapse">
           <thead>
-            <tr style={{ background: "var(--color-surface-elevated)", borderBottom: "2px solid var(--color-border)" }}>
+            <tr className="border-b border-white/[0.07] bg-white/[0.02]">
               {[
                 lang === "en" ? "Ward" : "الجناح",
                 lang === "en" ? "Total Capacity" : "الكلي",
@@ -300,14 +329,14 @@ export default function HospitalPortal() {
                 lang === "en" ? "Occupancy" : "الإشغال",
                 lang === "en" ? "Status" : "الحالة",
               ].map(h => (
-                <th key={h} style={{ padding: "1rem", textAlign: "left", fontSize: "0.875rem", fontWeight: 600, color: "var(--color-text-muted)" }}>{h}</th>
+                <th key={h} className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-white/40">{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {wards.length === 0 && (
               <tr>
-                <td colSpan={7} style={{ padding: "1.5rem", textAlign: "center", color: "var(--color-text-muted)" }}>
+                <td colSpan={7} className="px-4 py-6 text-center text-sm text-white/40">
                   {lang === "en"
                     ? "Ward-level breakdown is not wired up yet -- only tenant-wide totals above are live."
                     : "تفصيل الأجنحة غير متاح بعد -- الإجماليات أعلاه فقط مباشرة."}
@@ -317,29 +346,25 @@ export default function HospitalPortal() {
             {wards.map((ward, i) => {
               const occ = Math.round((ward.occupied / ward.total) * 100);
               return (
-                <tr key={ward.name} style={{ borderBottom: "1px solid var(--color-border)", background: i % 2 === 0 ? "transparent" : "var(--color-surface-elevated)" }}>
-                  <td style={{ padding: "1rem", fontWeight: 600, color: "var(--color-text)" }}>{lang === "ar" ? ward.name_ar : ward.name}</td>
-                  <td style={{ padding: "1rem", color: "var(--color-text)" }}>{ward.total}</td>
-                  <td style={{ padding: "1rem", fontWeight: 600, color: "var(--color-text)" }}>{ward.occupied}</td>
-                  <td style={{ padding: "1rem", color: "#22c55e", fontWeight: 600 }}>{ward.total - ward.occupied}</td>
-                  <td style={{ padding: "1rem", color: "var(--color-text)" }}>{ward.pending_discharge}</td>
-                  <td style={{ padding: "1rem" }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-                      <div style={{ flex: 1, height: "8px", background: "var(--color-border)", borderRadius: "4px" }}>
-                        <div style={{ width: `${occ}%`, height: "100%", background: statusColor(ward.status), borderRadius: "4px" }} />
+                <tr key={ward.name} className={`border-b border-white/5 last:border-0 ${i % 2 === 1 ? "bg-white/[0.015]" : ""}`}>
+                  <td className="px-4 py-3 text-sm font-semibold">{lang === "ar" ? ward.name_ar : ward.name}</td>
+                  <td className="px-4 py-3 text-sm tabular-nums">{ward.total}</td>
+                  <td className="px-4 py-3 text-sm font-semibold tabular-nums">{ward.occupied}</td>
+                  <td className="px-4 py-3 text-sm font-semibold tabular-nums text-emerald-400">{ward.total - ward.occupied}</td>
+                  <td className="px-4 py-3 text-sm tabular-nums">{ward.pending_discharge}</td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-3">
+                      <div className="h-2 flex-1 rounded-full bg-white/10">
+                        <div className="h-full rounded-full" style={{ width: `${occ}%`, background: statusColor(ward.status) }} />
                       </div>
-                      <span style={{ fontSize: "0.875rem", fontWeight: 700, color: statusColor(ward.status), minWidth: "40px" }}>{occ}%</span>
+                      <span className="min-w-[40px] text-sm font-bold tabular-nums" style={{ color: statusColor(ward.status) }}>{occ}%</span>
                     </div>
                   </td>
-                  <td style={{ padding: "1rem" }}>
-                    <span style={{
-                      padding: "0.3rem 0.75rem",
-                      borderRadius: "20px",
-                      fontSize: "0.75rem",
-                      fontWeight: 700,
-                      background: ward.status === "critical" ? "#fee2e2" : ward.status === "elevated" ? "#fef3c7" : "#d1fae5",
-                      color: ward.status === "critical" ? "#b91c1c" : ward.status === "elevated" ? "#b45309" : "#047857"
-                    }}>
+                  <td className="px-4 py-3">
+                    <span
+                      className="rounded-full px-3 py-1 text-xs font-bold"
+                      style={{ background: `${statusColor(ward.status)}22`, color: statusColor(ward.status) }}
+                    >
                       {ward.status.toUpperCase()}
                     </span>
                   </td>
@@ -348,6 +373,7 @@ export default function HospitalPortal() {
             })}
           </tbody>
         </table>
+        </div>
       </div>
     </div>
   );
