@@ -22,8 +22,11 @@ import {
   LogOut,
   Menu,
   X,
+  ShieldCheck,
 } from "lucide-react";
 import { useAuth } from "@/contexts/auth";
+
+const ADMIN_ROLES = ["platform_admin", "cyidentity_admin", "hospital_admin"];
 
 const CLINICAL_NAV_ITEMS = [
   { href: "/hospital", label: "Command Overview", icon: LayoutDashboard },
@@ -46,6 +49,11 @@ const ERP_NAV_ITEMS = [
   { href: "/hospital/reports", label: "Reports & Dashboards", icon: BarChart3 },
 ];
 
+const SETTINGS_NAV_ITEMS = [
+  { href: "/hospital/settings/users", label: "Users", icon: Users },
+  { href: "/hospital/settings/roles", label: "Roles & Permissions", icon: ShieldCheck },
+];
+
 function initials(name: string): string {
   const parts = name.trim().split(/\s+/).filter(Boolean);
   if (parts.length === 0) return "?";
@@ -60,6 +68,7 @@ export default function HospitalLayout({ children }: { children: React.ReactNode
 
   const displayName = session?.displayName || session?.email || "Unknown user";
   const primaryRole = session?.roles?.[0];
+  const isAdmin = (session?.roles || []).some(r => ADMIN_ROLES.includes(r));
 
   return (
     <div className="flex min-h-screen bg-surface text-white">
@@ -128,6 +137,32 @@ export default function HospitalLayout({ children }: { children: React.ReactNode
               </Link>
             );
           })}
+
+          {isAdmin && (
+            <>
+              <p className="px-3 pb-1 pt-4 text-xs font-semibold uppercase tracking-wider text-white/40">
+                Settings
+              </p>
+              {SETTINGS_NAV_ITEMS.map(({ href, label, icon: Icon }) => {
+                const active = pathname === href;
+                return (
+                  <Link
+                    key={href}
+                    href={href}
+                    onClick={() => setMobileNavOpen(false)}
+                    className={`flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                      active
+                        ? "bg-brand-500/15 text-brand-200"
+                        : "text-white/70 hover:bg-white/5 hover:text-white"
+                    }`}
+                  >
+                    <Icon size={18} strokeWidth={2} />
+                    {label}
+                  </Link>
+                );
+              })}
+            </>
+          )}
         </nav>
       </aside>
 

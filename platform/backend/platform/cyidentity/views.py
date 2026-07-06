@@ -31,6 +31,7 @@ from django.http import HttpResponse
 from django.utils import timezone
 from rest_framework import status, viewsets
 from rest_framework.decorators import action, api_view, permission_classes
+from rest_framework.exceptions import ValidationError
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 
@@ -61,6 +62,7 @@ from platform.cyidentity.permissions import (
 from platform.cyidentity.serializers import (
     ApplicationClientRegisterSerializer,
     ApplicationClientSerializer,
+    AssignRoleSerializer,
     BreakGlassAccessSerializer,
     BreakGlassActivateSerializer,
     BreakGlassApproveSerializer,
@@ -89,6 +91,7 @@ from platform.cyidentity.serializers import (
 from platform.cyidentity.services import (
     BreakGlassService,
     ClientService,
+    KeycloakAdminClient,
     KeycloakError,
     RealmService,
     SessionService,
@@ -282,6 +285,22 @@ class RoleViewSet(viewsets.ModelViewSet):
     serializer_class = RoleSerializer
     permission_classes = [ReadOnlyOrPlatformAdmin]
 
+    def perform_create(self, serializer):
+        """
+        Mirrors the new role into Keycloak so it actually exists as a
+        realm role -- otherwise assign-role later 404s against Keycloak
+        even though the row exists locally.
+        """
+        role = serializer.save()
+        try:
+            KeycloakAdminClient().create_role(
+                role.realm.realm_name,
+                {"name": role.name, "description": role.description},
+            )
+        except KeycloakError as exc:
+            role.delete()
+            raise ValidationError({"detail": f"Keycloak role sync failed: {exc}"}) from exc
+
 
 class RoleAssignmentViewSet(viewsets.ModelViewSet):
     queryset = RoleAssignment.objects.all().order_by("-created_at")
@@ -356,6 +375,45 @@ class UserProfileViewSet(viewsets.ModelViewSet):
         user = self.get_object()
         try:
             user = UserProvisioningService().sync_mfa_status(user)
+        except KeycloakError as exc:
+            return Response(
+                {"detail": str(exc), "keycloak_status": exc.status_code},
+                status=status.HTTP_502_BAD_GATEWAY,
+            )
+        return Response(UserProfileSerializer(user).data)
+
+    @action(detail=True, methods=["post"], url_path="assign-role")
+    def assign_role(self, request, pk=None):
+        """Grants a realm role to this user (real Keycloak role-mapping + local mirror)."""
+        user = self.get_object()
+        serializer = AssignRoleSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        try:
+            role = Role.objects.get(pk=serializer.validated_data["role_id"])
+        except Role.DoesNotExist:
+            return Response({"detail": "Role not found"}, status=status.HTTP_404_NOT_FOUND)
+        try:
+            granted_by = (getattr(request, "auth_claims", None) or {}).get("preferred_username", "")
+            user = UserProvisioningService().assign_role(user, role, granted_by=granted_by)
+        except KeycloakError as exc:
+            return Response(
+                {"detail": str(exc), "keycloak_status": exc.status_code},
+                status=status.HTTP_502_BAD_GATEWAY,
+            )
+        return Response(UserProfileSerializer(user).data)
+
+    @action(detail=True, methods=["post"], url_path="remove-role")
+    def remove_role(self, request, pk=None):
+        """Revokes a realm role from this user (real Keycloak role-mapping + local mirror)."""
+        user = self.get_object()
+        serializer = AssignRoleSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        try:
+            role = Role.objects.get(pk=serializer.validated_data["role_id"])
+        except Role.DoesNotExist:
+            return Response({"detail": "Role not found"}, status=status.HTTP_404_NOT_FOUND)
+        try:
+            user = UserProvisioningService().remove_role(user, role)
         except KeycloakError as exc:
             return Response(
                 {"detail": str(exc), "keycloak_status": exc.status_code},

@@ -28,6 +28,7 @@ function CallbackHandler() {
           `${window.location.origin}/auth/callback`
         );
         const claims = parseJwtClaims(accessToken);
+        const realmAccess = claims["realm_access"] as { roles?: string[] } | undefined;
 
         const session: UserSession = {
           userId: String(claims["sub"] ?? ""),
@@ -35,7 +36,7 @@ function CallbackHandler() {
           displayName: String(claims["name"] ?? ""),
           realm: String(claims["iss"] ?? ""),
           tenantId: String(claims["tenant_id"] ?? ""),
-          roles: (claims["roles"] as string[]) ?? [],
+          roles: realmAccess?.roles ?? [],
           permissions: (claims["permissions"] as string[]) ?? [],
           accessToken,
           tokenExpiresAt: Date.now() + ((claims["exp"] as number) ?? 900) * 1000,

@@ -504,6 +504,7 @@ class UserProfile(BaseModel):
     failed_login_count = models.PositiveIntegerField(default=0)
     locked_until = models.DateTimeField(null=True, blank=True)
     attributes = models.JSONField(default=dict, blank=True)
+    roles = models.ManyToManyField(Role, blank=True, related_name="assigned_users")
 
     class Meta:
         db_table = "platform_user_profiles"

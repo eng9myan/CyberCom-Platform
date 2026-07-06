@@ -338,21 +338,78 @@ class KeycloakAdminClient:
         location = resp.headers.get("Location", "")
         return location.rsplit("/", 1)[-1] if location else str(uuid.uuid4())
 
+    def create_role(self, realm_name: str, role_payload: dict[str, Any]) -> None:
+        """Idempotent: a role that already exists in the realm is not an error."""
+        if not getattr(settings, "KEYCLOAK_ENABLED", True):
+            role_name = role_payload.get("name") or str(uuid.uuid4())
+            self._fake_store["roles"].setdefault(realm_name, {})[role_name] = role_payload
+            return
+        import httpx  # type: ignore
+
+        url = f"{self.base_url}/admin/realms/{realm_name}/roles"
+        resp = httpx.post(
+            url, json=role_payload, headers=self._auth_headers(), timeout=self.timeout_seconds
+        )
+        if resp.status_code == 409:
+            return
+        if resp.status_code >= 400:
+            raise KeycloakError(
+                f"create_role failed: {resp.status_code}", resp.status_code, resp.text
+            )
+
+    def get_realm_role(self, realm_name: str, role_name: str) -> dict[str, Any]:
+        """
+        Keycloak's role-mappings endpoints require the role's own `id`
+        (not just its name) in the request body, so callers resolve the
+        real RoleRepresentation here before assign/remove.
+        """
+        if not getattr(settings, "KEYCLOAK_ENABLED", True):
+            return {"id": role_name, "name": role_name}
+        import httpx  # type: ignore
+
+        url = f"{self.base_url}/admin/realms/{realm_name}/roles/{role_name}"
+        resp = httpx.get(url, headers=self._auth_headers(), timeout=self.timeout_seconds)
+        if resp.status_code >= 400:
+            raise KeycloakError(
+                f"get_realm_role failed: {resp.status_code}", resp.status_code, resp.text
+            )
+        return resp.json()
+
     def assign_role_to_user(self, realm_name: str, user_id: str, role_name: str) -> None:
         if not getattr(settings, "KEYCLOAK_ENABLED", True):
             return
         import httpx  # type: ignore
 
+        role = self.get_realm_role(realm_name, role_name)
         url = f"{self.base_url}/admin/realms/{realm_name}/users/{user_id}/role-mappings/realm"
         resp = httpx.post(
             url,
-            json=[{"name": role_name}],
+            json=[{"id": role["id"], "name": role["name"]}],
             headers=self._auth_headers(),
             timeout=self.timeout_seconds,
         )
         if resp.status_code >= 400:
             raise KeycloakError(
                 f"assign_role failed: {resp.status_code}", resp.status_code, resp.text
+            )
+
+    def remove_role_from_user(self, realm_name: str, user_id: str, role_name: str) -> None:
+        if not getattr(settings, "KEYCLOAK_ENABLED", True):
+            return
+        import httpx  # type: ignore
+
+        role = self.get_realm_role(realm_name, role_name)
+        url = f"{self.base_url}/admin/realms/{realm_name}/users/{user_id}/role-mappings/realm"
+        resp = httpx.request(
+            "DELETE",
+            url,
+            json=[{"id": role["id"], "name": role["name"]}],
+            headers=self._auth_headers(),
+            timeout=self.timeout_seconds,
+        )
+        if resp.status_code >= 400:
+            raise KeycloakError(
+                f"remove_role failed: {resp.status_code}", resp.status_code, resp.text
             )
 
     def get_user_credential_types(self, realm_name: str, user_id: str) -> list[str]:
@@ -737,15 +794,17 @@ class UserProvisioningService:
         )
         return profile
 
-    def assign_role(self, user: UserProfile, role: Role, granted_by: str = "") -> RoleAssignment:
+    def assign_role(self, user: UserProfile, role: Role, granted_by: str = "") -> UserProfile:
+        """Grants `role` to `user`: real Keycloak realm role-mapping + local mirror."""
         self.kc.assign_role_to_user(user.realm.realm_name, str(user.keycloak_user_id), role.name)
-        return RoleAssignment.objects.create(
-            role=role,
-            permission=None,
-            child_role=None,
-            kind="permission",
-            granted_by=granted_by,
-        )
+        user.roles.add(role)
+        return user
+
+    def remove_role(self, user: UserProfile, role: Role) -> UserProfile:
+        """Revokes `role` from `user`: real Keycloak realm role-mapping + local mirror."""
+        self.kc.remove_role_from_user(user.realm.realm_name, str(user.keycloak_user_id), role.name)
+        user.roles.remove(role)
+        return user
 
     def sync_mfa_status(self, user: UserProfile) -> UserProfile:
         """

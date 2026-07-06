@@ -328,6 +328,7 @@ class GroupMembershipSerializer(serializers.ModelSerializer):
 # ---------------------------------------------------------------------------
 class UserProfileSerializer(serializers.ModelSerializer):
     is_locked = serializers.BooleanField(read_only=True)
+    roles = RoleSerializer(many=True, read_only=True)
 
     class Meta:
         model = UserProfile
@@ -349,6 +350,7 @@ class UserProfileSerializer(serializers.ModelSerializer):
             "failed_login_count",
             "locked_until",
             "is_locked",
+            "roles",
             "attributes",
             "created_at",
             "updated_at",
@@ -360,9 +362,14 @@ class UserProfileSerializer(serializers.ModelSerializer):
             "failed_login_count",
             "locked_until",
             "is_locked",
+            "roles",
             "created_at",
             "updated_at",
         ]
+
+
+class AssignRoleSerializer(serializers.Serializer):
+    role_id = serializers.UUIDField()
 
 
 class UserProvisionSerializer(serializers.Serializer):
