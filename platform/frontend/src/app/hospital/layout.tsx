@@ -13,6 +13,8 @@ import {
   UserPlus,
   CalendarDays,
   Stethoscope,
+  HeartHandshake,
+  ClipboardCheck,
   Pill,
   Receipt,
   Package,
@@ -43,9 +45,11 @@ const NAV_GROUPS = [
   {
     label: "Clinical Operations",
     items: [
+      { href: "/hospital/reception", label: "Reception", icon: ClipboardCheck },
       { href: "/hospital/patients", label: "Patient Registration", icon: UserPlus },
       { href: "/hospital/appointments", label: "Appointment Calendar", icon: CalendarDays },
       { href: "/hospital/doctor-workspace", label: "Doctor Workspace", icon: Stethoscope },
+      { href: "/hospital/nursing", label: "Nursing Dashboard", icon: HeartHandshake },
       { href: "/hospital/adt", label: "Admissions (ADT)", icon: ClipboardList },
       { href: "/hospital/emar", label: "Medication Admin (eMAR)", icon: Pill },
       { href: "/hospital/emergency", label: "Emergency", icon: Siren },
