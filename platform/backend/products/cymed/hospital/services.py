@@ -2626,3 +2626,68 @@ class OperationsService:
                 "reason": "No housekeeping/room-turnaround model exists yet.",
             },
         }
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 14. NursingService — Nursing Dashboard. Medication due, pending tasks, and
+#     care plans are real queries against eMAR/NursingTask/NursingCarePlan.
+# ─────────────────────────────────────────────────────────────────────────────
+
+
+class NursingService:
+    MED_DUE_WINDOW_HOURS = 2
+
+    @classmethod
+    def get_dashboard(cls, tenant_id: str) -> dict:
+        from products.cymed.hospital.adt.models import Admission
+        from products.cymed.hospital.nursing.models import (
+            NursingCarePlan,
+            NursingHandover,
+            NursingTask,
+        )
+        from products.cymed.pharmacy.administration.models import (
+            AdministrationStatus,
+            MedicationAdministrationRecord,
+        )
+
+        tenant_uuid = uuid.UUID(str(tenant_id))
+        now = timezone.now()
+        today = now.date()
+        due_cutoff = now + timezone.timedelta(hours=cls.MED_DUE_WINDOW_HOURS)
+
+        patients_today = (
+            Admission.objects.filter(tenant_id=tenant_uuid, status="admitted")
+            .values("encounter__patient_id")
+            .distinct()
+            .count()
+        )
+
+        meds_due_qs = MedicationAdministrationRecord.objects.filter(
+            tenant_id=tenant_uuid,
+            status=AdministrationStatus.SCHEDULED,
+            scheduled_at__lte=due_cutoff,
+        ).order_by("scheduled_at")
+        meds_overdue_count = meds_due_qs.filter(scheduled_at__lt=now).count()
+        meds_due_soon_count = meds_due_qs.filter(scheduled_at__gte=now).count()
+
+        tasks_pending = NursingTask.objects.filter(tenant_id=tenant_uuid, status="pending")
+        tasks_pending_count = tasks_pending.count()
+        tasks_overdue_count = tasks_pending.filter(scheduled_at__lt=now).count()
+
+        care_plans_count = NursingCarePlan.objects.filter(tenant_id=tenant_uuid).count()
+        handovers_today_count = NursingHandover.objects.filter(
+            tenant_id=tenant_uuid, handover_time__date=today
+        ).count()
+
+        return {
+            "patients_today": patients_today,
+            "medication_due": {
+                "overdue": meds_overdue_count,
+                "due_within_hours": cls.MED_DUE_WINDOW_HOURS,
+                "due_soon": meds_due_soon_count,
+            },
+            "tasks_pending_count": tasks_pending_count,
+            "tasks_overdue_count": tasks_overdue_count,
+            "care_plans_on_file": care_plans_count,
+            "handovers_today": handovers_today_count,
+        }

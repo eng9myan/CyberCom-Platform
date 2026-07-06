@@ -6,6 +6,7 @@ from products.cymed.hospital.services import (
     HospitalAIAssistant,
     HospitalOperationsService,
     MedicalDirectorService,
+    NursingService,
     OperationsService,
 )
 
@@ -99,6 +100,19 @@ class OperationsDashboardView(APIView):
             return Response({"detail": "Tenant context required"}, status=400)
 
         return Response(OperationsService.get_dashboard(tenant_id))
+
+
+class NursingDashboardView(APIView):
+    """Medication due, pending tasks, care plans, handovers -- real eMAR/NursingTask queries."""
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        tenant_id = getattr(request, "tenant_id", None)
+        if not tenant_id:
+            return Response({"detail": "Tenant context required"}, status=400)
+
+        return Response(NursingService.get_dashboard(tenant_id))
 
 
 class HospitalAIAssistantView(APIView):

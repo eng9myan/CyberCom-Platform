@@ -6,6 +6,7 @@ from products.cymed.hospital.clinical_command_center.views import (
     ClinicalCommandCenterTrendView,
     HospitalAIAssistantView,
     MedicalDirectorDashboardView,
+    NursingDashboardView,
     OperationsDashboardView,
 )
 
@@ -24,4 +25,5 @@ urlpatterns = [
         name="medical-director-dashboard",
     ),
     path("operations/", OperationsDashboardView.as_view(), name="operations-dashboard"),
+    path("nursing/", NursingDashboardView.as_view(), name="nursing-dashboard"),
 ]
