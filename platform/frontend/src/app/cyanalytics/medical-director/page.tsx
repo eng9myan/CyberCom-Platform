@@ -10,6 +10,22 @@ import type { MedicalDirectorDashboard } from "@/lib/cyanalytics/types";
 
 const REFRESH_INTERVAL_MS = 30_000;
 
+interface UserProfileRaw {
+  id: string;
+  keycloak_user_id: string;
+  display_name: string;
+  username: string;
+}
+
+interface Paginated<T> {
+  count: number;
+  results: T[];
+}
+
+function unwrap<T>(data: Paginated<T> | T[]): T[] {
+  return Array.isArray(data) ? data : data.results;
+}
+
 function KpiTile({
   label, value, unit, tone = "default", note,
 }: { label: string; value: string | number; unit?: string; tone?: "default" | "warning"; note?: string }) {
@@ -28,6 +44,7 @@ function KpiTile({
 export default function MedicalDirectorPage() {
   const { session } = useAuth();
   const [data, setData] = useState<MedicalDirectorDashboard | null>(null);
+  const [physicians, setPhysicians] = useState<Record<string, string>>({});
   const [error, setError] = useState<string | null>(null);
   const [periodDays, setPeriodDays] = useState(30);
 
@@ -43,6 +60,22 @@ export default function MedicalDirectorPage() {
           { token: session.accessToken, tenantId: session.tenantId }
         );
         if (!cancelled) setData(result);
+
+        // Best-effort name join; the dashboard's own numbers must not be
+        // lost if this secondary lookup fails.
+        try {
+          const usersData = await apiFetch<Paginated<UserProfileRaw> | UserProfileRaw[]>(
+            "/api/v1/identity/users/",
+            { token: session.accessToken, tenantId: session.tenantId }
+          );
+          if (!cancelled) {
+            const map: Record<string, string> = {};
+            for (const u of unwrap(usersData)) map[u.keycloak_user_id] = u.display_name || u.username;
+            setPhysicians(map);
+          }
+        } catch {
+          // Leave physicians map empty; UUIDs render as-is.
+        }
       } catch (err) {
         if (cancelled) return;
         const detail = (err as { detail?: string })?.detail;
@@ -146,12 +179,21 @@ export default function MedicalDirectorPage() {
                     </td>
                   </tr>
                 )}
-                {data.consultant_productivity.map((c) => (
-                  <tr key={c.admitting_physician_id} className="border-b border-white/5 last:border-0">
-                    <td className="px-4 py-3 font-mono text-xs text-white/70">{c.admitting_physician_id}</td>
-                    <td className="px-4 py-3 tabular-nums">{c.admission_count}</td>
-                  </tr>
-                ))}
+                {data.consultant_productivity.map((c) => {
+                  const name = physicians[c.admitting_physician_id];
+                  return (
+                    <tr key={c.admitting_physician_id} className="border-b border-white/5 last:border-0">
+                      <td className="px-4 py-3 text-xs text-white/70">
+                        {name ?? (
+                          <span className="font-mono" title={c.admitting_physician_id}>
+                            {c.admitting_physician_id.slice(0, 8)}
+                          </span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 tabular-nums">{c.admission_count}</td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
