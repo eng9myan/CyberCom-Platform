@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
-import { Users, ClipboardCheck, FileText, FlaskConical, AlertTriangle } from "lucide-react";
+import { Users, ClipboardCheck, FileText, FlaskConical, AlertTriangle, NotebookPen } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { useAuth } from "@/contexts/auth";
 import { resolveCurrentProvider, type CurrentProvider } from "./_lib/provider";
@@ -21,6 +21,7 @@ const DEEP_LINKS = [
   { href: "/provider-portal/tasks", label: "Clinical Tasks", icon: ClipboardCheck, description: "Open tasks, escalations, follow-ups" },
   { href: "/provider-portal/orders", label: "Orders (CPOE)", icon: FileText, description: "Place and track clinical orders" },
   { href: "/provider-portal/results", label: "Results", icon: FlaskConical, description: "Lab and imaging results review" },
+  { href: "/provider-portal/notes", label: "Clinical Notes", icon: NotebookPen, description: "SOAP notes with ICD-11 diagnosis coding" },
 ];
 
 export default function ProviderPortalHome() {

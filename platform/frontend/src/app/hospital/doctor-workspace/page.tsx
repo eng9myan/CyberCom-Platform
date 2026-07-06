@@ -24,6 +24,7 @@ const DEEP_LINKS = [
   { href: "/provider-portal/tasks", label: "Clinical Tasks", icon: ClipboardCheck, description: "Open tasks, escalations, follow-ups" },
   { href: "/provider-portal/orders", label: "Orders", icon: FileText, description: "Active clinical orders" },
   { href: "/provider-portal/results", label: "Results", icon: FlaskConical, description: "Lab and imaging results review" },
+  { href: "/provider-portal/notes", label: "Clinical Notes", icon: FileText, description: "SOAP notes with ICD-11 diagnosis coding" },
 ];
 
 export default function DoctorWorkspace() {

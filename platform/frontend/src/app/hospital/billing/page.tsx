@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
-import { Receipt } from "lucide-react";
+import { useState, useEffect, useCallback, Fragment } from "react";
+import { Receipt, Search } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { useAuth } from "@/contexts/auth";
 
@@ -46,6 +46,12 @@ interface Paginated<T> {
   results: T[];
 }
 
+interface ICD11Result {
+  code: string;
+  display: string;
+  system?: string;
+}
+
 const STATUS_COLOR: Record<string, string> = {
   open: "#ef4444", coded: "#f59e0b", reviewed: "#f59e0b", billed: "#3b82f6",
   paid: "#22c55e", partial: "#f59e0b", denied: "#ef4444", written_off: "#6b7280",
@@ -58,6 +64,12 @@ export default function HospitalBilling() {
   const [patientNames, setPatientNames] = useState<Map<string, string>>(new Map());
   const [statusFilter, setStatusFilter] = useState<"all" | BillingStatus>("all");
   const [fetchError, setFetchError] = useState<string | null>(null);
+
+  const [codingEncounterId, setCodingEncounterId] = useState<string | null>(null);
+  const [icdQuery, setIcdQuery] = useState("");
+  const [icdResults, setIcdResults] = useState<ICD11Result[] | null>(null);
+  const [icdSearching, setIcdSearching] = useState(false);
+  const [icdError, setIcdError] = useState<string | null>(null);
 
   const loadData = useCallback(async () => {
     if (!session) return;
@@ -107,6 +119,45 @@ export default function HospitalBilling() {
     }
   }
 
+  async function searchICD11() {
+    if (!session || !icdQuery.trim()) return;
+    setIcdSearching(true);
+    setIcdError(null);
+    try {
+      const res = await apiFetch<{ results?: ICD11Result[] } | ICD11Result[]>("/api/v1/terminology/search/", {
+        method: "POST",
+        token: session.accessToken,
+        tenantId: session.tenantId,
+        body: JSON.stringify({ provider: "icd11", query: icdQuery, tenant_id: session.tenantId, limit: 10 }),
+      });
+      setIcdResults(Array.isArray(res) ? res : res.results ?? []);
+    } catch (err) {
+      const detail = (err as { detail?: string })?.detail;
+      setIcdError(detail || (err instanceof Error ? err.message : "ICD-11 search failed."));
+      setIcdResults(null);
+    } finally {
+      setIcdSearching(false);
+    }
+  }
+
+  async function assignDiagnosis(encounterId: string, result: ICD11Result) {
+    if (!session) return;
+    try {
+      await apiFetch(`/api/v1/rcm/billing/encounter-billings/${encounterId}/`, {
+        method: "PATCH",
+        token: session.accessToken,
+        tenantId: session.tenantId,
+        body: JSON.stringify({ icd11_primary_diagnosis: `${result.code} — ${result.display}` }),
+      });
+      setCodingEncounterId(null);
+      setIcdQuery(""); setIcdResults(null);
+      void loadData();
+    } catch (err) {
+      const detail = (err as { detail?: string })?.detail;
+      setFetchError(detail || "Failed to assign diagnosis code.");
+    }
+  }
+
   if (!isAuthenticated) {
     return <div className="mx-auto mt-16 max-w-lg text-center"><h1 className="text-xl font-bold">Sign in required</h1></div>;
   }
@@ -114,12 +165,12 @@ export default function HospitalBilling() {
     return (
       <div className="mx-auto mt-16 max-w-lg text-center">
         <h1 className="text-xl font-bold text-red-400">Unable to load billing data</h1>
-        <p className="mt-2 text-white/50">{fetchError}</p>
+        <p className="mt-2 text-ink/50">{fetchError}</p>
       </div>
     );
   }
   if (encounters === null || invoices === null) {
-    return <div className="mt-16 text-center text-white/50">Loading live billing data...</div>;
+    return <div className="mt-16 text-center text-ink/50">Loading live billing data...</div>;
   }
 
   const outstandingInvoices = invoices.filter(i => ["issued", "sent", "partial", "overdue"].includes(i.status));
@@ -131,8 +182,8 @@ export default function HospitalBilling() {
   return (
     <div className="mx-auto max-w-6xl">
       <header className="mb-6">
-        <h1 className="flex items-center gap-2 text-2xl font-bold"><Receipt size={22} /> Billing & Invoicing</h1>
-        <p className="mt-1 text-sm text-white/50">Live encounter billing and invoices for this tenant</p>
+        <h1 className="flex items-center gap-2 font-heading text-2xl font-bold"><Receipt size={22} /> Billing & Invoicing</h1>
+        <p className="mt-1 text-sm text-ink/50">Live encounter billing and invoices for this tenant</p>
       </header>
 
       <div className="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
@@ -142,8 +193,8 @@ export default function HospitalBilling() {
           { label: "Collected (paid)", value: `SAR ${paidTotal.toLocaleString()}`, color: "#22c55e" },
           { label: "Invoices", value: invoices.length, color: "#22D3EE" },
         ].map(c => (
-          <div key={c.label} className="rounded-xl border border-white/10 bg-surface-raised p-4">
-            <p className="text-xs text-white/50">{c.label}</p>
+          <div key={c.label} className="cy-card p-4">
+            <p className="text-xs text-ink/50">{c.label}</p>
             <p className="mt-1 text-xl font-bold" style={{ color: c.color }}>{c.value}</p>
           </div>
         ))}
@@ -154,51 +205,95 @@ export default function HospitalBilling() {
           <button
             key={s}
             onClick={() => setStatusFilter(s)}
-            className={`rounded-lg border px-3 py-1.5 text-sm capitalize ${statusFilter === s ? "border-brand-400 bg-brand-500/15 text-brand-200 font-semibold" : "border-white/10 bg-surface-overlay text-white/70"}`}
+            className={`rounded-lg border px-3 py-1.5 text-sm capitalize ${statusFilter === s ? "border-brand-400 bg-brand-500/15 text-brand-200 font-semibold" : "border-ink/10 bg-surface-overlay text-ink/70"}`}
           >
             {s} ({encounters.filter(e => s === "all" || e.billing_status === s).length})
           </button>
         ))}
       </div>
 
-      <div className="overflow-hidden rounded-xl border border-white/10 bg-surface-raised">
+      <div className="cy-card overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full border-collapse text-sm">
             <thead>
-              <tr className="border-b border-white/10 bg-white/5">
+              <tr className="border-b border-ink/10 bg-ink/5">
                 {["Patient", "Date", "Type", "Diagnosis (ICD-11)", "Charges (SAR)", "Balance Due", "Status", "Action"].map(h => (
-                  <th key={h} className="px-4 py-3 text-left font-semibold text-white/50">{h}</th>
+                  <th key={h} className="px-4 py-3 text-left font-semibold text-ink/50">{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {filtered.length === 0 && (
-                <tr><td colSpan={8} className="px-4 py-6 text-center text-white/50">No encounter billing records for this filter.</td></tr>
+                <tr><td colSpan={8} className="px-4 py-6 text-center text-ink/50">No encounter billing records for this filter.</td></tr>
               )}
               {filtered.map(enc => {
                 const statusIdx = STATUS_ORDER.indexOf(enc.billing_status);
                 const nextStatus = statusIdx >= 0 && statusIdx < STATUS_ORDER.length - 1 ? STATUS_ORDER[statusIdx + 1] : undefined;
+                const isCoding = codingEncounterId === enc.id;
                 return (
-                  <tr key={enc.id} className="border-b border-white/5">
-                    <td className="px-4 py-3 font-medium">{patientNames.get(enc.patient_account) || "Unknown patient"}</td>
-                    <td className="px-4 py-3 text-white/60">{enc.encounter_date}</td>
-                    <td className="px-4 py-3 capitalize text-white/60">{enc.encounter_type}</td>
-                    <td className="px-4 py-3 font-mono">{enc.icd11_primary_diagnosis || "—"}</td>
-                    <td className="px-4 py-3 font-semibold">{parseFloat(enc.total_charges).toLocaleString()}</td>
-                    <td className="px-4 py-3">{parseFloat(enc.balance_due).toLocaleString()}</td>
-                    <td className="px-4 py-3">
-                      <span className="rounded-full px-2 py-0.5 text-xs font-semibold capitalize" style={{ background: `${STATUS_COLOR[enc.billing_status]}22`, color: STATUS_COLOR[enc.billing_status] }}>
-                        {enc.billing_status.replace("_", " ")}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      {nextStatus && (
-                        <button onClick={() => advanceStatus(enc)} className="rounded-md bg-brand-500 px-2 py-1 text-xs font-semibold capitalize hover:bg-brand-600">
-                          Mark {nextStatus}
+                  <Fragment key={enc.id}>
+                    <tr className="border-b border-ink/5">
+                      <td className="px-4 py-3 font-medium">{patientNames.get(enc.patient_account) || "Unknown patient"}</td>
+                      <td className="px-4 py-3 text-ink/60">{enc.encounter_date}</td>
+                      <td className="px-4 py-3 capitalize text-ink/60">{enc.encounter_type}</td>
+                      <td className="px-4 py-3">
+                        <button
+                          onClick={() => { setCodingEncounterId(isCoding ? null : enc.id); setIcdResults(null); setIcdQuery(""); setIcdError(null); }}
+                          className="flex items-center gap-1.5 font-mono text-brand-300 hover:underline"
+                        >
+                          <Search size={12} /> {enc.icd11_primary_diagnosis || "Set diagnosis…"}
                         </button>
-                      )}
-                    </td>
-                  </tr>
+                      </td>
+                      <td className="px-4 py-3 font-semibold">{parseFloat(enc.total_charges).toLocaleString()}</td>
+                      <td className="px-4 py-3">{parseFloat(enc.balance_due).toLocaleString()}</td>
+                      <td className="px-4 py-3">
+                        <span className="rounded-full px-2 py-0.5 text-xs font-semibold capitalize" style={{ background: `${STATUS_COLOR[enc.billing_status]}22`, color: STATUS_COLOR[enc.billing_status] }}>
+                          {enc.billing_status.replace("_", " ")}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3">
+                        {nextStatus && (
+                          <button onClick={() => advanceStatus(enc)} className="rounded-md bg-brand-500 px-2 py-1 text-xs font-semibold capitalize hover:bg-brand-600">
+                            Mark {nextStatus}
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                    {isCoding && (
+                      <tr>
+                        <td colSpan={8} className="bg-ink/[0.02] px-4 py-4">
+                          <div className="flex gap-2">
+                            <input
+                              value={icdQuery}
+                              onChange={e => setIcdQuery(e.target.value)}
+                              onKeyDown={e => e.key === "Enter" && searchICD11()}
+                              placeholder="Search ICD-11 (e.g. type 2 diabetes, pneumonia)…"
+                              className="w-full max-w-md rounded-lg border border-ink/10 bg-surface px-3 py-2 text-sm"
+                            />
+                            <button onClick={searchICD11} disabled={icdSearching || !icdQuery.trim()} className="cy-btn cy-btn-primary !min-h-0 !py-2 !px-4 text-sm disabled:opacity-50">
+                              {icdSearching ? "…" : "Search"}
+                            </button>
+                          </div>
+                          {icdError && <p className="mt-2 text-xs text-red-400">{icdError}</p>}
+                          {icdResults && (
+                            <div className="mt-3 grid max-w-lg gap-1.5">
+                              {icdResults.length === 0 && <p className="text-xs text-ink/40">No ICD-11 concepts matched.</p>}
+                              {icdResults.map(r => (
+                                <button
+                                  key={r.code}
+                                  onClick={() => assignDiagnosis(enc.id, r)}
+                                  className="flex items-center justify-between rounded-lg border border-ink/10 bg-surface px-3 py-2 text-left text-sm hover:border-brand-400/40 hover:bg-brand-500/5"
+                                >
+                                  <span>{r.display}</span>
+                                  <span className="font-mono text-xs text-ink/40">{r.code}</span>
+                                </button>
+                              ))}
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    )}
+                  </Fragment>
                 );
               })}
             </tbody>
