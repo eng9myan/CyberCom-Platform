@@ -6,6 +6,8 @@ from rest_framework.filters import OrderingFilter, SearchFilter
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
+from platform.cyidentity.permissions import HasFinanceAccess as HasBillingAccess
+
 from .models import (
     BillingAdjustment,
     EncounterBilling,
@@ -33,6 +35,7 @@ class PatientAccountViewSet(ModelViewSet):
 
     queryset = PatientAccount.objects.all().order_by("-created_at")
     serializer_class = PatientAccountSerializer
+    permission_classes = [HasBillingAccess]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ["patient_id", "account_status"]
     search_fields = ["account_number", "fhir_account_id"]
@@ -48,6 +51,7 @@ class EncounterBillingViewSet(ModelViewSet):
 
     queryset = EncounterBilling.objects.all().order_by("-encounter_date")
     serializer_class = EncounterBillingSerializer
+    permission_classes = [HasBillingAccess]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ["patient_account", "encounter_type", "billing_status", "encounter_date"]
     search_fields = ["icd11_primary_diagnosis"]
@@ -62,6 +66,7 @@ class InvoiceViewSet(ModelViewSet):
     """
 
     queryset = Invoice.objects.all().order_by("-invoice_date")
+    permission_classes = [HasBillingAccess]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ["patient_account", "invoice_type", "status", "due_date"]
     search_fields = ["invoice_number", "fhir_invoice_id"]
@@ -147,6 +152,7 @@ class InvoiceLineViewSet(ModelViewSet):
 
     queryset = InvoiceLine.objects.all().order_by("line_number")
     serializer_class = InvoiceLineSerializer
+    permission_classes = [HasBillingAccess]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ["invoice"]
     search_fields = ["service_code", "service_description", "icd11_diagnosis_code"]
@@ -162,6 +168,7 @@ class BillingAdjustmentViewSet(ModelViewSet):
 
     queryset = BillingAdjustment.objects.all().order_by("-adjustment_date")
     serializer_class = BillingAdjustmentSerializer
+    permission_classes = [HasBillingAccess]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ["invoice", "adjustment_type"]
     search_fields = ["reason"]
@@ -177,6 +184,7 @@ class RefundViewSet(ModelViewSet):
 
     queryset = Refund.objects.all().order_by("-refund_date")
     serializer_class = RefundSerializer
+    permission_classes = [HasBillingAccess]
     filter_backends = [DjangoFilterBackend, SearchFilter, OrderingFilter]
     filterset_fields = ["invoice", "status"]
     search_fields = ["reason"]

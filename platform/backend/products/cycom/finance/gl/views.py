@@ -1,8 +1,9 @@
 from django.shortcuts import get_object_or_404
 from rest_framework import status
-from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+
+from platform.cyidentity.permissions import HasFinanceAccess
 
 from .models import Account, JournalEntry, JournalLine
 from .serializers import AccountSerializer, JournalEntrySerializer, JournalLineSerializer
@@ -13,7 +14,7 @@ from .serializers import AccountSerializer, JournalEntrySerializer, JournalLineS
 
 
 class AccountListView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [HasFinanceAccess]
 
     def get(self, request):
         tenant_id = getattr(request, "tenant_id", None)
@@ -31,7 +32,7 @@ class AccountListView(APIView):
 
 
 class AccountDetailView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [HasFinanceAccess]
 
     def _get_object(self, pk, tenant_id):
         return get_object_or_404(Account, pk=pk, tenant_id=tenant_id)
@@ -72,7 +73,7 @@ class AccountDetailView(APIView):
 
 
 class JournalEntryListView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [HasFinanceAccess]
 
     def get(self, request):
         tenant_id = getattr(request, "tenant_id", None)
@@ -94,7 +95,7 @@ class JournalEntryListView(APIView):
 
 
 class JournalEntryDetailView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [HasFinanceAccess]
 
     def _get_object(self, pk, tenant_id):
         return get_object_or_404(JournalEntry, pk=pk, tenant_id=tenant_id)
@@ -135,7 +136,7 @@ class JournalEntryDetailView(APIView):
 
 
 class JournalLineListView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [HasFinanceAccess]
 
     def get(self, request):
         tenant_id = getattr(request, "tenant_id", None)
@@ -157,7 +158,7 @@ class JournalLineListView(APIView):
 
 
 class JournalLineDetailView(APIView):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [HasFinanceAccess]
 
     def _get_object(self, pk, tenant_id):
         return get_object_or_404(JournalLine, pk=pk, tenant_id=tenant_id)

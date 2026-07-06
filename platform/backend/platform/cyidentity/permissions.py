@@ -68,6 +68,32 @@ class TokenHasRealmRole(permissions.BasePermission):
         return self.required_role in roles
 
 
+FINANCE_ROLES = {
+    "platform_admin",
+    "hospital_admin",
+    "billing_clerk",
+    "billing_admin",
+    "finance_admin",
+    "group_cfo",
+    "revenue_cycle_manager",
+}
+
+
+class HasFinanceAccess(permissions.BasePermission):
+    """
+    Gates billing/GL/finance endpoints to staff with an explicit financial
+    or administrative mandate. A clinical role (nurse, physician, etc.)
+    carries no financial-data access by default.
+    """
+
+    message = "Billing/finance role required."
+
+    def has_permission(self, request, view) -> bool:
+        token = getattr(request, "auth_claims", None) or {}
+        roles = set(token.get("realm_access", {}).get("roles", []) or [])
+        return bool(roles & FINANCE_ROLES)
+
+
 class TokenHasScope(permissions.BasePermission):
     required_scope: str = ""
 
