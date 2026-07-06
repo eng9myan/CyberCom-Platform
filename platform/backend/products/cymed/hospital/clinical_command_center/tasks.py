@@ -13,7 +13,7 @@ from celery import shared_task
 from channels.layers import get_channel_layer
 
 from platform.tenant.models import Tenant, TenantStatus
-from products.cymed.hospital.services import HospitalOperationsService
+from products.cymed.hospital.clinical_command_center.consumers import get_hospital_kpi_bundle
 
 
 @shared_task(name="hospital_command_center.broadcast_kpis")
@@ -25,13 +25,13 @@ def broadcast_hospital_kpis_task() -> int:
     broadcast_count = 0
     for tenant in Tenant.objects.filter(status=TenantStatus.ACTIVE).only("id"):
         try:
-            snapshot = HospitalOperationsService.get_snapshot(str(tenant.id))
+            bundle = get_hospital_kpi_bundle(str(tenant.id))
         except Exception:
             continue
 
         async_to_sync(channel_layer.group_send)(
             f"hospital_kpis_{tenant.id}",
-            {"type": "kpi.update", "data": snapshot},
+            {"type": "kpi.update", "data": bundle},
         )
         broadcast_count += 1
 

@@ -3,14 +3,16 @@
 /**
  * CyAnalytics KPI engine.
  *
- * Polls real backend endpoints on an interval (no live WebSocket/SSE
- * transport exists in this backend yet -- Django Channels isn't wired up,
- * so "real-time" here means short-interval polling; the hook's return shape
- * is transport-agnostic so swapping the fetch loop for an SSE subscription
- * later doesn't change any consumer).
+ * Connects to the real Django Channels WebSocket
+ * (ws/hospital/command-center/) for server-pushed updates -- the consumer
+ * sends a real snapshot on connect, then forwards "kpi.update" broadcasts
+ * from the `broadcast_hospital_kpis` Celery beat task (every 10s). Falls
+ * back to 15s HTTP polling if the socket fails to connect or drops and
+ * won't reconnect (e.g. dev environment without Channels/Redis running) --
+ * the hook's return shape is identical either way, so no consumer cares
+ * which transport is live.
  *
- * Only the "hospital" level has a real backend today
- * (ClinicalCommandCenterMetricsView / ModuleSummaryView). "network"
+ * Only the "hospital" level has a real backend today. "network"
  * (multi-hospital rollup) has no aggregation endpoint -- there is exactly
  * one tenant per request in this architecture -- so it always resolves to
  * `available: false` with an honest reason instead of invented numbers.
@@ -28,10 +30,17 @@ import type {
 } from "./types";
 
 const POLL_INTERVAL_MS = 15_000;
+const WS_RECONNECT_DELAY_MS = 3_000;
+const WS_MAX_RECONNECT_ATTEMPTS = 3;
 
 interface HospitalKpiBundle {
   census: HospitalCensusSnapshot;
   modules: HospitalModuleSummary;
+}
+
+function wsUrlFor(path: string): string {
+  const apiBase = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+  return apiBase.replace(/^http/, "ws") + path;
 }
 
 export function useHospitalKpis(level: DrillLevel): KpiResult<HospitalKpiBundle> {
@@ -49,14 +58,17 @@ export function useHospitalKpis(level: DrillLevel): KpiResult<HospitalKpiBundle>
           ? "No KPI source wired for this drill level yet."
           : undefined,
   });
-  const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const wsRef = useRef<WebSocket | null>(null);
+  const reconnectAttemptsRef = useRef(0);
 
   useEffect(() => {
     if (level !== "hospital" || !session) return;
 
     let cancelled = false;
+    let usingFallbackPoll = false;
 
-    async function poll() {
+    async function pollOnce() {
       if (!session) return;
       try {
         const opts = { token: session.accessToken, tenantId: session.tenantId };
@@ -86,12 +98,65 @@ export function useHospitalKpis(level: DrillLevel): KpiResult<HospitalKpiBundle>
       }
     }
 
-    void poll();
-    timerRef.current = setInterval(() => void poll(), POLL_INTERVAL_MS);
+    function startPollingFallback() {
+      if (usingFallbackPoll || cancelled) return;
+      usingFallbackPoll = true;
+      void pollOnce();
+      pollTimerRef.current = setInterval(() => void pollOnce(), POLL_INTERVAL_MS);
+    }
+
+    function connectWebSocket() {
+      if (!session || cancelled) return;
+      const url = wsUrlFor(
+        `/ws/hospital/command-center/?token=${encodeURIComponent(session.accessToken)}&tenant_id=${encodeURIComponent(session.tenantId)}`
+      );
+      const ws = new WebSocket(url);
+      wsRef.current = ws;
+
+      ws.onopen = () => {
+        reconnectAttemptsRef.current = 0;
+      };
+
+      ws.onmessage = (event) => {
+        if (cancelled) return;
+        try {
+          const parsed = JSON.parse(event.data as string) as {
+            type: "snapshot" | "kpi_update";
+            data: HospitalKpiBundle;
+          };
+          setState({
+            data: parsed.data,
+            available: true,
+            loading: false,
+            error: null,
+            lastUpdated: new Date().toISOString(),
+          });
+        } catch {
+          // Ignore a malformed frame rather than crash the dashboard.
+        }
+      };
+
+      ws.onclose = () => {
+        if (cancelled) return;
+        reconnectAttemptsRef.current += 1;
+        if (reconnectAttemptsRef.current <= WS_MAX_RECONNECT_ATTEMPTS) {
+          setTimeout(connectWebSocket, WS_RECONNECT_DELAY_MS);
+        } else {
+          startPollingFallback();
+        }
+      };
+
+      ws.onerror = () => {
+        ws.close();
+      };
+    }
+
+    connectWebSocket();
 
     return () => {
       cancelled = true;
-      if (timerRef.current) clearInterval(timerRef.current);
+      wsRef.current?.close();
+      if (pollTimerRef.current) clearInterval(pollTimerRef.current);
     };
   }, [level, session]);
 

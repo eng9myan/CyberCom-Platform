@@ -26,8 +26,8 @@ class HospitalKpiConsumer(AsyncJsonWebsocketConsumer):
         await self.channel_layer.group_add(self.group_name, self.channel_name)
         await self.accept()
 
-        snapshot = await self._get_snapshot()
-        await self.send_json({"type": "snapshot", "data": snapshot})
+        bundle = await self._get_bundle()
+        await self.send_json({"type": "snapshot", "data": bundle})
 
     async def disconnect(self, close_code):
         if hasattr(self, "group_name"):
@@ -38,5 +38,13 @@ class HospitalKpiConsumer(AsyncJsonWebsocketConsumer):
         await self.send_json({"type": "kpi_update", "data": event["data"]})
 
     @database_sync_to_async
-    def _get_snapshot(self) -> dict:
-        return HospitalOperationsService.get_snapshot(self.tenant_id)
+    def _get_bundle(self) -> dict:
+        return get_hospital_kpi_bundle(self.tenant_id)
+
+
+def get_hospital_kpi_bundle(tenant_id: str) -> dict:
+    """Shared by the consumer (sync-wrapped) and the broadcast Celery task."""
+    return {
+        "census": HospitalOperationsService.get_snapshot(tenant_id),
+        "modules": HospitalOperationsService.get_module_summary(tenant_id),
+    }
