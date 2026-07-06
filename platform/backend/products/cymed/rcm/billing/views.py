@@ -100,6 +100,44 @@ class InvoiceViewSet(ModelViewSet):
         serializer = InvoiceSerializer(invoice, context={"request": request})
         return Response(serializer.data, status=status.HTTP_200_OK)
 
+    @action(detail=True, methods=["post"], url_path="submit-to-jofotara")
+    def submit_to_jofotara(self, request, pk=None):
+        """Build the invoice's UBL 2.1 XML and submit to JoFotara (Jordan e-invoicing)."""
+        from .jofotara import submit_invoice
+
+        invoice = self.get_object()
+        if invoice.status not in ("issued", "sent", "partial", "paid"):
+            return Response(
+                {"detail": f"Cannot submit an invoice with status '{invoice.status}' to JoFotara."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        tenant_id = getattr(request, "tenant_id", None)
+        result = submit_invoice(invoice, tenant_id)
+
+        invoice.jofotara_status = result["status"]
+        if result["status"] == "submitted":
+            invoice.jofotara_invoice_uuid = result.get("jofotara_invoice_uuid", "")
+            invoice.jofotara_qr_code = result.get("qr_code", "")
+            invoice.jofotara_submitted_at = timezone.now()
+            invoice.jofotara_error = ""
+        elif result["status"] == "rejected":
+            invoice.jofotara_error = result.get("error", "")
+        invoice.save(
+            update_fields=[
+                "jofotara_status", "jofotara_invoice_uuid", "jofotara_qr_code",
+                "jofotara_submitted_at", "jofotara_error", "updated_at",
+            ]
+        )
+        return Response(
+            {
+                "invoice": InvoiceSerializer(invoice, context={"request": request}).data,
+                "jofotara_status": result["status"],
+                "reason": result.get("reason", ""),
+                "ubl_xml": result.get("ubl_xml", ""),
+            }
+        )
+
 
 class InvoiceLineViewSet(ModelViewSet):
     """

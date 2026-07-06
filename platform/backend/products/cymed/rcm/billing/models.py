@@ -179,6 +179,20 @@ class Invoice(BaseModel):
     notes = models.TextField(blank=True)
     fhir_invoice_id = models.CharField(max_length=200, blank=True, null=True)
 
+    JOFOTARA_STATUS_CHOICES = [
+        ("not_submitted", "Not Submitted"),
+        ("submitted", "Submitted"),
+        ("accepted", "Accepted"),
+        ("rejected", "Rejected"),
+    ]
+    jofotara_status = models.CharField(
+        max_length=20, choices=JOFOTARA_STATUS_CHOICES, default="not_submitted"
+    )
+    jofotara_invoice_uuid = models.CharField(max_length=100, blank=True)
+    jofotara_qr_code = models.TextField(blank=True)
+    jofotara_submitted_at = models.DateTimeField(null=True, blank=True)
+    jofotara_error = models.TextField(blank=True)
+
     class Meta:
         db_table = "cymed_rcm_bill_invoices"
         ordering = ["-invoice_date"]
