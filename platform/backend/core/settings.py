@@ -170,6 +170,7 @@ PRODUCT_APPS = [
     "products.cymed.pharmacy.analytics",
     "products.cymed.pharmacy.inventory_bridge",
     "products.cymed.pharmacy.procurement_bridge",
+    "products.cymed.pharmacy.pos",
     # CyMed Population Health Edition (Program 3.9)
     "products.cymed.population_health.registries",
     "products.cymed.population_health.public_health",

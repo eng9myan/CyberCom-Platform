@@ -28,4 +28,6 @@ urlpatterns = [
     path("inventory/", include("products.cymed.pharmacy.inventory_bridge.urls")),
     # Procurement Bridge (CyCom ERP)
     path("procurement/", include("products.cymed.pharmacy.procurement_bridge.urls")),
+    # Point of Sale (OTC/retail checkout)
+    path("pos/", include("products.cymed.pharmacy.pos.urls")),
 ]

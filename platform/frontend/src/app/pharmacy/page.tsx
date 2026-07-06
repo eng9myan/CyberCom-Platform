@@ -121,6 +121,7 @@ export default function PharmacyPortal() {
           { href: "/pharmacy/dispensing", label: lang === "en" ? "Dispensing Queue" : "طابور الصرف" },
           { href: "/pharmacy/formulary", label: lang === "en" ? "Formulary Search" : "دليل الأدوية" },
           { href: "/pharmacy/inventory", label: lang === "en" ? "Inventory & Stock" : "المخزون والعهدة" },
+          { href: "/pharmacy/pos", label: lang === "en" ? "POS (Point of Sale)" : "نقطة البيع" },
         ].map(item => (
           <a key={item.href} href={item.href} style={{ padding: "0.6rem 1.2rem", borderRadius: "6px", background: "var(--color-surface)", border: "1px solid var(--color-border)", color: "var(--color-text)", textDecoration: "none", fontSize: "0.875rem", fontWeight: 600 }}>
             {item.label}
