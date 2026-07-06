@@ -51,6 +51,18 @@ export interface HospitalModuleSummary {
   bi_reports_active: number;
 }
 
+/** Mirrors OperationsService.get_dashboard(). */
+export interface OperationsDashboard {
+  admissions_today: number;
+  discharges_today: number;
+  transfers_today_by_status: Record<string, number>;
+  beds_by_status: Record<string, number>;
+  emergency_waiting: number;
+  bed_occupancy_percentage: number;
+  ambulance_tracking: { tracked: boolean; reason: string };
+  cleaning_status: { tracked: boolean; reason: string };
+}
+
 /** Mirrors MedicalDirectorService.get_dashboard(). */
 export interface MedicalDirectorDashboard {
   period_days: number;

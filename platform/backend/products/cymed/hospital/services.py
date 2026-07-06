@@ -2571,3 +2571,58 @@ class MedicalDirectorService:
             "icu_critical_events_count": critical_events_count,
             "consultant_productivity": consultant_productivity,
         }
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# 13. OperationsService — Operations Dashboard. Admissions/discharges/
+#     transfers/bed status are real queries. Ambulance tracking and
+#     housekeeping/cleaning-turnaround status have no backend model in this
+#     codebase -- reported as `tracked: False` rather than invented numbers.
+# ─────────────────────────────────────────────────────────────────────────────
+
+
+class OperationsService:
+    @classmethod
+    def get_dashboard(cls, tenant_id: str) -> dict:
+        from products.cymed.core.facilities.models import Bed
+        from products.cymed.hospital.adt.models import Admission, DischargeSummary, TransferRequest
+
+        tenant_uuid = uuid.UUID(str(tenant_id))
+        today = timezone.now().date()
+
+        admissions_today = Admission.objects.filter(
+            tenant_id=tenant_uuid, admitted_at__date=today
+        ).count()
+        discharges_today = DischargeSummary.objects.filter(
+            tenant_id=tenant_uuid, discharged_at__date=today
+        ).count()
+
+        transfers_by_status = dict(
+            TransferRequest.objects.filter(tenant_id=tenant_uuid, requested_at__date=today)
+            .values("status")
+            .annotate(n=Count("id"))
+            .values_list("status", "n")
+        )
+
+        beds_by_status = dict(
+            Bed.objects.filter(tenant_id=tenant_uuid)
+            .values("status")
+            .annotate(n=Count("id"))
+            .values_list("status", "n")
+        )
+
+        snapshot = HospitalOperationsService.get_snapshot(tenant_id)
+
+        return {
+            "admissions_today": admissions_today,
+            "discharges_today": discharges_today,
+            "transfers_today_by_status": transfers_by_status,
+            "beds_by_status": beds_by_status,
+            "emergency_waiting": snapshot["operational_census"]["emergency_waiting"],
+            "bed_occupancy_percentage": snapshot["capacity_indicators"]["bed_occupancy_percentage"],
+            "ambulance_tracking": {"tracked": False, "reason": "No ambulance/EMS model exists yet."},
+            "cleaning_status": {
+                "tracked": False,
+                "reason": "No housekeeping/room-turnaround model exists yet.",
+            },
+        }

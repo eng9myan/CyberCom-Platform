@@ -35,7 +35,7 @@ const TILES: DepartmentTile[] = [
   { id: "multi-hospital", name: "Multi-Hospital Dashboard", href: "/cyanalytics/multi-hospital", icon: "Radar", status: "live" },
   { id: "hospital-ceo", name: "Hospital CEO Dashboard", href: "/hospital", icon: "Building2", status: "live" },
   { id: "medical-director", name: "Medical Director", href: "/cyanalytics/medical-director", icon: "Stethoscope", status: "live" },
-  { id: "operations", name: "Operations", href: "#", icon: "ClipboardList", status: "coming_soon" },
+  { id: "operations", name: "Operations", href: "/cyanalytics/operations", icon: "ClipboardList", status: "live" },
   { id: "emergency", name: "Emergency", href: "/hospital/emergency", icon: "Siren", status: "live" },
   { id: "icu", name: "ICU", href: "/hospital/icu", icon: "HeartPulse", status: "live" },
   { id: "nursing", name: "Nursing", href: "#", icon: "Users", status: "coming_soon" },
