@@ -17,6 +17,24 @@ def _get_jwks_client() -> PyJWKClient:
     return _jwks_client
 
 
+def decode_jwt(token: str) -> dict:
+    """
+    Shared JWT validation used by both the HTTP CyIdentityAuthMiddleware and
+    the WebSocket JWTAuthMiddleware (core/channels_auth.py) -- one place for
+    the signing-key/algorithm/audience/issuer contract, not duplicated.
+    Raises ExpiredSignatureError / InvalidTokenError on failure.
+    """
+    signing_key = _get_jwks_client().get_signing_key_from_jwt(token)
+    return jwt.decode(
+        token,
+        signing_key.key,
+        algorithms=["RS256"],
+        audience=settings.CYIDENTITY_CLIENT_ID,
+        issuer=settings.CYIDENTITY_ISSUER,
+        options={"require": ["exp", "iat", "sub"]},
+    )
+
+
 class CyIdentityUser:
     """
     Lightweight authenticated-principal wrapper around a validated JWT's claims.
@@ -123,15 +141,7 @@ class CyIdentityAuthMiddleware:
 
         token = auth_header.split(' ')[1]
         try:
-            signing_key = _get_jwks_client().get_signing_key_from_jwt(token)
-            payload = jwt.decode(
-                token,
-                signing_key.key,
-                algorithms=['RS256'],
-                audience=settings.CYIDENTITY_CLIENT_ID,
-                issuer=settings.CYIDENTITY_ISSUER,
-                options={"require": ["exp", "iat", "sub"]},
-            )
+            payload = decode_jwt(token)
             stale_session = _sync_session(payload)
             if stale_session is not None:
                 return JsonResponse(

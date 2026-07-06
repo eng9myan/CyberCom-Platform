@@ -26,4 +26,20 @@ if sys_path_removed:
 from django.core.asgi import get_asgi_application
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "core.settings")
-application = get_asgi_application()
+
+# django_asgi_app must be constructed before importing anything that touches
+# models/apps (Channels routing imports consumers, which import services) --
+# this is Django's own documented ordering requirement for ASGI + Channels.
+django_asgi_app = get_asgi_application()
+
+from channels.routing import ProtocolTypeRouter, URLRouter  # noqa: E402
+
+from core.channels_auth import JWTAuthMiddlewareStack  # noqa: E402
+from core.routing import websocket_urlpatterns  # noqa: E402
+
+application = ProtocolTypeRouter(
+    {
+        "http": django_asgi_app,
+        "websocket": JWTAuthMiddlewareStack(URLRouter(websocket_urlpatterns)),
+    }
+)

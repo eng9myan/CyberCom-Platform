@@ -255,7 +255,9 @@ PRODUCT_APPS = [
     "products.website",
 ]
 
-INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + PLATFORM_APPS + PRODUCT_APPS
+# "channels" must precede django.contrib.staticfiles for Channels' runserver
+# override (ASGI-serving dev server) to take effect -- see Channels docs.
+INSTALLED_APPS = ["channels"] + DJANGO_APPS + THIRD_PARTY_APPS + PLATFORM_APPS + PRODUCT_APPS
 
 # ---------------------------------------------------------------------------
 # MIDDLEWARE (order matters — tenant before audit)
@@ -339,6 +341,16 @@ CACHES = {
 }
 
 # ---------------------------------------------------------------------------
+# CHANNELS — real-time WebSocket push (Command Center KPI streaming)
+# ---------------------------------------------------------------------------
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {"hosts": [REDIS_URL]},
+    }
+}
+
+# ---------------------------------------------------------------------------
 # CELERY (ADR-0001)
 # ---------------------------------------------------------------------------
 CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL", REDIS_URL)
@@ -371,6 +383,10 @@ CELERY_BEAT_SCHEDULE = {
     "imaging-escalate-critical-findings": {
         "task": "img_reporting.escalate_critical_findings",
         "schedule": 300.0,
+    },
+    "hospital-broadcast-command-center-kpis": {
+        "task": "hospital_command_center.broadcast_kpis",
+        "schedule": 10.0,
     },
 }
 
