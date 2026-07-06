@@ -100,7 +100,7 @@ function KpiTile({
       <div className="flex h-10 w-10 items-center justify-center rounded-xl" style={{ background: accentBg, color: accentFg }}>
         <Icon size={18} />
       </div>
-      <div className="mt-4 text-xs uppercase tracking-[0.18em] text-white/40">{label}</div>
+      <div className="mt-4 text-xs uppercase tracking-[0.18em] text-ink/40">{label}</div>
       <div className="mt-1 font-heading text-3xl font-black tracking-tight tabular-nums">{value}</div>
     </div>
   );
@@ -207,7 +207,7 @@ export default function HospitalPortal() {
   const capacityColor = metrics.capacity_pct >= 90 ? "#ef4444" : metrics.capacity_pct >= 80 ? "#f59e0b" : "#22c55e";
   const occupancyData = [
     { name: "Occupied", value: metrics.occupied_beds, color: capacityColor },
-    { name: "Available", value: Math.max(metrics.available_beds, 0), color: "rgba(255,255,255,0.08)" },
+    { name: "Available", value: Math.max(metrics.available_beds, 0), color: "rgba(148,163,184,0.35)" },
   ];
 
   return (
@@ -217,7 +217,7 @@ export default function HospitalPortal() {
           <h1 className="font-heading text-2xl font-bold tracking-tight">
             {lang === "en" ? "Command Overview" : "نظرة عامة على القيادة"}
           </h1>
-          <p className="mt-1 text-sm text-white/50">
+          <p className="mt-1 text-sm text-ink/50">
             {lang === "en" ? "Live hospital operations" : "عمليات المستشفى المباشرة"}
             {loading && <span className="ml-3 text-brand-400">Updating…</span>}
           </p>
@@ -239,7 +239,7 @@ export default function HospitalPortal() {
       <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
         <div className="cy-card p-5">
           <h3 className="font-heading text-lg font-bold">{lang === "en" ? "Bed Occupancy" : "إشغال الأسرة"}</h3>
-          <p className="text-xs text-white/40">{lang === "en" ? "Tenant-wide, live" : "على مستوى المستأجر"}</p>
+          <p className="text-xs text-ink/40">{lang === "en" ? "Tenant-wide, live" : "على مستوى المستأجر"}</p>
           <div className="relative mx-auto mt-2 h-56 w-56">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
@@ -250,12 +250,12 @@ export default function HospitalPortal() {
             </ResponsiveContainer>
             <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
               <span className="font-heading text-3xl font-black tabular-nums" style={{ color: capacityColor }}>{metrics.capacity_pct}%</span>
-              <span className="text-xs text-white/40">{lang === "en" ? "capacity" : "الطاقة"}</span>
+              <span className="text-xs text-ink/40">{lang === "en" ? "capacity" : "الطاقة"}</span>
             </div>
           </div>
           <div className="mt-4 flex justify-center gap-6 text-xs">
-            <span className="flex items-center gap-1.5 text-white/60"><span className="h-2 w-2 rounded-full" style={{ background: capacityColor }} />{lang === "en" ? "Occupied" : "مشغول"} {metrics.occupied_beds}</span>
-            <span className="flex items-center gap-1.5 text-white/60"><span className="h-2 w-2 rounded-full bg-white/15" />{lang === "en" ? "Available" : "متاح"} {metrics.available_beds}</span>
+            <span className="flex items-center gap-1.5 text-ink/60"><span className="h-2 w-2 rounded-full" style={{ background: capacityColor }} />{lang === "en" ? "Occupied" : "مشغول"} {metrics.occupied_beds}</span>
+            <span className="flex items-center gap-1.5 text-ink/60"><span className="h-2 w-2 rounded-full bg-ink/15" />{lang === "en" ? "Available" : "متاح"} {metrics.available_beds}</span>
           </div>
         </div>
 
@@ -263,7 +263,7 @@ export default function HospitalPortal() {
           <div className="mb-1 flex items-center justify-between">
             <div>
               <h3 className="font-heading text-lg font-bold">{lang === "en" ? "Admissions vs. Discharges" : "القبول مقابل الخروج"}</h3>
-              <p className="text-xs text-white/40">{lang === "en" ? "Last 7 days · live" : "آخر 7 أيام"}</p>
+              <p className="text-xs text-ink/40">{lang === "en" ? "Last 7 days · live" : "آخر 7 أيام"}</p>
             </div>
           </div>
           <div className="mt-3 h-64">
@@ -280,7 +280,7 @@ export default function HospitalPortal() {
                 </LineChart>
               </ResponsiveContainer>
             ) : (
-              <div className="flex h-full items-center justify-center text-sm text-white/40">
+              <div className="flex h-full items-center justify-center text-sm text-ink/40">
                 {lang === "en" ? "Loading trend data..." : "جاري تحميل بيانات الاتجاه..."}
               </div>
             )}
@@ -305,8 +305,8 @@ export default function HospitalPortal() {
             <div className="mb-3 flex h-9 w-9 items-center justify-center rounded-lg bg-brand-500/10 text-brand-400">
               <Icon size={18} />
             </div>
-            <p className="text-sm font-semibold text-white">{label}</p>
-            <p className="mt-1 text-xs text-white/40">
+            <p className="text-sm font-semibold text-ink">{label}</p>
+            <p className="mt-1 text-xs text-ink/40">
               {badge === undefined ? "…" : badge} {badgeLabel}
             </p>
           </Link>
@@ -319,7 +319,7 @@ export default function HospitalPortal() {
         <div className="overflow-x-auto">
         <table className="w-full border-collapse">
           <thead>
-            <tr className="border-b border-white/[0.07] bg-white/[0.02]">
+            <tr className="border-b border-ink/[0.07] bg-ink/[0.02]">
               {[
                 lang === "en" ? "Ward" : "الجناح",
                 lang === "en" ? "Total Capacity" : "الكلي",
@@ -329,14 +329,14 @@ export default function HospitalPortal() {
                 lang === "en" ? "Occupancy" : "الإشغال",
                 lang === "en" ? "Status" : "الحالة",
               ].map(h => (
-                <th key={h} className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-white/40">{h}</th>
+                <th key={h} className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-ink/40">{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {wards.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-4 py-6 text-center text-sm text-white/40">
+                <td colSpan={7} className="px-4 py-6 text-center text-sm text-ink/40">
                   {lang === "en"
                     ? "Ward-level breakdown is not wired up yet -- only tenant-wide totals above are live."
                     : "تفصيل الأجنحة غير متاح بعد -- الإجماليات أعلاه فقط مباشرة."}
@@ -346,7 +346,7 @@ export default function HospitalPortal() {
             {wards.map((ward, i) => {
               const occ = Math.round((ward.occupied / ward.total) * 100);
               return (
-                <tr key={ward.name} className={`border-b border-white/5 last:border-0 ${i % 2 === 1 ? "bg-white/[0.015]" : ""}`}>
+                <tr key={ward.name} className={`border-b border-ink/5 last:border-0 ${i % 2 === 1 ? "bg-ink/[0.015]" : ""}`}>
                   <td className="px-4 py-3 text-sm font-semibold">{lang === "ar" ? ward.name_ar : ward.name}</td>
                   <td className="px-4 py-3 text-sm tabular-nums">{ward.total}</td>
                   <td className="px-4 py-3 text-sm font-semibold tabular-nums">{ward.occupied}</td>
@@ -354,7 +354,7 @@ export default function HospitalPortal() {
                   <td className="px-4 py-3 text-sm tabular-nums">{ward.pending_discharge}</td>
                   <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
-                      <div className="h-2 flex-1 rounded-full bg-white/10">
+                      <div className="h-2 flex-1 rounded-full bg-ink/10">
                         <div className="h-full rounded-full" style={{ width: `${occ}%`, background: statusColor(ward.status) }} />
                       </div>
                       <span className="min-w-[40px] text-sm font-bold tabular-nums" style={{ color: statusColor(ward.status) }}>{occ}%</span>

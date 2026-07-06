@@ -12,12 +12,13 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
-  const locale = "ar";
-  const dir = locale === "ar" ? "rtl" : "ltr";
-
+  // Real lang/dir/theme attributes are set client-side by PreferencesProvider
+  // once it knows which account (if any) is signed in. These are just the
+  // pre-hydration defaults; suppressHydrationWarning covers the one-frame
+  // mismatch while that context reads localStorage.
   return (
-    <html lang={locale} dir={dir} data-theme="dark" suppressHydrationWarning>
-      <body className="cybercom-app-body bg-surface text-white antialiased">
+    <html lang="en" dir="ltr" data-theme="dark" suppressHydrationWarning>
+      <body className="cybercom-app-body bg-surface text-[var(--color-text)] antialiased">
         <Providers>
           <main className="min-h-screen">{children}</main>
         </Providers>

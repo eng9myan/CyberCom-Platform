@@ -39,6 +39,11 @@
   --color-foreground: #f1f5f9;          /* alias used by root page.tsx */
   --color-text-muted: #94a3b8;
   --color-text-subtle: #475569;
+  /* RGB triplets so Tailwind's ink-* utilities can carry an opacity modifier
+     (bg-ink/50 etc) -- kept in sync with the hex values above by hand since
+     this is a plain CSS custom property, not a preprocessor. */
+  --color-ink-rgb: 241 245 249;
+  --color-ink-muted-rgb: 148 163 184;
 
   /* ── Status ─────────────────────────────────────────────────────────── */
   --color-success: #16a34a;
@@ -112,14 +117,19 @@
 }
 
 [data-theme="light"] {
-  --color-background: hsl(220, 30%, 97%);
-  --color-surface: hsl(220, 25%, 94%);
-  --color-surface-raised: hsl(220, 20%, 90%);
-  --color-surface-elevated: hsl(220, 20%, 90%);
-  --color-text: hsl(220, 25%, 10%);
-  --color-foreground: hsl(220, 25%, 10%);
-  --color-text-muted: hsl(220, 15%, 45%);
-  --color-border: rgba(0, 0, 0, 0.10);
-  --glass-background: rgba(0, 0, 0, 0.03);
-  --glass-border: 1px solid rgba(0, 0, 0, 0.08);
+  --color-background: #faf8f5;
+  --color-surface: #ffffff;
+  --color-surface-raised: #f2ede4;
+  --color-surface-elevated: #f2ede4;
+  --color-surface-overlay: #e8e1d4;
+  --color-text: #1a1611;
+  --color-foreground: #1a1611;
+  --color-text-muted: #6b6154;
+  --color-text-subtle: #a39a89;
+  --color-ink-rgb: 26 22 17;
+  --color-ink-muted-rgb: 107 97 84;
+  --color-border: rgba(26, 22, 17, 0.10);
+  --glass-background: rgba(26, 22, 17, 0.03);
+  --glass-border: 1px solid rgba(26, 22, 17, 0.08);
+  --glass-shadow: 0 1px 2px rgba(26, 22, 17, 0.05), 0 6px 20px -8px rgba(26, 22, 17, 0.12);
 }

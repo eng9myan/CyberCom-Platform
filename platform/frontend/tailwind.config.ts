@@ -30,11 +30,19 @@ const config: Config = {
           DEFAULT: "hsl(210, 80%, 22%)",
           light: "hsl(210, 70%, 35%)",
         },
+        // Theme-reactive: these resolve against the CSS custom properties in
+        // shared/design-system/variables.css, which PreferencesProvider flips
+        // via the root <html data-theme> attribute -- unlike literal hex
+        // values, bg-surface etc. actually change when a user switches theme.
         surface: {
-          DEFAULT: "#0a0a0f",
-          raised: "#0f0f1a",
-          overlay: "#1e293b",
-          elevated: "#263449",
+          DEFAULT: "var(--color-background)",
+          raised: "var(--color-surface)",
+          overlay: "var(--color-surface-raised)",
+          elevated: "var(--color-surface-overlay)",
+        },
+        ink: {
+          DEFAULT: "rgb(var(--color-ink-rgb) / <alpha-value>)",
+          muted: "rgb(var(--color-ink-muted-rgb) / <alpha-value>)",
         },
       },
       fontFamily: {
