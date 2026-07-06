@@ -8,6 +8,7 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 
 from platform.tenant.models import (
+    HealthGroup,
     Tenant,
     TenantAuditConfiguration,
     TenantBranding,
@@ -29,10 +30,12 @@ from platform.tenant.models import (
 from platform.tenant.permissions import (
     CanProvisionTenant,
     CanTerminateTenant,
+    IsHealthGroupExecutive,
     IsPlatformAdmin,
     ReadOnlyOrPlatformAdmin,
 )
 from platform.tenant.serializers import (
+    HealthGroupSerializer,
     TenantAuditConfigurationSerializer,
     TenantBootstrapSerializer,
     TenantBrandingSerializer,
@@ -326,3 +329,23 @@ class TenantAuditConfigurationViewSet(viewsets.ModelViewSet):
     queryset = TenantAuditConfiguration.objects.all()
     serializer_class = TenantAuditConfigurationSerializer
     permission_classes = [IsPlatformAdmin]
+
+
+class HealthGroupViewSet(viewsets.ModelViewSet):
+    """
+    Cross-tenant health group registry + aggregation. This is the one
+    ViewSet whose queryset is not tenant-scoped by design (a group spans
+    multiple tenants); real access control is IsHealthGroupExecutive, not
+    the usual per-tenant isolation.
+    """
+
+    queryset = HealthGroup.objects.all()
+    serializer_class = HealthGroupSerializer
+    permission_classes = [IsHealthGroupExecutive]
+
+    @action(detail=True, methods=["get"])
+    def snapshot(self, request, pk=None):
+        from platform.tenant.health_group_service import get_group_snapshot
+
+        group = self.get_object()
+        return Response(get_group_snapshot(group))

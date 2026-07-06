@@ -9,6 +9,7 @@ from rest_framework.routers import DefaultRouter
 from platform.tenant import views
 
 router = DefaultRouter()
+router.register(r"health-groups", views.HealthGroupViewSet, basename="health-group")
 router.register(r"", views.TenantViewSet, basename="tenant")
 router.register(r"profiles", views.TenantProfileViewSet, basename="tenant-profile")
 router.register(

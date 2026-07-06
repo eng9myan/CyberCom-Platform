@@ -5,6 +5,7 @@ CyberCom Multi-Tenant Framework — DRF Serializers.
 from rest_framework import serializers
 
 from .models import (
+    HealthGroup,
     Tenant,
     TenantAuditConfiguration,
     TenantBranding,
@@ -262,3 +263,15 @@ class TenantFeatureFlagToggleSerializer(serializers.Serializer):
 
 class TenantDomainVerifySerializer(serializers.Serializer):
     domain_id = serializers.UUIDField()
+
+
+class HealthGroupSerializer(serializers.ModelSerializer):
+    tenant_count = serializers.SerializerMethodField()
+
+    class Meta:
+        model = HealthGroup
+        fields = ["id", "name", "slug", "is_active", "tenant_count", "created_at", "updated_at"]
+        read_only_fields = ["id", "created_at", "updated_at"]
+
+    def get_tenant_count(self, obj):
+        return obj.tenants.count()

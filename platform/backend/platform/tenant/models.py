@@ -88,6 +88,26 @@ class ComplianceFramework(models.TextChoices):
 # ---------------------------------------------------------------------------
 
 
+class HealthGroup(PlatformModel):
+    """
+    A holding company / hospital network owning multiple Tenant records
+    (Hospital A, Hospital B, a clinic network, labs, pharmacies, ...).
+    Enables the Enterprise Command Center / Multi-Hospital Dashboard to
+    aggregate real per-tenant data across a group instead of one tenant.
+    """
+
+    name = models.CharField(max_length=200, unique=True)
+    slug = models.SlugField(max_length=100, unique=True)
+    is_active = models.BooleanField(default=True)
+
+    class Meta:
+        db_table = "platform_health_groups"
+        ordering = ["name"]
+
+    def __str__(self) -> str:
+        return self.name
+
+
 class Tenant(PlatformModel):
     """
     Central registry of all tenants. One row per organization.
@@ -97,6 +117,13 @@ class Tenant(PlatformModel):
     name = models.CharField(max_length=200, unique=True)
     slug = models.SlugField(max_length=100, unique=True)
     display_name = models.CharField(max_length=200, blank=True)
+    health_group = models.ForeignKey(
+        HealthGroup,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="tenants",
+    )
     tenant_type = models.CharField(
         max_length=30, choices=TenantType.choices, default=TenantType.SAAS
     )

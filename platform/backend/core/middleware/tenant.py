@@ -30,6 +30,12 @@ class TenantIsolationMiddleware:
             request.tenant_id = None
             return self.get_response(request)
 
+        # Health groups legitimately span multiple tenants -- gated by
+        # IsHealthGroupExecutive at the view layer instead of tenant isolation.
+        if request.path.startswith("/api/v1/tenants/health-groups/"):
+            request.tenant_id = None
+            return self.get_response(request)
+
         # Fallback to check token session payload if header is missing
         if not tenant_id and hasattr(request, "user_session"):
             tenant_id = request.user_session.get("tenant_id")

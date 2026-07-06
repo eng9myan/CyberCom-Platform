@@ -79,3 +79,18 @@ class CanTerminateTenant(BasePermission):
         claims = getattr(request, "auth_claims", {})
         realm_roles = set(claims.get("realm_access", {}).get("roles", []))
         return "platform_admin" in realm_roles
+
+
+class IsHealthGroupExecutive(BasePermission):
+    """
+    Group-level cross-tenant KPIs (Enterprise Command Center, Multi-Hospital
+    Dashboard) are only visible to roles that legitimately span the whole
+    health group -- not to a single hospital's regular staff roles.
+    """
+
+    EXECUTIVE_ROLES = {"platform_admin", "group_ceo", "group_board_member", "group_cfo"}
+
+    def has_permission(self, request, view) -> bool:
+        claims = getattr(request, "auth_claims", {})
+        realm_roles = set(claims.get("realm_access", {}).get("roles", []))
+        return bool(realm_roles & self.EXECUTIVE_ROLES)
