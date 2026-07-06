@@ -1,5 +1,7 @@
 "use client";
 
+import { usePreferences } from "@/contexts/preferences";
+
 import { useState, useEffect } from "react";
 import { apiFetch } from "@/lib/api";
 
@@ -96,7 +98,9 @@ function statusBadge(st: string, lang: "en" | "ar") {
 export default function ReceptionPage() {
   const [patients, setPatients] = useState<WaitingPatient[]>(MOCK_WAITING);
   const [metrics, setMetrics] = useState<ReceptionMetrics>(MOCK_METRICS);
-  const [lang, setLang] = useState<"en" | "ar">("en");
+  const { locale: lang, setLocale: _setLangRaw } = usePreferences();
+  const setLang = (updater: "en" | "ar" | ((prev: "en" | "ar") => "en" | "ar")) =>
+    _setLangRaw(typeof updater === "function" ? (updater as (prev: "en" | "ar") => "en" | "ar")(lang) : updater);
   const [loading, setLoading] = useState(false);
 
   // Check-in form state

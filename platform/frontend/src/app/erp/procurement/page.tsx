@@ -1,5 +1,7 @@
 "use client";
 
+import { usePreferences } from "@/contexts/preferences";
+
 import { useState, useEffect, useCallback } from "react";
 import { apiFetch } from "@/lib/api";
 import { useAuth } from "@/contexts/auth";
@@ -48,7 +50,9 @@ const STATUS_COLOR: Record<string, string> = {
 
 export default function ProcurementPage() {
   const { session, isAuthenticated } = useAuth();
-  const [lang, setLang] = useState<"en" | "ar">("en");
+  const { locale: lang, setLocale: _setLangRaw } = usePreferences();
+  const setLang = (updater: "en" | "ar" | ((prev: "en" | "ar") => "en" | "ar")) =>
+    _setLangRaw(typeof updater === "function" ? (updater as (prev: "en" | "ar") => "en" | "ar")(lang) : updater);
   const [orders, setOrders] = useState<PurchaseOrderRaw[] | null>(null);
   const [vendors, setVendors] = useState<Record<string, VendorRaw>>({});
   const [filter, setFilter] = useState("all");

@@ -1,5 +1,7 @@
 "use client";
 
+import { usePreferences } from "@/contexts/preferences";
+
 import { useState, useEffect } from "react";
 import { apiFetch } from "@/lib/api";
 
@@ -91,7 +93,9 @@ function statusLabel(status: string, lang: "en" | "ar"): string {
 
 export default function AppointmentsPage() {
   const [appointments, setAppointments] = useState<Appointment[]>(MOCK_APPOINTMENTS);
-  const [lang, setLang] = useState<"en" | "ar">("en");
+  const { locale: lang, setLocale: _setLangRaw } = usePreferences();
+  const setLang = (updater: "en" | "ar" | ((prev: "en" | "ar") => "en" | "ar")) =>
+    _setLangRaw(typeof updater === "function" ? (updater as (prev: "en" | "ar") => "en" | "ar")(lang) : updater);
   const [loading, setLoading] = useState(false);
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [filterSpecialty, setFilterSpecialty] = useState<string>("All");

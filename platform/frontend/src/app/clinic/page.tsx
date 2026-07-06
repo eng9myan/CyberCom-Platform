@@ -1,5 +1,7 @@
 "use client";
 
+import { usePreferences } from "@/contexts/preferences";
+
 import { useState, useEffect } from "react";
 import { apiFetch } from "@/lib/api";
 
@@ -59,7 +61,9 @@ function triageColor(level: string) {
 export default function ClinicPortal() {
   const [metrics, setMetrics] = useState<ClinicMetrics>(MOCK_METRICS);
   const [queue, setQueue] = useState<QueueEntry[]>(MOCK_QUEUE);
-  const [lang, setLang] = useState<"en" | "ar">("en");
+  const { locale: lang, setLocale: _setLangRaw } = usePreferences();
+  const setLang = (updater: "en" | "ar" | ((prev: "en" | "ar") => "en" | "ar")) =>
+    _setLangRaw(typeof updater === "function" ? (updater as (prev: "en" | "ar") => "en" | "ar")(lang) : updater);
   const [filter, setFilter] = useState<"all" | "waiting" | "in_consultation" | "completed">("all");
   const [loading, setLoading] = useState(false);
 

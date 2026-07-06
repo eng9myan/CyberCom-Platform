@@ -1,5 +1,7 @@
 "use client";
 
+import { usePreferences } from "@/contexts/preferences";
+
 import { useState, useEffect } from "react";
 import { apiFetch } from "@/lib/api";
 
@@ -224,7 +226,9 @@ function orderStatusColor(s: string): string {
 
 export default function ConsultationsPage() {
   const [consultations, setConsultations] = useState<Consultation[]>(MOCK_CONSULTATIONS);
-  const [lang, setLang] = useState<"en" | "ar">("en");
+  const { locale: lang, setLocale: _setLangRaw } = usePreferences();
+  const setLang = (updater: "en" | "ar" | ((prev: "en" | "ar") => "en" | "ar")) =>
+    _setLangRaw(typeof updater === "function" ? (updater as (prev: "en" | "ar") => "en" | "ar")(lang) : updater);
   const [loading, setLoading] = useState(false);
   const [selectedId, setSelectedId] = useState<string>(MOCK_CONSULTATIONS[0]?.id ?? "");
   const [activeTab, setActiveTab] = useState<"soap" | "diagnosis" | "orders">("soap");

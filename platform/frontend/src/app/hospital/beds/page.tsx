@@ -1,5 +1,7 @@
 "use client";
 
+import { usePreferences } from "@/contexts/preferences";
+
 import { useState, useEffect, useCallback } from "react";
 import { BedDouble } from "lucide-react";
 import { apiFetch } from "@/lib/api";
@@ -29,7 +31,9 @@ function wardBeds(ward: WardNode): Bed[] {
 
 export default function BedsPage() {
   const { session, isAuthenticated } = useAuth();
-  const [lang, setLang] = useState<"en" | "ar">("en");
+  const { locale: lang, setLocale: _setLangRaw } = usePreferences();
+  const setLang = (updater: "en" | "ar" | ((prev: "en" | "ar") => "en" | "ar")) =>
+    _setLangRaw(typeof updater === "function" ? (updater as (prev: "en" | "ar") => "en" | "ar")(lang) : updater);
   const [facilities, setFacilities] = useState<Facility[] | null>(null);
   const [assignments, setAssignments] = useState<BedAssignment[]>([]);
   const [patients, setPatients] = useState<Patient[]>([]);

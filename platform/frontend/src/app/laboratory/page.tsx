@@ -1,5 +1,7 @@
 "use client";
 
+import { usePreferences } from "@/contexts/preferences";
+
 import { useState } from "react";
 
 interface LabOrder {
@@ -64,7 +66,9 @@ function tatColor(elapsed: number, target: number) {
 }
 
 export default function LaboratoryPortal() {
-  const [lang, setLang] = useState<"en" | "ar">("en");
+  const { locale: lang, setLocale: _setLangRaw } = usePreferences();
+  const setLang = (updater: "en" | "ar" | ((prev: "en" | "ar") => "en" | "ar")) =>
+    _setLangRaw(typeof updater === "function" ? (updater as (prev: "en" | "ar") => "en" | "ar")(lang) : updater);
   const [priorityFilter, setPriorityFilter] = useState<"all" | "stat" | "urgent" | "routine">("all");
 
   const filtered = priorityFilter === "all" ? ORDERS : ORDERS.filter(o => o.priority === priorityFilter);

@@ -1,5 +1,7 @@
 "use client";
 
+import { usePreferences } from "@/contexts/preferences";
+
 import { useState, useEffect } from "react";
 import { apiFetch } from "@/lib/api";
 
@@ -70,7 +72,9 @@ function fmt(n: number) {
 }
 
 export default function ErpPage() {
-  const [lang, setLang] = useState<"en" | "ar">("en");
+  const { locale: lang, setLocale: _setLangRaw } = usePreferences();
+  const setLang = (updater: "en" | "ar" | ((prev: "en" | "ar") => "en" | "ar")) =>
+    _setLangRaw(typeof updater === "function" ? (updater as (prev: "en" | "ar") => "en" | "ar")(lang) : updater);
   const [finance, setFinance] = useState<FinanceSummary>(FINANCE);
   const [hr, setHr] = useState<HRSummary>(HR);
   const [inventory, setInventory] = useState<InventorySummary>(INVENTORY);

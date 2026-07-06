@@ -1,4 +1,6 @@
 "use client";
+
+import { usePreferences } from "@/contexts/preferences";
 import { useState, useEffect } from "react";
 import { apiFetch } from "@/lib/api";
 
@@ -26,7 +28,9 @@ const MOCK_IMAGING: ImagingReport[] = [
 const FLAG_COLOR: Record<string, string> = { normal: "#22c55e", abnormal: "#f59e0b", critical: "#ef4444" };
 
 export default function PatientResultsPage() {
-  const [lang, setLang] = useState<"en" | "ar">("en");
+  const { locale: lang, setLocale: _setLangRaw } = usePreferences();
+  const setLang = (updater: "en" | "ar" | ((prev: "en" | "ar") => "en" | "ar")) =>
+    _setLangRaw(typeof updater === "function" ? (updater as (prev: "en" | "ar") => "en" | "ar")(lang) : updater);
   const [labs, setLabs] = useState<LabResult[]>(MOCK_LAB);
   const [imaging, setImaging] = useState<ImagingReport[]>(MOCK_IMAGING);
   const [tab, setTab] = useState<"lab" | "imaging">("lab");

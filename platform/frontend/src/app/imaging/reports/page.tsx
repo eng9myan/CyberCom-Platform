@@ -1,5 +1,7 @@
 "use client";
 
+import { usePreferences } from "@/contexts/preferences";
+
 import { useState, useEffect, useCallback } from "react";
 import { apiFetch } from "@/lib/api";
 import { useAuth } from "@/contexts/auth";
@@ -49,7 +51,9 @@ const STATUS_COLORS: Record<string, string> = {
 
 export default function ImagingReportsPage() {
   const { session, isAuthenticated } = useAuth();
-  const [lang, setLang] = useState<"en" | "ar">("en");
+  const { locale: lang, setLocale: _setLangRaw } = usePreferences();
+  const setLang = (updater: "en" | "ar" | ((prev: "en" | "ar") => "en" | "ar")) =>
+    _setLangRaw(typeof updater === "function" ? (updater as (prev: "en" | "ar") => "en" | "ar")(lang) : updater);
   const [reports, setReports] = useState<RadiologyReportRaw[] | null>(null);
   const [criticalByReport, setCriticalByReport] = useState<Record<string, CriticalFindingRaw[]>>({});
   const [patients, setPatients] = useState<Record<string, PatientRaw>>({});

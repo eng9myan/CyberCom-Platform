@@ -1,4 +1,6 @@
 "use client";
+
+import { usePreferences } from "@/contexts/preferences";
 import { useState, useEffect } from "react";
 import { apiFetch } from "@/lib/api";
 
@@ -20,7 +22,9 @@ const MOCK: Claim[] = [
 const STATUS_COLOR: Record<string, string> = { submitted: "#22D3EE", processing: "#f59e0b", paid: "#22c55e", rejected: "#ef4444", appealing: "#a78bfa" };
 
 export default function ClaimsPage() {
-  const [lang, setLang] = useState<"en" | "ar">("en");
+  const { locale: lang, setLocale: _setLangRaw } = usePreferences();
+  const setLang = (updater: "en" | "ar" | ((prev: "en" | "ar") => "en" | "ar")) =>
+    _setLangRaw(typeof updater === "function" ? (updater as (prev: "en" | "ar") => "en" | "ar")(lang) : updater);
   const [claims, setClaims] = useState<Claim[]>(MOCK);
   const [filter, setFilter] = useState("all");
   const [loading, setLoading] = useState(false);

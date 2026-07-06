@@ -1,5 +1,7 @@
 "use client";
 
+import { usePreferences } from "@/contexts/preferences";
+
 /**
  * CyberCom Multi-Tenant Admin Portal
  * Program 2.2 — Tenant Framework
@@ -264,7 +266,9 @@ const fmtFramework = (f: ComplianceFramework) =>
 // ---------------------------------------------------------------------------
 
 export default function TenantAdminPage() {
-  const [lang, setLang] = useState<"en" | "ar">("en");
+  const { locale: lang, setLocale: _setLangRaw } = usePreferences();
+  const setLang = (updater: "en" | "ar" | ((prev: "en" | "ar") => "en" | "ar")) =>
+    _setLangRaw(typeof updater === "function" ? (updater as (prev: "en" | "ar") => "en" | "ar")(lang) : updater);
   const [theme, setTheme] = useState<"dark" | "light">("dark");
   const [tab, setTab] = useState(0);
   const [search, setSearch] = useState("");

@@ -1,4 +1,6 @@
 "use client";
+
+import { usePreferences } from "@/contexts/preferences";
 import { useState, useEffect } from "react";
 import { apiFetch } from "@/lib/api";
 
@@ -20,7 +22,9 @@ const MOCK: CareGap[] = [
 const PRI_COLOR: Record<string, string> = { high: "#ef4444", medium: "#f59e0b", low: "#22c55e" };
 
 export default function CareGapsPage() {
-  const [lang, setLang] = useState<"en" | "ar">("en");
+  const { locale: lang, setLocale: _setLangRaw } = usePreferences();
+  const setLang = (updater: "en" | "ar" | ((prev: "en" | "ar") => "en" | "ar")) =>
+    _setLangRaw(typeof updater === "function" ? (updater as (prev: "en" | "ar") => "en" | "ar")(lang) : updater);
   const [gaps, setGaps] = useState<CareGap[]>(MOCK);
   const [filter, setFilter] = useState("all");
   const [loading, setLoading] = useState(false);

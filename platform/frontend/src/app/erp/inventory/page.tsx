@@ -1,4 +1,6 @@
 "use client";
+
+import { usePreferences } from "@/contexts/preferences";
 import { useState, useEffect, useCallback } from "react";
 import { apiFetch } from "@/lib/api";
 import { useAuth } from "@/contexts/auth";
@@ -9,7 +11,9 @@ interface Paginated<T> { count: number; results: T[]; }
 
 export default function InventoryPage() {
   const { session, isAuthenticated } = useAuth();
-  const [lang, setLang] = useState<"en" | "ar">("en");
+  const { locale: lang, setLocale: _setLangRaw } = usePreferences();
+  const setLang = (updater: "en" | "ar" | ((prev: "en" | "ar") => "en" | "ar")) =>
+    _setLangRaw(typeof updater === "function" ? (updater as (prev: "en" | "ar") => "en" | "ar")(lang) : updater);
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
   const [items, setItems] = useState<StockItem[] | null>(null);
   const [filter, setFilter] = useState<"all" | "in_stock" | "out_of_stock">("all");

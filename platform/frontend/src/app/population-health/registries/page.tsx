@@ -1,4 +1,6 @@
 "use client";
+
+import { usePreferences } from "@/contexts/preferences";
 import { useState, useEffect } from "react";
 import { apiFetch } from "@/lib/api";
 
@@ -20,7 +22,9 @@ const MOCK_PATIENTS: RegPatient[] = [
 const RISK_COLOR: Record<string, string> = { high: "#ef4444", medium: "#f59e0b", low: "#22c55e" };
 
 export default function RegistriesPage() {
-  const [lang, setLang] = useState<"en" | "ar">("en");
+  const { locale: lang, setLocale: _setLangRaw } = usePreferences();
+  const setLang = (updater: "en" | "ar" | ((prev: "en" | "ar") => "en" | "ar")) =>
+    _setLangRaw(typeof updater === "function" ? (updater as (prev: "en" | "ar") => "en" | "ar")(lang) : updater);
   const [registries, setRegistries] = useState<Registry[]>(MOCK_REGISTRIES);
   const [selected, setSelected] = useState<Registry | null>(null);
   const [loading, setLoading] = useState(false);

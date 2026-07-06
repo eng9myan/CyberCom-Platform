@@ -1,4 +1,6 @@
 "use client";
+
+import { usePreferences } from "@/contexts/preferences";
 import { useState, useEffect } from "react";
 import { apiFetch } from "@/lib/api";
 
@@ -22,7 +24,9 @@ const REASON_GROUPS: Record<string, number> = {};
 MOCK.forEach(d => { REASON_GROUPS[d.denial_reason] = (REASON_GROUPS[d.denial_reason] ?? 0) + 1; });
 
 export default function DenialsPage() {
-  const [lang, setLang] = useState<"en" | "ar">("en");
+  const { locale: lang, setLocale: _setLangRaw } = usePreferences();
+  const setLang = (updater: "en" | "ar" | ((prev: "en" | "ar") => "en" | "ar")) =>
+    _setLangRaw(typeof updater === "function" ? (updater as (prev: "en" | "ar") => "en" | "ar")(lang) : updater);
   const [denials, setDenials] = useState<Denial[]>(MOCK);
   const [filter, setFilter] = useState("all");
   const [loading, setLoading] = useState(false);

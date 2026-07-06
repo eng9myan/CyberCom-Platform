@@ -1,5 +1,7 @@
 "use client";
 
+import { usePreferences } from "@/contexts/preferences";
+
 import { useState } from "react";
 
 interface ImagingStudy {
@@ -56,7 +58,9 @@ function statusColor(s: string) {
 }
 
 export default function ImagingPortal() {
-  const [lang, setLang] = useState<"en" | "ar">("en");
+  const { locale: lang, setLocale: _setLangRaw } = usePreferences();
+  const setLang = (updater: "en" | "ar" | ((prev: "en" | "ar") => "en" | "ar")) =>
+    _setLangRaw(typeof updater === "function" ? (updater as (prev: "en" | "ar") => "en" | "ar")(lang) : updater);
   const [modalityFilter, setModalityFilter] = useState<string>("all");
 
   const filtered = modalityFilter === "all" ? STUDIES : STUDIES.filter(s => s.modality === modalityFilter);

@@ -1,5 +1,7 @@
 "use client";
 
+import { usePreferences } from "@/contexts/preferences";
+
 import { useState, useEffect, useCallback } from "react";
 import { apiFetch } from "@/lib/api";
 import { useAuth } from "@/contexts/auth";
@@ -64,7 +66,9 @@ const fmt = (n: number) => Math.abs(n) >= 1000000 ? `${(n / 1000000).toFixed(1)}
 
 export default function FinancePage() {
   const { session, isAuthenticated } = useAuth();
-  const [lang, setLang] = useState<"en" | "ar">("en");
+  const { locale: lang, setLocale: _setLangRaw } = usePreferences();
+  const setLang = (updater: "en" | "ar" | ((prev: "en" | "ar") => "en" | "ar")) =>
+    _setLangRaw(typeof updater === "function" ? (updater as (prev: "en" | "ar") => "en" | "ar")(lang) : updater);
   const [accounts, setAccounts] = useState<AccountRaw[] | null>(null);
   const [pl, setPl] = useState<MonthlyPL[] | null>(null);
   const [tab, setTab] = useState<"pl" | "gl">("pl");

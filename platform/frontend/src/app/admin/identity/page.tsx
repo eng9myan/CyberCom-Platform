@@ -1,5 +1,7 @@
 "use client";
 
+import { usePreferences } from "@/contexts/preferences";
+
 import { useState } from "react";
 import Head from "next/head";
 import { apiFetch } from "@/lib/api";
@@ -86,7 +88,9 @@ export default function IdentityAdminPortal() {
   const { session: authSession } = useAuth();
 
   // --- Internationalization (EN / AR) ---
-  const [lang, setLang] = useState<"en" | "ar">("en");
+  const { locale: lang, setLocale: _setLangRaw } = usePreferences();
+  const setLang = (updater: "en" | "ar" | ((prev: "en" | "ar") => "en" | "ar")) =>
+    _setLangRaw(typeof updater === "function" ? (updater as (prev: "en" | "ar") => "en" | "ar")(lang) : updater);
   const [theme, setTheme] = useState<"dark" | "light">("dark");
   const isRtl = lang === "ar";
 

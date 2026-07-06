@@ -1,4 +1,6 @@
 "use client";
+
+import { usePreferences } from "@/contexts/preferences";
 import { useState, useEffect } from "react";
 import { apiFetch } from "@/lib/api";
 
@@ -31,7 +33,9 @@ const TREND_ICON: Record<string, string> = { up: "↑", stable: "→", down: "�
 const TREND_COLOR: Record<string, string> = { up: "#ef4444", stable: "#22D3EE", down: "#22c55e" };
 
 export default function PopHealthAnalyticsPage() {
-  const [lang, setLang] = useState<"en" | "ar">("en");
+  const { locale: lang, setLocale: _setLangRaw } = usePreferences();
+  const setLang = (updater: "en" | "ar" | ((prev: "en" | "ar") => "en" | "ar")) =>
+    _setLangRaw(typeof updater === "function" ? (updater as (prev: "en" | "ar") => "en" | "ar")(lang) : updater);
   const [prevalence, setPrevalence] = useState<Prevalence[]>(MOCK_PREVALENCE);
   const [risk, setRisk] = useState<RiskBand[]>(MOCK_RISK);
   const [loading, setLoading] = useState(false);

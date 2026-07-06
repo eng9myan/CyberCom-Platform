@@ -1,5 +1,7 @@
 "use client";
 
+import { usePreferences } from "@/contexts/preferences";
+
 import { useState, useEffect } from "react";
 import { apiFetch } from "@/lib/api";
 
@@ -32,7 +34,9 @@ const INVOICES: InvoiceSummary[] = [
 ];
 
 export default function PatientPortal() {
-  const [lang, setLang] = useState<"en" | "ar">("en");
+  const { locale: lang, setLocale: _setLangRaw } = usePreferences();
+  const setLang = (updater: "en" | "ar" | ((prev: "en" | "ar") => "en" | "ar")) =>
+    _setLangRaw(typeof updater === "function" ? (updater as (prev: "en" | "ar") => "en" | "ar")(lang) : updater);
   const [summary, setSummary] = useState<PatientSummary>(SUMMARY);
   const [invoices, setInvoices] = useState<InvoiceSummary[]>(INVOICES);
   const [subject, setSubject] = useState("");
