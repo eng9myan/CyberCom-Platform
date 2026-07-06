@@ -39,7 +39,7 @@ function CallbackHandler() {
           roles: realmAccess?.roles ?? [],
           permissions: (claims["permissions"] as string[]) ?? [],
           accessToken,
-          tokenExpiresAt: Date.now() + ((claims["exp"] as number) ?? 900) * 1000,
+          tokenExpiresAt: claims["exp"] ? (claims["exp"] as number) * 1000 : Date.now() + 900 * 1000,
         };
 
         setSession(session);

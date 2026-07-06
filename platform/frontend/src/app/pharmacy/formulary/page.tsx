@@ -1,18 +1,21 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { apiFetch } from "@/lib/api";
+import { useAuth } from "@/contexts/auth";
 
 interface DrugRaw {
   id: string;
+  drug_code: string;
+  drug_name: string;
   generic_name?: string;
-  brand_name?: string;
-  drug_class?: string;
-  dosage_form?: string;
-  strength?: string;
-  formulary_status?: string;
-  restriction_notes?: string;
-  preferred_alternative?: string;
+  status: string;
+  tier: number;
+  requires_prior_auth: boolean;
+  requires_step_therapy: boolean;
+  available_strengths?: string[];
+  available_forms?: string[];
+  notes?: string;
 }
 
 interface Drug {
@@ -27,90 +30,73 @@ interface Drug {
   preferredAlternative: string;
 }
 
-const MOCK_DRUGS: Drug[] = [
-  { id: "f-001", genericName: "Metformin", brandName: "Glucophage", drugClass: "Antidiabetic (Biguanide)", dosageForm: "Tablet", strength: "500mg, 850mg, 1000mg", status: "formulary", restrictionNotes: "", preferredAlternative: "" },
-  { id: "f-002", genericName: "Insulin Glargine", brandName: "Lantus", drugClass: "Insulin (Long-acting)", dosageForm: "Solution for injection", strength: "100 units/mL", status: "formulary", restrictionNotes: "", preferredAlternative: "" },
-  { id: "f-003", genericName: "Atorvastatin", brandName: "Lipitor", drugClass: "Statin", dosageForm: "Tablet", strength: "10mg, 20mg, 40mg, 80mg", status: "formulary", restrictionNotes: "", preferredAlternative: "" },
-  { id: "f-004", genericName: "Rosuvastatin", brandName: "Crestor", drugClass: "Statin", dosageForm: "Tablet", strength: "5mg, 10mg, 20mg, 40mg", status: "non-formulary", restrictionNotes: "Prefer atorvastatin unless documented intolerance.", preferredAlternative: "Atorvastatin (Lipitor)" },
-  { id: "f-005", genericName: "Lisinopril", brandName: "Zestril", drugClass: "ACE Inhibitor", dosageForm: "Tablet", strength: "5mg, 10mg, 20mg", status: "formulary", restrictionNotes: "", preferredAlternative: "" },
-  { id: "f-006", genericName: "Losartan", brandName: "Cozaar", drugClass: "ARB", dosageForm: "Tablet", strength: "25mg, 50mg, 100mg", status: "formulary", restrictionNotes: "", preferredAlternative: "" },
-  { id: "f-007", genericName: "Amlodipine", brandName: "Norvasc", drugClass: "Calcium Channel Blocker", dosageForm: "Tablet", strength: "5mg, 10mg", status: "formulary", restrictionNotes: "", preferredAlternative: "" },
-  { id: "f-008", genericName: "Metoprolol Succinate", brandName: "Toprol-XL", drugClass: "Beta Blocker", dosageForm: "Extended-release Tablet", strength: "25mg, 50mg, 100mg", status: "formulary", restrictionNotes: "", preferredAlternative: "" },
-  { id: "f-009", genericName: "Amoxicillin", brandName: "Amoxil", drugClass: "Antibiotic (Penicillin)", dosageForm: "Capsule / Suspension", strength: "250mg, 500mg", status: "formulary", restrictionNotes: "", preferredAlternative: "" },
-  { id: "f-010", genericName: "Azithromycin", brandName: "Zithromax", drugClass: "Antibiotic (Macrolide)", dosageForm: "Tablet / Suspension", strength: "250mg, 500mg", status: "formulary", restrictionNotes: "", preferredAlternative: "" },
-  { id: "f-011", genericName: "Ciprofloxacin", brandName: "Cipro", drugClass: "Antibiotic (Fluoroquinolone)", dosageForm: "Tablet", strength: "250mg, 500mg, 750mg", status: "restricted", restrictionNotes: "Restricted to infectious disease approval for systemic use.", preferredAlternative: "Amoxicillin or Azithromycin per indication" },
-  { id: "f-012", genericName: "Vancomycin", brandName: "Vancocin", drugClass: "Antibiotic (Glycopeptide)", dosageForm: "IV infusion / Capsule", strength: "500mg, 1g vial", status: "restricted", restrictionNotes: "Infectious Disease or ICU approval required. TDM monitoring mandatory.", preferredAlternative: "" },
-  { id: "f-013", genericName: "Omeprazole", brandName: "Losec", drugClass: "Proton Pump Inhibitor", dosageForm: "Capsule / IV", strength: "20mg, 40mg", status: "formulary", restrictionNotes: "", preferredAlternative: "" },
-  { id: "f-014", genericName: "Pantoprazole", brandName: "Protonix", drugClass: "Proton Pump Inhibitor", dosageForm: "Tablet / IV", strength: "20mg, 40mg", status: "non-formulary", restrictionNotes: "Prefer omeprazole unless specific indication.", preferredAlternative: "Omeprazole (Losec)" },
-  { id: "f-015", genericName: "Salbutamol", brandName: "Ventolin", drugClass: "Bronchodilator (SABA)", dosageForm: "Inhaler / Nebuliser", strength: "100mcg/puff, 2.5mg/2.5mL", status: "formulary", restrictionNotes: "", preferredAlternative: "" },
-  { id: "f-016", genericName: "Fluticasone/Salmeterol", brandName: "Seretide", drugClass: "ICS/LABA Combination", dosageForm: "Inhaler", strength: "250/25mcg, 500/50mcg", status: "restricted", restrictionNotes: "Respiratory specialist initiation required. Step-up therapy only.", preferredAlternative: "" },
-  { id: "f-017", genericName: "Levothyroxine", brandName: "Eltroxin", drugClass: "Thyroid Hormone", dosageForm: "Tablet", strength: "25mcg, 50mcg, 100mcg", status: "formulary", restrictionNotes: "", preferredAlternative: "" },
-  { id: "f-018", genericName: "Prednisolone", brandName: "Deltacortril", drugClass: "Corticosteroid", dosageForm: "Tablet / Syrup", strength: "5mg, 25mg", status: "formulary", restrictionNotes: "", preferredAlternative: "" },
-  { id: "f-019", genericName: "Methylprednisolone", brandName: "Solu-Medrol", drugClass: "Corticosteroid (IV)", dosageForm: "IV powder for reconstitution", strength: "40mg, 125mg, 500mg, 1g", status: "restricted", restrictionNotes: "Hospital/specialist use only for pulse therapy.", preferredAlternative: "Prednisolone oral for maintenance" },
-  { id: "f-020", genericName: "Furosemide", brandName: "Lasix", drugClass: "Loop Diuretic", dosageForm: "Tablet / IV", strength: "20mg, 40mg, 80mg", status: "formulary", restrictionNotes: "", preferredAlternative: "" },
-  { id: "f-021", genericName: "Spironolactone", brandName: "Aldactone", drugClass: "Aldosterone Antagonist", dosageForm: "Tablet", strength: "25mg, 50mg, 100mg", status: "formulary", restrictionNotes: "", preferredAlternative: "" },
-  { id: "f-022", genericName: "Warfarin", brandName: "Coumadin", drugClass: "Anticoagulant (Vitamin K Antagonist)", dosageForm: "Tablet", strength: "1mg, 2mg, 5mg", status: "restricted", restrictionNotes: "Requires INR monitoring. Anticoagulation clinic review mandatory.", preferredAlternative: "" },
-  { id: "f-023", genericName: "Rivaroxaban", brandName: "Xarelto", drugClass: "Anticoagulant (Direct Xa inhibitor)", dosageForm: "Tablet", strength: "10mg, 15mg, 20mg", status: "restricted", restrictionNotes: "Cardiology / Haematology initiation required. Formulary exception form needed.", preferredAlternative: "Warfarin for non-valvular AF if budget concern" },
-  { id: "f-024", genericName: "Aspirin", brandName: "Aspirin Cardio", drugClass: "Antiplatelet / NSAID", dosageForm: "Tablet", strength: "75mg, 100mg, 300mg", status: "formulary", restrictionNotes: "", preferredAlternative: "" },
-  { id: "f-025", genericName: "Clopidogrel", brandName: "Plavix", drugClass: "Antiplatelet", dosageForm: "Tablet", strength: "75mg", status: "formulary", restrictionNotes: "", preferredAlternative: "" },
-  { id: "f-026", genericName: "Sertraline", brandName: "Zoloft", drugClass: "Antidepressant (SSRI)", dosageForm: "Tablet", strength: "25mg, 50mg, 100mg", status: "formulary", restrictionNotes: "", preferredAlternative: "" },
-  { id: "f-027", genericName: "Escitalopram", brandName: "Lexapro", drugClass: "Antidepressant (SSRI)", dosageForm: "Tablet", strength: "5mg, 10mg, 20mg", status: "non-formulary", restrictionNotes: "Prefer sertraline as first-line. Escitalopram requires psychiatry note.", preferredAlternative: "Sertraline (Zoloft)" },
-  { id: "f-028", genericName: "Gabapentin", brandName: "Neurontin", drugClass: "Anticonvulsant / Neuropathic Pain", dosageForm: "Capsule", strength: "100mg, 300mg, 400mg", status: "formulary", restrictionNotes: "", preferredAlternative: "" },
-  { id: "f-029", genericName: "Levetiracetam", brandName: "Keppra", drugClass: "Anticonvulsant", dosageForm: "Tablet / IV", strength: "250mg, 500mg, 1000mg", status: "restricted", restrictionNotes: "Neurology initiation required for new epilepsy diagnosis.", preferredAlternative: "" },
-  { id: "f-030", genericName: "Paracetamol", brandName: "Panadol", drugClass: "Analgesic / Antipyretic", dosageForm: "Tablet / IV / Syrup", strength: "500mg, 1g", status: "formulary", restrictionNotes: "", preferredAlternative: "" },
-  { id: "f-031", genericName: "Tramadol", brandName: "Tramal", drugClass: "Opioid Analgesic", dosageForm: "Capsule / IV", strength: "50mg, 100mg", status: "restricted", restrictionNotes: "Controlled substance. Requires prescriber DEA-equivalent authorization. Max 3-day supply outpatient.", preferredAlternative: "Paracetamol + ibuprofen combination for mild-moderate pain" },
-  { id: "f-032", genericName: "Ibuprofen", brandName: "Brufen", drugClass: "NSAID", dosageForm: "Tablet / Suspension", strength: "200mg, 400mg, 600mg", status: "formulary", restrictionNotes: "", preferredAlternative: "" },
-  { id: "f-033", genericName: "Dexamethasone", brandName: "Decadron", drugClass: "Corticosteroid (IV/IM)", dosageForm: "Injection", strength: "4mg/mL, 8mg/2mL", status: "restricted", restrictionNotes: "Hospital use. Oncology use covered separately under cancer protocol.", preferredAlternative: "" },
-  { id: "f-034", genericName: "Ondansetron", brandName: "Zofran", drugClass: "Antiemetic (5-HT3 antagonist)", dosageForm: "Tablet / IV", strength: "4mg, 8mg", status: "formulary", restrictionNotes: "", preferredAlternative: "" },
-  { id: "f-035", genericName: "Metoclopramide", brandName: "Primperan", drugClass: "Prokinetic / Antiemetic", dosageForm: "Tablet / IV", strength: "10mg", status: "formulary", restrictionNotes: "", preferredAlternative: "" },
-  { id: "f-036", genericName: "Allopurinol", brandName: "Zyloprim", drugClass: "Xanthine Oxidase Inhibitor", dosageForm: "Tablet", strength: "100mg, 300mg", status: "formulary", restrictionNotes: "", preferredAlternative: "" },
-  { id: "f-037", genericName: "Colchicine", brandName: "Colcrys", drugClass: "Anti-Gout", dosageForm: "Tablet", strength: "0.5mg", status: "formulary", restrictionNotes: "", preferredAlternative: "" },
-  { id: "f-038", genericName: "Doxycycline", brandName: "Vibramycin", drugClass: "Antibiotic (Tetracycline)", dosageForm: "Capsule", strength: "100mg", status: "formulary", restrictionNotes: "", preferredAlternative: "" },
-  { id: "f-039", genericName: "Loperamide", brandName: "Imodium", drugClass: "Antidiarrheal", dosageForm: "Capsule / Tablet", strength: "2mg", status: "formulary", restrictionNotes: "", preferredAlternative: "" },
-  { id: "f-040", genericName: "Cetirizine", brandName: "Zyrtec", drugClass: "Antihistamine (2nd gen)", dosageForm: "Tablet / Syrup", strength: "5mg, 10mg", status: "formulary", restrictionNotes: "", preferredAlternative: "" },
-];
+interface Paginated<T> {
+  count: number;
+  results: T[];
+}
+
+function unwrap<T>(data: Paginated<T> | T[]): T[] {
+  return Array.isArray(data) ? data : data.results;
+}
+
+function mapStatus(raw: string): Drug["status"] {
+  if (raw === "restricted") return "restricted";
+  if (raw === "non_formulary" || raw === "discontinued" || raw === "non_preferred") return "non-formulary";
+  return "formulary";
+}
 
 type StatusFilter = "all" | "formulary" | "non-formulary" | "restricted";
 
 export default function FormularyPage() {
+  const { session, isAuthenticated } = useAuth();
   const [lang, setLang] = useState<"en" | "ar">("en");
-  const [drugs, setDrugs] = useState<Drug[]>(MOCK_DRUGS);
+  const [drugs, setDrugs] = useState<Drug[] | null>(null);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [classFilter, setClassFilter] = useState("all");
   const [loading, setLoading] = useState(false);
+  const [fetchError, setFetchError] = useState<string | null>(null);
+
+  const loadData = useCallback(async () => {
+    if (!session) return;
+    setLoading(true);
+    setFetchError(null);
+    try {
+      const data = await apiFetch<Paginated<DrugRaw> | DrugRaw[]>(
+        "/api/v1/pharmacy/formulary/drugs/",
+        { token: session.accessToken, tenantId: session.tenantId }
+      );
+      const mapped: Drug[] = unwrap(data).map(d => ({
+        id: d.id,
+        genericName: d.generic_name || d.drug_name,
+        brandName: d.drug_name,
+        drugClass: `Tier ${d.tier}`,
+        dosageForm: (d.available_forms || []).join(", ") || "—",
+        strength: (d.available_strengths || []).join(", ") || "—",
+        status: mapStatus(d.status),
+        restrictionNotes: [
+          d.requires_prior_auth ? "Requires prior authorization." : "",
+          d.requires_step_therapy ? "Requires step therapy." : "",
+          d.notes || "",
+        ].filter(Boolean).join(" "),
+        preferredAlternative: "",
+      }));
+      setDrugs(mapped);
+    } catch (err) {
+      const detail = (err as { detail?: string })?.detail;
+      setFetchError(detail || (err instanceof Error ? err.message : "Failed to load formulary."));
+    } finally {
+      setLoading(false);
+    }
+  }, [session]);
 
   useEffect(() => {
-    async function loadData() {
-      setLoading(true);
-      try {
-        const data = await apiFetch<DrugRaw[]>("/api/v1/pharmacy/formulary/");
-        if (data && data.length > 0) {
-          const mapped: Drug[] = data.map(d => ({
-            id: d.id,
-            genericName: d.generic_name || "Unknown",
-            brandName: d.brand_name || "—",
-            drugClass: d.drug_class || "General",
-            dosageForm: d.dosage_form || "—",
-            strength: d.strength || "—",
-            status: (["formulary", "non-formulary", "restricted"].includes(d.formulary_status || "") ? d.formulary_status as Drug["status"] : "formulary"),
-            restrictionNotes: d.restriction_notes || "",
-            preferredAlternative: d.preferred_alternative || "",
-          }));
-          setDrugs(mapped);
-        }
-      } catch {
-        // silent fallback
-      } finally {
-        setLoading(false);
-      }
-    }
     void loadData();
-  }, []);
+  }, [loadData]);
 
-  const drugClasses = ["all", ...Array.from(new Set(drugs.map(d => d.drugClass))).sort()];
+  const drugClasses = ["all", ...Array.from(new Set((drugs || []).map(d => d.drugClass))).sort()];
 
-  const filtered = drugs.filter(d => {
+  const filtered = (drugs || []).filter(d => {
     const q = search.toLowerCase();
     if (q && !d.genericName.toLowerCase().includes(q) && !d.brandName.toLowerCase().includes(q) && !d.drugClass.toLowerCase().includes(q)) return false;
     if (statusFilter !== "all" && d.status !== statusFilter) return false;
@@ -126,8 +112,21 @@ export default function FormularyPage() {
 
   const dir = lang === "ar" ? "rtl" : "ltr";
 
+  if (!isAuthenticated) {
+    return (
+      <div style={{ padding: "4rem", textAlign: "center" }}>
+        <h1 style={{ fontSize: "1.25rem", fontWeight: 700 }}>Sign in required</h1>
+      </div>
+    );
+  }
+
   return (
     <div style={{ padding: "2rem", maxWidth: "1400px", margin: "0 auto", direction: dir }}>
+      {fetchError && (
+        <div style={{ background: "#fee2e2", border: "1px solid #fca5a5", color: "#b91c1c", padding: "0.9rem 1rem", borderRadius: "8px", marginBottom: "1.5rem", fontSize: "0.88rem" }}>
+          {fetchError}
+        </div>
+      )}
       {/* Header */}
       <header style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "2rem" }}>
         <div>
@@ -162,10 +161,10 @@ export default function FormularyPage() {
       {/* Stats */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: "1rem", marginBottom: "2rem" }}>
         {[
-          { label: lang === "en" ? "Total Drugs" : "إجمالي الأدوية", value: drugs.length, color: "#22D3EE" },
-          { label: lang === "en" ? "Formulary" : "مدرجة", value: drugs.filter(d => d.status === "formulary").length, color: "#22c55e" },
-          { label: lang === "en" ? "Non-Formulary" : "غير مدرجة", value: drugs.filter(d => d.status === "non-formulary").length, color: "#ef4444" },
-          { label: lang === "en" ? "Restricted" : "مقيّدة", value: drugs.filter(d => d.status === "restricted").length, color: "#f59e0b" },
+          { label: lang === "en" ? "Total Drugs" : "إجمالي الأدوية", value: (drugs || []).length, color: "#22D3EE" },
+          { label: lang === "en" ? "Formulary" : "مدرجة", value: (drugs || []).filter(d => d.status === "formulary").length, color: "#22c55e" },
+          { label: lang === "en" ? "Non-Formulary" : "غير مدرجة", value: (drugs || []).filter(d => d.status === "non-formulary").length, color: "#ef4444" },
+          { label: lang === "en" ? "Restricted" : "مقيّدة", value: (drugs || []).filter(d => d.status === "restricted").length, color: "#f59e0b" },
         ].map(m => (
           <div key={m.label} style={{ background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: "10px", padding: "1.25rem", textAlign: "center" }}>
             <p style={{ fontSize: "2rem", fontWeight: 700, color: m.color, margin: 0 }}>{m.value}</p>
@@ -249,7 +248,7 @@ export default function FormularyPage() {
         )}
       </div>
       <p style={{ marginTop: "0.75rem", fontSize: "0.78rem", color: "var(--color-text-muted)" }}>
-        {lang === "en" ? `Showing ${filtered.length} of ${drugs.length} formulary items` : `عرض ${filtered.length} من ${drugs.length} دواء`}
+        {lang === "en" ? `Showing ${filtered.length} of ${(drugs || []).length} formulary items` : `عرض ${filtered.length} من ${(drugs || []).length} دواء`}
       </p>
     </div>
   );
