@@ -193,13 +193,13 @@ export default function ADTPage() {
   }
 
   if (!isAuthenticated) {
-    return <div style={{ padding: "2rem", textAlign: "center", marginTop: "4rem" }}><h1 style={{ fontWeight: 700, fontSize: "1.25rem" }}>Sign in required</h1></div>;
+    return <div className="mx-auto mt-16 max-w-lg text-center"><h1 className="text-xl font-bold">Sign in required</h1></div>;
   }
   if (fetchError) {
-    return <div style={{ padding: "2rem", textAlign: "center", marginTop: "4rem" }}><h1 style={{ fontWeight: 700, fontSize: "1.25rem", color: "#ef4444" }}>Unable to load ADT data</h1><p style={{ color: "var(--color-text-muted)" }}>{fetchError}</p></div>;
+    return <div className="mx-auto mt-16 max-w-lg text-center"><h1 className="text-xl font-bold text-red-400">Unable to load ADT data</h1><p className="mt-1 text-sm text-ink/50">{fetchError}</p></div>;
   }
   if (admissions === null) {
-    return <div style={{ padding: "2rem", textAlign: "center", marginTop: "4rem", color: "var(--color-text-muted)" }}>Loading live ADT data...</div>;
+    return <div className="mx-auto mt-16 max-w-lg text-center text-sm text-ink/40">Loading live ADT data...</div>;
   }
 
   const today = new Date().toDateString();
@@ -218,86 +218,93 @@ export default function ADTPage() {
   ].sort((a, b) => b.timestamp.localeCompare(a.timestamp));
   const filteredLog = filterType === "all" ? logRows : logRows.filter(r => r.kind === filterType);
 
-  const cardStyle: React.CSSProperties = { background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: "12px", padding: "1.5rem", marginBottom: "1rem" };
-  const inputStyle: React.CSSProperties = { width: "100%", padding: "0.625rem 0.875rem", background: "var(--color-background)", border: "1px solid var(--color-border)", borderRadius: "8px", color: "var(--color-text)", fontSize: "0.875rem", boxSizing: "border-box" };
-  const labelStyle: React.CSSProperties = { display: "block", fontSize: "0.8rem", fontWeight: 600, color: "var(--color-text-muted)", marginBottom: "0.375rem" };
-  const btnPrimary: React.CSSProperties = { padding: "0.625rem 1.5rem", background: "#22D3EE", color: "#0f172a", border: "none", borderRadius: "8px", fontWeight: 700, fontSize: "0.875rem", cursor: "pointer" };
+  const inputCls = "w-full rounded-lg border border-ink/10 bg-surface px-3.5 py-2.5 text-sm text-ink";
+  const labelCls = "mb-1.5 block text-[13px] font-semibold text-ink/50";
 
   function typeColor(type: string) { return type === "admit" ? "#22D3EE" : type === "discharge" ? "#22c55e" : "#f59e0b"; }
+  const tabAccent: Record<typeof activeTab, string> = { log: "text-brand-400", admit: "text-brand-400", discharge: "text-emerald-400", transfer: "text-amber-400" };
 
   return (
-    <div dir={dir} style={{ padding: "2rem", maxWidth: "1200px", margin: "0 auto" }}>
-      <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem" }}>
+    <div dir={dir} className="mx-auto max-w-5xl">
+      <header className="mb-6 flex items-center justify-between">
         <div>
-          <h1 style={{ fontSize: "1.75rem", fontWeight: 700, color: "#22D3EE", margin: 0 }}>
+          <h1 className="font-heading text-2xl font-bold">
             {lang === "en" ? "Admit / Discharge / Transfer" : "القبول / الخروج / النقل"}
           </h1>
-          <p style={{ color: "var(--color-text-muted)", fontSize: "0.9rem", marginTop: "0.25rem" }}>
+          <p className="mt-1 text-sm text-ink/50">
             {lang === "en" ? "Manage all patient movement transactions" : "إدارة جميع حركات المرضى"}
           </p>
         </div>
-        <button onClick={() => setLang(l => l === "en" ? "ar" : "en")} style={{ padding: "0.5rem 1rem", borderRadius: "8px", border: "1px solid var(--color-border)", cursor: "pointer", background: "var(--color-surface)", color: "var(--color-text)", fontSize: "0.875rem", fontWeight: 500 }}>
+        <button onClick={() => setLang(l => l === "en" ? "ar" : "en")} className="cy-btn cy-btn-ghost !min-h-0 !py-2 !px-4 text-sm">
           {lang === "en" ? "العربية" : "English"}
         </button>
       </header>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "1rem", marginBottom: "2rem" }}>
+      <div className="mb-8 grid grid-cols-3 gap-4">
         {[
           { label: lang === "en" ? "Admissions Today" : "قبول اليوم", value: admitCount, color: "#22D3EE" },
           { label: lang === "en" ? "Discharges Today" : "خروج اليوم", value: dischargeCount, color: "#22c55e" },
           { label: lang === "en" ? "Transfers Today" : "نقل اليوم", value: transferCount, color: "#f59e0b" },
         ].map(card => (
-          <div key={card.label} style={{ background: "var(--color-surface)", border: `1px solid ${card.color}44`, borderRadius: "12px", padding: "1.25rem", textAlign: "center" }}>
-            <div style={{ fontSize: "2.25rem", fontWeight: 800, color: card.color }}>{card.value}</div>
-            <div style={{ fontSize: "0.85rem", color: "var(--color-text-muted)", marginTop: "0.25rem", fontWeight: 500 }}>{card.label}</div>
+          <div key={card.label} className="cy-card p-5 text-center" style={{ borderColor: `${card.color}44` }}>
+            <div className="text-3xl font-extrabold" style={{ color: card.color }}>{card.value}</div>
+            <div className="mt-1 text-sm font-medium text-ink/50">{card.label}</div>
           </div>
         ))}
       </div>
 
-      <div style={{ display: "flex", gap: "0.5rem", marginBottom: "1.5rem", borderBottom: "2px solid var(--color-border)" }}>
+      <div className="mb-6 flex gap-2 border-b border-ink/10">
         {(["log", "admit", "discharge", "transfer"] as const).map(tab => (
-          <button key={tab} onClick={() => { setActiveTab(tab); setFormSuccess(null); setFormError(null); }} style={{ padding: "0.625rem 1.25rem", border: "none", borderBottom: activeTab === tab ? "3px solid #22D3EE" : "3px solid transparent", background: "transparent", color: activeTab === tab ? "#22D3EE" : "var(--color-text-muted)", fontWeight: 600, fontSize: "0.875rem", cursor: "pointer", marginBottom: "-2px" }}>
+          <button
+            key={tab}
+            onClick={() => { setActiveTab(tab); setFormSuccess(null); setFormError(null); }}
+            className={`-mb-px border-b-2 px-5 py-2.5 text-sm font-semibold transition ${activeTab === tab ? `border-current ${tabAccent[tab]}` : "border-transparent text-ink/50 hover:text-ink"}`}
+          >
             {tab === "log" ? (lang === "en" ? "ADT Log" : "سجل الحركات") : tab === "admit" ? (lang === "en" ? "New Admission" : "قبول جديد") : tab === "discharge" ? (lang === "en" ? "Discharge" : "خروج") : (lang === "en" ? "Transfer" : "نقل")}
           </button>
         ))}
       </div>
 
-      {formSuccess && <div style={{ background: "#052e16", border: "1px solid #22c55e", borderRadius: "8px", padding: "0.875rem 1.25rem", marginBottom: "1rem", color: "#22c55e", fontWeight: 600, fontSize: "0.875rem" }}>{formSuccess}</div>}
-      {formError && <div style={{ background: "#2e0505", border: "1px solid #ef4444", borderRadius: "8px", padding: "0.875rem 1.25rem", marginBottom: "1rem", color: "#ef4444", fontWeight: 600, fontSize: "0.875rem" }}>{formError}</div>}
+      {formSuccess && <div className="mb-4 rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-5 py-3.5 text-sm font-semibold text-emerald-400">{formSuccess}</div>}
+      {formError && <div className="mb-4 rounded-lg border border-red-500/40 bg-red-500/10 px-5 py-3.5 text-sm font-semibold text-red-400">{formError}</div>}
 
       {activeTab === "log" && (
         <div>
-          <div style={{ display: "flex", gap: "0.5rem", marginBottom: "1rem", flexWrap: "wrap" }}>
+          <div className="mb-4 flex flex-wrap gap-2">
             {(["all", "admit", "discharge", "transfer"] as const).map(f => (
-              <button key={f} onClick={() => setFilterType(f)} style={{ padding: "0.4rem 1rem", borderRadius: "20px", border: filterType === f ? "2px solid #22D3EE" : "1px solid var(--color-border)", background: filterType === f ? "#22D3EE22" : "var(--color-surface)", color: filterType === f ? "#22D3EE" : "var(--color-text-muted)", fontWeight: 600, fontSize: "0.8rem", cursor: "pointer" }}>
+              <button
+                key={f}
+                onClick={() => setFilterType(f)}
+                className={`rounded-full px-4 py-1.5 text-xs font-semibold ${filterType === f ? "border border-brand-400/60 bg-brand-500/15 text-brand-300" : "border border-ink/10 text-ink/50 hover:bg-ink/5"}`}
+              >
                 {f === "all" ? (lang === "en" ? "All" : "الكل") : f === "admit" ? (lang === "en" ? "Admissions" : "قبول") : f === "discharge" ? (lang === "en" ? "Discharges" : "خروج") : (lang === "en" ? "Transfers" : "نقل")}
               </button>
             ))}
           </div>
-          <div style={{ background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: "12px", overflow: "auto" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse", minWidth: "800px" }}>
+          <div className="cy-card overflow-auto p-0">
+            <table className="w-full min-w-[800px] border-collapse">
               <thead>
-                <tr style={{ borderBottom: "2px solid var(--color-border)" }}>
+                <tr className="border-b border-ink/10">
                   {[lang === "en" ? "Type" : "النوع", lang === "en" ? "Patient" : "المريض", lang === "en" ? "Physician" : "الطبيب", lang === "en" ? "Reason" : "السبب", lang === "en" ? "Time" : "الوقت", lang === "en" ? "Status" : "الحالة"].map(h => (
-                    <th key={h} style={{ padding: "0.875rem 1rem", textAlign: "left", fontSize: "0.8rem", fontWeight: 600, color: "var(--color-text-muted)" }}>{h}</th>
+                    <th key={h} className="px-4 py-3.5 text-left text-xs font-semibold text-ink/50">{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {filteredLog.length === 0 && (
-                  <tr><td colSpan={6} style={{ padding: "1.5rem", textAlign: "center", color: "var(--color-text-muted)" }}>No ADT transactions for this tenant yet.</td></tr>
+                  <tr><td colSpan={6} className="p-6 text-center text-sm text-ink/40">No ADT transactions for this tenant yet.</td></tr>
                 )}
-                {filteredLog.map((tx, i) => (
-                  <tr key={tx.id} style={{ borderBottom: "1px solid var(--color-border)", background: i % 2 === 0 ? "transparent" : "rgb(var(--color-ink-rgb) / 0.02)" }}>
-                    <td style={{ padding: "0.875rem 1rem" }}>
-                      <span style={{ padding: "0.25rem 0.75rem", borderRadius: "20px", fontSize: "0.75rem", fontWeight: 700, background: typeColor(tx.kind) + "22", color: typeColor(tx.kind), textTransform: "capitalize" }}>{tx.kind}</span>
+                {filteredLog.map(tx => (
+                  <tr key={tx.id} className="border-b border-ink/5">
+                    <td className="px-4 py-3.5">
+                      <span className="rounded-full px-3 py-1 text-xs font-bold capitalize" style={{ background: typeColor(tx.kind) + "22", color: typeColor(tx.kind) }}>{tx.kind}</span>
                     </td>
-                    <td style={{ padding: "0.875rem 1rem", fontWeight: 600, color: "var(--color-text)", fontSize: "0.875rem" }}>{patientName(tx.patient)}</td>
-                    <td style={{ padding: "0.875rem 1rem", fontSize: "0.8rem", color: "var(--color-text-muted)" }}>{providerName(tx.physician)}</td>
-                    <td style={{ padding: "0.875rem 1rem", fontSize: "0.8rem", color: "var(--color-text-muted)", maxWidth: "220px" }}>{tx.reason}</td>
-                    <td style={{ padding: "0.875rem 1rem", fontSize: "0.8rem", color: "var(--color-text-muted)", whiteSpace: "nowrap" }}>{new Date(tx.timestamp).toLocaleString()}</td>
-                    <td style={{ padding: "0.875rem 1rem" }}>
-                      <span style={{ padding: "0.25rem 0.625rem", borderRadius: "20px", fontSize: "0.75rem", fontWeight: 700, background: "rgb(var(--color-ink-rgb) / 0.06)", color: "var(--color-text-muted)", textTransform: "capitalize" }}>{tx.status}</span>
+                    <td className="px-4 py-3.5 text-sm font-semibold">{patientName(tx.patient)}</td>
+                    <td className="px-4 py-3.5 text-xs text-ink/50">{providerName(tx.physician)}</td>
+                    <td className="max-w-[220px] px-4 py-3.5 text-xs text-ink/50">{tx.reason}</td>
+                    <td className="whitespace-nowrap px-4 py-3.5 text-xs text-ink/50">{new Date(tx.timestamp).toLocaleString()}</td>
+                    <td className="px-4 py-3.5">
+                      <span className="rounded-full bg-ink/[0.06] px-2.5 py-1 text-xs font-bold capitalize text-ink/50">{tx.status}</span>
                     </td>
                   </tr>
                 ))}
@@ -308,54 +315,54 @@ export default function ADTPage() {
       )}
 
       {activeTab === "admit" && (
-        <div style={cardStyle}>
-          <h2 style={{ fontSize: "1.1rem", fontWeight: 700, color: "#22D3EE", marginBottom: "1.5rem" }}>{lang === "en" ? "New Patient Admission" : "قبول مريض جديد"}</h2>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.25rem" }}>
+        <div className="cy-card p-6">
+          <h2 className="mb-6 text-lg font-bold text-brand-400">{lang === "en" ? "New Patient Admission" : "قبول مريض جديد"}</h2>
+          <div className="grid grid-cols-2 gap-5">
             <div>
-              <label style={labelStyle}>{lang === "en" ? "Patient" : "المريض"}</label>
-              <select style={inputStyle} value={admitForm.patient} onChange={e => setAdmitForm({ ...admitForm, patient: e.target.value, encounter: "" })}>
+              <label className={labelCls}>{lang === "en" ? "Patient" : "المريض"}</label>
+              <select className={inputCls} value={admitForm.patient} onChange={e => setAdmitForm({ ...admitForm, patient: e.target.value, encounter: "" })}>
                 <option value="">{lang === "en" ? "Select patient..." : "اختر المريض..."}</option>
                 {patients.map(p => <option key={p.id} value={p.id}>{p.first_name} {p.last_name} ({p.mrn})</option>)}
               </select>
             </div>
             <div>
-              <label style={labelStyle}>{lang === "en" ? "Encounter" : "الزيارة"}</label>
-              <select style={inputStyle} value={admitForm.encounter} onChange={e => setAdmitForm({ ...admitForm, encounter: e.target.value })} disabled={!admitForm.patient}>
+              <label className={labelCls}>{lang === "en" ? "Encounter" : "الزيارة"}</label>
+              <select className={inputCls} value={admitForm.encounter} onChange={e => setAdmitForm({ ...admitForm, encounter: e.target.value })} disabled={!admitForm.patient}>
                 <option value="">{patientEncounters.length === 0 && admitForm.patient ? (lang === "en" ? "No encounters for this patient" : "لا توجد زيارات لهذا المريض") : (lang === "en" ? "Select encounter..." : "اختر الزيارة...")}</option>
                 {patientEncounters.map(e => <option key={e.id} value={e.id}>{e.id.slice(0, 8)} — {e.status}</option>)}
               </select>
             </div>
             <div>
-              <label style={labelStyle}>{lang === "en" ? "Attending Physician" : "الطبيب المعالج"}</label>
-              <select style={inputStyle} value={admitForm.physician} onChange={e => setAdmitForm({ ...admitForm, physician: e.target.value })}>
+              <label className={labelCls}>{lang === "en" ? "Attending Physician" : "الطبيب المعالج"}</label>
+              <select className={inputCls} value={admitForm.physician} onChange={e => setAdmitForm({ ...admitForm, physician: e.target.value })}>
                 <option value="">{lang === "en" ? "Select physician..." : "اختر الطبيب..."}</option>
                 {providers.map(p => <option key={p.id} value={p.id}>Dr. {p.first_name} {p.last_name}</option>)}
               </select>
             </div>
             <div>
-              <label style={labelStyle}>{lang === "en" ? "Bed Assignment (optional)" : "تعيين السرير (اختياري)"}</label>
-              <select style={inputStyle} value={admitForm.bed} onChange={e => setAdmitForm({ ...admitForm, bed: e.target.value })}>
+              <label className={labelCls}>{lang === "en" ? "Bed Assignment (optional)" : "تعيين السرير (اختياري)"}</label>
+              <select className={inputCls} value={admitForm.bed} onChange={e => setAdmitForm({ ...admitForm, bed: e.target.value })}>
                 <option value="">{lang === "en" ? "No bed yet" : "بدون سرير حالياً"}</option>
                 {availableBeds.map(b => <option key={b.id} value={b.id}>{b.bed_number}</option>)}
               </select>
             </div>
             <div>
-              <label style={labelStyle}>{lang === "en" ? "Admission Type" : "نوع القبول"}</label>
-              <select style={inputStyle} value={admitForm.admissionType} onChange={e => setAdmitForm({ ...admitForm, admissionType: e.target.value })}>
+              <label className={labelCls}>{lang === "en" ? "Admission Type" : "نوع القبول"}</label>
+              <select className={inputCls} value={admitForm.admissionType} onChange={e => setAdmitForm({ ...admitForm, admissionType: e.target.value })}>
                 <option value="">{lang === "en" ? "Select type..." : "اختر النوع..."}</option>
                 {admissionTypes.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
               </select>
             </div>
             <div>
-              <label style={labelStyle}>{lang === "en" ? "Admission Reason" : "سبب القبول"}</label>
-              <select style={inputStyle} value={admitForm.admissionReason} onChange={e => setAdmitForm({ ...admitForm, admissionReason: e.target.value })}>
+              <label className={labelCls}>{lang === "en" ? "Admission Reason" : "سبب القبول"}</label>
+              <select className={inputCls} value={admitForm.admissionReason} onChange={e => setAdmitForm({ ...admitForm, admissionReason: e.target.value })}>
                 <option value="">{lang === "en" ? "Select reason..." : "اختر السبب..."}</option>
                 {admissionReasons.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
               </select>
             </div>
           </div>
-          <div style={{ display: "flex", gap: "1rem", marginTop: "1.5rem" }}>
-            <button style={{ ...btnPrimary, opacity: submitting ? 0.5 : 1 }} disabled={submitting || !admitForm.patient || !admitForm.encounter || !admitForm.physician || !admitForm.admissionType || !admitForm.admissionReason} onClick={submitAdmit}>
+          <div className="mt-6 flex gap-4">
+            <button className="cy-btn cy-btn-primary disabled:opacity-50" disabled={submitting || !admitForm.patient || !admitForm.encounter || !admitForm.physician || !admitForm.admissionType || !admitForm.admissionReason} onClick={submitAdmit}>
               {submitting ? (lang === "en" ? "Submitting..." : "جارٍ الإرسال...") : (lang === "en" ? "Submit Admission" : "إرسال طلب القبول")}
             </button>
           </div>
@@ -363,41 +370,41 @@ export default function ADTPage() {
       )}
 
       {activeTab === "discharge" && (
-        <div style={cardStyle}>
-          <h2 style={{ fontSize: "1.1rem", fontWeight: 700, color: "#22c55e", marginBottom: "1.5rem" }}>{lang === "en" ? "Patient Discharge" : "خروج المريض"}</h2>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.25rem" }}>
-            <div style={{ gridColumn: "1 / -1" }}>
-              <label style={labelStyle}>{lang === "en" ? "Open Admission" : "القبول المفتوح"}</label>
-              <select style={inputStyle} value={dischargeForm.admission} onChange={e => setDischargeForm({ ...dischargeForm, admission: e.target.value })}>
+        <div className="cy-card p-6">
+          <h2 className="mb-6 text-lg font-bold text-emerald-400">{lang === "en" ? "Patient Discharge" : "خروج المريض"}</h2>
+          <div className="grid grid-cols-2 gap-5">
+            <div className="col-span-2">
+              <label className={labelCls}>{lang === "en" ? "Open Admission" : "القبول المفتوح"}</label>
+              <select className={inputCls} value={dischargeForm.admission} onChange={e => setDischargeForm({ ...dischargeForm, admission: e.target.value })}>
                 <option value="">{lang === "en" ? "Select admission..." : "اختر القبول..."}</option>
                 {openAdmissions.map(a => <option key={a.id} value={a.id}>{patientName(patientForEncounter(a.encounter))} — {new Date(a.admitted_at).toLocaleDateString()}</option>)}
               </select>
             </div>
             <div>
-              <label style={labelStyle}>{lang === "en" ? "Discharge Disposition" : "وجهة الخروج"}</label>
-              <select style={inputStyle} value={dischargeForm.disposition} onChange={e => setDischargeForm({ ...dischargeForm, disposition: e.target.value })}>
+              <label className={labelCls}>{lang === "en" ? "Discharge Disposition" : "وجهة الخروج"}</label>
+              <select className={inputCls} value={dischargeForm.disposition} onChange={e => setDischargeForm({ ...dischargeForm, disposition: e.target.value })}>
                 <option value="">{lang === "en" ? "Select disposition..." : "اختر الوجهة..."}</option>
                 {dischargeDispositions.map(d => <option key={d.id} value={d.id}>{d.name}</option>)}
               </select>
             </div>
             <div>
-              <label style={labelStyle}>{lang === "en" ? "Discharge Reason" : "سبب الخروج"}</label>
-              <select style={inputStyle} value={dischargeForm.reason} onChange={e => setDischargeForm({ ...dischargeForm, reason: e.target.value })}>
+              <label className={labelCls}>{lang === "en" ? "Discharge Reason" : "سبب الخروج"}</label>
+              <select className={inputCls} value={dischargeForm.reason} onChange={e => setDischargeForm({ ...dischargeForm, reason: e.target.value })}>
                 <option value="">{lang === "en" ? "Select reason..." : "اختر السبب..."}</option>
                 {dischargeReasons.map(r => <option key={r.id} value={r.id}>{r.name}</option>)}
               </select>
             </div>
-            <div style={{ gridColumn: "1 / -1" }}>
-              <label style={labelStyle}>{lang === "en" ? "Discharge Summary" : "ملخص الخروج"}</label>
-              <textarea style={{ ...inputStyle, height: "90px", resize: "vertical" }} value={dischargeForm.summary} onChange={e => setDischargeForm({ ...dischargeForm, summary: e.target.value })} placeholder={lang === "en" ? "Clinical summary..." : "الملخص السريري..."} />
+            <div className="col-span-2">
+              <label className={labelCls}>{lang === "en" ? "Discharge Summary" : "ملخص الخروج"}</label>
+              <textarea className={`${inputCls} h-[90px] resize-y`} value={dischargeForm.summary} onChange={e => setDischargeForm({ ...dischargeForm, summary: e.target.value })} placeholder={lang === "en" ? "Clinical summary..." : "الملخص السريري..."} />
             </div>
-            <div style={{ gridColumn: "1 / -1" }}>
-              <label style={labelStyle}>{lang === "en" ? "Instructions" : "التعليمات"}</label>
-              <textarea style={{ ...inputStyle, height: "90px", resize: "vertical" }} value={dischargeForm.instructions} onChange={e => setDischargeForm({ ...dischargeForm, instructions: e.target.value })} placeholder={lang === "en" ? "Discharge instructions..." : "تعليمات الخروج..."} />
+            <div className="col-span-2">
+              <label className={labelCls}>{lang === "en" ? "Instructions" : "التعليمات"}</label>
+              <textarea className={`${inputCls} h-[90px] resize-y`} value={dischargeForm.instructions} onChange={e => setDischargeForm({ ...dischargeForm, instructions: e.target.value })} placeholder={lang === "en" ? "Discharge instructions..." : "تعليمات الخروج..."} />
             </div>
           </div>
-          <div style={{ display: "flex", gap: "1rem", marginTop: "1.5rem" }}>
-            <button style={{ ...btnPrimary, background: "#22c55e", opacity: submitting ? 0.5 : 1 }} disabled={submitting || !dischargeForm.admission || !dischargeForm.disposition || !dischargeForm.reason} onClick={submitDischarge}>
+          <div className="mt-6 flex gap-4">
+            <button className="cy-btn bg-emerald-500 text-white disabled:opacity-50" disabled={submitting || !dischargeForm.admission || !dischargeForm.disposition || !dischargeForm.reason} onClick={submitDischarge}>
               {submitting ? (lang === "en" ? "Processing..." : "جارٍ التنفيذ...") : (lang === "en" ? "Process Discharge" : "تنفيذ الخروج")}
             </button>
           </div>
@@ -405,30 +412,30 @@ export default function ADTPage() {
       )}
 
       {activeTab === "transfer" && (
-        <div style={cardStyle}>
-          <h2 style={{ fontSize: "1.1rem", fontWeight: 700, color: "#f59e0b", marginBottom: "1.5rem" }}>{lang === "en" ? "Patient Transfer" : "نقل المريض"}</h2>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.25rem" }}>
-            <div style={{ gridColumn: "1 / -1" }}>
-              <label style={labelStyle}>{lang === "en" ? "Open Admission" : "القبول المفتوح"}</label>
-              <select style={inputStyle} value={transferForm.admission} onChange={e => setTransferForm({ ...transferForm, admission: e.target.value })}>
+        <div className="cy-card p-6">
+          <h2 className="mb-6 text-lg font-bold text-amber-400">{lang === "en" ? "Patient Transfer" : "نقل المريض"}</h2>
+          <div className="grid grid-cols-2 gap-5">
+            <div className="col-span-2">
+              <label className={labelCls}>{lang === "en" ? "Open Admission" : "القبول المفتوح"}</label>
+              <select className={inputCls} value={transferForm.admission} onChange={e => setTransferForm({ ...transferForm, admission: e.target.value })}>
                 <option value="">{lang === "en" ? "Select admission..." : "اختر القبول..."}</option>
                 {openAdmissions.map(a => <option key={a.id} value={a.id}>{patientName(patientForEncounter(a.encounter))} — {new Date(a.admitted_at).toLocaleDateString()}</option>)}
               </select>
             </div>
-            <div style={{ gridColumn: "1 / -1" }}>
-              <label style={labelStyle}>{lang === "en" ? "Target Bed" : "السرير المستهدف"}</label>
-              <select style={inputStyle} value={transferForm.targetBed} onChange={e => setTransferForm({ ...transferForm, targetBed: e.target.value })}>
+            <div className="col-span-2">
+              <label className={labelCls}>{lang === "en" ? "Target Bed" : "السرير المستهدف"}</label>
+              <select className={inputCls} value={transferForm.targetBed} onChange={e => setTransferForm({ ...transferForm, targetBed: e.target.value })}>
                 <option value="">{lang === "en" ? "Select bed..." : "اختر السرير..."}</option>
                 {availableBeds.map(b => <option key={b.id} value={b.id}>{b.bed_number}</option>)}
               </select>
             </div>
-            <div style={{ gridColumn: "1 / -1" }}>
-              <label style={labelStyle}>{lang === "en" ? "Transfer Reason" : "سبب النقل"}</label>
-              <textarea style={{ ...inputStyle, height: "90px", resize: "vertical" }} value={transferForm.reason} onChange={e => setTransferForm({ ...transferForm, reason: e.target.value })} placeholder={lang === "en" ? "Reason for patient transfer..." : "سبب نقل المريض..."} />
+            <div className="col-span-2">
+              <label className={labelCls}>{lang === "en" ? "Transfer Reason" : "سبب النقل"}</label>
+              <textarea className={`${inputCls} h-[90px] resize-y`} value={transferForm.reason} onChange={e => setTransferForm({ ...transferForm, reason: e.target.value })} placeholder={lang === "en" ? "Reason for patient transfer..." : "سبب نقل المريض..."} />
             </div>
           </div>
-          <div style={{ display: "flex", gap: "1rem", marginTop: "1.5rem" }}>
-            <button style={{ ...btnPrimary, background: "#f59e0b", opacity: submitting ? 0.5 : 1 }} disabled={submitting || !transferForm.admission || !transferForm.targetBed} onClick={submitTransfer}>
+          <div className="mt-6 flex gap-4">
+            <button className="cy-btn bg-amber-500 text-white disabled:opacity-50" disabled={submitting || !transferForm.admission || !transferForm.targetBed} onClick={submitTransfer}>
               {submitting ? (lang === "en" ? "Submitting..." : "جارٍ الإرسال...") : (lang === "en" ? "Initiate Transfer" : "بدء النقل")}
             </button>
           </div>

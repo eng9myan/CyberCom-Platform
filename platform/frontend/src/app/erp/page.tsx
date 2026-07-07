@@ -113,49 +113,31 @@ export default function ErpPage() {
     { href: "/erp/assets", label: isAr ? "الأصول" : "Assets" },
   ];
 
-  const s: Record<string, React.CSSProperties> = {
-    page: { padding: "2rem", maxWidth: 1200, margin: "0 auto", direction: isAr ? "rtl" : "ltr" },
-    header: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem", borderBottom: "2px solid rgba(34,211,238,0.3)", paddingBottom: "1rem" },
-    h1: { fontSize: "1.75rem", fontWeight: 700, color: "#22D3EE" },
-    subtitle: { fontSize: "0.9rem", color: "var(--color-text-muted)" },
-    langBtn: { background: "var(--color-surface)", border: "1px solid var(--color-border)", color: "var(--color-text)", padding: "0.4rem 1rem", borderRadius: 6, cursor: "pointer", fontWeight: 600 },
-    nav: { display: "flex", gap: "0.75rem", marginBottom: "2rem", flexWrap: "wrap" as const },
-    navLink: { padding: "0.6rem 1.2rem", borderRadius: 6, background: "var(--color-surface)", border: "1px solid var(--color-border)", color: "var(--color-text)", textDecoration: "none", fontSize: "0.875rem", fontWeight: 600 },
-    section: { marginBottom: "2rem" },
-    sectionTitle: { fontSize: "1.1rem", fontWeight: 700, color: "#22D3EE", marginBottom: "1rem" },
-    grid: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "1rem" },
-    card: { background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: 8, padding: "1.25rem" },
-    cardLabel: { fontSize: "0.8rem", color: "var(--color-text-muted)", marginBottom: 6 },
-    cardValue: { fontSize: "1.8rem", fontWeight: 700, color: "#22D3EE" },
-    cardSub: { fontSize: "0.75rem", color: "var(--color-text-muted)", marginTop: 4 },
-    alertBadge: { display: "inline-block", background: "rgba(239,68,68,0.15)", color: "#f87171", border: "1px solid rgba(239,68,68,0.3)", borderRadius: 4, padding: "2px 8px", fontSize: "0.75rem", fontWeight: 600 },
-  };
-
   return (
-    <div style={s.page}>
-      <header style={s.header}>
+    <div className="mx-auto max-w-5xl" style={{ direction: isAr ? "rtl" : "ltr" }}>
+      <header className="mb-6 flex items-center justify-between border-b border-brand-400/30 pb-4">
         <div>
-          <h1 style={s.h1}>{isAr ? "نظام تخطيط موارد المؤسسة — CyCom ERP" : "CyCom ERP — Enterprise Resource Planning"}</h1>
-          <p style={s.subtitle}>{isAr ? "المالية · الموارد البشرية · المخزون · المشتريات" : "Finance · Human Resources · Inventory · Procurement"}</p>
+          <h1 className="font-heading text-2xl font-bold">{isAr ? "نظام تخطيط موارد المؤسسة — CyCom ERP" : "CyCom ERP — Enterprise Resource Planning"}</h1>
+          <p className="text-sm text-ink/50">{isAr ? "المالية · الموارد البشرية · المخزون · المشتريات" : "Finance · Human Resources · Inventory · Procurement"}</p>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
-          {loading && <span style={{ color: "var(--color-text-muted)", fontSize: "0.8rem" }}>●</span>}
-          <button style={s.langBtn} onClick={() => setLang(isAr ? "en" : "ar")}>
+        <div className="flex items-center gap-4">
+          {loading && <span className="text-xs text-ink/50">●</span>}
+          <button className="cy-btn cy-btn-ghost !min-h-0 !py-2 !px-4 text-sm" onClick={() => setLang(isAr ? "en" : "ar")}>
             {isAr ? "English" : "العربية"}
           </button>
         </div>
       </header>
 
-      <nav style={s.nav}>
+      <nav className="mb-8 flex flex-wrap gap-3">
         {SUB_MODULES.map(m => (
-          <a key={m.href} href={m.href} style={s.navLink}>{m.label}</a>
+          <a key={m.href} href={m.href} className="rounded-md border border-ink/10 bg-surface px-4 py-2 text-sm font-semibold text-ink transition hover:border-brand-400 hover:text-brand-400">{m.label}</a>
         ))}
       </nav>
 
       {/* Finance */}
-      <div style={s.section}>
-        <div style={s.sectionTitle}>{isAr ? "المالية والحسابات العامة" : "Finance & General Ledger"}</div>
-        <div style={s.grid}>
+      <div className="mb-8">
+        <div className="mb-3 text-lg font-bold text-brand-400">{isAr ? "المالية والحسابات العامة" : "Finance & General Ledger"}</div>
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
           {[
             { label: isAr ? "الإيرادات" : "Revenue (MTD)", value: `SAR ${fmt(finance.revenue)}`, sub: isAr ? "هذا الشهر" : "Month to date" },
             { label: isAr ? "المصروفات" : "Expenses (MTD)", value: `SAR ${fmt(finance.expenses)}`, sub: isAr ? "هذا الشهر" : "Month to date" },
@@ -164,67 +146,67 @@ export default function ErpPage() {
             { label: isAr ? "ذمم دائنة" : "AP Balance", value: `SAR ${fmt(finance.ap_balance)}`, sub: isAr ? "مستحق" : "Payable" },
             { label: isAr ? "النقد" : "Cash Balance", value: `SAR ${fmt(finance.cash_balance)}`, sub: isAr ? "متاح" : "Available" },
           ].map(item => (
-            <div key={item.label} style={s.card}>
-              <div style={s.cardLabel}>{item.label}</div>
-              <div style={s.cardValue}>{item.value}</div>
-              <div style={s.cardSub}>{item.sub}</div>
+            <div key={item.label} className="cy-card p-5">
+              <div className="text-xs text-ink/50">{item.label}</div>
+              <div className="mt-1.5 text-2xl font-bold text-brand-400">{item.value}</div>
+              <div className="mt-1 text-xs text-ink/40">{item.sub}</div>
             </div>
           ))}
         </div>
       </div>
 
       {/* HR */}
-      <div style={s.section}>
-        <div style={s.sectionTitle}>{isAr ? "الموارد البشرية" : "Human Resources"}</div>
-        <div style={s.grid}>
+      <div className="mb-8">
+        <div className="mb-3 text-lg font-bold text-brand-400">{isAr ? "الموارد البشرية" : "Human Resources"}</div>
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
           {[
             { label: isAr ? "إجمالي الموظفين" : "Total Staff", value: hr.total_staff, sub: "" },
             { label: isAr ? "نشط" : "Active", value: hr.active, sub: `${Math.round((hr.active / hr.total_staff) * 100)}%` },
             { label: isAr ? "في إجازة" : "On Leave", value: hr.on_leave, sub: isAr ? "حالياً" : "Currently" },
             { label: isAr ? "شواغر" : "Open Positions", value: hr.open_positions, sub: isAr ? "قيد التوظيف" : "Recruiting" },
           ].map(item => (
-            <div key={item.label} style={s.card}>
-              <div style={s.cardLabel}>{item.label}</div>
-              <div style={s.cardValue}>{item.value}</div>
-              {item.sub && <div style={s.cardSub}>{item.sub}</div>}
+            <div key={item.label} className="cy-card p-5">
+              <div className="text-xs text-ink/50">{item.label}</div>
+              <div className="mt-1.5 text-2xl font-bold text-brand-400">{item.value}</div>
+              {item.sub && <div className="mt-1 text-xs text-ink/40">{item.sub}</div>}
             </div>
           ))}
         </div>
       </div>
 
       {/* Inventory */}
-      <div style={s.section}>
-        <div style={s.sectionTitle}>{isAr ? "إدارة المخزون" : "Inventory Management"}</div>
-        <div style={s.grid}>
+      <div className="mb-8">
+        <div className="mb-3 text-lg font-bold text-brand-400">{isAr ? "إدارة المخزون" : "Inventory Management"}</div>
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
           {[
             { label: isAr ? "إجمالي الأصناف" : "Total SKUs", value: inventory.total_items.toLocaleString(), sub: "" },
             { label: isAr ? "مخزون منخفض" : "Low Stock", value: inventory.low_stock, sub: isAr ? "يحتاج طلب" : "Needs reorder", alert: true },
             { label: isAr ? "قيمة المخزون" : "Stock Value", value: `SAR ${fmt(inventory.stock_value)}`, sub: "" },
             { label: isAr ? "طلبات معلقة" : "Pending Orders", value: inventory.pending_orders, sub: isAr ? "قيد الاستلام" : "In transit" },
           ].map(item => (
-            <div key={item.label} style={s.card}>
-              <div style={s.cardLabel}>{item.label}</div>
-              <div style={{ ...s.cardValue, color: item.alert ? "#f87171" : "#22D3EE" }}>{item.value}</div>
-              {item.sub && <div style={s.cardSub}>{item.sub}</div>}
+            <div key={item.label} className="cy-card p-5">
+              <div className="text-xs text-ink/50">{item.label}</div>
+              <div className="mt-1.5 text-2xl font-bold" style={{ color: item.alert ? "#f87171" : "#22D3EE" }}>{item.value}</div>
+              {item.sub && <div className="mt-1 text-xs text-ink/40">{item.sub}</div>}
             </div>
           ))}
         </div>
       </div>
 
       {/* Procurement */}
-      <div style={s.section}>
-        <div style={s.sectionTitle}>{isAr ? "المشتريات" : "Procurement"}</div>
-        <div style={s.grid}>
+      <div className="mb-8">
+        <div className="mb-3 text-lg font-bold text-brand-400">{isAr ? "المشتريات" : "Procurement"}</div>
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
           {[
             { label: isAr ? "أوامر الشراء المفتوحة" : "Open Purchase Orders", value: procurement.open_pos, sub: "" },
             { label: isAr ? "في انتظار الموافقة" : "Awaiting Approval", value: procurement.pending_approval, sub: isAr ? "طلبات شراء" : "Purchase requests" },
             { label: isAr ? "الإنفاق الشهري" : "MTD Spend", value: `SAR ${fmt(procurement.spend_mtd)}`, sub: "" },
             { label: isAr ? "الموردون" : "Active Vendors", value: procurement.vendors, sub: isAr ? "مورد نشط" : "Approved suppliers" },
           ].map(item => (
-            <div key={item.label} style={s.card}>
-              <div style={s.cardLabel}>{item.label}</div>
-              <div style={s.cardValue}>{item.value}</div>
-              {item.sub && <div style={s.cardSub}>{item.sub}</div>}
+            <div key={item.label} className="cy-card p-5">
+              <div className="text-xs text-ink/50">{item.label}</div>
+              <div className="mt-1.5 text-2xl font-bold text-brand-400">{item.value}</div>
+              {item.sub && <div className="mt-1 text-xs text-ink/40">{item.sub}</div>}
             </div>
           ))}
         </div>

@@ -66,36 +66,36 @@ export default function ImagingPortal() {
   const filtered = modalityFilter === "all" ? STUDIES : STUDIES.filter(s => s.modality === modalityFilter);
 
   return (
-    <div className="dashboard-container">
-      <header className="dashboard-header">
+    <div className="mx-auto max-w-6xl">
+      <header className="mb-6 flex items-center justify-between">
         <div>
-          <h1 style={{ fontSize: "1.5rem", fontWeight: 700, color: "var(--color-primary)" }}>
+          <h1 className="font-heading text-2xl font-bold">
             {lang === "en" ? "CyMed Imaging" : "تصوير سايمد"}
           </h1>
-          <p style={{ color: "var(--color-text-muted)", fontSize: "0.875rem" }}>
+          <p className="text-sm text-ink/50">
             {lang === "en" ? "Radiology & Medical Imaging" : "الأشعة والتصوير الطبي"}
           </p>
         </div>
-        <button onClick={() => setLang(l => l === "en" ? "ar" : "en")} style={{ padding: "0.4rem 0.8rem", borderRadius: "4px", border: "1px solid var(--color-border)", cursor: "pointer", background: "var(--color-surface)", color: "var(--color-text)", fontSize: "0.8rem" }}>
+        <button onClick={() => setLang(l => l === "en" ? "ar" : "en")} className="cy-btn cy-btn-ghost !min-h-0 !py-2 !px-4 text-sm">
           {lang === "en" ? "العربية" : "English"}
         </button>
       </header>
 
-      <nav style={{ display: "flex", gap: "0.5rem", marginBottom: "1.5rem", flexWrap: "wrap" }}>
+      <nav className="mb-6 flex flex-wrap gap-2">
         {[
           { href: "/imaging/orders", label: lang === "en" ? "Orders" : "الطلبات" },
           { href: "/imaging/scheduling", label: lang === "en" ? "Scheduling" : "الجدولة" },
           { href: "/imaging/reports", label: lang === "en" ? "Reporting" : "التقارير" },
           { href: "/imaging/pacs", label: lang === "en" ? "PACS Viewer" : "عارض PACS" },
         ].map(item => (
-          <a key={item.href} href={item.href} style={{ padding: "0.4rem 1rem", borderRadius: "4px", background: "var(--color-surface)", border: "1px solid var(--color-border)", color: "var(--color-text)", textDecoration: "none", fontSize: "0.875rem", fontWeight: 500 }}>
+          <a key={item.href} href={item.href} className="rounded-md border border-ink/10 bg-surface px-4 py-1.5 text-sm font-medium text-ink hover:bg-ink/5">
             {item.label}
           </a>
         ))}
       </nav>
 
       {/* Metrics */}
-      <div className="metrics-grid" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: "1rem", marginBottom: "1.5rem" }}>
+      <div className="mb-6 grid grid-cols-[repeat(auto-fit,minmax(140px,1fr))] gap-4">
         {[
           { label: lang === "en" ? "Studies Today" : "دراسات اليوم", value: METRICS.studies_today, color: "#6366f1" },
           { label: lang === "en" ? "Pending Report" : "انتظار تقرير", value: METRICS.pending_report, color: "#f59e0b" },
@@ -104,84 +104,84 @@ export default function ImagingPortal() {
           { label: lang === "en" ? "Avg TAT (hrs)" : "متوسط الوقت", value: METRICS.avg_report_tat_hours, color: "#8b5cf6" },
           { label: lang === "en" ? "Teleradiology" : "تشعيع عن بُعد", value: METRICS.teleradiology_pending, color: "#ec4899" },
         ].map(m => (
-          <div key={m.label} className="glass-card" style={{ textAlign: "center", padding: "1rem" }}>
-            <p style={{ fontSize: "1.75rem", fontWeight: 700, color: m.color }}>{m.value}</p>
-            <p style={{ fontSize: "0.7rem", color: "var(--color-text-muted)", marginTop: "0.2rem" }}>{m.label}</p>
+          <div key={m.label} className="cy-card p-4 text-center">
+            <p className="text-2xl font-bold" style={{ color: m.color }}>{m.value}</p>
+            <p className="mt-1 text-xs text-ink/50">{m.label}</p>
           </div>
         ))}
       </div>
 
       {/* Modality Utilization */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))", gap: "1rem", marginBottom: "1.5rem" }}>
+      <div className="mb-6 grid grid-cols-[repeat(auto-fit,minmax(120px,1fr))] gap-4">
         {Object.entries(METRICS.modality_utilization).map(([mod, pct]) => (
-          <div key={mod} className="glass-card" style={{ textAlign: "center", padding: "1rem" }}>
-            <div style={{ fontSize: "1.4rem", fontWeight: 700, color: MODALITY_COLORS[mod] }}>{pct}%</div>
-            <div style={{ height: "6px", background: "var(--color-border)", borderRadius: "3px", margin: "0.5rem 0" }}>
-              <div style={{ width: `${pct}%`, height: "100%", background: MODALITY_COLORS[mod], borderRadius: "3px" }} />
+          <div key={mod} className="cy-card p-4 text-center">
+            <div className="text-xl font-bold" style={{ color: MODALITY_COLORS[mod] }}>{pct}%</div>
+            <div className="my-2 h-1.5 rounded-full bg-ink/10">
+              <div className="h-full rounded-full" style={{ width: `${pct}%`, background: MODALITY_COLORS[mod] }} />
             </div>
-            <div style={{ fontSize: "0.8rem", fontWeight: 600, color: MODALITY_COLORS[mod] }}>{mod}</div>
-            <div style={{ fontSize: "0.7rem", color: "var(--color-text-muted)" }}>{lang === "en" ? "Utilization" : "الاستخدام"}</div>
+            <div className="text-sm font-semibold" style={{ color: MODALITY_COLORS[mod] }}>{mod}</div>
+            <div className="text-xs text-ink/50">{lang === "en" ? "Utilization" : "الاستخدام"}</div>
           </div>
         ))}
       </div>
 
       {/* Studies Table */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
-        <h2 style={{ fontSize: "1.1rem", fontWeight: 600 }}>{lang === "en" ? "Worklist" : "قائمة العمل"}</h2>
-        <div style={{ display: "flex", gap: "0.25rem" }}>
+      <div className="mb-4 flex items-center justify-between">
+        <h2 className="text-lg font-bold">{lang === "en" ? "Worklist" : "قائمة العمل"}</h2>
+        <div className="flex gap-1">
           {["all", "CT", "MRI", "XR", "US"].map(f => (
-            <button key={f} onClick={() => setModalityFilter(f)} style={{ padding: "0.3rem 0.6rem", borderRadius: "4px", border: "1px solid var(--color-border)", cursor: "pointer", fontSize: "0.8rem", background: modalityFilter === f ? (MODALITY_COLORS[f] || "var(--color-primary)") : "var(--color-surface)", color: modalityFilter === f ? "#fff" : "var(--color-text)" }}>
+            <button key={f} onClick={() => setModalityFilter(f)} className="rounded-md border border-ink/10 px-2.5 py-1 text-sm" style={{ background: modalityFilter === f ? (MODALITY_COLORS[f] || "#22D3EE") : "transparent", color: modalityFilter === f ? "#fff" : undefined }}>
               {f === "all" ? (lang === "en" ? "All" : "الكل") : f}
             </button>
           ))}
         </div>
       </div>
 
-      <div className="glass-card" style={{ overflowX: "auto", padding: 0 }}>
-        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+      <div className="cy-card overflow-hidden p-0">
+        <table className="w-full border-collapse">
           <thead>
-            <tr style={{ background: "var(--color-surface-elevated)", borderBottom: "2px solid var(--color-border)" }}>
+            <tr className="border-b border-ink/10">
               {["Accession", "Patient", "Study", "Modality", "Priority", "Time", "Status", "Actions"].map(h => (
-                <th key={h} style={{ padding: "0.75rem 1rem", textAlign: "left", fontSize: "0.75rem", fontWeight: 600, color: "var(--color-text-muted)", textTransform: "uppercase" }}>{h}</th>
+                <th key={h} className="px-4 py-3 text-left text-[13px] font-semibold text-ink/50">{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
-            {filtered.map((study, i) => (
-              <tr key={study.id} style={{ borderBottom: "1px solid var(--color-border)", background: i % 2 === 0 ? "transparent" : "var(--color-surface)" }}>
-                <td style={{ padding: "0.75rem 1rem", fontSize: "0.8rem", fontFamily: "monospace", color: "var(--color-primary)" }}>{study.accession_number}</td>
-                <td style={{ padding: "0.75rem 1rem" }}>
-                  <div style={{ fontWeight: 500, fontSize: "0.875rem" }}>{lang === "ar" ? study.patient_name_ar : study.patient_name}</div>
-                  <div style={{ fontSize: "0.75rem", color: "var(--color-text-muted)" }}>{study.mrn}</div>
+            {filtered.map((study) => (
+              <tr key={study.id} className="border-b border-ink/10">
+                <td className="px-4 py-3 font-mono text-xs text-brand-400">{study.accession_number}</td>
+                <td className="px-4 py-3">
+                  <div className="text-sm font-medium">{lang === "ar" ? study.patient_name_ar : study.patient_name}</div>
+                  <div className="text-xs text-ink/50">{study.mrn}</div>
                 </td>
-                <td style={{ padding: "0.75rem 1rem" }}>
-                  <div style={{ fontSize: "0.85rem" }}>{study.study_description}</div>
-                  <div style={{ fontSize: "0.75rem", color: "var(--color-text-muted)" }}>{study.ordered_by}</div>
+                <td className="px-4 py-3">
+                  <div className="text-sm">{study.study_description}</div>
+                  <div className="text-xs text-ink/50">{study.ordered_by}</div>
                 </td>
-                <td style={{ padding: "0.75rem 1rem" }}>
-                  <span style={{ padding: "0.2rem 0.6rem", borderRadius: "4px", fontSize: "0.8rem", fontWeight: 700, background: MODALITY_COLORS[study.modality] + "22", color: MODALITY_COLORS[study.modality] }}>
+                <td className="px-4 py-3">
+                  <span className="rounded px-2.5 py-1 text-sm font-bold" style={{ background: MODALITY_COLORS[study.modality] + "22", color: MODALITY_COLORS[study.modality] }}>
                     {study.modality}
                   </span>
                 </td>
-                <td style={{ padding: "0.75rem 1rem" }}>
-                  <span style={{ fontSize: "0.8rem", fontWeight: 600, color: study.priority === "stat" ? "#ef4444" : study.priority === "urgent" ? "#f59e0b" : "#22c55e" }}>
+                <td className="px-4 py-3">
+                  <span className="text-sm font-semibold" style={{ color: study.priority === "stat" ? "#ef4444" : study.priority === "urgent" ? "#f59e0b" : "#22c55e" }}>
                     {study.priority.toUpperCase()}
                   </span>
                 </td>
-                <td style={{ padding: "0.75rem 1rem", fontSize: "0.875rem" }}>{study.scheduled_time}</td>
-                <td style={{ padding: "0.75rem 1rem" }}>
-                  <span style={{ padding: "0.2rem 0.6rem", borderRadius: "12px", fontSize: "0.75rem", fontWeight: 600, background: statusColor(study.status) + "22", color: statusColor(study.status) }}>
+                <td className="px-4 py-3 text-sm">{study.scheduled_time}</td>
+                <td className="px-4 py-3">
+                  <span className="rounded-full px-2.5 py-1 text-xs font-semibold" style={{ background: statusColor(study.status) + "22", color: statusColor(study.status) }}>
                     {study.status.replace(/_/g, " ")}
                   </span>
                 </td>
-                <td style={{ padding: "0.75rem 1rem" }}>
-                  <div style={{ display: "flex", gap: "0.3rem" }}>
+                <td className="px-4 py-3">
+                  <div className="flex gap-1.5">
                     {study.status === "images_available" && (
-                      <button style={{ padding: "0.2rem 0.5rem", fontSize: "0.75rem", borderRadius: "4px", background: "#8b5cf6", color: "#fff", border: "none", cursor: "pointer" }}>
+                      <button className="rounded-md bg-violet-500 px-2.5 py-1 text-xs font-semibold text-white">
                         {lang === "en" ? "Report" : "تقرير"}
                       </button>
                     )}
-                    <button style={{ padding: "0.2rem 0.5rem", fontSize: "0.75rem", borderRadius: "4px", background: "var(--color-surface)", border: "1px solid var(--color-border)", cursor: "pointer", color: "var(--color-text)" }}>
+                    <button className="rounded-md border border-ink/10 bg-surface px-2.5 py-1 text-xs font-semibold text-ink">
                       {lang === "en" ? "View" : "عرض"}
                     </button>
                   </div>

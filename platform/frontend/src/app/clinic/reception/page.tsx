@@ -194,49 +194,49 @@ export default function ReceptionPage() {
   const filtered = patients.filter(p => filterStatus === "all" || p.status === filterStatus);
   const dir = lang === "ar" ? "rtl" : "ltr";
 
+  const fieldLabelCls = "mb-1.5 block text-xs font-bold uppercase tracking-wide text-ink/50";
+  const fieldInputCls = "w-full rounded-lg border border-ink/10 bg-surface px-3 py-2 text-sm text-ink";
+
   return (
-    <div dir={dir} style={{ padding: "2rem", maxWidth: "1280px", margin: "0 auto", fontFamily: "system-ui, sans-serif", color: "var(--color-text)", background: "var(--color-background)", minHeight: "100vh" }}>
+    <div dir={dir} className="mx-auto max-w-6xl">
 
       {/* Header */}
-      <header style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "2rem", flexWrap: "wrap", gap: "1rem" }}>
+      <header className="mb-8 flex flex-wrap items-start justify-between gap-4">
         <div>
-          <a href="/clinic" style={{ color: "var(--color-text-muted)", textDecoration: "none", fontSize: "0.875rem" }}>
+          <a href="/clinic" className="text-sm text-ink/50 hover:text-ink">
             {lang === "en" ? "← Clinic" : "العيادة ←"}
           </a>
-          <h1 style={{ fontSize: "1.875rem", fontWeight: 700, color: "#22D3EE", margin: "0.25rem 0 0" }}>
+          <h1 className="mt-1 font-heading text-3xl font-bold">
             {lang === "en" ? "Reception Desk" : "مكتب الاستقبال"}
           </h1>
-          <p style={{ color: "var(--color-text-muted)", marginTop: "0.25rem", fontSize: "0.95rem" }}>
+          <p className="mt-1 text-sm text-ink/50">
             {lang === "en" ? "Patient check-in, queue management, and walk-ins" : "تسجيل وصول المرضى وإدارة الطابور"}
           </p>
         </div>
-        <div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
-          {loading && <span style={{ fontSize: "0.875rem", color: "var(--color-text-muted)" }}>{lang === "en" ? "Syncing..." : "جارٍ التزامن..."}</span>}
-          <button
-            onClick={() => setLang(l => l === "en" ? "ar" : "en")}
-            style={{ padding: "0.5rem 1.1rem", borderRadius: "8px", border: "1px solid var(--color-border)", background: "var(--color-surface)", color: "var(--color-text)", cursor: "pointer", fontWeight: 600, fontSize: "0.875rem" }}
-          >
+        <div className="flex items-center gap-3">
+          {loading && <span className="text-sm text-ink/50">{lang === "en" ? "Syncing..." : "جارٍ التزامن..."}</span>}
+          <button onClick={() => setLang(l => l === "en" ? "ar" : "en")} className="cy-btn cy-btn-ghost !min-h-0 !py-2 !px-4 text-sm">
             {lang === "en" ? "العربية" : "English"}
           </button>
         </div>
       </header>
 
       {/* Sibling nav */}
-      <nav style={{ display: "flex", gap: "0.625rem", marginBottom: "2rem", flexWrap: "wrap" }}>
+      <nav className="mb-8 flex flex-wrap gap-2.5">
         {[
           { href: "/clinic/appointments",  label: lang === "en" ? "Appointments"  : "المواعيد" },
           { href: "/clinic/triage",        label: lang === "en" ? "Triage"        : "الفرز" },
           { href: "/clinic/consultations", label: lang === "en" ? "Consultations" : "الاستشارات" },
           { href: "/clinic/telemedicine",  label: lang === "en" ? "Telemedicine"  : "التطبيب عن بُعد" },
         ].map(n => (
-          <a key={n.href} href={n.href} style={{ padding: "0.5rem 1rem", borderRadius: "6px", background: "var(--color-surface)", border: "1px solid var(--color-border)", color: "var(--color-text)", textDecoration: "none", fontSize: "0.8rem", fontWeight: 600 }}>
+          <a key={n.href} href={n.href} className="rounded-md border border-ink/10 bg-surface px-4 py-2 text-xs font-semibold hover:bg-ink/5">
             {n.label}
           </a>
         ))}
       </nav>
 
       {/* Metrics */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(145px, 1fr))", gap: "1rem", marginBottom: "2rem" }}>
+      <div className="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
         {[
           { label: lang === "en" ? "Waiting Now"        : "في الانتظار",         value: metrics.waiting_now,       color: "#f59e0b" },
           { label: lang === "en" ? "Checked In Today"   : "المسجّلون اليوم",    value: metrics.checked_in_today,  color: "#22D3EE" },
@@ -245,43 +245,34 @@ export default function ReceptionPage() {
           { label: lang === "en" ? "Avg Wait (min)"     : "متوسط الانتظار (د)", value: metrics.avg_wait_min,      color: "#ec4899" },
           { label: lang === "en" ? "No-shows"           : "غائبون",              value: metrics.no_shows,          color: "#ef4444" },
         ].map(m => (
-          <div key={m.label} style={{ background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: "10px", padding: "1.25rem", textAlign: "center" }}>
-            <p style={{ fontSize: "2rem", fontWeight: 700, color: m.color, margin: 0 }}>{m.value}</p>
-            <p style={{ fontSize: "0.78rem", color: "var(--color-text-muted)", marginTop: "0.35rem", fontWeight: 500 }}>{m.label}</p>
+          <div key={m.label} className="cy-card p-5 text-center">
+            <p className="text-3xl font-bold" style={{ color: m.color }}>{m.value}</p>
+            <p className="mt-1 text-xs font-medium text-ink/50">{m.label}</p>
           </div>
         ))}
       </div>
 
       {/* Main two-column layout */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 360px", gap: "1.5rem", alignItems: "start" }}>
+      <div className="grid grid-cols-[1fr_360px] items-start gap-6">
 
         {/* LEFT — Queue table */}
         <div>
           {actionMsg && (
-            <div style={{ marginBottom: "1rem", padding: "0.75rem 1.25rem", borderRadius: "8px", background: "#d1fae5", color: "#065f46", fontWeight: 600, fontSize: "0.9rem" }}>
+            <div className="mb-4 rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-5 py-3 text-sm font-semibold text-emerald-400">
               {actionMsg}
             </div>
           )}
 
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
-            <h2 style={{ fontWeight: 700, fontSize: "1.1rem", margin: 0 }}>
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-lg font-bold">
               {lang === "en" ? "Waiting Queue" : "طابور الانتظار"}
             </h2>
-            <div style={{ display: "flex", gap: "0.5rem" }}>
+            <div className="flex gap-2">
               {(["all", "waiting", "checked_in", "called", "in_consultation"] as const).map(f => (
                 <button
                   key={f}
                   onClick={() => setFilterStatus(f)}
-                  style={{
-                    padding: "0.35rem 0.7rem",
-                    borderRadius: "6px",
-                    border: "1px solid var(--color-border)",
-                    cursor: "pointer",
-                    fontSize: "0.75rem",
-                    fontWeight: 600,
-                    background: filterStatus === f ? "#22D3EE" : "var(--color-surface)",
-                    color: filterStatus === f ? "#0a0a0a" : "var(--color-text)",
-                  }}
+                  className={`rounded-md px-2.5 py-1.5 text-xs font-semibold border ${filterStatus === f ? "border-brand-400 bg-brand-500 text-white" : "border-ink/10 bg-surface text-ink hover:bg-ink/5"}`}
                 >
                   {f === "all" ? (lang === "en" ? "All" : "الكل") :
                    f === "waiting" ? (lang === "en" ? "Waiting" : "انتظار") :
@@ -293,10 +284,10 @@ export default function ReceptionPage() {
             </div>
           </div>
 
-          <div style={{ background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: "12px", overflow: "hidden" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+          <div className="cy-card overflow-hidden p-0">
+            <table className="w-full border-collapse">
               <thead>
-                <tr style={{ borderBottom: "2px solid var(--color-border)" }}>
+                <tr className="border-b border-ink/10">
                   {[
                     lang === "en" ? "Check-in"  : "وقت الوصول",
                     lang === "en" ? "Patient"   : "المريض",
@@ -307,43 +298,40 @@ export default function ReceptionPage() {
                     lang === "en" ? "Status"    : "الحالة",
                     lang === "en" ? "Actions"   : "إجراءات",
                   ].map(h => (
-                    <th key={h} style={{ padding: "0.75rem 0.875rem", textAlign: lang === "ar" ? "right" : "left", fontSize: "0.75rem", fontWeight: 700, color: "var(--color-text-muted)", textTransform: "uppercase", letterSpacing: "0.04em" }}>{h}</th>
+                    <th key={h} className={`px-3.5 py-3 text-xs font-bold uppercase tracking-wide text-ink/50 ${lang === "ar" ? "text-right" : "text-left"}`}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {filtered.map((p, i) => {
+                {filtered.map(p => {
                   const vtb = visitTypeBadge(p.visit_type, lang);
                   const stb = statusBadge(p.status, lang);
                   return (
-                    <tr key={p.id} style={{ borderBottom: "1px solid var(--color-border)", background: i % 2 === 0 ? "transparent" : "rgb(var(--color-ink-rgb) / 0.02)" }}>
-                      <td style={{ padding: "0.75rem 0.875rem", fontWeight: 700, color: "#22D3EE", fontSize: "0.875rem" }}>{p.check_in_time}</td>
-                      <td style={{ padding: "0.75rem 0.875rem" }}>
-                        <div style={{ fontWeight: 600, color: "var(--color-text)", fontSize: "0.875rem" }}>{lang === "ar" ? p.patient_name_ar : p.patient_name}</div>
-                        <div style={{ fontSize: "0.7rem", color: "var(--color-text-muted)" }}>{p.phone}</div>
+                    <tr key={p.id} className="border-b border-ink/5">
+                      <td className="px-3.5 py-3 text-sm font-bold text-brand-400">{p.check_in_time}</td>
+                      <td className="px-3.5 py-3">
+                        <div className="text-sm font-semibold">{lang === "ar" ? p.patient_name_ar : p.patient_name}</div>
+                        <div className="text-xs text-ink/50">{p.phone}</div>
                       </td>
-                      <td style={{ padding: "0.75rem 0.875rem", fontSize: "0.78rem", fontFamily: "monospace", color: "var(--color-text-muted)" }}>{p.mrn}</td>
-                      <td style={{ padding: "0.75rem 0.875rem" }}>
-                        <span style={{ padding: "0.25rem 0.6rem", borderRadius: "20px", fontSize: "0.7rem", fontWeight: 700, background: vtb.bg, color: vtb.color, whiteSpace: "nowrap" }}>{vtb.label}</span>
+                      <td className="px-3.5 py-3 font-mono text-[13px] text-ink/50">{p.mrn}</td>
+                      <td className="px-3.5 py-3">
+                        <span className="whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-bold" style={{ background: vtb.bg, color: vtb.color }}>{vtb.label}</span>
                       </td>
-                      <td style={{ padding: "0.75rem 0.875rem", fontSize: "0.8rem", color: "var(--color-text)" }}>{p.specialty}</td>
-                      <td style={{ padding: "0.75rem 0.875rem", fontSize: "0.8rem", fontWeight: p.wait_minutes > 20 ? 700 : 400, color: p.wait_minutes > 20 ? "#ef4444" : "var(--color-text)" }}>
+                      <td className="px-3.5 py-3 text-sm">{p.specialty}</td>
+                      <td className={`px-3.5 py-3 text-sm ${p.wait_minutes > 20 ? "font-bold text-red-400" : ""}`}>
                         {p.wait_minutes > 0 ? `${p.wait_minutes}m` : "—"}
                       </td>
-                      <td style={{ padding: "0.75rem 0.875rem" }}>
-                        <span style={{ padding: "0.25rem 0.6rem", borderRadius: "20px", fontSize: "0.7rem", fontWeight: 700, background: stb.bg, color: stb.color, whiteSpace: "nowrap" }}>{stb.label}</span>
+                      <td className="px-3.5 py-3">
+                        <span className="whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-bold" style={{ background: stb.bg, color: stb.color }}>{stb.label}</span>
                       </td>
-                      <td style={{ padding: "0.75rem 0.875rem" }}>
-                        <div style={{ display: "flex", gap: "0.4rem" }}>
+                      <td className="px-3.5 py-3">
+                        <div className="flex gap-1.5">
                           {p.status === "waiting" && (
-                            <button
-                              onClick={() => { void handleCall(p); }}
-                              style={{ padding: "0.3rem 0.6rem", fontSize: "0.72rem", fontWeight: 700, borderRadius: "5px", background: "#22D3EE", color: "#0a0a0a", border: "none", cursor: "pointer", whiteSpace: "nowrap" }}
-                            >
+                            <button onClick={() => { void handleCall(p); }} className="cy-btn cy-btn-primary !min-h-0 whitespace-nowrap !py-1.5 !px-2.5 text-xs">
                               {lang === "en" ? "Call" : "استدعاء"}
                             </button>
                           )}
-                          <button style={{ padding: "0.3rem 0.6rem", fontSize: "0.72rem", fontWeight: 600, borderRadius: "5px", background: "var(--color-surface)", border: "1px solid var(--color-border)", cursor: "pointer", color: "var(--color-text)", whiteSpace: "nowrap" }}>
+                          <button className="cy-btn cy-btn-ghost !min-h-0 whitespace-nowrap !py-1.5 !px-2.5 text-xs">
                             {lang === "en" ? "View" : "عرض"}
                           </button>
                         </div>
@@ -354,7 +342,7 @@ export default function ReceptionPage() {
               </tbody>
             </table>
             {filtered.length === 0 && (
-              <div style={{ padding: "2.5rem", textAlign: "center", color: "var(--color-text-muted)" }}>
+              <div className="p-10 text-center text-sm text-ink/40">
                 {lang === "en" ? "No patients in queue." : "لا يوجد مرضى في الطابور."}
               </div>
             )}
@@ -362,47 +350,44 @@ export default function ReceptionPage() {
         </div>
 
         {/* RIGHT — Check-in form */}
-        <div style={{ background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: "12px", padding: "1.5rem", position: "sticky", top: "1rem" }}>
-          <h2 style={{ fontWeight: 700, fontSize: "1.1rem", marginTop: 0, marginBottom: "1.25rem", color: "#22D3EE" }}>
+        <div className="cy-card sticky top-4 p-6">
+          <h2 className="mb-5 text-lg font-bold text-brand-400">
             {lang === "en" ? "Quick Check-in" : "تسجيل الوصول السريع"}
           </h2>
 
           {checkInMsg && (
-            <div style={{ marginBottom: "1rem", padding: "0.65rem 1rem", borderRadius: "7px", background: "#d1fae5", color: "#065f46", fontWeight: 600, fontSize: "0.85rem" }}>
+            <div className="mb-4 rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-4 py-2.5 text-sm font-semibold text-emerald-400">
               {checkInMsg}
             </div>
           )}
 
           {/* MRN lookup */}
-          <div style={{ marginBottom: "1rem" }}>
-            <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: "var(--color-text-muted)", marginBottom: "0.35rem", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+          <div className="mb-4">
+            <label className={fieldLabelCls}>
               {lang === "en" ? "Patient MRN" : "الرقم الطبي"}
             </label>
-            <div style={{ display: "flex", gap: "0.5rem" }}>
+            <div className="flex gap-2">
               <input
                 type="text"
                 value={mrnInput}
                 onChange={e => { setMrnInput(e.target.value); setMrnLookupResult(""); }}
                 placeholder={lang === "en" ? "e.g. MRN-001234" : "مثال: MRN-001234"}
-                style={{ flex: 1, padding: "0.5rem 0.75rem", borderRadius: "7px", border: "1px solid var(--color-border)", background: "var(--color-background)", color: "var(--color-text)", fontSize: "0.875rem" }}
+                className={`flex-1 ${fieldInputCls}`}
               />
-              <button
-                onClick={handleMrnLookup}
-                style={{ padding: "0.5rem 0.75rem", borderRadius: "7px", background: "var(--color-primary)", color: "#fff", border: "none", cursor: "pointer", fontWeight: 700, fontSize: "0.8rem", whiteSpace: "nowrap" }}
-              >
+              <button onClick={handleMrnLookup} className="cy-btn cy-btn-primary !min-h-0 whitespace-nowrap !py-2 !px-3 text-xs">
                 {lang === "en" ? "Lookup" : "بحث"}
               </button>
             </div>
             {mrnLookupResult && (
-              <p style={{ marginTop: "0.5rem", fontSize: "0.78rem", color: mrnLookupResult.includes("No") || mrnLookupResult.includes("لم") ? "#ef4444" : "#22c55e", fontWeight: 600 }}>
+              <p className={`mt-2 text-xs font-semibold ${mrnLookupResult.includes("No") || mrnLookupResult.includes("لم") ? "text-red-400" : "text-emerald-400"}`}>
                 {mrnLookupResult}
               </p>
             )}
           </div>
 
           {/* Appointment ID */}
-          <div style={{ marginBottom: "1rem" }}>
-            <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: "var(--color-text-muted)", marginBottom: "0.35rem", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+          <div className="mb-4">
+            <label className={fieldLabelCls}>
               {lang === "en" ? "Appointment ID (optional)" : "رقم الموعد (اختياري)"}
             </label>
             <input
@@ -410,25 +395,21 @@ export default function ReceptionPage() {
               value={aptIdInput}
               onChange={e => setAptIdInput(e.target.value)}
               placeholder={lang === "en" ? "e.g. APT-001" : "مثال: APT-001"}
-              style={{ width: "100%", boxSizing: "border-box", padding: "0.5rem 0.75rem", borderRadius: "7px", border: "1px solid var(--color-border)", background: "var(--color-background)", color: "var(--color-text)", fontSize: "0.875rem" }}
+              className={fieldInputCls}
             />
           </div>
 
           {/* Visit type */}
-          <div style={{ marginBottom: "1rem" }}>
-            <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: "var(--color-text-muted)", marginBottom: "0.35rem", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+          <div className="mb-4">
+            <label className={fieldLabelCls}>
               {lang === "en" ? "Visit Type" : "نوع الزيارة"}
             </label>
-            <div style={{ display: "flex", gap: "0.5rem" }}>
+            <div className="flex gap-2">
               {(["appointment", "walk_in"] as const).map(vt => (
                 <button
                   key={vt}
                   onClick={() => setVisitTypeInput(vt)}
-                  style={{
-                    flex: 1, padding: "0.5rem", borderRadius: "7px", border: "1px solid var(--color-border)", cursor: "pointer", fontSize: "0.8rem", fontWeight: 700,
-                    background: visitTypeInput === vt ? "#22D3EE" : "var(--color-surface)",
-                    color: visitTypeInput === vt ? "#0a0a0a" : "var(--color-text)",
-                  }}
+                  className={`flex-1 rounded-lg border px-2 py-2 text-sm font-bold ${visitTypeInput === vt ? "border-brand-400 bg-brand-500 text-white" : "border-ink/10 bg-surface text-ink"}`}
                 >
                   {vt === "appointment" ? (lang === "en" ? "Appointment" : "موعد") : (lang === "en" ? "Walk-in" : "بدون موعد")}
                 </button>
@@ -437,39 +418,32 @@ export default function ReceptionPage() {
           </div>
 
           {/* Specialty */}
-          <div style={{ marginBottom: "1.5rem" }}>
-            <label style={{ display: "block", fontSize: "0.78rem", fontWeight: 700, color: "var(--color-text-muted)", marginBottom: "0.35rem", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+          <div className="mb-6">
+            <label className={fieldLabelCls}>
               {lang === "en" ? "Specialty" : "التخصص"}
             </label>
-            <select
-              value={specialtyInput}
-              onChange={e => setSpecialtyInput(e.target.value)}
-              style={{ width: "100%", padding: "0.5rem 0.75rem", borderRadius: "7px", border: "1px solid var(--color-border)", background: "var(--color-background)", color: "var(--color-text)", fontSize: "0.875rem" }}
-            >
+            <select value={specialtyInput} onChange={e => setSpecialtyInput(e.target.value)} className={fieldInputCls}>
               {["General Practice", "Internal Medicine", "Cardiology", "Dermatology", "Orthopedics", "Obstetrics", "Ophthalmology", "Endocrinology", "Pulmonology", "Neurology", "Gastroenterology", "Pediatrics", "ENT", "Psychiatry"].map(s => (
                 <option key={s} value={s}>{s}</option>
               ))}
             </select>
           </div>
 
-          <button
-            onClick={() => { void handleCheckIn(); }}
-            style={{ width: "100%", padding: "0.75rem", borderRadius: "8px", background: "#22D3EE", color: "#0a0a0a", border: "none", cursor: "pointer", fontWeight: 700, fontSize: "1rem" }}
-          >
+          <button onClick={() => { void handleCheckIn(); }} className="cy-btn cy-btn-primary w-full">
             {lang === "en" ? "Check In Patient" : "تسجيل وصول المريض"}
           </button>
 
-          <div style={{ marginTop: "1.25rem", padding: "1rem", background: "var(--color-background)", borderRadius: "8px", border: "1px solid var(--color-border)" }}>
-            <p style={{ margin: 0, fontSize: "0.78rem", color: "var(--color-text-muted)", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: "0.5rem" }}>
+          <div className="mt-5 rounded-lg border border-ink/10 bg-surface-overlay p-4">
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-ink/50">
               {lang === "en" ? "Queue Summary" : "ملخص الطابور"}
             </p>
             {(["waiting", "checked_in", "called", "in_consultation"] as const).map(st => {
               const count = patients.filter(p => p.status === st).length;
               const stb = statusBadge(st, lang);
               return (
-                <div key={st} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.35rem" }}>
-                  <span style={{ fontSize: "0.8rem", color: stb.color, fontWeight: 600 }}>{stb.label}</span>
-                  <span style={{ fontSize: "0.875rem", fontWeight: 700, color: "var(--color-text)" }}>{count}</span>
+                <div key={st} className="mb-1.5 flex items-center justify-between">
+                  <span className="text-sm font-semibold" style={{ color: stb.color }}>{stb.label}</span>
+                  <span className="text-sm font-bold">{count}</span>
                 </div>
               );
             })}
@@ -477,7 +451,7 @@ export default function ReceptionPage() {
         </div>
       </div>
 
-      <div style={{ marginTop: "1.5rem", fontSize: "0.75rem", color: "var(--color-text-muted)", textAlign: "center" }}>
+      <div className="mt-6 text-center text-xs text-ink/50">
         CyMed Clinic · {lang === "en" ? "Reception Desk" : "مكتب الاستقبال"} · {new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
       </div>
     </div>

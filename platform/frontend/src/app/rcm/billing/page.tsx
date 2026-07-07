@@ -126,31 +126,24 @@ export default function RCMBilling() {
 
   if (!isAuthenticated) {
     return (
-      <div style={{ padding: "2rem", maxWidth: "600px", margin: "4rem auto", textAlign: "center" }}>
-        <h1 style={{ fontSize: "1.5rem", fontWeight: 700, marginBottom: "1rem" }}>
-          {lang === "en" ? "Sign in required" : "تسجيل الدخول مطلوب"}
-        </h1>
-        <a href="/auth" style={{ padding: "0.75rem 1.5rem", borderRadius: "8px", background: "var(--color-primary)", color: "#fff", textDecoration: "none", fontWeight: 600 }}>
-          {lang === "en" ? "Go to login" : "الذهاب لتسجيل الدخول"}
-        </a>
+      <div className="mx-auto mt-16 max-w-lg text-center">
+        <h1 className="text-xl font-bold">{lang === "en" ? "Sign in required" : "تسجيل الدخول مطلوب"}</h1>
       </div>
     );
   }
 
   if (fetchError) {
     return (
-      <div style={{ padding: "2rem", maxWidth: "600px", margin: "4rem auto", textAlign: "center" }}>
-        <h1 style={{ fontSize: "1.5rem", fontWeight: 700, marginBottom: "1rem", color: "#ef4444" }}>
-          {lang === "en" ? "Unable to load billing data" : "تعذر تحميل بيانات الفوترة"}
-        </h1>
-        <p style={{ color: "var(--color-text-muted)" }}>{fetchError}</p>
+      <div className="mx-auto mt-16 max-w-lg text-center">
+        <h1 className="text-xl font-bold text-red-400">{lang === "en" ? "Unable to load billing data" : "تعذر تحميل بيانات الفوترة"}</h1>
+        <p className="mt-1 text-sm text-ink/50">{fetchError}</p>
       </div>
     );
   }
 
   if (loading || encounters === null || invoices === null) {
     return (
-      <div style={{ padding: "2rem", textAlign: "center", marginTop: "4rem", color: "var(--color-text-muted)" }}>
+      <div className="mx-auto mt-16 max-w-lg text-center text-sm text-ink/40">
         {lang === "en" ? "Loading live billing data..." : "جاري تحميل بيانات الفوترة..."}
       </div>
     );

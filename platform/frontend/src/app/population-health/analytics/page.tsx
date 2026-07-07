@@ -50,73 +50,75 @@ export default function PopHealthAnalyticsPage() {
     ]).then(([p, r]) => { if (p && p.length) setPrevalence(p); if (r && r.length) setRisk(r); }).catch(() => {}).finally(() => setLoading(false));
   }, []);
 
-  const s: Record<string, React.CSSProperties> = {
-    page: { padding: "2rem", maxWidth: 1200, margin: "0 auto", direction: isAr ? "rtl" : "ltr" },
-    header: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem", borderBottom: "2px solid rgba(34,211,238,0.3)", paddingBottom: "1rem" },
-    h1: { fontSize: "1.6rem", fontWeight: 700, color: "#22D3EE" },
-    btn: { background: "var(--color-surface)", border: "1px solid var(--color-border)", color: "var(--color-text)", padding: "0.4rem 1rem", borderRadius: 6, cursor: "pointer", fontWeight: 600, textDecoration: "none" as const },
-    sectionTitle: { fontSize: "1.05rem", fontWeight: 700, color: "#22D3EE", marginBottom: "1rem" },
-    twoCol: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.5rem", marginBottom: "1.5rem" },
-    card: { background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: 8, padding: "1.25rem" },
-    table: { width: "100%", borderCollapse: "collapse" as const },
-    th: { padding: "0.6rem 0.75rem", textAlign: (isAr ? "right" : "left") as "left" | "right", color: "var(--color-text-muted)", fontWeight: 600, borderBottom: "1px solid var(--color-border)", fontSize: "0.82rem" },
-    td: { padding: "0.6rem 0.75rem", borderBottom: "1px solid var(--color-border)", fontSize: "0.85rem" },
-  };
-
   return (
-    <div style={s.page}>
-      <header style={s.header}>
+    <div className="mx-auto max-w-6xl" style={{ direction: isAr ? "rtl" : "ltr" }}>
+      <header className="mb-6 flex items-center justify-between">
         <div>
-          <h1 style={s.h1}>{isAr ? "تحليلات صحة المجتمع" : "Population Health Analytics"}</h1>
-          <p style={{ color: "var(--color-text-muted)", fontSize: "0.875rem" }}>{isAr ? `مجموع المجتمع: ${totalPop.toLocaleString()} مريض` : `Total population: ${totalPop.toLocaleString()} patients`}</p>
+          <h1 className="font-heading text-2xl font-bold">{isAr ? "تحليلات صحة المجتمع" : "Population Health Analytics"}</h1>
+          <p className="text-sm text-ink/50">{isAr ? `مجموع المجتمع: ${totalPop.toLocaleString()} مريض` : `Total population: ${totalPop.toLocaleString()} patients`}</p>
         </div>
-        <div style={{ display: "flex", gap: "0.75rem" }}>
-          {loading && <span style={{ color: "var(--color-text-muted)", fontSize: "0.8rem" }}>●</span>}
-          <a href="/population-health" style={s.btn}>{isAr ? "← صحة المجتمع" : "← Population Health"}</a>
-          <button style={s.btn} onClick={() => setLang(isAr ? "en" : "ar")}>{isAr ? "English" : "العربية"}</button>
+        <div className="flex items-center gap-3">
+          {loading && <span className="text-xs text-ink/50">●</span>}
+          <a href="/population-health" className="cy-btn cy-btn-ghost !min-h-0 !py-2 !px-4 text-sm">{isAr ? "← صحة المجتمع" : "← Population Health"}</a>
+          <button onClick={() => setLang(isAr ? "en" : "ar")} className="cy-btn cy-btn-ghost !min-h-0 !py-2 !px-4 text-sm">{isAr ? "English" : "العربية"}</button>
         </div>
       </header>
 
-      <div style={s.twoCol}>
-        <div style={s.card}>
-          <div style={s.sectionTitle}>{isAr ? "انتشار الأمراض المزمنة" : "Chronic Disease Prevalence"}</div>
-          <table style={s.table}>
-            <thead><tr><th style={s.th}>{isAr ? "الحالة" : "Condition"}</th><th style={s.th}>{isAr ? "العدد" : "Count"}</th><th style={s.th}>%</th><th style={s.th}>{isAr ? "اتجاه" : "Trend"}</th></tr></thead>
+      <div className="mb-6 grid grid-cols-2 gap-6">
+        <div className="cy-card p-5">
+          <div className="mb-4 text-lg font-bold">{isAr ? "انتشار الأمراض المزمنة" : "Chronic Disease Prevalence"}</div>
+          <table className="w-full border-collapse">
+            <thead><tr className="border-b border-ink/10">
+              <th className={`px-3 py-2.5 text-[13px] font-semibold text-ink/50 ${isAr ? "text-right" : "text-left"}`}>{isAr ? "الحالة" : "Condition"}</th>
+              <th className={`px-3 py-2.5 text-[13px] font-semibold text-ink/50 ${isAr ? "text-right" : "text-left"}`}>{isAr ? "العدد" : "Count"}</th>
+              <th className={`px-3 py-2.5 text-[13px] font-semibold text-ink/50 ${isAr ? "text-right" : "text-left"}`}>%</th>
+              <th className={`px-3 py-2.5 text-[13px] font-semibold text-ink/50 ${isAr ? "text-right" : "text-left"}`}>{isAr ? "اتجاه" : "Trend"}</th>
+            </tr></thead>
             <tbody>{prevalence.map(p => (
-              <tr key={p.condition}>
-                <td style={s.td}>{isAr ? p.condition_ar : p.condition}</td>
-                <td style={s.td}>{p.count.toLocaleString()}</td>
-                <td style={s.td}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                    <div style={{ width: `${p.pct * 3}px`, height: 8, background: "#22D3EE44", borderRadius: 4, position: "relative" as const }}>
-                      <div style={{ width: `${p.pct * 3}px`, height: 8, background: "#22D3EE", borderRadius: 4 }} />
-                    </div>
-                    <span style={{ fontWeight: 600 }}>{p.pct}%</span>
+              <tr key={p.condition} className="border-b border-ink/10">
+                <td className="px-3 py-2.5 text-sm">{isAr ? p.condition_ar : p.condition}</td>
+                <td className="px-3 py-2.5 text-sm">{p.count.toLocaleString()}</td>
+                <td className="px-3 py-2.5 text-sm">
+                  <div className="flex items-center gap-2">
+                    <div className="h-2 rounded" style={{ width: `${p.pct * 3}px`, background: "#22D3EE" }} />
+                    <span className="font-semibold">{p.pct}%</span>
                   </div>
                 </td>
-                <td style={{ ...s.td, color: TREND_COLOR[p.trend], fontWeight: 700 }}>{TREND_ICON[p.trend]}</td>
+                <td className="px-3 py-2.5 text-sm font-bold" style={{ color: TREND_COLOR[p.trend] }}>{TREND_ICON[p.trend]}</td>
               </tr>
             ))}</tbody>
           </table>
         </div>
-        <div style={s.card}>
-          <div style={s.sectionTitle}>{isAr ? "توزيع مستوى المخاطر" : "Risk Score Distribution"}</div>
+        <div className="cy-card p-5">
+          <div className="mb-4 text-lg font-bold">{isAr ? "توزيع مستوى المخاطر" : "Risk Score Distribution"}</div>
           {risk.map(r => (
-            <div key={r.label} style={{ marginBottom: "1rem" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-                <span style={{ fontSize: "0.875rem", fontWeight: 600 }}>{isAr ? r.label_ar : r.label}</span>
-                <span style={{ fontSize: "0.875rem", fontWeight: 700, color: r.color }}>{r.count.toLocaleString()} ({Math.round(r.count / totalPop * 100)}%)</span>
+            <div key={r.label} className="mb-4">
+              <div className="mb-1 flex justify-between">
+                <span className="text-sm font-semibold">{isAr ? r.label_ar : r.label}</span>
+                <span className="text-sm font-bold" style={{ color: r.color }}>{r.count.toLocaleString()} ({Math.round(r.count / totalPop * 100)}%)</span>
               </div>
-              <div style={{ height: 16, background: "var(--color-background)", borderRadius: 8, overflow: "hidden" }}>
-                <div style={{ width: `${(r.count / totalPop) * 100}%`, height: "100%", background: r.color, borderRadius: 8 }} />
+              <div className="h-4 overflow-hidden rounded-lg bg-ink/[0.06]">
+                <div className="h-full rounded-lg" style={{ width: `${(r.count / totalPop) * 100}%`, background: r.color }} />
               </div>
             </div>
           ))}
-          <div style={{ marginTop: "1.5rem" }}>
-            <div style={s.sectionTitle}>{isAr ? "المخاطرة حسب الفئة العمرية" : "High Risk by Age Group"}</div>
-            <table style={s.table}>
-              <thead><tr><th style={s.th}>{isAr ? "العمر" : "Age"}</th><th style={s.th}>{isAr ? "المجموع" : "Total"}</th><th style={s.th}>{isAr ? "مخاطر مرتفعة" : "High Risk"}</th><th style={s.th}>%</th></tr></thead>
-              <tbody>{MOCK_AGE.map(a => <tr key={a.age}><td style={s.td}>{a.age}</td><td style={s.td}>{a.total.toLocaleString()}</td><td style={{ ...s.td, color: "#f59e0b", fontWeight: 600 }}>{a.high_risk}</td><td style={s.td}>{Math.round(a.high_risk / a.total * 100)}%</td></tr>)}</tbody>
+          <div className="mt-6">
+            <div className="mb-4 text-lg font-bold">{isAr ? "المخاطرة حسب الفئة العمرية" : "High Risk by Age Group"}</div>
+            <table className="w-full border-collapse">
+              <thead><tr className="border-b border-ink/10">
+                <th className={`px-3 py-2.5 text-[13px] font-semibold text-ink/50 ${isAr ? "text-right" : "text-left"}`}>{isAr ? "العمر" : "Age"}</th>
+                <th className={`px-3 py-2.5 text-[13px] font-semibold text-ink/50 ${isAr ? "text-right" : "text-left"}`}>{isAr ? "المجموع" : "Total"}</th>
+                <th className={`px-3 py-2.5 text-[13px] font-semibold text-ink/50 ${isAr ? "text-right" : "text-left"}`}>{isAr ? "مخاطر مرتفعة" : "High Risk"}</th>
+                <th className={`px-3 py-2.5 text-[13px] font-semibold text-ink/50 ${isAr ? "text-right" : "text-left"}`}>%</th>
+              </tr></thead>
+              <tbody>{MOCK_AGE.map(a => (
+                <tr key={a.age} className="border-b border-ink/10">
+                  <td className="px-3 py-2.5 text-sm">{a.age}</td>
+                  <td className="px-3 py-2.5 text-sm">{a.total.toLocaleString()}</td>
+                  <td className="px-3 py-2.5 text-sm font-semibold text-amber-400">{a.high_risk}</td>
+                  <td className="px-3 py-2.5 text-sm">{Math.round(a.high_risk / a.total * 100)}%</td>
+                </tr>
+              ))}</tbody>
             </table>
           </div>
         </div>

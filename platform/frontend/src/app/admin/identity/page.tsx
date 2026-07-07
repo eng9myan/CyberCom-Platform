@@ -427,6 +427,15 @@ export default function IdentityAdminPortal() {
     notify(`Break-glass active until: ${new Date(expiry).toLocaleTimeString()}`);
   };
 
+  // --- Shared presentational helpers ---
+  const inputCls = "w-full rounded-lg border border-ink/10 bg-surface px-3 py-2 text-sm text-ink";
+  const labelCls = "mb-1.5 block text-[13px] font-semibold text-ink/50";
+  const thCls = `px-4 py-3 text-[13px] font-semibold text-ink/50 ${isRtl ? "text-right" : "text-left"}`;
+  const navBtnCls = (active: boolean) =>
+    `w-full rounded-lg border px-3 py-2.5 text-sm font-semibold transition ${isRtl ? "text-right" : "text-left"} ${
+      active ? "border-brand-400/60 bg-brand-500 text-white" : "border-ink/10 text-ink/70 hover:bg-ink/5"
+    }`;
+
   return (
     <>
       <Head>
@@ -434,27 +443,25 @@ export default function IdentityAdminPortal() {
         <meta name="description" content="CyberCom CyIdentity core administrative control plane dashboard." />
       </Head>
 
-      <div className="dashboard-container" style={{ direction: isRtl ? "rtl" : "ltr" }}>
+      <div dir={isRtl ? "rtl" : "ltr"} className="mx-auto max-w-6xl">
         {/* --- Header Section --- */}
-        <header className="dashboard-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <header className="mb-6 flex flex-wrap items-center justify-between gap-4">
           <div>
-            <h1 style={{ fontSize: "var(--font-size-2xl)", fontWeight: "var(--font-weight-bold)" }}>{t.title}</h1>
-            <p style={{ color: "var(--color-text-muted)", fontSize: "var(--font-size-sm)" }}>{t.subtitle}</p>
+            <h1 className="font-heading text-2xl font-bold">{t.title}</h1>
+            <p className="mt-1 text-sm text-ink/50">{t.subtitle}</p>
           </div>
-          <div style={{ display: "flex", gap: "var(--spacing-sm)" }}>
+          <div className="flex gap-2">
             <button
               onClick={() => setLang(lang === "en" ? "ar" : "en")}
-              className="theme-toggle-btn"
               id="cyidentity-lang-toggle"
-              style={{ padding: "var(--spacing-sm) var(--spacing-md)" }}
+              className="cy-btn cy-btn-ghost !min-h-0 !py-2 !px-4 text-sm"
             >
               {t.toggleLang}
             </button>
             <button
               onClick={toggleTheme}
-              className="theme-toggle-btn"
               id="cyidentity-theme-toggle"
-              style={{ padding: "var(--spacing-sm) var(--spacing-md)" }}
+              className="cy-btn cy-btn-ghost !min-h-0 !py-2 !px-4 text-sm"
             >
               {t.toggleTheme}
             </button>
@@ -464,28 +471,22 @@ export default function IdentityAdminPortal() {
         {/* --- Notification Banner --- */}
         {notification && (
           <div
-            className="glass-card"
-            style={{
-              marginBottom: "var(--spacing-md)",
-              borderLeft: notification.type === "error" ? "4px solid var(--color-error)" : "4px solid var(--color-success)",
-              borderRight: isRtl && notification.type === "error" ? "4px solid var(--color-error)" : isRtl ? "4px solid var(--color-success)" : "none",
-              padding: "var(--spacing-sm) var(--spacing-md)",
-              color: "white",
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
+            className={`mb-4 flex items-center justify-between rounded-lg border px-4 py-3 text-sm font-semibold ${
+              notification.type === "error"
+                ? "border-red-500/40 bg-red-500/10 text-red-400"
+                : "border-emerald-500/40 bg-emerald-500/10 text-emerald-400"
+            }`}
           >
             <span>{notification.message}</span>
-            <button style={{ background: "none", border: "none", color: "white", cursor: "pointer", fontWeight: "bold" }} onClick={() => setNotification(null)}>✕</button>
+            <button className="font-bold" onClick={() => setNotification(null)}>✕</button>
           </div>
         )}
 
         {/* --- Main Grid Layout --- */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(12, 1fr)", gap: "var(--spacing-lg)", marginTop: "var(--spacing-lg)" }}>
-          
+        <div className="mt-6 grid grid-cols-12 gap-6">
+
           {/* --- Navigation Side Panel --- */}
-          <aside className="glass-card" style={{ gridColumn: "span 3", display: "flex", flexDirection: "column", gap: "var(--spacing-sm)", height: "fit-content" }}>
+          <aside className="cy-card col-span-3 flex h-fit flex-col gap-2 p-4">
             {[
               { id: "realms", label: t.navRealms },
               { id: "users", label: t.navUsers },
@@ -499,18 +500,7 @@ export default function IdentityAdminPortal() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as typeof activeTab)}
-                style={{
-                  width: "100%",
-                  padding: "var(--spacing-sm) var(--spacing-md)",
-                  background: activeTab === tab.id ? "var(--color-primary)" : "none",
-                  border: "1px solid rgb(var(--color-ink-rgb) / 0.1)",
-                  color: "white",
-                  borderRadius: "var(--radius-md)",
-                  textAlign: isRtl ? "right" : "left",
-                  cursor: "pointer",
-                  fontWeight: activeTab === tab.id ? "bold" : "normal",
-                  transition: "var(--transition-fast)",
-                }}
+                className={navBtnCls(activeTab === tab.id)}
               >
                 {tab.label}
               </button>
@@ -518,52 +508,49 @@ export default function IdentityAdminPortal() {
           </aside>
 
           {/* --- Details Console Panel --- */}
-          <main className="glass-card" style={{ gridColumn: "span 9" }}>
-            
+          <main className="cy-card col-span-9 p-6">
+
             {/* 1. REALMS PANEL */}
             {activeTab === "realms" && (
               <div>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "var(--spacing-md)" }}>
-                  <h2>{t.navRealms}</h2>
-                  <span style={{ fontSize: "var(--font-size-sm)", color: "var(--color-text-muted)" }}>{realms.length} Domains Configured</span>
+                <div className="mb-4 flex items-center justify-between">
+                  <h2 className="text-lg font-bold">{t.navRealms}</h2>
+                  <span className="text-sm text-ink/50">{realms.length} Domains Configured</span>
                 </div>
 
-                <div style={{ overflowX: "auto" }}>
-                  <table style={{ width: "100%", borderCollapse: "collapse", marginBottom: "var(--spacing-lg)" }}>
+                <div className="overflow-x-auto">
+                  <table className="mb-6 w-full border-collapse text-sm">
                     <thead>
-                      <tr style={{ borderBottom: "1px solid rgb(var(--color-ink-rgb) / 0.15)" }}>
-                        <th style={{ padding: "var(--spacing-sm)", textAlign: isRtl ? "right" : "left" }}>{t.realmName}</th>
-                        <th style={{ padding: "var(--spacing-sm)", textAlign: isRtl ? "right" : "left" }}>{t.realmType}</th>
-                        <th style={{ padding: "var(--spacing-sm)", textAlign: isRtl ? "right" : "left" }}>{t.region}</th>
-                        <th style={{ padding: "var(--spacing-sm)", textAlign: isRtl ? "right" : "left" }}>{t.status}</th>
-                        <th style={{ padding: "var(--spacing-sm)", textAlign: isRtl ? "right" : "left" }}>{t.actions}</th>
+                      <tr className="border-b border-ink/10">
+                        <th className={thCls}>{t.realmName}</th>
+                        <th className={thCls}>{t.realmType}</th>
+                        <th className={thCls}>{t.region}</th>
+                        <th className={thCls}>{t.status}</th>
+                        <th className={thCls}>{t.actions}</th>
                       </tr>
                     </thead>
                     <tbody>
                       {realms.map(r => (
-                        <tr key={r.id} style={{ borderBottom: "1px solid rgb(var(--color-ink-rgb) / 0.05)" }}>
-                          <td style={{ padding: "var(--spacing-sm)" }}>{r.name}</td>
-                          <td style={{ padding: "var(--spacing-sm)" }}>
-                            <span style={{ background: "rgb(var(--color-ink-rgb) / 0.1)", padding: "2px 6px", borderRadius: "4px", fontSize: "0.8rem" }}>{r.type}</span>
+                        <tr key={r.id} className="border-b border-ink/5">
+                          <td className="px-4 py-3">{r.name}</td>
+                          <td className="px-4 py-3">
+                            <span className="rounded bg-ink/10 px-1.5 py-0.5 text-xs">{r.type}</span>
                           </td>
-                          <td style={{ padding: "var(--spacing-sm)" }}>{r.region}</td>
-                          <td style={{ padding: "var(--spacing-sm)" }}>
-                            <span style={{
-                              color: r.status === "active" ? "var(--color-success)" : r.status === "pending" ? "var(--color-warning)" : "var(--color-error)",
-                              fontWeight: "bold",
-                            }}>
+                          <td className="px-4 py-3">{r.region}</td>
+                          <td className="px-4 py-3">
+                            <span className={`font-bold ${r.status === "active" ? "text-emerald-400" : r.status === "pending" ? "text-amber-400" : "text-red-400"}`}>
                               {r.status === "active" ? t.statusActive : r.status === "pending" ? t.statusPending : r.status === "suspended" ? t.statusSuspended : t.statusDecommissioned}
                             </span>
                           </td>
-                          <td style={{ padding: "var(--spacing-sm)", display: "flex", gap: "5px" }}>
+                          <td className="flex flex-wrap gap-1.5 px-4 py-3">
                             {r.status === "pending" && (
-                              <button onClick={() => handleActivateRealm(r.id)} style={{ background: "var(--color-success)", color: "white", border: "none", padding: "2px 8px", borderRadius: "4px", cursor: "pointer" }}>{t.activate}</button>
+                              <button onClick={() => handleActivateRealm(r.id)} className="rounded bg-emerald-500 px-2 py-0.5 text-xs font-semibold text-white hover:bg-emerald-600">{t.activate}</button>
                             )}
                             {r.status === "active" && (
-                              <button onClick={() => handleSuspendRealm(r.id)} style={{ background: "var(--color-warning)", color: "white", border: "none", padding: "2px 8px", borderRadius: "4px", cursor: "pointer" }}>{t.lock}</button>
+                              <button onClick={() => handleSuspendRealm(r.id)} className="rounded bg-amber-500 px-2 py-0.5 text-xs font-semibold text-white hover:bg-amber-600">{t.lock}</button>
                             )}
                             {r.status !== "decommissioned" && (
-                              <button onClick={() => handleDecommissionRealm(r.id)} style={{ background: "var(--color-error)", color: "white", border: "none", padding: "2px 8px", borderRadius: "4px", cursor: "pointer" }}>🗑</button>
+                              <button onClick={() => handleDecommissionRealm(r.id)} className="rounded bg-red-500 px-2 py-0.5 text-xs font-semibold text-white hover:bg-red-600">🗑</button>
                             )}
                           </td>
                         </tr>
@@ -572,16 +559,16 @@ export default function IdentityAdminPortal() {
                   </table>
                 </div>
 
-                <form onSubmit={handleProvisionRealm} className="glass-card" style={{ marginTop: "var(--spacing-lg)", padding: "var(--spacing-md)" }}>
-                  <h3 style={{ marginBottom: "var(--spacing-sm)" }}>{t.provisionRealm}</h3>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--spacing-sm)", marginBottom: "var(--spacing-sm)" }}>
-                    <div className="form-group">
-                      <label>{t.realmName}</label>
-                      <input type="text" value={newRealm.name} onChange={e => setNewRealm({ ...newRealm, name: e.target.value })} placeholder="e.g. corp-workforce" style={{ background: "rgba(0,0,0,0.2)", border: "1px solid rgb(var(--color-ink-rgb) / 0.1)", borderRadius: "4px", padding: "6px", color: "white", width: "100%" }} />
+                <form onSubmit={handleProvisionRealm} className="cy-card mt-6 p-4">
+                  <h3 className="mb-2 text-sm font-bold">{t.provisionRealm}</h3>
+                  <div className="mb-2 grid grid-cols-2 gap-2">
+                    <div>
+                      <label className={labelCls}>{t.realmName}</label>
+                      <input type="text" value={newRealm.name} onChange={e => setNewRealm({ ...newRealm, name: e.target.value })} placeholder="e.g. corp-workforce" className={inputCls} />
                     </div>
-                    <div className="form-group">
-                      <label>{t.realmType}</label>
-                      <select value={newRealm.type} onChange={e => setNewRealm({ ...newRealm, type: e.target.value })} style={{ background: "rgba(0,0,0,0.2)", border: "1px solid rgb(var(--color-ink-rgb) / 0.1)", borderRadius: "4px", padding: "6px", color: "white", width: "100%" }}>
+                    <div>
+                      <label className={labelCls}>{t.realmType}</label>
+                      <select value={newRealm.type} onChange={e => setNewRealm({ ...newRealm, type: e.target.value })} className={inputCls}>
                         <option value="workforce">Workforce</option>
                         <option value="customer">Customer (Multi-Tenant)</option>
                         <option value="citizen">Citizen</option>
@@ -590,12 +577,12 @@ export default function IdentityAdminPortal() {
                       </select>
                     </div>
                   </div>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                    <label style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                  <div className="flex items-center justify-between">
+                    <label className="flex items-center gap-2">
                       <input type="checkbox" checked={newRealm.mfaEnforced} onChange={e => setNewRealm({ ...newRealm, mfaEnforced: e.target.checked })} />
                       {t.mfa}
                     </label>
-                    <button type="submit" style={{ background: "var(--color-primary)", color: "white", border: "none", padding: "8px 16px", borderRadius: "4px", cursor: "pointer", fontWeight: "bold" }}>{t.save}</button>
+                    <button type="submit" className="cy-btn cy-btn-primary">{t.save}</button>
                   </div>
                 </form>
               </div>
@@ -604,45 +591,34 @@ export default function IdentityAdminPortal() {
             {/* 2. USERS PANEL */}
             {activeTab === "users" && (
               <div>
-                <h2>{t.navUsers}</h2>
-                <div style={{ overflowX: "auto", marginTop: "var(--spacing-md)" }}>
-                  <table style={{ width: "100%", borderCollapse: "collapse", marginBottom: "var(--spacing-lg)" }}>
+                <h2 className="text-lg font-bold">{t.navUsers}</h2>
+                <div className="mt-4 overflow-x-auto">
+                  <table className="mb-6 w-full border-collapse text-sm">
                     <thead>
-                      <tr style={{ borderBottom: "1px solid rgb(var(--color-ink-rgb) / 0.15)" }}>
-                        <th style={{ padding: "var(--spacing-sm)", textAlign: isRtl ? "right" : "left" }}>{t.username}</th>
-                        <th style={{ padding: "var(--spacing-sm)", textAlign: isRtl ? "right" : "left" }}>{t.email}</th>
-                        <th style={{ padding: "var(--spacing-sm)", textAlign: isRtl ? "right" : "left" }}>{t.status}</th>
-                        <th style={{ padding: "var(--spacing-sm)", textAlign: isRtl ? "right" : "left" }}>{t.actions}</th>
+                      <tr className="border-b border-ink/10">
+                        <th className={thCls}>{t.username}</th>
+                        <th className={thCls}>{t.email}</th>
+                        <th className={thCls}>{t.status}</th>
+                        <th className={thCls}>{t.actions}</th>
                       </tr>
                     </thead>
                     <tbody>
                       {users.map(u => (
-                        <tr key={u.id} style={{ borderBottom: "1px solid rgb(var(--color-ink-rgb) / 0.05)" }}>
-                          <td style={{ padding: "var(--spacing-sm)" }}>
+                        <tr key={u.id} className="border-b border-ink/5">
+                          <td className="px-4 py-3">
                             <div>{u.displayName}</div>
-                            <small style={{ color: "var(--color-text-muted)" }}>@{u.username}</small>
+                            <small className="text-ink/50">@{u.username}</small>
                           </td>
-                          <td style={{ padding: "var(--spacing-sm)" }}>{u.email}</td>
-                          <td style={{ padding: "var(--spacing-sm)" }}>
-                            <span style={{
-                              color: !u.enabled ? "var(--color-text-subtle)" : u.lockedUntil ? "var(--color-error)" : "var(--color-success)",
-                              fontWeight: "bold",
-                            }}>
+                          <td className="px-4 py-3">{u.email}</td>
+                          <td className="px-4 py-3">
+                            <span className={`font-bold ${!u.enabled ? "text-ink/40" : u.lockedUntil ? "text-red-400" : "text-emerald-400"}`}>
                               {!u.enabled ? "Disabled" : u.lockedUntil ? "Locked" : "Active"}
                             </span>
                           </td>
-                          <td style={{ padding: "var(--spacing-sm)" }}>
+                          <td className="px-4 py-3">
                             <button
                               onClick={() => handleToggleLockUser(u.id)}
-                              style={{
-                                background: u.lockedUntil ? "var(--color-success)" : "var(--color-warning)",
-                                color: "white",
-                                border: "none",
-                                padding: "4px 8px",
-                                borderRadius: "4px",
-                                cursor: "pointer",
-                                fontSize: "0.85rem",
-                              }}
+                              className={`rounded px-2 py-1 text-xs font-semibold text-white ${u.lockedUntil ? "bg-emerald-500 hover:bg-emerald-600" : "bg-amber-500 hover:bg-amber-600"}`}
                             >
                               {u.lockedUntil ? t.unlock : t.lock}
                             </button>
@@ -653,19 +629,19 @@ export default function IdentityAdminPortal() {
                   </table>
                 </div>
 
-                <form onSubmit={handleProvisionUser} className="glass-card" style={{ padding: "var(--spacing-md)" }}>
-                  <h3 style={{ marginBottom: "var(--spacing-sm)" }}>{t.provisionUser}</h3>
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "var(--spacing-sm)" }}>
-                    <div className="form-group">
-                      <label>{t.username}</label>
-                      <input type="text" value={newUser.username} onChange={e => setNewUser({ ...newUser, username: e.target.value })} placeholder="e.g. s.johansson" style={{ background: "rgba(0,0,0,0.2)", border: "1px solid rgb(var(--color-ink-rgb) / 0.1)", borderRadius: "4px", padding: "6px", color: "white", width: "100%" }} />
+                <form onSubmit={handleProvisionUser} className="cy-card p-4">
+                  <h3 className="mb-2 text-sm font-bold">{t.provisionUser}</h3>
+                  <div className="grid grid-cols-3 gap-2">
+                    <div>
+                      <label className={labelCls}>{t.username}</label>
+                      <input type="text" value={newUser.username} onChange={e => setNewUser({ ...newUser, username: e.target.value })} placeholder="e.g. s.johansson" className={inputCls} />
                     </div>
-                    <div className="form-group">
-                      <label>{t.email}</label>
-                      <input type="email" value={newUser.email} onChange={e => setNewUser({ ...newUser, email: e.target.value })} placeholder="email@cybercom.com" style={{ background: "rgba(0,0,0,0.2)", border: "1px solid rgb(var(--color-ink-rgb) / 0.1)", borderRadius: "4px", padding: "6px", color: "white", width: "100%" }} />
+                    <div>
+                      <label className={labelCls}>{t.email}</label>
+                      <input type="email" value={newUser.email} onChange={e => setNewUser({ ...newUser, email: e.target.value })} placeholder="email@cybercom.com" className={inputCls} />
                     </div>
-                    <div className="form-group" style={{ display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
-                      <button type="submit" style={{ background: "var(--color-primary)", color: "white", border: "none", padding: "8px 16px", borderRadius: "4px", cursor: "pointer", fontWeight: "bold" }}>{t.save}</button>
+                    <div className="flex flex-col justify-end">
+                      <button type="submit" className="cy-btn cy-btn-primary">{t.save}</button>
                     </div>
                   </div>
                 </form>
@@ -675,29 +651,26 @@ export default function IdentityAdminPortal() {
             {/* 3. ROLES PANEL */}
             {activeTab === "roles" && (
               <div>
-                <h2>{t.navRoles}</h2>
-                <div style={{ overflowX: "auto", marginTop: "var(--spacing-md)" }}>
-                  <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                <h2 className="text-lg font-bold">{t.navRoles}</h2>
+                <div className="mt-4 overflow-x-auto">
+                  <table className="w-full border-collapse text-sm">
                     <thead>
-                      <tr style={{ borderBottom: "1px solid rgb(var(--color-ink-rgb) / 0.15)" }}>
-                        <th style={{ padding: "var(--spacing-sm)", textAlign: isRtl ? "right" : "left" }}>{t.roleName}</th>
-                        <th style={{ padding: "var(--spacing-sm)", textAlign: isRtl ? "right" : "left" }}>{t.roleType}</th>
-                        <th style={{ padding: "var(--spacing-sm)", textAlign: isRtl ? "right" : "left" }}>{t.description}</th>
+                      <tr className="border-b border-ink/10">
+                        <th className={thCls}>{t.roleName}</th>
+                        <th className={thCls}>{t.roleType}</th>
+                        <th className={thCls}>{t.description}</th>
                       </tr>
                     </thead>
                     <tbody>
                       {roles.map(r => (
-                        <tr key={r.id} style={{ borderBottom: "1px solid rgb(var(--color-ink-rgb) / 0.05)" }}>
-                          <td style={{ padding: "var(--spacing-sm)", fontWeight: "bold" }}>{r.name}</td>
-                          <td style={{ padding: "var(--spacing-sm)" }}>
-                            <span style={{
-                              color: r.clientRole ? "var(--color-secondary-light)" : "var(--color-primary-light)",
-                              fontSize: "0.8rem",
-                            }}>
+                        <tr key={r.id} className="border-b border-ink/5">
+                          <td className="px-4 py-3 font-bold">{r.name}</td>
+                          <td className="px-4 py-3">
+                            <span className={`text-xs ${r.clientRole ? "text-cyan-400" : "text-brand-300"}`}>
                               {r.clientRole ? "Client-Scoped" : "Realm-Scoped"}
                             </span>
                           </td>
-                          <td style={{ padding: "var(--spacing-sm)", color: "var(--color-text-muted)" }}>{r.description}</td>
+                          <td className="px-4 py-3 text-ink/50">{r.description}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -709,24 +682,24 @@ export default function IdentityAdminPortal() {
             {/* 4. GROUPS PANEL */}
             {activeTab === "groups" && (
               <div>
-                <h2>{t.navGroups}</h2>
-                <div style={{ overflowX: "auto", marginTop: "var(--spacing-md)" }}>
-                  <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                <h2 className="text-lg font-bold">{t.navGroups}</h2>
+                <div className="mt-4 overflow-x-auto">
+                  <table className="w-full border-collapse text-sm">
                     <thead>
-                      <tr style={{ borderBottom: "1px solid rgb(var(--color-ink-rgb) / 0.15)" }}>
-                        <th style={{ padding: "var(--spacing-sm)", textAlign: isRtl ? "right" : "left" }}>{t.groupName}</th>
-                        <th style={{ padding: "var(--spacing-sm)", textAlign: isRtl ? "right" : "left" }}>{t.path}</th>
-                        <th style={{ padding: "var(--spacing-sm)", textAlign: isRtl ? "right" : "left" }}>{t.description}</th>
+                      <tr className="border-b border-ink/10">
+                        <th className={thCls}>{t.groupName}</th>
+                        <th className={thCls}>{t.path}</th>
+                        <th className={thCls}>{t.description}</th>
                       </tr>
                     </thead>
                     <tbody>
                       {groups.map(g => (
-                        <tr key={g.id} style={{ borderBottom: "1px solid rgb(var(--color-ink-rgb) / 0.05)" }}>
-                          <td style={{ padding: "var(--spacing-sm)", fontWeight: "bold" }}>{g.name}</td>
-                          <td style={{ padding: "var(--spacing-sm)" }}>
-                            <code style={{ background: "rgba(0,0,0,0.3)", padding: "2px 6px", borderRadius: "4px" }}>{g.path}</code>
+                        <tr key={g.id} className="border-b border-ink/5">
+                          <td className="px-4 py-3 font-bold">{g.name}</td>
+                          <td className="px-4 py-3">
+                            <code className="rounded bg-ink/10 px-1.5 py-0.5 font-mono text-xs">{g.path}</code>
                           </td>
-                          <td style={{ padding: "var(--spacing-sm)", color: "var(--color-text-muted)" }}>{g.description}</td>
+                          <td className="px-4 py-3 text-ink/50">{g.description}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -738,47 +711,39 @@ export default function IdentityAdminPortal() {
             {/* 5. CLIENTS PANEL */}
             {activeTab === "clients" && (
               <div>
-                <h2>{t.navClients}</h2>
-                <div style={{ overflowX: "auto", marginTop: "var(--spacing-md)" }}>
-                  <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                <h2 className="text-lg font-bold">{t.navClients}</h2>
+                <div className="mt-4 overflow-x-auto">
+                  <table className="w-full border-collapse text-sm">
                     <thead>
-                      <tr style={{ borderBottom: "1px solid rgb(var(--color-ink-rgb) / 0.15)" }}>
-                        <th style={{ padding: "var(--spacing-sm)", textAlign: isRtl ? "right" : "left" }}>{t.clientId}</th>
-                        <th style={{ padding: "var(--spacing-sm)", textAlign: isRtl ? "right" : "left" }}>{t.protocol}</th>
-                        <th style={{ padding: "var(--spacing-sm)", textAlign: isRtl ? "right" : "left" }}>{t.secretHint}</th>
-                        <th style={{ padding: "var(--spacing-sm)", textAlign: isRtl ? "right" : "left" }}>{t.actions}</th>
+                      <tr className="border-b border-ink/10">
+                        <th className={thCls}>{t.clientId}</th>
+                        <th className={thCls}>{t.protocol}</th>
+                        <th className={thCls}>{t.secretHint}</th>
+                        <th className={thCls}>{t.actions}</th>
                       </tr>
                     </thead>
                     <tbody>
                       {clients.map(c => (
-                        <tr key={c.id} style={{ borderBottom: "1px solid rgb(var(--color-ink-rgb) / 0.05)" }}>
-                          <td style={{ padding: "var(--spacing-sm)" }}>
+                        <tr key={c.id} className="border-b border-ink/5">
+                          <td className="px-4 py-3">
                             <div>{c.name}</div>
-                            <small style={{ color: "var(--color-text-muted)" }}>{c.clientId}</small>
+                            <small className="text-ink/50">{c.clientId}</small>
                           </td>
-                          <td style={{ padding: "var(--spacing-sm)" }}>
-                            <span style={{ textTransform: "uppercase", fontSize: "0.8rem", background: "rgb(var(--color-ink-rgb) / 0.1)", padding: "2px 6px", borderRadius: "4px" }}>{c.protocol}</span>
+                          <td className="px-4 py-3">
+                            <span className="rounded bg-ink/10 px-1.5 py-0.5 text-xs uppercase">{c.protocol}</span>
                           </td>
-                          <td style={{ padding: "var(--spacing-sm)" }}>
+                          <td className="px-4 py-3">
                             {c.publicClient ? (
-                              <span style={{ color: "var(--color-text-subtle)", fontSize: "0.85rem" }}>Public Client (No Secret)</span>
+                              <span className="text-xs text-ink/40">Public Client (No Secret)</span>
                             ) : (
                               <code>•••• {c.secretHint || "None"}</code>
                             )}
                           </td>
-                          <td style={{ padding: "var(--spacing-sm)" }}>
+                          <td className="px-4 py-3">
                             {!c.publicClient && (
                               <button
                                 onClick={() => handleRotateSecret(c.id)}
-                                style={{
-                                  background: "var(--color-secondary)",
-                                  color: "white",
-                                  border: "none",
-                                  padding: "4px 8px",
-                                  borderRadius: "4px",
-                                  cursor: "pointer",
-                                  fontSize: "0.85rem",
-                                }}
+                                className="rounded bg-cyan-500 px-2 py-1 text-xs font-semibold text-white hover:bg-cyan-600"
                               >
                                 {t.rotateSecret}
                               </button>
@@ -795,50 +760,39 @@ export default function IdentityAdminPortal() {
             {/* 6. SESSIONS PANEL */}
             {activeTab === "sessions" && (
               <div>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "var(--spacing-md)" }}>
-                  <h2>{t.navSessions}</h2>
-                  <button onClick={handleEnforceIdleTimeout} style={{ background: "var(--color-warning)", border: "none", color: "white", padding: "6px 12px", borderRadius: "4px", cursor: "pointer", fontWeight: "bold" }}>
+                <div className="mb-4 flex items-center justify-between">
+                  <h2 className="text-lg font-bold">{t.navSessions}</h2>
+                  <button onClick={handleEnforceIdleTimeout} className="rounded-lg bg-amber-500 px-3 py-1.5 text-sm font-bold text-white hover:bg-amber-600">
                     {t.enforceIdle}
                   </button>
                 </div>
-                <div style={{ overflowX: "auto" }}>
-                  <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse text-sm">
                     <thead>
-                      <tr style={{ borderBottom: "1px solid rgb(var(--color-ink-rgb) / 0.15)" }}>
-                        <th style={{ padding: "var(--spacing-sm)", textAlign: isRtl ? "right" : "left" }}>{t.username}</th>
-                        <th style={{ padding: "var(--spacing-sm)", textAlign: isRtl ? "right" : "left" }}>{t.ipAddress}</th>
-                        <th style={{ padding: "var(--spacing-sm)", textAlign: isRtl ? "right" : "left" }}>{t.startedAt}</th>
-                        <th style={{ padding: "var(--spacing-sm)", textAlign: isRtl ? "right" : "left" }}>{t.status}</th>
-                        <th style={{ padding: "var(--spacing-sm)", textAlign: isRtl ? "right" : "left" }}>{t.actions}</th>
+                      <tr className="border-b border-ink/10">
+                        <th className={thCls}>{t.username}</th>
+                        <th className={thCls}>{t.ipAddress}</th>
+                        <th className={thCls}>{t.startedAt}</th>
+                        <th className={thCls}>{t.status}</th>
+                        <th className={thCls}>{t.actions}</th>
                       </tr>
                     </thead>
                     <tbody>
                       {sessions.map(s => (
-                        <tr key={s.id} style={{ borderBottom: "1px solid rgb(var(--color-ink-rgb) / 0.05)" }}>
-                          <td style={{ padding: "var(--spacing-sm)" }}>{s.username}</td>
-                          <td style={{ padding: "var(--spacing-sm)" }}><code>{s.ipAddress}</code></td>
-                          <td style={{ padding: "var(--spacing-sm)" }}>{new Date(s.startedAt).toLocaleTimeString()}</td>
-                          <td style={{ padding: "var(--spacing-sm)" }}>
-                            <span style={{
-                              color: s.status === "active" ? "var(--color-success)" : "var(--color-text-subtle)",
-                              fontWeight: "bold",
-                            }}>
+                        <tr key={s.id} className="border-b border-ink/5">
+                          <td className="px-4 py-3">{s.username}</td>
+                          <td className="px-4 py-3"><code>{s.ipAddress}</code></td>
+                          <td className="px-4 py-3">{new Date(s.startedAt).toLocaleTimeString()}</td>
+                          <td className="px-4 py-3">
+                            <span className={`font-bold ${s.status === "active" ? "text-emerald-400" : "text-ink/40"}`}>
                               {s.status === "active" ? "Active" : s.status === "revoked" ? "Revoked" : "Idle Expired"}
                             </span>
                           </td>
-                          <td style={{ padding: "var(--spacing-sm)" }}>
+                          <td className="px-4 py-3">
                             {s.status === "active" && (
                               <button
                                 onClick={() => handleRevokeSession(s.id)}
-                                style={{
-                                  background: "var(--color-error)",
-                                  color: "white",
-                                  border: "none",
-                                  padding: "4px 8px",
-                                  borderRadius: "4px",
-                                  cursor: "pointer",
-                                  fontSize: "0.85rem",
-                                }}
+                                className="rounded bg-red-500 px-2 py-1 text-xs font-semibold text-white hover:bg-red-600"
                               >
                                 {t.revoke}
                               </button>
@@ -855,46 +809,43 @@ export default function IdentityAdminPortal() {
             {/* 7. BREAK GLASS PANEL */}
             {activeTab === "breakGlass" && (
               <div>
-                <h2>{t.navBreakGlass}</h2>
-                <div style={{ overflowX: "auto", marginTop: "var(--spacing-md)" }}>
-                  <table style={{ width: "100%", borderCollapse: "collapse", marginBottom: "var(--spacing-lg)" }}>
+                <h2 className="text-lg font-bold">{t.navBreakGlass}</h2>
+                <div className="mt-4 overflow-x-auto">
+                  <table className="mb-6 w-full border-collapse text-sm">
                     <thead>
-                      <tr style={{ borderBottom: "1px solid rgb(var(--color-ink-rgb) / 0.15)" }}>
-                        <th style={{ padding: "var(--spacing-sm)", textAlign: isRtl ? "right" : "left" }}>Requestor</th>
-                        <th style={{ padding: "var(--spacing-sm)", textAlign: isRtl ? "right" : "left" }}>{t.reason} / {t.justification}</th>
-                        <th style={{ padding: "var(--spacing-sm)", textAlign: isRtl ? "right" : "left" }}>{t.target}</th>
-                        <th style={{ padding: "var(--spacing-sm)", textAlign: isRtl ? "right" : "left" }}>{t.status}</th>
-                        <th style={{ padding: "var(--spacing-sm)", textAlign: isRtl ? "right" : "left" }}>{t.actions}</th>
+                      <tr className="border-b border-ink/10">
+                        <th className={thCls}>Requestor</th>
+                        <th className={thCls}>{t.reason} / {t.justification}</th>
+                        <th className={thCls}>{t.target}</th>
+                        <th className={thCls}>{t.status}</th>
+                        <th className={thCls}>{t.actions}</th>
                       </tr>
                     </thead>
                     <tbody>
                       {breakGlasses.map(bg => (
-                        <tr key={bg.id} style={{ borderBottom: "1px solid rgb(var(--color-ink-rgb) / 0.05)" }}>
-                          <td style={{ padding: "var(--spacing-sm)" }}>{bg.username}</td>
-                          <td style={{ padding: "var(--spacing-sm)" }}>
+                        <tr key={bg.id} className="border-b border-ink/5">
+                          <td className="px-4 py-3">{bg.username}</td>
+                          <td className="px-4 py-3">
                             <div><strong>{bg.reason.toUpperCase()}</strong></div>
-                            <small style={{ color: "var(--color-text-muted)" }}>{bg.justification}</small>
+                            <small className="text-ink/50">{bg.justification}</small>
                           </td>
-                          <td style={{ padding: "var(--spacing-sm)" }}>
+                          <td className="px-4 py-3">
                             <div><code>{bg.targetResource}</code></div>
-                            <small style={{ color: "var(--color-primary-light)" }}>{bg.targetAction}</small>
+                            <small className="text-brand-300">{bg.targetAction}</small>
                           </td>
-                          <td style={{ padding: "var(--spacing-sm)" }}>
-                            <span style={{
-                              color: bg.status === "active" ? "var(--color-success)" : bg.status === "requested" ? "var(--color-warning)" : "var(--color-text-subtle)",
-                              fontWeight: "bold",
-                            }}>
+                          <td className="px-4 py-3">
+                            <span className={`font-bold ${bg.status === "active" ? "text-emerald-400" : bg.status === "requested" ? "text-amber-400" : "text-ink/40"}`}>
                               {bg.status.toUpperCase()}
                             </span>
                           </td>
-                          <td style={{ padding: "var(--spacing-sm)" }}>
+                          <td className="px-4 py-3">
                             {bg.status === "requested" && (
-                              <button onClick={() => setSelectedBgId(bg.id)} style={{ background: "var(--color-primary)", color: "white", border: "none", padding: "4px 8px", borderRadius: "4px", cursor: "pointer", fontSize: "0.85rem" }}>
+                              <button onClick={() => setSelectedBgId(bg.id)} className="rounded bg-brand-500 px-2 py-1 text-xs font-semibold text-white hover:bg-brand-600">
                                 {t.approve}
                               </button>
                             )}
                             {bg.status === "approved" && (
-                              <button onClick={() => handleActivateBreakGlass(bg.id)} style={{ background: "var(--color-success)", color: "white", border: "none", padding: "4px 8px", borderRadius: "4px", cursor: "pointer", fontSize: "0.85rem" }}>
+                              <button onClick={() => handleActivateBreakGlass(bg.id)} className="rounded bg-emerald-500 px-2 py-1 text-xs font-semibold text-white hover:bg-emerald-600">
                                 {t.activate}
                               </button>
                             )}
@@ -907,21 +858,21 @@ export default function IdentityAdminPortal() {
 
                 {/* --- Approval Signature Sub-Form --- */}
                 {selectedBgId && (
-                  <form onSubmit={handleApproveBreakGlass} className="glass-card" style={{ padding: "var(--spacing-md)", border: "1px solid var(--color-warning)" }}>
-                    <h3 style={{ color: "var(--color-warning)", marginBottom: "var(--spacing-sm)" }}>Dual Signature Required</h3>
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--spacing-sm)", marginBottom: "var(--spacing-sm)" }}>
-                      <div className="form-group">
-                        <label>{t.approver1}</label>
-                        <input type="text" required value={dualApproval.approver} onChange={e => setDualApproval({ ...dualApproval, approver: e.target.value })} placeholder="Chief Security Officer" style={{ background: "rgba(0,0,0,0.2)", border: "1px solid rgb(var(--color-ink-rgb) / 0.1)", borderRadius: "4px", padding: "6px", color: "white", width: "100%" }} />
+                  <form onSubmit={handleApproveBreakGlass} className="cy-card border border-amber-500/50 p-4">
+                    <h3 className="mb-2 text-sm font-bold text-amber-400">Dual Signature Required</h3>
+                    <div className="mb-2 grid grid-cols-2 gap-2">
+                      <div>
+                        <label className={labelCls}>{t.approver1}</label>
+                        <input type="text" required value={dualApproval.approver} onChange={e => setDualApproval({ ...dualApproval, approver: e.target.value })} placeholder="Chief Security Officer" className={inputCls} />
                       </div>
-                      <div className="form-group">
-                        <label>{t.approver2}</label>
-                        <input type="text" required value={dualApproval.secondApprover} onChange={e => setDualApproval({ ...dualApproval, secondApprover: e.target.value })} placeholder="Clinical Director" style={{ background: "rgba(0,0,0,0.2)", border: "1px solid rgb(var(--color-ink-rgb) / 0.1)", borderRadius: "4px", padding: "6px", color: "white", width: "100%" }} />
+                      <div>
+                        <label className={labelCls}>{t.approver2}</label>
+                        <input type="text" required value={dualApproval.secondApprover} onChange={e => setDualApproval({ ...dualApproval, secondApprover: e.target.value })} placeholder="Clinical Director" className={inputCls} />
                       </div>
                     </div>
-                    <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
-                      <button type="button" onClick={() => setSelectedBgId(null)} style={{ background: "none", border: "1px solid white", color: "white", padding: "6px 12px", borderRadius: "4px", cursor: "pointer" }}>{t.cancel}</button>
-                      <button type="submit" style={{ background: "var(--color-warning)", color: "black", border: "none", padding: "6px 12px", borderRadius: "4px", cursor: "pointer", fontWeight: "bold" }}>Sign & Approve</button>
+                    <div className="flex justify-end gap-2.5">
+                      <button type="button" onClick={() => setSelectedBgId(null)} className="cy-btn cy-btn-ghost !min-h-0 !py-1.5 !px-3 text-sm">{t.cancel}</button>
+                      <button type="submit" className="rounded-lg bg-amber-500 px-3 py-1.5 text-sm font-bold text-black hover:bg-amber-600">Sign &amp; Approve</button>
                     </div>
                   </form>
                 )}
@@ -931,34 +882,31 @@ export default function IdentityAdminPortal() {
             {/* 8. AUDIT PANEL */}
             {activeTab === "audit" && (
               <div>
-                <h2>{t.navAudit}</h2>
-                <div style={{ overflowX: "auto", marginTop: "var(--spacing-md)" }}>
-                  <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                <h2 className="text-lg font-bold">{t.navAudit}</h2>
+                <div className="mt-4 overflow-x-auto">
+                  <table className="w-full border-collapse text-sm">
                     <thead>
-                      <tr style={{ borderBottom: "1px solid rgb(var(--color-ink-rgb) / 0.15)" }}>
-                        <th style={{ padding: "var(--spacing-sm)", textAlign: isRtl ? "right" : "left" }}>{t.timestamp}</th>
-                        <th style={{ padding: "var(--spacing-sm)", textAlign: isRtl ? "right" : "left" }}>User</th>
-                        <th style={{ padding: "var(--spacing-sm)", textAlign: isRtl ? "right" : "left" }}>{t.outcome}</th>
-                        <th style={{ padding: "var(--spacing-sm)", textAlign: isRtl ? "right" : "left" }}>{t.details}</th>
+                      <tr className="border-b border-ink/10">
+                        <th className={thCls}>{t.timestamp}</th>
+                        <th className={thCls}>User</th>
+                        <th className={thCls}>{t.outcome}</th>
+                        <th className={thCls}>{t.details}</th>
                       </tr>
                     </thead>
                     <tbody>
                       {auditLogs.map(a => (
-                        <tr key={a.id} style={{ borderBottom: "1px solid rgb(var(--color-ink-rgb) / 0.05)" }}>
-                          <td style={{ padding: "var(--spacing-sm)", whiteSpace: "nowrap" }}><small>{new Date(a.timestamp).toLocaleString()}</small></td>
-                          <td style={{ padding: "var(--spacing-sm)" }}>
+                        <tr key={a.id} className="border-b border-ink/5">
+                          <td className="whitespace-nowrap px-4 py-3"><small>{new Date(a.timestamp).toLocaleString()}</small></td>
+                          <td className="px-4 py-3">
                             <div>{a.usernameAttempted}</div>
-                            <small style={{ color: "var(--color-text-muted)" }}>{a.ipAddress}</small>
+                            <small className="text-ink/50">{a.ipAddress}</small>
                           </td>
-                          <td style={{ padding: "var(--spacing-sm)" }}>
-                            <span style={{
-                              color: a.outcome === "success" ? "var(--color-success)" : "var(--color-error)",
-                              fontWeight: "bold",
-                            }}>
+                          <td className="px-4 py-3">
+                            <span className={`font-bold ${a.outcome === "success" ? "text-emerald-400" : "text-red-400"}`}>
                               {a.outcome.toUpperCase()}
                             </span>
                           </td>
-                          <td style={{ padding: "var(--spacing-sm)", color: "var(--color-text-muted)", fontSize: "0.9rem" }}>{a.details}</td>
+                          <td className="px-4 py-3 text-sm text-ink/50">{a.details}</td>
                         </tr>
                       ))}
                     </tbody>

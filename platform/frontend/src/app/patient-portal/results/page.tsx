@@ -45,50 +45,43 @@ export default function PatientResultsPage() {
     ]).then(([l, i]) => { if (l && l.length) setLabs(l); if (i && i.length) setImaging(i); }).catch(() => {}).finally(() => setLoading(false));
   }, []);
 
-  const s: Record<string, React.CSSProperties> = {
-    page: { padding: "2rem", maxWidth: 1000, margin: "0 auto", direction: isAr ? "rtl" : "ltr" },
-    header: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem", borderBottom: "2px solid rgba(34,211,238,0.3)", paddingBottom: "1rem" },
-    h1: { fontSize: "1.6rem", fontWeight: 700, color: "#22D3EE" },
-    btn: { background: "var(--color-surface)", border: "1px solid var(--color-border)", color: "var(--color-text)", padding: "0.4rem 1rem", borderRadius: 6, cursor: "pointer", fontWeight: 600, textDecoration: "none" as const },
-    table: { width: "100%", borderCollapse: "collapse" as const },
-    th: { padding: "0.75rem", textAlign: (isAr ? "right" : "left") as "left" | "right", color: "var(--color-text-muted)", fontWeight: 600, borderBottom: "1px solid var(--color-border)", fontSize: "0.85rem" },
-    td: { padding: "0.75rem", borderBottom: "1px solid var(--color-border)", fontSize: "0.875rem" },
-  };
+  const thCls = `px-4 py-3 text-[13px] font-semibold text-ink/50 ${isAr ? "text-right" : "text-left"}`;
+  const tdCls = "border-b border-ink/10 px-4 py-3 text-sm";
 
   return (
-    <div style={s.page}>
-      <header style={s.header}>
+    <div className="mx-auto max-w-5xl" style={{ direction: isAr ? "rtl" : "ltr" }}>
+      <header className="mb-6 flex items-center justify-between">
         <div>
-          <h1 style={s.h1}>{isAr ? "نتائجي" : "My Results"}</h1>
-          <p style={{ color: "var(--color-text-muted)", fontSize: "0.875rem" }}>{isAr ? "نتائج المختبر والأشعة" : "Lab & imaging results"}</p>
+          <h1 className="font-heading text-2xl font-bold">{isAr ? "نتائجي" : "My Results"}</h1>
+          <p className="text-sm text-ink/50">{isAr ? "نتائج المختبر والأشعة" : "Lab & imaging results"}</p>
         </div>
-        <div style={{ display: "flex", gap: "0.75rem" }}>
-          {loading && <span style={{ color: "var(--color-text-muted)", fontSize: "0.8rem" }}>●</span>}
-          <a href="/patient-portal" style={s.btn}>{isAr ? "← البوابة" : "← Portal"}</a>
-          <button style={s.btn} onClick={() => setLang(isAr ? "en" : "ar")}>{isAr ? "English" : "العربية"}</button>
+        <div className="flex items-center gap-3">
+          {loading && <span className="text-xs text-ink/50">●</span>}
+          <a href="/patient-portal" className="cy-btn cy-btn-ghost !min-h-0 !py-2 !px-4 text-sm">{isAr ? "← البوابة" : "← Portal"}</a>
+          <button onClick={() => setLang(isAr ? "en" : "ar")} className="cy-btn cy-btn-ghost !min-h-0 !py-2 !px-4 text-sm">{isAr ? "English" : "العربية"}</button>
         </div>
       </header>
       {labs.some(l => l.flag === "critical") && (
-        <div style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: 8, padding: "0.75rem 1rem", marginBottom: "1.25rem", color: "#fca5a5", fontSize: "0.875rem" }}>
+        <div className="mb-5 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
           ⚠ {isAr ? "نتائج حرجة — تم إبلاغ فريق الرعاية الصحية مباشرة. يُرجى التواصل مع طبيبك." : "Critical results detected — your care team has been notified directly. Please contact your physician."}
         </div>
       )}
-      <div style={{ display: "flex", gap: "0.5rem", marginBottom: "1.5rem" }}>
-        <button onClick={() => setTab("lab")} style={{ ...s.btn, background: tab === "lab" ? "#22D3EE" : "var(--color-surface)", color: tab === "lab" ? "#000" : "var(--color-text)" }}>{isAr ? "نتائج المختبر" : "Lab Results"} ({labs.length})</button>
-        <button onClick={() => setTab("imaging")} style={{ ...s.btn, background: tab === "imaging" ? "#22D3EE" : "var(--color-surface)", color: tab === "imaging" ? "#000" : "var(--color-text)" }}>{isAr ? "تقارير الأشعة" : "Imaging Reports"} ({imaging.length})</button>
+      <div className="mb-6 flex gap-2">
+        <button onClick={() => setTab("lab")} className={`rounded-lg px-4 py-1.5 text-sm font-semibold ${tab === "lab" ? "border border-brand-400/60 bg-brand-500/15 text-brand-300" : "border border-ink/10 text-ink/50 hover:bg-ink/5"}`}>{isAr ? "نتائج المختبر" : "Lab Results"} ({labs.length})</button>
+        <button onClick={() => setTab("imaging")} className={`rounded-lg px-4 py-1.5 text-sm font-semibold ${tab === "imaging" ? "border border-brand-400/60 bg-brand-500/15 text-brand-300" : "border border-ink/10 text-ink/50 hover:bg-ink/5"}`}>{isAr ? "تقارير الأشعة" : "Imaging Reports"} ({imaging.length})</button>
       </div>
       {tab === "lab" && (
-        <div style={{ background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: 8, overflow: "hidden" }}>
-          <table style={s.table}>
-            <thead><tr style={{ background: "rgba(34,211,238,0.05)" }}><th style={s.th}>{isAr ? "الاختبار" : "Test"}</th><th style={s.th}>LOINC</th><th style={s.th}>{isAr ? "التاريخ" : "Date"}</th><th style={s.th}>{isAr ? "النتيجة" : "Result"}</th><th style={s.th}>{isAr ? "المرجع" : "Ref. Range"}</th><th style={s.th}>{isAr ? "تصنيف" : "Flag"}</th></tr></thead>
+        <div className="cy-card overflow-hidden p-0">
+          <table className="w-full border-collapse">
+            <thead><tr className="border-b border-ink/10"><th className={thCls}>{isAr ? "الاختبار" : "Test"}</th><th className={thCls}>LOINC</th><th className={thCls}>{isAr ? "التاريخ" : "Date"}</th><th className={thCls}>{isAr ? "النتيجة" : "Result"}</th><th className={thCls}>{isAr ? "المرجع" : "Ref. Range"}</th><th className={thCls}>{isAr ? "تصنيف" : "Flag"}</th></tr></thead>
             <tbody>{labs.map(l => (
-              <tr key={l.id} style={{ background: l.flag === "critical" ? "rgba(239,68,68,0.04)" : "transparent" }}>
-                <td style={s.td}><div style={{ fontWeight: 600 }}>{isAr ? l.test_ar : l.test}</div></td>
-                <td style={{ ...s.td, fontFamily: "monospace", fontSize: "0.78rem", color: "var(--color-text-muted)" }}>{l.loinc}</td>
-                <td style={{ ...s.td, fontFamily: "monospace", fontSize: "0.8rem" }}>{l.date}</td>
-                <td style={{ ...s.td, fontWeight: 700, color: FLAG_COLOR[l.flag] }}>{l.result} {l.unit}</td>
-                <td style={{ ...s.td, color: "var(--color-text-muted)", fontSize: "0.8rem" }}>{l.ref_range}</td>
-                <td style={s.td}><span style={{ background: `${FLAG_COLOR[l.flag]}22`, color: FLAG_COLOR[l.flag], border: `1px solid ${FLAG_COLOR[l.flag]}55`, borderRadius: 4, padding: "2px 8px", fontSize: "0.75rem", fontWeight: 700 }}>{l.flag}</span></td>
+              <tr key={l.id} className={l.flag === "critical" ? "bg-red-500/[0.04]" : ""}>
+                <td className={tdCls}><div className="font-semibold">{isAr ? l.test_ar : l.test}</div></td>
+                <td className={`${tdCls} font-mono text-xs text-ink/50`}>{l.loinc}</td>
+                <td className={`${tdCls} font-mono text-[13px]`}>{l.date}</td>
+                <td className={`${tdCls} font-bold`} style={{ color: FLAG_COLOR[l.flag] }}>{l.result} {l.unit}</td>
+                <td className={`${tdCls} text-[13px] text-ink/50`}>{l.ref_range}</td>
+                <td className={tdCls}><span className="rounded px-2 py-0.5 text-xs font-bold" style={{ background: `${FLAG_COLOR[l.flag]}22`, color: FLAG_COLOR[l.flag], border: `1px solid ${FLAG_COLOR[l.flag]}55` }}>{l.flag}</span></td>
               </tr>
             ))}</tbody>
           </table>
@@ -97,15 +90,15 @@ export default function PatientResultsPage() {
       {tab === "imaging" && (
         <div>
           {imaging.map(r => (
-            <div key={r.id} style={{ background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: 8, padding: "1.25rem", marginBottom: "0.75rem" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.5rem" }}>
+            <div key={r.id} className="cy-card mb-3 p-5">
+              <div className="mb-2 flex justify-between">
                 <div>
-                  <span style={{ fontWeight: 700 }}>{r.modality} — {isAr ? r.body_part_ar : r.body_part}</span>
-                  <div style={{ fontSize: "0.8rem", color: "var(--color-text-muted)" }}>{r.date} · {r.radiologist}</div>
+                  <span className="font-bold">{r.modality} — {isAr ? r.body_part_ar : r.body_part}</span>
+                  <div className="text-[13px] text-ink/50">{r.date} · {r.radiologist}</div>
                 </div>
               </div>
-              <div style={{ background: "rgba(34,211,238,0.05)", border: "1px solid rgba(34,211,238,0.15)", borderRadius: 6, padding: "0.75rem", fontSize: "0.875rem" }}>
-                <div style={{ fontSize: "0.75rem", fontWeight: 700, color: "#22D3EE", marginBottom: 4 }}>{isAr ? "الانطباع" : "Impression"}</div>
+              <div className="rounded-lg border border-ink/10 bg-surface-overlay p-3 text-sm">
+                <div className="mb-1 text-xs font-bold" style={{ color: "#22D3EE" }}>{isAr ? "الانطباع" : "Impression"}</div>
                 {isAr ? r.impression_ar : r.impression}
               </div>
             </div>

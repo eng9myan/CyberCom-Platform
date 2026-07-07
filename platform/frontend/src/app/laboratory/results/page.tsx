@@ -157,11 +157,7 @@ export default function LabResultsPage() {
   const t = (en: string, ar: string) => lang === "en" ? en : ar;
 
   if (!isAuthenticated) {
-    return (
-      <div style={{ padding: "4rem", textAlign: "center" }}>
-        <h1 style={{ fontSize: "1.25rem", fontWeight: 700 }}>Sign in required</h1>
-      </div>
-    );
+    return <div className="mx-auto mt-16 max-w-lg text-center"><h1 className="text-xl font-bold">Sign in required</h1></div>;
   }
 
   const filtered = (results || []).filter(r => statusFilter === "all" || r.status === statusFilter);
@@ -173,22 +169,24 @@ export default function LabResultsPage() {
     });
   });
 
+  const dir = lang === "ar" ? "rtl" : "ltr";
+
   return (
-    <div style={{ padding: "2rem", maxWidth: "1400px", margin: "0 auto", direction: lang === "ar" ? "rtl" : "ltr", background: "var(--color-background)", minHeight: "100vh", color: "var(--color-text)" }}>
-      <header style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "1.5rem" }}>
+    <div dir={dir} className="mx-auto max-w-6xl">
+      <header className="mb-6 flex items-start justify-between">
         <div>
-          <a href="/laboratory" style={{ color: "#22D3EE", textDecoration: "none", fontSize: "0.875rem" }}>{t("← Laboratory", "← المختبر")}</a>
-          <h1 style={{ fontSize: "1.75rem", fontWeight: 700, color: "#22D3EE" }}>{t("Lab Results", "نتائج المختبر")}</h1>
-          <p style={{ color: "var(--color-text-muted)", fontSize: "0.875rem", marginTop: "0.25rem" }}>
+          <a href="/laboratory" className="text-sm text-brand-400">{t("← Laboratory", "← المختبر")}</a>
+          <h1 className="font-heading text-2xl font-bold text-brand-400">{t("Lab Results", "نتائج المختبر")}</h1>
+          <p className="mt-1 text-sm text-ink/50">
             {t("Real results with critical-value flagging and read-back acknowledgment", "نتائج حقيقية مع تمييز القيم الحرجة والإقرار بها")}
           </p>
         </div>
-        <button onClick={() => setLang(l => l === "en" ? "ar" : "en")} style={{ padding: "0.4rem 0.8rem", borderRadius: "4px", border: "1px solid var(--color-border)", cursor: "pointer", background: "var(--color-surface)", color: "var(--color-text)", fontSize: "0.8rem" }}>
+        <button onClick={() => setLang(l => l === "en" ? "ar" : "en")} className="cy-btn cy-btn-ghost !min-h-0 !py-2 !px-4 text-sm">
           {lang === "en" ? "العربية" : "English"}
         </button>
       </header>
 
-      <nav style={{ display: "flex", gap: "0.5rem", marginBottom: "1.5rem", flexWrap: "wrap" }}>
+      <nav className="mb-6 flex flex-wrap gap-2">
         {[
           { href: "/laboratory", label: t("Overview", "نظرة عامة") },
           { href: "/laboratory/orders", label: t("Orders", "الطلبات") },
@@ -196,90 +194,98 @@ export default function LabResultsPage() {
           { href: "/laboratory/worklists", label: t("Worklists", "قوائم العمل") },
           { href: "/laboratory/results", label: t("Results", "النتائج") },
         ].map(item => (
-          <a key={item.href} href={item.href} style={{ padding: "0.4rem 1rem", borderRadius: "4px", background: item.href === "/laboratory/results" ? "#22D3EE22" : "var(--color-surface)", border: `1px solid ${item.href === "/laboratory/results" ? "#22D3EE" : "var(--color-border)"}`, color: item.href === "/laboratory/results" ? "#22D3EE" : "var(--color-text)", textDecoration: "none", fontSize: "0.875rem", fontWeight: 500 }}>
+          <a
+            key={item.href}
+            href={item.href}
+            className={`rounded-lg px-4 py-1.5 text-sm font-medium ${item.href === "/laboratory/results" ? "border border-brand-400/60 bg-brand-500/15 text-brand-300" : "border border-ink/10 text-ink/70 hover:bg-ink/5"}`}
+          >
             {item.label}
           </a>
         ))}
       </nav>
 
       {fetchError && (
-        <div style={{ background: "#fee2e2", border: "1px solid #fca5a5", color: "#b91c1c", padding: "0.9rem 1rem", borderRadius: "8px", marginBottom: "1.5rem", fontSize: "0.88rem" }}>
+        <div className="mb-6 rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-3.5 text-sm text-red-400">
           {fetchError}
         </div>
       )}
 
       {unacknowledgedCritical.length > 0 && (
-        <div style={{ background: "#fef2f2", border: "1px solid #fca5a5", borderRadius: "10px", padding: "0.85rem 1.25rem", marginBottom: "1.25rem", display: "flex", alignItems: "center", gap: "0.75rem" }}>
-          <span style={{ fontSize: "1.2rem" }}>⚠</span>
+        <div className="mb-5 flex items-center gap-3 rounded-lg border border-red-500/40 bg-red-500/10 px-5 py-3.5">
+          <span className="text-lg">⚠</span>
           <div>
-            <p style={{ color: "#b91c1c", fontWeight: 700, margin: 0, fontSize: "0.9rem" }}>
+            <p className="text-sm font-bold text-red-400">
               {unacknowledgedCritical.length} {t("Unacknowledged Critical Value(s)", "قيمة حرجة غير مُقرّ بها")}
             </p>
-            <p style={{ color: "#b91c1c", fontSize: "0.8rem", margin: "0.2rem 0 0" }}>
+            <p className="mt-0.5 text-xs text-red-400">
               {t("Critical results require immediate physician acknowledgment.", "تتطلب النتائج الحرجة إقرارًا فوريًا من الطبيب.")}
             </p>
           </div>
         </div>
       )}
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: "1rem", marginBottom: "1.5rem" }}>
+      <div className="mb-6 grid grid-cols-4 gap-4">
         {[
           { label: t("Total Results", "إجمالي النتائج"), value: (results || []).length, color: "#6366f1" },
           { label: t("Critical", "حرجة"), value: (results || []).filter(r => r.has_critical_value).length, color: "#ef4444" },
           { label: t("Abnormal", "غير طبيعية"), value: (results || []).filter(r => r.has_abnormal_value).length, color: "#f59e0b" },
           { label: t("Unacknowledged", "غير مُقرّ بها"), value: unacknowledgedCritical.length, color: "#ef4444" },
         ].map(m => (
-          <div key={m.label} style={{ background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: "10px", padding: "1rem", textAlign: "center" }}>
-            <p style={{ fontSize: "1.75rem", fontWeight: 700, color: m.color }}>{m.value}</p>
-            <p style={{ fontSize: "0.7rem", color: "var(--color-text-muted)", marginTop: "0.2rem" }}>{m.label}</p>
+          <div key={m.label} className="cy-card p-4 text-center">
+            <p className="text-2xl font-bold" style={{ color: m.color }}>{m.value}</p>
+            <p className="mt-1 text-xs text-ink/50">{m.label}</p>
           </div>
         ))}
       </div>
 
-      <div style={{ display: "flex", gap: "0.4rem", marginBottom: "1.25rem", flexWrap: "wrap" }}>
+      <div className="mb-5 flex flex-wrap items-center gap-2">
         {["all", "pending", "resulted", "verified", "approved", "amended", "cancelled"].map(f => (
-          <button key={f} onClick={() => setStatusFilter(f)} style={{ padding: "0.3rem 0.7rem", borderRadius: "5px", border: "1px solid var(--color-border)", cursor: "pointer", fontSize: "0.75rem", fontWeight: 600, background: statusFilter === f ? "#22D3EE" : "var(--color-surface)", color: statusFilter === f ? "#000" : "var(--color-text)" }}>
+          <button
+            key={f}
+            onClick={() => setStatusFilter(f)}
+            className={`rounded-md px-2.5 py-1 text-xs font-semibold ${statusFilter === f ? "bg-brand-400 text-black" : "border border-ink/10 text-ink/70 hover:bg-ink/5"}`}
+          >
             {f === "all" ? t("All", "الكل") : f}
           </button>
         ))}
-        {loading && <span style={{ fontSize: "0.8rem", color: "var(--color-text-muted)", alignSelf: "center" }}>{t("Loading…", "جارٍ التحميل…")}</span>}
+        {loading && <span className="self-center text-sm text-ink/50">{t("Loading…", "جارٍ التحميل…")}</span>}
       </div>
 
-      <div style={{ display: "grid", gap: "1rem" }}>
+      <div className="grid gap-4">
         {!loading && filtered.length === 0 && (
-          <div style={{ background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: "10px", padding: "2rem", textAlign: "center", color: "var(--color-text-muted)" }}>
+          <div className="cy-card p-8 text-center text-sm text-ink/40">
             {t("No lab results for this tenant yet.", "لا توجد نتائج مخبرية لهذا المستأجر بعد.")}
           </div>
         )}
         {filtered.map(result => {
           const patientInfo = patientByOrderItem[result.order_item];
           return (
-            <div key={result.id} style={{ background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: "10px", padding: "1.25rem" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "0.75rem" }}>
+            <div key={result.id} className="cy-card p-5">
+              <div className="mb-3 flex items-start justify-between">
                 <div>
-                  <p style={{ fontWeight: 700, fontSize: "0.9rem", margin: 0 }}>{patientInfo?.label || `Order Item ${result.order_item.slice(0, 8)}`}</p>
-                  {patientInfo?.mrn && <p style={{ fontSize: "0.78rem", color: "var(--color-text-muted)", margin: "0.15rem 0 0" }}>{patientInfo.mrn}</p>}
+                  <p className="text-sm font-bold">{patientInfo?.label || `Order Item ${result.order_item.slice(0, 8)}`}</p>
+                  {patientInfo?.mrn && <p className="mt-0.5 text-xs text-ink/50">{patientInfo.mrn}</p>}
                 </div>
-                <span style={{ padding: "0.2rem 0.6rem", borderRadius: "12px", fontSize: "0.72rem", fontWeight: 700, background: (STATUS_COLORS[result.status] || "#6b7280") + "22", color: STATUS_COLORS[result.status] || "#6b7280" }}>
+                <span className="rounded-full px-2.5 py-1 text-xs font-bold" style={{ background: (STATUS_COLORS[result.status] || "#6b7280") + "22", color: STATUS_COLORS[result.status] || "#6b7280" }}>
                   {result.status}
                 </span>
               </div>
-              <div style={{ display: "grid", gap: "0.4rem" }}>
+              <div className="grid gap-1.5">
                 {(result.values || []).map(v => {
                   const critical = criticalByValue[v.id];
                   return (
-                    <div key={v.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0.4rem 0.6rem", borderRadius: "6px", background: v.is_critical ? "#fef2f2" : "transparent" }}>
-                      <span style={{ fontSize: "0.85rem", fontWeight: v.is_critical ? 700 : 400, color: v.is_critical ? "#b91c1c" : "var(--color-text)" }}>
+                    <div key={v.id} className={`flex items-center justify-between rounded-md px-2.5 py-1.5 ${v.is_critical ? "bg-red-500/10" : ""}`}>
+                      <span className={`text-sm ${v.is_critical ? "font-bold text-red-400" : ""}`}>
                         {v.is_critical && "⚠ "}{v.analyte_name}: {v.value_numeric ?? v.value_text} {v.unit}
-                        {v.interpretation && <span style={{ color: "var(--color-text-muted)" }}> ({v.interpretation})</span>}
+                        {v.interpretation && <span className="text-ink/50"> ({v.interpretation})</span>}
                       </span>
                       {v.is_critical && critical && (
                         critical.notification_status === "acknowledged" ? (
-                          <span style={{ fontSize: "0.72rem", color: "#22c55e", fontWeight: 600 }}>
+                          <span className="text-xs font-semibold text-emerald-400">
                             {t("Acknowledged by", "أقرّ بواسطة")} {critical.acknowledgement_name}
                           </span>
                         ) : (
-                          <button disabled={busyId === critical.id} onClick={() => handleAcknowledge(critical.id)} style={{ padding: "0.25rem 0.6rem", fontSize: "0.72rem", fontWeight: 700, borderRadius: "5px", background: "#ef4444", color: "#fff", border: "none", cursor: "pointer", opacity: busyId === critical.id ? 0.5 : 1 }}>
+                          <button disabled={busyId === critical.id} onClick={() => handleAcknowledge(critical.id)} className="rounded-md bg-red-500 px-2.5 py-1 text-xs font-bold text-white hover:bg-red-600 disabled:opacity-50">
                             {t("Acknowledge", "إقرار")}
                           </button>
                         )

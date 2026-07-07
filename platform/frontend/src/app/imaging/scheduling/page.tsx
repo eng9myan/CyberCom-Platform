@@ -92,31 +92,27 @@ export default function ImagingSchedulingPage() {
   const t = (en: string, ar: string) => lang === "en" ? en : ar;
 
   if (!isAuthenticated) {
-    return (
-      <div style={{ padding: "4rem", textAlign: "center" }}>
-        <h1 style={{ fontSize: "1.25rem", fontWeight: 700 }}>Sign in required</h1>
-      </div>
-    );
+    return <div className="mx-auto mt-16 max-w-lg text-center"><h1 className="text-xl font-bold">Sign in required</h1></div>;
   }
 
   const sorted = [...(appointments || [])].sort((a, b) => a.scheduled_start.localeCompare(b.scheduled_start));
 
   return (
-    <div style={{ padding: "2rem", maxWidth: "1400px", margin: "0 auto", direction: lang === "ar" ? "rtl" : "ltr", background: "var(--color-background)", minHeight: "100vh", color: "var(--color-text)" }}>
-      <header style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "1.5rem" }}>
+    <div className="mx-auto max-w-6xl" style={{ direction: lang === "ar" ? "rtl" : "ltr" }}>
+      <header className="mb-6 flex items-start justify-between">
         <div>
-          <a href="/imaging" style={{ color: "#22D3EE", textDecoration: "none", fontSize: "0.875rem" }}>{t("← Imaging", "← الأشعة")}</a>
-          <h1 style={{ fontSize: "1.75rem", fontWeight: 700, color: "#22D3EE" }}>{t("Imaging Schedule", "جدول الأشعة")}</h1>
-          <p style={{ color: "var(--color-text-muted)", fontSize: "0.875rem", marginTop: "0.25rem" }}>
+          <a href="/imaging" className="text-sm text-brand-400 hover:underline">{t("← Imaging", "← الأشعة")}</a>
+          <h1 className="font-heading text-2xl font-bold text-brand-400">{t("Imaging Schedule", "جدول الأشعة")}</h1>
+          <p className="mt-1 text-sm text-ink/50">
             {t("Real room/modality appointment schedule", "جدول مواعيد حقيقي للغرف والأجهزة")}
           </p>
         </div>
-        <button onClick={() => setLang(l => l === "en" ? "ar" : "en")} style={{ padding: "0.4rem 0.8rem", borderRadius: "4px", border: "1px solid var(--color-border)", cursor: "pointer", background: "var(--color-surface)", color: "var(--color-text)", fontSize: "0.8rem" }}>
+        <button onClick={() => setLang(l => l === "en" ? "ar" : "en")} className="cy-btn cy-btn-ghost !min-h-0 !py-2 !px-4 text-sm">
           {lang === "en" ? "العربية" : "English"}
         </button>
       </header>
 
-      <nav style={{ display: "flex", gap: "0.5rem", marginBottom: "1.5rem", flexWrap: "wrap" }}>
+      <nav className="mb-6 flex flex-wrap gap-2">
         {[
           { href: "/imaging", label: t("Overview", "نظرة عامة") },
           { href: "/imaging/orders", label: t("Orders", "الطلبات") },
@@ -124,51 +120,51 @@ export default function ImagingSchedulingPage() {
           { href: "/imaging/reports", label: t("Reports", "التقارير") },
           { href: "/imaging/pacs", label: t("PACS", "PACS") },
         ].map(item => (
-          <a key={item.href} href={item.href} style={{ padding: "0.4rem 1rem", borderRadius: "4px", background: item.href === "/imaging/scheduling" ? "#22D3EE22" : "var(--color-surface)", border: `1px solid ${item.href === "/imaging/scheduling" ? "#22D3EE" : "var(--color-border)"}`, color: item.href === "/imaging/scheduling" ? "#22D3EE" : "var(--color-text)", textDecoration: "none", fontSize: "0.875rem", fontWeight: 500 }}>
+          <a key={item.href} href={item.href} className={`rounded-md px-4 py-1.5 text-sm font-medium ${item.href === "/imaging/scheduling" ? "border border-brand-400 bg-brand-500/15 text-brand-400" : "border border-ink/10 bg-surface text-ink"}`}>
             {item.label}
           </a>
         ))}
       </nav>
 
       {fetchError && (
-        <div style={{ background: "#fee2e2", border: "1px solid #fca5a5", color: "#b91c1c", padding: "0.9rem 1rem", borderRadius: "8px", marginBottom: "1.5rem", fontSize: "0.88rem" }}>
+        <div className="mb-6 rounded-lg border border-red-300 bg-red-100 px-4 py-3.5 text-sm text-red-700">
           {fetchError}
         </div>
       )}
 
-      {loading && <p style={{ color: "var(--color-text-muted)", fontSize: "0.85rem", marginBottom: "1rem" }}>{t("Loading…", "جارٍ التحميل…")}</p>}
+      {loading && <p className="mb-4 text-sm text-ink/50">{t("Loading…", "جارٍ التحميل…")}</p>}
 
-      <div style={{ background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: "10px", overflowX: "auto" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+      <div className="cy-card overflow-hidden p-0">
+        <table className="w-full border-collapse">
           <thead>
-            <tr style={{ borderBottom: "2px solid var(--color-border)" }}>
+            <tr className="border-b border-ink/10">
               {[t("Time", "الوقت"), t("Room", "الغرفة"), t("Patient", "المريض"), t("Status", "الحالة")].map(h => (
-                <th key={h} style={{ padding: "0.75rem 0.875rem", textAlign: lang === "ar" ? "right" : "left", fontSize: "0.72rem", fontWeight: 600, color: "var(--color-text-muted)", textTransform: "uppercase" }}>{h}</th>
+                <th key={h} className={`px-4 py-3 text-[13px] font-semibold text-ink/50 ${lang === "ar" ? "text-right" : "text-left"}`}>{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {!loading && sorted.length === 0 && (
-              <tr><td colSpan={4} style={{ padding: "2rem", textAlign: "center", color: "var(--color-text-muted)" }}>
+              <tr><td colSpan={4} className="px-4 py-8 text-center text-sm text-ink/40">
                 {t("No imaging appointments scheduled for this tenant yet.", "لا توجد مواعيد أشعة مجدولة لهذا المستأجر بعد.")}
               </td></tr>
             )}
-            {sorted.map((appt, i) => {
+            {sorted.map((appt) => {
               const room = appt.room ? rooms[appt.room] : null;
               const patient = patients[appt.patient_id];
               const patientLabel = patient ? `${patient.first_name} ${patient.last_name}` : `Patient ${appt.patient_id.slice(0, 8)}`;
               return (
-                <tr key={appt.id} style={{ borderBottom: "1px solid var(--color-border)", background: i % 2 === 0 ? "transparent" : "var(--color-background)" }}>
-                  <td style={{ padding: "0.75rem 0.875rem", fontSize: "0.85rem", whiteSpace: "nowrap" }}>
+                <tr key={appt.id} className="border-b border-ink/10">
+                  <td className="whitespace-nowrap px-4 py-3 text-sm">
                     {new Date(appt.scheduled_start).toLocaleString([], { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
                   </td>
-                  <td style={{ padding: "0.75rem 0.875rem", fontSize: "0.85rem" }}>{room ? `${room.name} (${room.modality_type})` : "—"}</td>
-                  <td style={{ padding: "0.75rem 0.875rem" }}>
-                    <div style={{ fontWeight: 500, fontSize: "0.875rem" }}>{patientLabel}</div>
-                    {patient?.mrn && <div style={{ fontSize: "0.72rem", color: "var(--color-text-muted)" }}>{patient.mrn}</div>}
+                  <td className="px-4 py-3 text-sm">{room ? `${room.name} (${room.modality_type})` : "—"}</td>
+                  <td className="px-4 py-3">
+                    <div className="text-sm font-medium">{patientLabel}</div>
+                    {patient?.mrn && <div className="text-xs text-ink/50">{patient.mrn}</div>}
                   </td>
-                  <td style={{ padding: "0.75rem 0.875rem" }}>
-                    <span style={{ padding: "0.2rem 0.55rem", borderRadius: "12px", fontSize: "0.72rem", fontWeight: 600, background: (STATUS_COLORS[appt.status] || "#6b7280") + "22", color: STATUS_COLORS[appt.status] || "#6b7280" }}>
+                  <td className="px-4 py-3">
+                    <span className="rounded-full px-2.5 py-1 text-xs font-semibold" style={{ background: (STATUS_COLORS[appt.status] || "#6b7280") + "22", color: STATUS_COLORS[appt.status] || "#6b7280" }}>
                       {appt.status}
                     </span>
                   </td>

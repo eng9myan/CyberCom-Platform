@@ -86,7 +86,7 @@ export default function ClinicPortal() {
             status: item.status === "scheduled" ? "waiting" : item.status === "in_progress" ? "in_consultation" : "completed"
           }));
           setQueue(mappedQueue);
-          
+
           // Re-calculate metrics based on live records
           setMetrics({
             waiting_patients: mappedQueue.filter(q => q.status === "waiting").length,
@@ -125,23 +125,23 @@ export default function ClinicPortal() {
   const filtered = filter === "all" ? queue : queue.filter(q => q.status === filter);
 
   return (
-    <div className="dashboard-container" style={{ padding: "2rem", maxWidth: "1200px", margin: "0 auto" }}>
-      <header className="dashboard-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "2rem" }}>
+    <div className="mx-auto max-w-5xl">
+      <header className="mb-8 flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 style={{ fontSize: "2rem", fontWeight: 700, color: "var(--color-primary)" }}>
+          <h1 className="font-heading text-2xl font-bold">
             {lang === "en" ? "CyMed Clinic" : "عيادة سايمد"}
           </h1>
-          <p style={{ color: "var(--color-text-muted)", fontSize: "1rem", marginTop: "0.25rem" }}>
+          <p className="mt-1 text-sm text-ink/50">
             {lang === "en" ? "Outpatient Clinic Management" : "إدارة العيادات الخارجية"}
           </p>
         </div>
-        <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
-          <span style={{ fontSize: "0.875rem", color: "var(--color-text-muted)" }}>
+        <div className="flex items-center gap-4">
+          <span className="text-sm text-ink/50">
             {new Date().toLocaleDateString(lang === "ar" ? "ar-SA" : "en-GB", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
           </span>
           <button
             onClick={() => setLang(l => l === "en" ? "ar" : "en")}
-            style={{ padding: "0.5rem 1rem", borderRadius: "8px", border: "1px solid var(--color-border)", cursor: "pointer", background: "var(--color-surface)", color: "var(--color-text)", fontSize: "0.875rem", fontWeight: 500 }}
+            className="cy-btn cy-btn-ghost !min-h-0 !py-2 !px-4 text-sm"
           >
             {lang === "en" ? "العربية" : "English"}
           </button>
@@ -149,7 +149,7 @@ export default function ClinicPortal() {
       </header>
 
       {/* Navigation */}
-      <nav style={{ display: "flex", gap: "0.75rem", marginBottom: "2rem", flexWrap: "wrap" }}>
+      <nav className="mb-8 flex flex-wrap gap-3">
         {[
           { href: "/clinic/reception", label: lang === "en" ? "Reception" : "الاستقبال" },
           { href: "/clinic/appointments", label: lang === "en" ? "Appointments" : "المواعيد" },
@@ -157,14 +157,14 @@ export default function ClinicPortal() {
           { href: "/clinic/consultations", label: lang === "en" ? "Consultations" : "الاستشارات" },
           { href: "/clinic/telemedicine", label: lang === "en" ? "Telemedicine" : "التطبيب عن بُعد" },
         ].map(item => (
-          <a key={item.href} href={item.href} style={{ padding: "0.6rem 1.2rem", borderRadius: "6px", background: "var(--color-surface)", border: "1px solid var(--color-border)", color: "var(--color-text)", textDecoration: "none", fontSize: "0.875rem", fontWeight: 600 }}>
+          <a key={item.href} href={item.href} className="cy-btn cy-btn-ghost !min-h-0 !py-2 !px-4 text-sm">
             {item.label}
           </a>
         ))}
       </nav>
 
       {/* Metrics */}
-      <div className="metrics-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "1rem", marginBottom: "2.5rem" }}>
+      <div className="mb-10 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-6">
         {[
           { label: lang === "en" ? "Waiting" : "في الانتظار", value: metrics.waiting_patients, color: "#f59e0b" },
           { label: lang === "en" ? "In Consultation" : "في الاستشارة", value: metrics.in_consultation, color: "#3b82f6" },
@@ -173,34 +173,25 @@ export default function ClinicPortal() {
           { label: lang === "en" ? "Avg Wait (min)" : "متوسط الانتظار (دقيقة)", value: metrics.avg_wait_minutes, color: "#ec4899" },
           { label: lang === "en" ? "No Shows" : "غائبون", value: metrics.no_shows, color: "#ef4444" },
         ].map(m => (
-          <div key={m.label} style={{ background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: "12px", textAlign: "center", padding: "1.5rem", boxShadow: "0 4px 6px rgba(0, 0, 0, 0.05)" }}>
-            <p style={{ fontSize: "2.25rem", fontWeight: 700, color: m.color }}>{m.value}</p>
-            <p style={{ fontSize: "0.875rem", color: "var(--color-text-muted)", marginTop: "0.5rem", fontWeight: 500 }}>{m.label}</p>
+          <div key={m.label} className="cy-card p-5 text-center">
+            <p className="text-3xl font-bold" style={{ color: m.color }}>{m.value}</p>
+            <p className="mt-2 text-sm font-medium text-ink/50">{m.label}</p>
           </div>
         ))}
       </div>
 
       {/* Queue Filter */}
-      <div style={{ display: "flex", gap: "1rem", marginBottom: "1.5rem", alignItems: "center" }}>
-        <h2 style={{ fontWeight: 700, fontSize: "1.25rem" }}>
+      <div className="mb-6 flex flex-wrap items-center gap-4">
+        <h2 className="text-lg font-bold">
           {lang === "en" ? "Patient Queue" : "طابور المرضى"}
-          {loading && <span style={{ marginLeft: "1rem", fontSize: "0.875rem", color: "var(--color-text-muted)" }}>Loading...</span>}
+          {loading && <span className="ml-4 text-sm font-normal text-ink/50">Loading...</span>}
         </h2>
-        <div style={{ display: "flex", gap: "0.5rem", marginLeft: "auto" }}>
+        <div className="ml-auto flex gap-2">
           {(["all", "waiting", "in_consultation", "completed"] as const).map(f => (
             <button
               key={f}
               onClick={() => setFilter(f)}
-              style={{
-                padding: "0.5rem 1rem",
-                borderRadius: "6px",
-                border: "1px solid var(--color-border)",
-                cursor: "pointer",
-                fontSize: "0.875rem",
-                fontWeight: 600,
-                background: filter === f ? "var(--color-primary)" : "var(--color-surface)",
-                color: filter === f ? "#fff" : "var(--color-text)",
-              }}
+              className={`rounded-full px-4 py-1.5 text-xs font-semibold ${filter === f ? "border border-brand-400/60 bg-brand-500/15 text-brand-300" : "border border-ink/10 text-ink/50 hover:bg-ink/5"}`}
             >
               {f === "all" ? (lang === "en" ? "All" : "الكل") :
                f === "waiting" ? (lang === "en" ? "Waiting" : "انتظار") :
@@ -212,10 +203,10 @@ export default function ClinicPortal() {
       </div>
 
       {/* Queue Table */}
-      <div style={{ background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: "12px", overflow: "hidden", boxShadow: "0 4px 6px rgba(0, 0, 0, 0.05)" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+      <div className="cy-card overflow-auto p-0">
+        <table className="w-full min-w-[900px] border-collapse">
           <thead>
-            <tr style={{ background: "var(--color-surface-elevated)", borderBottom: "2px solid var(--color-border)" }}>
+            <tr className="border-b border-ink/10">
               {[
                 lang === "en" ? "MRN" : "الرقم الطبي",
                 lang === "en" ? "Patient" : "المريض",
@@ -226,49 +217,42 @@ export default function ClinicPortal() {
                 lang === "en" ? "Status" : "الحالة",
                 lang === "en" ? "Actions" : "إجراءات",
               ].map(h => (
-                <th key={h} style={{ padding: "1rem", textAlign: "left", fontSize: "0.875rem", fontWeight: 600, color: "var(--color-text-muted)" }}>{h}</th>
+                <th key={h} className="px-4 py-3.5 text-left text-xs font-semibold text-ink/50">{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
-            {filtered.map((entry, i) => (
-              <tr key={entry.id} style={{ borderBottom: "1px solid var(--color-border)", background: i % 2 === 0 ? "transparent" : "var(--color-surface-elevated)" }}>
-                <td style={{ padding: "1rem", fontSize: "0.875rem", fontFamily: "monospace", color: "var(--color-text-muted)" }}>{entry.mrn}</td>
-                <td style={{ padding: "1rem" }}>
-                  <div style={{ fontWeight: 600, color: "var(--color-text)" }}>{lang === "ar" ? entry.patient_name_ar : entry.patient_name}</div>
+            {filtered.map(entry => (
+              <tr key={entry.id} className="border-b border-ink/5">
+                <td className="px-4 py-3.5 font-mono text-sm text-ink/50">{entry.mrn}</td>
+                <td className="px-4 py-3.5">
+                  <div className="text-sm font-semibold">{lang === "ar" ? entry.patient_name_ar : entry.patient_name}</div>
                 </td>
-                <td style={{ padding: "1rem", fontSize: "0.875rem", color: "var(--color-text)" }}>{entry.check_in_time}</td>
-                <td style={{ padding: "1rem", fontSize: "0.875rem", fontWeight: entry.wait_minutes > 20 ? 700 : 400, color: entry.wait_minutes > 20 ? "#ef4444" : "var(--color-text)" }}>
+                <td className="px-4 py-3.5 text-sm">{entry.check_in_time}</td>
+                <td className={`px-4 py-3.5 text-sm ${entry.wait_minutes > 20 ? "font-bold text-red-400" : ""}`}>
                   {entry.wait_minutes > 0 ? `${entry.wait_minutes}m` : "—"}
                 </td>
-                <td style={{ padding: "1rem" }}>
-                  <span style={{ display: "inline-block", width: "10px", height: "10px", borderRadius: "50%", background: triageColor(entry.triage_level), marginRight: "0.5rem" }} />
-                  <span style={{ fontSize: "0.875rem", color: "var(--color-text)" }}>{entry.triage_level.replace("_", " ")}</span>
+                <td className="px-4 py-3.5">
+                  <span className="mr-2 inline-block h-2.5 w-2.5 rounded-full" style={{ background: triageColor(entry.triage_level) }} />
+                  <span className="text-sm capitalize">{entry.triage_level.replace("_", " ")}</span>
                 </td>
-                <td style={{ padding: "1rem", fontSize: "0.875rem", color: "var(--color-text)" }}>{entry.specialty}</td>
-                <td style={{ padding: "1rem" }}>
-                  <span style={{
-                    padding: "0.3rem 0.75rem",
-                    borderRadius: "20px",
-                    fontSize: "0.75rem",
-                    fontWeight: 700,
-                    background: entry.status === "waiting" ? "#fef3c7" : entry.status === "in_consultation" ? "#dbeafe" : "#d1fae5",
-                    color: entry.status === "waiting" ? "#92400e" : entry.status === "in_consultation" ? "#1e40af" : "#065f46"
-                  }}>
+                <td className="px-4 py-3.5 text-sm">{entry.specialty}</td>
+                <td className="px-4 py-3.5">
+                  <span className={`rounded-full px-3 py-1 text-xs font-bold capitalize ${entry.status === "waiting" ? "bg-amber-500/15 text-amber-300" : entry.status === "in_consultation" ? "bg-sky-500/15 text-sky-300" : "bg-emerald-500/15 text-emerald-300"}`}>
                     {entry.status.replace("_", " ")}
                   </span>
                 </td>
-                <td style={{ padding: "1rem" }}>
-                  <div style={{ display: "flex", gap: "0.5rem" }}>
+                <td className="px-4 py-3.5">
+                  <div className="flex gap-2">
                     {entry.status === "waiting" && (
                       <button
                         onClick={() => { void handleCallIn(entry); }}
-                        style={{ padding: "0.4rem 0.8rem", fontSize: "0.8rem", fontWeight: 600, borderRadius: "6px", background: "var(--color-primary)", color: "#fff", border: "none", cursor: "pointer" }}
+                        className="cy-btn cy-btn-primary !min-h-0 !py-1.5 !px-3 text-xs"
                       >
                         {lang === "en" ? "Call In" : "استدعاء"}
                       </button>
                     )}
-                    <button style={{ padding: "0.4rem 0.8rem", fontSize: "0.8rem", fontWeight: 600, borderRadius: "6px", background: "var(--color-surface)", border: "1px solid var(--color-border)", cursor: "pointer", color: "var(--color-text)" }}>
+                    <button className="cy-btn cy-btn-ghost !min-h-0 !py-1.5 !px-3 text-xs">
                       {lang === "en" ? "View" : "عرض"}
                     </button>
                   </div>
@@ -278,7 +262,7 @@ export default function ClinicPortal() {
           </tbody>
         </table>
         {filtered.length === 0 && (
-          <div style={{ padding: "3rem", textAlign: "center", color: "var(--color-text-muted)", fontSize: "1rem" }}>
+          <div className="p-12 text-center text-sm text-ink/40">
             {lang === "en" ? "No patients in this queue" : "لا يوجد مرضى في هذا الطابور"}
           </div>
         )}

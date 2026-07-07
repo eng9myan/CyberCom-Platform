@@ -107,52 +107,37 @@ const TRUST = [
 
 export default function CyMedLanding() {
   return (
-    <div className="min-h-screen bg-[var(--color-background)] text-[var(--color-foreground)]">
+    <div className="min-h-screen bg-surface text-ink">
       {/* Demo Mode Banner */}
-      <div
-        role="alert"
-        style={{
-          background: "rgba(8, 145, 178, 0.10)",
-          borderBottom: "1px solid rgba(8, 145, 178, 0.25)",
-          padding: "10px 24px",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          gap: "10px",
-          fontSize: "13px",
-        }}
-      >
-        <Zap style={{ width: 14, height: 14, color: "#22D3EE" }} aria-hidden />
-        <span style={{ color: "#A5F3FC" }}>
-          <strong style={{ color: "#22D3EE" }}>Demo Mode</strong> — Live sample data. No account required. Explore all 10 modules below.
+      <div role="alert" className="flex items-center justify-center gap-2.5 border-b border-brand-400/25 bg-brand-500/10 px-6 py-2.5 text-[13px]">
+        <Zap className="h-3.5 w-3.5 text-brand-400" aria-hidden />
+        <span className="text-brand-200">
+          <strong className="text-brand-400">Demo Mode</strong> — Live sample data. No account required. Explore all 10 modules below.
         </span>
       </div>
 
       {/* Hero */}
-      <header style={{ padding: "60px 24px 40px", textAlign: "center", maxWidth: 900, margin: "0 auto" }}>
-        <div style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "4px 14px", borderRadius: 999, border: "1px solid rgba(34,211,238,0.3)", background: "rgba(34,211,238,0.06)", marginBottom: 20 }}>
-          <Stethoscope style={{ width: 14, height: 14, color: "#22D3EE" }} aria-hidden />
-          <span style={{ fontSize: 11, fontWeight: 600, color: "#22D3EE", letterSpacing: "0.15em", textTransform: "uppercase" }}>CyMed · Clinical Platform</span>
+      <header className="mx-auto max-w-[900px] px-6 pb-10 pt-16 text-center">
+        <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-brand-400/30 bg-brand-500/[0.06] px-3.5 py-1">
+          <Stethoscope className="h-3.5 w-3.5 text-brand-400" aria-hidden />
+          <span className="text-[11px] font-semibold uppercase tracking-[0.15em] text-brand-400">CyMed · Clinical Platform</span>
         </div>
 
-        <h1 style={{ fontSize: "clamp(2rem, 5vw, 3.25rem)", fontWeight: 700, lineHeight: 1.15, marginBottom: 16, color: "#ffffff" }}>
+        <h1 className="mb-4 font-heading text-[clamp(2rem,5vw,3.25rem)] font-bold leading-[1.15] text-ink">
           Intelligent Healthcare Platform
           <br />
-          <span style={{ color: "#22D3EE" }}>منصة الرعاية الصحية الذكية</span>
+          <span className="text-brand-400">منصة الرعاية الصحية الذكية</span>
         </h1>
 
-        <p style={{ fontSize: 17, color: "var(--color-muted, #94A3B8)", maxWidth: 600, margin: "0 auto 32px", lineHeight: 1.6 }}>
+        <p className="mx-auto mb-8 max-w-[600px] text-[17px] leading-relaxed text-ink/50">
           FHIR-native clinical suite covering every care setting.
           ICD-11, SNOMED CT, Arabic &amp; English. Select any module to explore with live demo data.
         </p>
 
-        <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
+        <div className="flex flex-wrap justify-center gap-3">
           {TRUST.map(({ icon: Icon, label }) => (
-            <div
-              key={label}
-              style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "6px 14px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.04)", fontSize: 12, color: "#94A3B8" }}
-            >
-              <Icon style={{ width: 13, height: 13, color: "#22D3EE" }} aria-hidden />
+            <div key={label} className="inline-flex items-center gap-1.5 rounded-lg border border-ink/[0.08] bg-ink/[0.04] px-3.5 py-1.5 text-xs text-ink/50">
+              <Icon className="h-[13px] w-[13px] text-brand-400" aria-hidden />
               {label}
             </div>
           ))}
@@ -160,19 +145,11 @@ export default function CyMedLanding() {
       </header>
 
       {/* Module Grid */}
-      <main style={{ maxWidth: 1100, margin: "0 auto", padding: "0 24px 80px" }}>
-        <h2 style={{ textAlign: "center", fontSize: 13, fontWeight: 700, letterSpacing: "0.15em", textTransform: "uppercase", color: "#64748B", marginBottom: 28 }}>
+      <main className="mx-auto max-w-[1100px] px-6 pb-20">
+        <h2 className="mb-7 text-center text-[13px] font-bold uppercase tracking-[0.15em] text-ink/40">
           9 Clinical Modules — Click to Explore
         </h2>
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
-            gap: 16,
-          }}
-          role="list"
-          aria-label="CyMed modules"
-        >
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(280px,1fr))] gap-4" role="list" aria-label="CyMed modules">
           {MODULES.map((mod) => {
             const Icon = mod.icon;
             return (
@@ -180,53 +157,19 @@ export default function CyMedLanding() {
                 key={mod.href}
                 href={mod.href}
                 role="listitem"
-                style={{
-                  display: "flex",
-                  alignItems: "flex-start",
-                  gap: 16,
-                  padding: 20,
-                  borderRadius: 16,
-                  border: "1px solid rgba(255,255,255,0.08)",
-                  background: "rgba(255,255,255,0.03)",
-                  textDecoration: "none",
-                  transition: "all 0.2s ease",
-                  cursor: "pointer",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = "rgba(255,255,255,0.06)";
-                  e.currentTarget.style.borderColor = "rgba(34,211,238,0.25)";
-                  e.currentTarget.style.transform = "translateY(-2px)";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = "rgba(255,255,255,0.03)";
-                  e.currentTarget.style.borderColor = "rgba(255,255,255,0.08)";
-                  e.currentTarget.style.transform = "none";
-                }}
+                className="cy-card flex items-start gap-4 p-5 no-underline"
               >
-                <div
-                  style={{
-                    width: 42,
-                    height: 42,
-                    borderRadius: 12,
-                    border: "1px solid rgba(255,255,255,0.08)",
-                    background: "rgba(255,255,255,0.04)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    flexShrink: 0,
-                  }}
-                  aria-hidden
-                >
-                  <Icon style={{ width: 20, height: 20, color: "#22D3EE" }} />
+                <div className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-xl border border-ink/[0.08] bg-ink/[0.04]" aria-hidden>
+                  <Icon className={`h-5 w-5 ${mod.color}`} />
                 </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 4 }}>
-                    <span style={{ fontSize: 15, fontWeight: 600, color: "#F1F5F9" }}>{mod.title}</span>
-                    <span style={{ fontSize: 13, color: "#64748B" }}>{mod.subtitle}</span>
+                <div className="min-w-0 flex-1">
+                  <div className="mb-1 flex items-baseline gap-2">
+                    <span className="text-[15px] font-semibold">{mod.title}</span>
+                    <span className="text-[13px] text-ink/40">{mod.subtitle}</span>
                   </div>
-                  <p style={{ fontSize: 13, color: "#64748B", lineHeight: 1.5, margin: 0 }}>{mod.desc}</p>
+                  <p className="text-[13px] leading-relaxed text-ink/40">{mod.desc}</p>
                 </div>
-                <ChevronRight style={{ width: 16, height: 16, color: "#475569", flexShrink: 0, marginTop: 2 }} aria-hidden />
+                <ChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-ink/30" aria-hidden />
               </Link>
             );
           })}

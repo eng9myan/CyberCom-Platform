@@ -40,83 +40,98 @@ export default function TelemedicinePage() {
 
   const counts = { pending: sessions.filter(s => s.status === "pending").length, in_progress: sessions.filter(s => s.status === "in_progress").length, completed: sessions.filter(s => s.status === "completed").length, cancelled: sessions.filter(s => s.status === "cancelled").length };
   const filtered = filter === "all" ? sessions : sessions.filter(s => s.status === filter);
-
-  const s: Record<string, React.CSSProperties> = {
-    page: { padding: "2rem", maxWidth: 1100, margin: "0 auto", direction: isAr ? "rtl" : "ltr" },
-    header: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem", borderBottom: "2px solid rgba(34,211,238,0.3)", paddingBottom: "1rem" },
-    h1: { fontSize: "1.6rem", fontWeight: 700, color: "#22D3EE" },
-    btn: { background: "var(--color-surface)", border: "1px solid var(--color-border)", color: "var(--color-text)", padding: "0.4rem 1rem", borderRadius: 6, cursor: "pointer", fontWeight: 600 },
-    grid: { display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(160px,1fr))", gap: "1rem", marginBottom: "1.5rem" },
-    card: { background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: 8, padding: "1rem", textAlign: "center" as const },
-    nav: { display: "flex", gap: "0.5rem", marginBottom: "1.5rem", flexWrap: "wrap" as const },
-    table: { width: "100%", borderCollapse: "collapse" as const },
-    th: { padding: "0.75rem", textAlign: (isAr ? "right" : "left") as "left" | "right", color: "var(--color-text-muted)", fontWeight: 600, borderBottom: "1px solid var(--color-border)", fontSize: "0.85rem" },
-    td: { padding: "0.75rem", borderBottom: "1px solid var(--color-border)", fontSize: "0.875rem" },
-  };
+  const dir = isAr ? "rtl" : "ltr";
 
   return (
-    <div style={s.page}>
-      <header style={s.header}>
+    <div dir={dir} className="mx-auto max-w-6xl">
+      <header className="mb-6 flex items-center justify-between border-b-2 border-brand-400/30 pb-4">
         <div>
-          <h1 style={s.h1}>{isAr ? "التطبيب عن بُعد" : "Telemedicine Sessions"}</h1>
-          <p style={{ color: "var(--color-text-muted)", fontSize: "0.875rem" }}>{isAr ? "جلسات الطب عن بُعد عبر الفيديو والهاتف والدردشة" : "Virtual consultations via video, phone & chat"}</p>
+          <h1 className="font-heading text-2xl font-bold text-brand-400">{isAr ? "التطبيب عن بُعد" : "Telemedicine Sessions"}</h1>
+          <p className="mt-1 text-sm text-ink/50">{isAr ? "جلسات الطب عن بُعد عبر الفيديو والهاتف والدردشة" : "Virtual consultations via video, phone & chat"}</p>
         </div>
-        <div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
-          {loading && <span style={{ color: "var(--color-text-muted)", fontSize: "0.8rem" }}>●</span>}
-          <button style={s.btn} onClick={() => setLang(isAr ? "en" : "ar")}>{isAr ? "English" : "العربية"}</button>
+        <div className="flex items-center gap-3">
+          {loading && <span className="text-xs text-ink/50">●</span>}
+          <button onClick={() => setLang(isAr ? "en" : "ar")} className="cy-btn cy-btn-ghost !min-h-0 !py-2 !px-4 text-sm">{isAr ? "English" : "العربية"}</button>
         </div>
       </header>
-      <nav style={s.nav}>
-        {[{ href: "/clinic", label: isAr ? "← الرجوع للعيادة" : "← Back to Clinic" }].map(m => (
-          <a key={m.href} href={m.href} style={{ ...s.btn, textDecoration: "none" }}>{m.label}</a>
-        ))}
+      <nav className="mb-6 flex flex-wrap gap-2">
+        <a href="/clinic" className="cy-btn cy-btn-ghost !min-h-0 !py-2 !px-4 text-sm no-underline">{isAr ? "← الرجوع للعيادة" : "← Back to Clinic"}</a>
       </nav>
-      <div style={s.grid}>
+      <div className="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
         {[
           { label: isAr ? "في الانتظار" : "Pending", value: counts.pending, color: "#f59e0b" },
           { label: isAr ? "جارية" : "In Progress", value: counts.in_progress, color: "#22c55e" },
           { label: isAr ? "مكتملة" : "Completed", value: counts.completed, color: "#22D3EE" },
           { label: isAr ? "ملغاة" : "Cancelled", value: counts.cancelled, color: "#6b7280" },
         ].map(m => (
-          <div key={m.label} style={s.card}>
-            <div style={{ fontSize: "1.8rem", fontWeight: 700, color: m.color }}>{m.value}</div>
-            <div style={{ fontSize: "0.8rem", color: "var(--color-text-muted)", marginTop: 4 }}>{m.label}</div>
+          <div key={m.label} className="cy-card p-4 text-center">
+            <div className="text-2xl font-bold" style={{ color: m.color }}>{m.value}</div>
+            <div className="mt-1 text-xs text-ink/50">{m.label}</div>
           </div>
         ))}
       </div>
-      <div style={{ display: "flex", gap: "0.5rem", marginBottom: "1.25rem", flexWrap: "wrap" }}>
+      <div className="mb-5 flex flex-wrap gap-2">
         {["all", "pending", "in_progress", "completed", "cancelled"].map(f => (
-          <button key={f} onClick={() => setFilter(f)} style={{ ...s.btn, background: filter === f ? "#22D3EE" : "var(--color-surface)", color: filter === f ? "#000" : "var(--color-text)", padding: "0.35rem 0.75rem", fontSize: "0.8rem" }}>
+          <button
+            key={f}
+            onClick={() => setFilter(f)}
+            className={`rounded-md px-3 py-1.5 text-xs font-semibold border ${filter === f ? "border-brand-400 bg-brand-500 text-white" : "border-ink/10 bg-surface text-ink hover:bg-ink/5"}`}
+          >
             {f === "all" ? (isAr ? "الكل" : "All") : f.replace("_", " ")}
           </button>
         ))}
       </div>
-      <div style={{ background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: 8, overflow: "hidden" }}>
-        <table style={s.table}>
+      <div className="cy-card overflow-auto p-0">
+        <table className="w-full border-collapse">
           <thead>
-            <tr style={{ background: "rgba(34,211,238,0.05)" }}>
-              <th style={s.th}>{isAr ? "المريض" : "Patient"}</th>
-              <th style={s.th}>{isAr ? "الطبيب" : "Provider"}</th>
-              <th style={s.th}>{isAr ? "التخصص" : "Specialty"}</th>
-              <th style={s.th}>{isAr ? "المنصة" : "Platform"}</th>
-              <th style={s.th}>{isAr ? "الوقت" : "Time"}</th>
-              <th style={s.th}>{isAr ? "الحالة" : "Status"}</th>
-              <th style={s.th}>{isAr ? "إجراء" : "Action"}</th>
+            <tr className="border-b border-ink/10">
+              {[
+                isAr ? "المريض" : "Patient",
+                isAr ? "الطبيب" : "Provider",
+                isAr ? "التخصص" : "Specialty",
+                isAr ? "المنصة" : "Platform",
+                isAr ? "الوقت" : "Time",
+                isAr ? "الحالة" : "Status",
+                isAr ? "إجراء" : "Action",
+              ].map(h => (
+                <th key={h} className={`px-4 py-3.5 text-xs font-semibold text-ink/50 ${isAr ? "text-right" : "text-left"}`}>{h}</th>
+              ))}
             </tr>
           </thead>
           <tbody>
             {filtered.map(sess => (
-              <tr key={sess.id}>
-                <td style={s.td}><div style={{ fontWeight: 600 }}>{isAr ? sess.patient_ar : sess.patient}</div><div style={{ fontSize: "0.75rem", color: "var(--color-text-muted)" }}>{sess.mrn}</div></td>
-                <td style={s.td}>{sess.provider}</td>
-                <td style={s.td}>{sess.specialty}</td>
-                <td style={s.td}>{PLATFORM_ICON[sess.platform]} {sess.platform}</td>
-                <td style={s.td}>{sess.scheduled_at}{sess.duration_min ? ` (${sess.duration_min}m)` : ""}</td>
-                <td style={s.td}><span style={{ background: `${STATUS_COLOR[sess.status]}22`, color: STATUS_COLOR[sess.status], border: `1px solid ${STATUS_COLOR[sess.status]}55`, borderRadius: 4, padding: "2px 8px", fontSize: "0.75rem", fontWeight: 600 }}>{sess.status.replace("_", " ")}</span></td>
-                <td style={s.td}>
-                  {sess.status === "pending" && <button onClick={() => handleAction(sess.id, "join")} style={{ background: "#22c55e22", color: "#22c55e", border: "1px solid #22c55e55", borderRadius: 4, padding: "3px 10px", cursor: "pointer", fontSize: "0.78rem", fontWeight: 600, marginRight: 6 }}>{isAr ? "انضمام" : "Join"}</button>}
-                  {sess.status === "in_progress" && <button onClick={() => handleAction(sess.id, "end")} style={{ background: "#22D3EE22", color: "#22D3EE", border: "1px solid #22D3EE55", borderRadius: 4, padding: "3px 10px", cursor: "pointer", fontSize: "0.78rem", fontWeight: 600, marginRight: 6 }}>{isAr ? "إنهاء" : "End"}</button>}
-                  {(sess.status === "pending") && <button onClick={() => handleAction(sess.id, "cancel")} style={{ background: "transparent", color: "#6b7280", border: "1px solid #6b728055", borderRadius: 4, padding: "3px 10px", cursor: "pointer", fontSize: "0.78rem" }}>{isAr ? "إلغاء" : "Cancel"}</button>}
+              <tr key={sess.id} className="border-b border-ink/5">
+                <td className="px-4 py-3 text-sm">
+                  <div className="font-semibold">{isAr ? sess.patient_ar : sess.patient}</div>
+                  <div className="text-xs text-ink/50">{sess.mrn}</div>
+                </td>
+                <td className="px-4 py-3 text-sm">{sess.provider}</td>
+                <td className="px-4 py-3 text-sm">{sess.specialty}</td>
+                <td className="px-4 py-3 text-sm">{PLATFORM_ICON[sess.platform]} {sess.platform}</td>
+                <td className="px-4 py-3 text-sm">{sess.scheduled_at}{sess.duration_min ? ` (${sess.duration_min}m)` : ""}</td>
+                <td className="px-4 py-3">
+                  <span className="rounded px-2 py-0.5 text-xs font-semibold" style={{ background: `${STATUS_COLOR[sess.status]}22`, color: STATUS_COLOR[sess.status], border: `1px solid ${STATUS_COLOR[sess.status]}55` }}>
+                    {sess.status.replace("_", " ")}
+                  </span>
+                </td>
+                <td className="px-4 py-3">
+                  <div className="flex gap-1.5">
+                    {sess.status === "pending" && (
+                      <button onClick={() => handleAction(sess.id, "join")} className="rounded px-2.5 py-1 text-xs font-semibold" style={{ background: "#22c55e22", color: "#22c55e", border: "1px solid #22c55e55" }}>
+                        {isAr ? "انضمام" : "Join"}
+                      </button>
+                    )}
+                    {sess.status === "in_progress" && (
+                      <button onClick={() => handleAction(sess.id, "end")} className="rounded px-2.5 py-1 text-xs font-semibold" style={{ background: "#22D3EE22", color: "#22D3EE", border: "1px solid #22D3EE55" }}>
+                        {isAr ? "إنهاء" : "End"}
+                      </button>
+                    )}
+                    {sess.status === "pending" && (
+                      <button onClick={() => handleAction(sess.id, "cancel")} className="rounded px-2.5 py-1 text-xs" style={{ background: "transparent", color: "#6b7280", border: "1px solid #6b728055" }}>
+                        {isAr ? "إلغاء" : "Cancel"}
+                      </button>
+                    )}
+                  </div>
                 </td>
               </tr>
             ))}

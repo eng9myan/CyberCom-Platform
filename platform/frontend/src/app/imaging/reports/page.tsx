@@ -122,29 +122,25 @@ export default function ImagingReportsPage() {
   const t = (en: string, ar: string) => lang === "en" ? en : ar;
 
   if (!isAuthenticated) {
-    return (
-      <div style={{ padding: "4rem", textAlign: "center" }}>
-        <h1 style={{ fontSize: "1.25rem", fontWeight: 700 }}>Sign in required</h1>
-      </div>
-    );
+    return <div className="mx-auto mt-16 max-w-lg text-center"><h1 className="text-xl font-bold">Sign in required</h1></div>;
   }
 
   return (
-    <div style={{ padding: "2rem", maxWidth: "1400px", margin: "0 auto", direction: lang === "ar" ? "rtl" : "ltr", background: "var(--color-background)", minHeight: "100vh", color: "var(--color-text)" }}>
-      <header style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "1.5rem" }}>
+    <div className="mx-auto max-w-6xl" style={{ direction: lang === "ar" ? "rtl" : "ltr" }}>
+      <header className="mb-6 flex items-start justify-between">
         <div>
-          <a href="/imaging" style={{ color: "#22D3EE", textDecoration: "none", fontSize: "0.875rem" }}>{t("← Imaging", "← الأشعة")}</a>
-          <h1 style={{ fontSize: "1.75rem", fontWeight: 700, color: "#22D3EE" }}>{t("Radiology Reports", "تقارير الأشعة")}</h1>
-          <p style={{ color: "var(--color-text-muted)", fontSize: "0.875rem", marginTop: "0.25rem" }}>
+          <a href="/imaging" className="text-sm text-brand-400 hover:underline">{t("← Imaging", "← الأشعة")}</a>
+          <h1 className="font-heading text-2xl font-bold text-brand-400">{t("Radiology Reports", "تقارير الأشعة")}</h1>
+          <p className="mt-1 text-sm text-ink/50">
             {t("Real reports with critical-finding notification workflow", "تقارير حقيقية مع سير عمل إشعار النتائج الحرجة")}
           </p>
         </div>
-        <button onClick={() => setLang(l => l === "en" ? "ar" : "en")} style={{ padding: "0.4rem 0.8rem", borderRadius: "4px", border: "1px solid var(--color-border)", cursor: "pointer", background: "var(--color-surface)", color: "var(--color-text)", fontSize: "0.8rem" }}>
+        <button onClick={() => setLang(l => l === "en" ? "ar" : "en")} className="cy-btn cy-btn-ghost !min-h-0 !py-2 !px-4 text-sm">
           {lang === "en" ? "العربية" : "English"}
         </button>
       </header>
 
-      <nav style={{ display: "flex", gap: "0.5rem", marginBottom: "1.5rem", flexWrap: "wrap" }}>
+      <nav className="mb-6 flex flex-wrap gap-2">
         {[
           { href: "/imaging", label: t("Overview", "نظرة عامة") },
           { href: "/imaging/orders", label: t("Orders", "الطلبات") },
@@ -152,60 +148,60 @@ export default function ImagingReportsPage() {
           { href: "/imaging/reports", label: t("Reports", "التقارير") },
           { href: "/imaging/pacs", label: t("PACS", "PACS") },
         ].map(item => (
-          <a key={item.href} href={item.href} style={{ padding: "0.4rem 1rem", borderRadius: "4px", background: item.href === "/imaging/reports" ? "#22D3EE22" : "var(--color-surface)", border: `1px solid ${item.href === "/imaging/reports" ? "#22D3EE" : "var(--color-border)"}`, color: item.href === "/imaging/reports" ? "#22D3EE" : "var(--color-text)", textDecoration: "none", fontSize: "0.875rem", fontWeight: 500 }}>
+          <a key={item.href} href={item.href} className={`rounded-md px-4 py-1.5 text-sm font-medium ${item.href === "/imaging/reports" ? "border border-brand-400 bg-brand-500/15 text-brand-400" : "border border-ink/10 bg-surface text-ink"}`}>
             {item.label}
           </a>
         ))}
       </nav>
 
       {fetchError && (
-        <div style={{ background: "#fee2e2", border: "1px solid #fca5a5", color: "#b91c1c", padding: "0.9rem 1rem", borderRadius: "8px", marginBottom: "1.5rem", fontSize: "0.88rem" }}>
+        <div className="mb-6 rounded-lg border border-red-300 bg-red-100 px-4 py-3.5 text-sm text-red-700">
           {fetchError}
         </div>
       )}
 
-      {loading && <p style={{ color: "var(--color-text-muted)", fontSize: "0.85rem", marginBottom: "1rem" }}>{t("Loading…", "جارٍ التحميل…")}</p>}
+      {loading && <p className="mb-4 text-sm text-ink/50">{t("Loading…", "جارٍ التحميل…")}</p>}
 
       {!loading && (reports || []).length === 0 && (
-        <div style={{ background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: "10px", padding: "2rem", textAlign: "center", color: "var(--color-text-muted)" }}>
+        <div className="cy-card p-8 text-center text-sm text-ink/50">
           {t("No radiology reports for this tenant yet.", "لا توجد تقارير أشعة لهذا المستأجر بعد.")}
         </div>
       )}
 
-      <div style={{ display: "grid", gap: "1rem" }}>
+      <div className="grid gap-4">
         {(reports || []).map(report => {
           const patient = patients[report.patient_id];
           const patientLabel = patient ? `${patient.first_name} ${patient.last_name}` : `Patient ${report.patient_id.slice(0, 8)}`;
           const findings = criticalByReport[report.id] || [];
           return (
-            <div key={report.id} style={{ background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: "10px", padding: "1.25rem" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "0.75rem" }}>
+            <div key={report.id} className="cy-card p-5">
+              <div className="mb-3 flex items-start justify-between">
                 <div>
-                  <p style={{ fontWeight: 700, fontSize: "0.9rem", margin: 0 }}>{patientLabel}</p>
-                  {patient?.mrn && <p style={{ fontSize: "0.78rem", color: "var(--color-text-muted)", margin: "0.15rem 0 0" }}>{patient.mrn}</p>}
+                  <p className="text-sm font-bold">{patientLabel}</p>
+                  {patient?.mrn && <p className="mt-0.5 text-xs text-ink/50">{patient.mrn}</p>}
                 </div>
-                <span style={{ padding: "0.2rem 0.6rem", borderRadius: "12px", fontSize: "0.72rem", fontWeight: 700, background: (STATUS_COLORS[report.status] || "#6b7280") + "22", color: STATUS_COLORS[report.status] || "#6b7280" }}>
+                <span className="rounded-full px-2.5 py-1 text-xs font-bold" style={{ background: (STATUS_COLORS[report.status] || "#6b7280") + "22", color: STATUS_COLORS[report.status] || "#6b7280" }}>
                   {report.status}
                 </span>
               </div>
               {report.findings && (
-                <p style={{ fontSize: "0.82rem", color: "var(--color-text-muted)", marginBottom: "0.4rem" }}><strong>{t("Findings:", "النتائج:")}</strong> {report.findings}</p>
+                <p className="mb-1.5 text-sm text-ink/50"><strong>{t("Findings:", "النتائج:")}</strong> {report.findings}</p>
               )}
               {report.impression && (
-                <p style={{ fontSize: "0.82rem", marginBottom: "0.4rem" }}><strong>{t("Impression:", "الانطباع:")}</strong> {report.impression}</p>
+                <p className="mb-1.5 text-sm"><strong>{t("Impression:", "الانطباع:")}</strong> {report.impression}</p>
               )}
               {!report.findings && !report.impression && (
-                <p style={{ fontSize: "0.8rem", color: "var(--color-text-muted)", fontStyle: "italic" }}>{t("Report not yet dictated.", "لم يتم إملاء التقرير بعد.")}</p>
+                <p className="text-sm italic text-ink/50">{t("Report not yet dictated.", "لم يتم إملاء التقرير بعد.")}</p>
               )}
               {findings.length > 0 && (
-                <div style={{ marginTop: "0.75rem", display: "grid", gap: "0.4rem" }}>
+                <div className="mt-3 grid gap-1.5">
                   {findings.map(f => (
-                    <div key={f.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0.5rem 0.7rem", borderRadius: "6px", background: "#fef2f2" }}>
-                      <span style={{ fontSize: "0.82rem", fontWeight: 700, color: "#b91c1c" }}>⚠ {f.finding_description} ({f.severity})</span>
+                    <div key={f.id} className="flex items-center justify-between rounded-md bg-red-500/[0.06] px-3 py-2">
+                      <span className="text-sm font-bold text-red-500">⚠ {f.finding_description} ({f.severity})</span>
                       {f.notification_status === "acknowledged" ? (
-                        <span style={{ fontSize: "0.72rem", color: "#22c55e", fontWeight: 600 }}>{t("Acknowledged", "تم الإقرار")}</span>
+                        <span className="text-xs font-semibold text-emerald-500">{t("Acknowledged", "تم الإقرار")}</span>
                       ) : (
-                        <button disabled={busyId === f.id} onClick={() => handleNotifyAcknowledge(f)} style={{ padding: "0.25rem 0.6rem", fontSize: "0.72rem", fontWeight: 700, borderRadius: "5px", background: "#ef4444", color: "#fff", border: "none", cursor: "pointer", opacity: busyId === f.id ? 0.5 : 1 }}>
+                        <button disabled={busyId === f.id} onClick={() => handleNotifyAcknowledge(f)} className="rounded-md bg-red-500 px-2.5 py-1 text-xs font-bold text-white disabled:opacity-50">
                           {f.notification_status === "pending" ? t("Notify", "إشعار") : t("Acknowledge", "إقرار")}
                         </button>
                       )}

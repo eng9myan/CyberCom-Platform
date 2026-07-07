@@ -46,54 +46,86 @@ export default function EligibilityPage() {
 
   const filtered = results.filter(r => !search || r.patient.toLowerCase().includes(search.toLowerCase()) || r.mrn.includes(search));
 
-  const s: Record<string, React.CSSProperties> = {
-    page: { padding: "2rem", maxWidth: 1200, margin: "0 auto", direction: isAr ? "rtl" : "ltr" },
-    header: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem", borderBottom: "2px solid rgba(34,211,238,0.3)", paddingBottom: "1rem" },
-    h1: { fontSize: "1.6rem", fontWeight: 700, color: "#22D3EE" },
-    btn: { background: "var(--color-surface)", border: "1px solid var(--color-border)", color: "var(--color-text)", padding: "0.4rem 1rem", borderRadius: 6, cursor: "pointer", fontWeight: 600, textDecoration: "none" as const },
-    table: { width: "100%", borderCollapse: "collapse" as const },
-    th: { padding: "0.75rem", textAlign: (isAr ? "right" : "left") as "left" | "right", color: "var(--color-text-muted)", fontWeight: 600, borderBottom: "1px solid var(--color-border)", fontSize: "0.85rem" },
-    td: { padding: "0.75rem", borderBottom: "1px solid var(--color-border)", fontSize: "0.875rem" },
-    input: { padding: "0.5rem 0.75rem", borderRadius: 6, border: "1px solid var(--color-border)", background: "var(--color-surface)", color: "var(--color-text)", fontSize: "0.875rem" },
-  };
+  const inputCls = "rounded-lg border border-ink/10 bg-surface px-3 py-2 text-sm text-ink";
 
   return (
-    <div style={s.page}>
-      <header style={s.header}>
+    <div style={{ direction: isAr ? "rtl" : "ltr" }} className="mx-auto max-w-6xl">
+      <header className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 style={s.h1}>{isAr ? "التحقق من التغطية التأمينية" : "Insurance Eligibility Verification"}</h1>
-          <p style={{ color: "var(--color-text-muted)", fontSize: "0.875rem" }}>{results.filter(r => r.status === "active").length} {isAr ? "تغطية نشطة" : "active coverages"}</p>
+          <h1 className="font-heading text-2xl font-bold">{isAr ? "التحقق من التغطية التأمينية" : "Insurance Eligibility Verification"}</h1>
+          <p className="mt-1 text-sm text-ink/50">{results.filter(r => r.status === "active").length} {isAr ? "تغطية نشطة" : "active coverages"}</p>
         </div>
-        <div style={{ display: "flex", gap: "0.75rem" }}>
-          {loading && <span style={{ color: "var(--color-text-muted)", fontSize: "0.8rem" }}>●</span>}
-          <a href="/rcm" style={s.btn}>{isAr ? "← دورة الإيرادات" : "← RCM"}</a>
-          <button style={s.btn} onClick={() => setLang(isAr ? "en" : "ar")}>{isAr ? "English" : "العربية"}</button>
+        <div className="flex items-center gap-3">
+          {loading && <span className="text-xs text-ink/40">●</span>}
+          <a href="/rcm" className="cy-btn cy-btn-ghost !min-h-0 !py-2 !px-4 text-sm">{isAr ? "← دورة الإيرادات" : "← RCM"}</a>
+          <button onClick={() => setLang(isAr ? "en" : "ar")} className="cy-btn cy-btn-ghost !min-h-0 !py-2 !px-4 text-sm">{isAr ? "English" : "العربية"}</button>
         </div>
       </header>
-      <div style={{ background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: 8, padding: "1.25rem", marginBottom: "1.5rem" }}>
-        <div style={{ fontWeight: 700, marginBottom: "0.75rem" }}>{isAr ? "التحقق الفوري من التغطية" : "Real-Time Eligibility Check"}</div>
-        <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap", alignItems: "flex-end" }}>
-          <div><label style={{ display: "block", fontSize: "0.8rem", color: "var(--color-text-muted)", marginBottom: 4 }}>{isAr ? "رقم المريض (MRN)" : "Patient MRN"}</label><input value={checkMrn} onChange={e => setCheckMrn(e.target.value)} placeholder="MRN-002145" style={{ ...s.input, width: 180 }} /></div>
-          <div><label style={{ display: "block", fontSize: "0.8rem", color: "var(--color-text-muted)", marginBottom: 4 }}>{isAr ? "شركة التأمين" : "Payer"}</label><select value={checkPayer} onChange={e => setCheckPayer(e.target.value)} style={s.input}>{PAYERS.map(p => <option key={p} value={p}>{p}</option>)}</select></div>
-          <button onClick={handleCheck} disabled={checking} style={{ background: "#22D3EE", color: "#000", border: "none", borderRadius: 6, padding: "0.5rem 1.5rem", cursor: checking ? "not-allowed" : "pointer", fontWeight: 700 }}>{checking ? (isAr ? "جاري التحقق..." : "Checking...") : (isAr ? "تحقق الآن" : "Verify Now")}</button>
+
+      <div className="cy-card mb-6 p-5">
+        <div className="mb-3 text-lg font-bold">{isAr ? "التحقق الفوري من التغطية" : "Real-Time Eligibility Check"}</div>
+        <div className="flex flex-wrap items-end gap-3">
+          <div>
+            <label className="mb-1 block text-[13px] font-semibold text-ink/50">{isAr ? "رقم المريض (MRN)" : "Patient MRN"}</label>
+            <input value={checkMrn} onChange={e => setCheckMrn(e.target.value)} placeholder="MRN-002145" className={`${inputCls} w-[180px]`} />
+          </div>
+          <div>
+            <label className="mb-1 block text-[13px] font-semibold text-ink/50">{isAr ? "شركة التأمين" : "Payer"}</label>
+            <select value={checkPayer} onChange={e => setCheckPayer(e.target.value)} className={inputCls}>
+              {PAYERS.map(p => <option key={p} value={p}>{p}</option>)}
+            </select>
+          </div>
+          <button onClick={handleCheck} disabled={checking} className="cy-btn cy-btn-primary disabled:opacity-50">
+            {checking ? (isAr ? "جاري التحقق..." : "Checking...") : (isAr ? "تحقق الآن" : "Verify Now")}
+          </button>
         </div>
       </div>
-      <div style={{ marginBottom: "1rem" }}><input value={search} onChange={e => setSearch(e.target.value)} placeholder={isAr ? "بحث باسم المريض أو الرقم..." : "Search patient or MRN..."} style={{ ...s.input, width: "100%", maxWidth: 380 }} /></div>
-      <div style={{ background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: 8, overflow: "hidden" }}>
-        <table style={s.table}>
-          <thead><tr style={{ background: "rgba(34,211,238,0.05)" }}><th style={s.th}>{isAr ? "المريض" : "Patient"}</th><th style={s.th}>{isAr ? "الجهة / الخطة" : "Payer / Plan"}</th><th style={s.th}>{isAr ? "رقم العضوية" : "Member ID"}</th><th style={s.th}>{isAr ? "الرسوم الثابتة" : "Copay"}</th><th style={s.th}>{isAr ? "قابل للخصم" : "Deductible"}</th><th style={s.th}>{isAr ? "شبكة داخلية" : "In-Network"}</th><th style={s.th}>{isAr ? "الحالة" : "Status"}</th></tr></thead>
-          <tbody>{filtered.map(r => (
-            <tr key={r.id}>
-              <td style={s.td}><div style={{ fontWeight: 600 }}>{isAr ? r.patient_ar : r.patient}</div><div style={{ fontSize: "0.75rem", color: "var(--color-text-muted)" }}>{r.mrn}</div></td>
-              <td style={s.td}><div style={{ fontWeight: 600 }}>{r.payer}</div><div style={{ fontSize: "0.78rem", color: "var(--color-text-muted)" }}>{r.plan}</div></td>
-              <td style={{ ...s.td, fontFamily: "monospace", fontSize: "0.8rem" }}>{r.member_id}</td>
-              <td style={s.td}>SAR {r.copay}</td>
-              <td style={s.td}><div style={{ fontSize: "0.82rem" }}>SAR {r.deductible_met.toLocaleString()} / {r.deductible.toLocaleString()}</div><div style={{ height: 4, background: "var(--color-background)", borderRadius: 2, marginTop: 4 }}><div style={{ width: r.deductible > 0 ? `${Math.min(r.deductible_met / r.deductible * 100, 100)}%` : "100%", height: "100%", background: "#22D3EE", borderRadius: 2 }} /></div></td>
-              <td style={s.td}>{r.in_network ? <span style={{ color: "#22c55e", fontWeight: 700 }}>✓ {isAr ? "نعم" : "Yes"}</span> : <span style={{ color: "#ef4444" }}>✗ {isAr ? "لا" : "No"}</span>}</td>
-              <td style={s.td}><div><span style={{ background: `${STATUS_COLOR[r.status]}22`, color: STATUS_COLOR[r.status], border: `1px solid ${STATUS_COLOR[r.status]}55`, borderRadius: 4, padding: "2px 8px", fontSize: "0.75rem", fontWeight: 600 }}>{r.status}</span><div style={{ fontSize: "0.7rem", color: "var(--color-text-muted)", marginTop: 2 }}>{r.verified_on}</div></div></td>
-            </tr>
-          ))}</tbody>
-        </table>
+
+      <div className="mb-4">
+        <input value={search} onChange={e => setSearch(e.target.value)} placeholder={isAr ? "بحث باسم المريض أو الرقم..." : "Search patient or MRN..."} className={`${inputCls} w-full max-w-[380px]`} />
+      </div>
+
+      <div className="cy-card overflow-hidden p-0">
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse text-sm">
+            <thead>
+              <tr className="border-b border-ink/10 bg-ink/5">
+                {[isAr ? "المريض" : "Patient", isAr ? "الجهة / الخطة" : "Payer / Plan", isAr ? "رقم العضوية" : "Member ID", isAr ? "الرسوم الثابتة" : "Copay", isAr ? "قابل للخصم" : "Deductible", isAr ? "شبكة داخلية" : "In-Network", isAr ? "الحالة" : "Status"].map(h => (
+                  <th key={h} className="px-4 py-3 text-left text-[13px] font-semibold text-ink/50">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map(r => (
+                <tr key={r.id}>
+                  <td className="border-b border-ink/10 px-4 py-3">
+                    <div className="text-sm font-semibold">{isAr ? r.patient_ar : r.patient}</div>
+                    <div className="text-xs text-ink/50">{r.mrn}</div>
+                  </td>
+                  <td className="border-b border-ink/10 px-4 py-3">
+                    <div className="text-sm font-semibold">{r.payer}</div>
+                    <div className="text-xs text-ink/50">{r.plan}</div>
+                  </td>
+                  <td className="border-b border-ink/10 px-4 py-3 font-mono text-xs">{r.member_id}</td>
+                  <td className="border-b border-ink/10 px-4 py-3 text-sm">SAR {r.copay}</td>
+                  <td className="border-b border-ink/10 px-4 py-3">
+                    <div className="text-sm">SAR {r.deductible_met.toLocaleString()} / {r.deductible.toLocaleString()}</div>
+                    <div className="mt-1 h-1 rounded bg-ink/10">
+                      <div className="h-full rounded bg-brand-400" style={{ width: r.deductible > 0 ? `${Math.min(r.deductible_met / r.deductible * 100, 100)}%` : "100%" }} />
+                    </div>
+                  </td>
+                  <td className="border-b border-ink/10 px-4 py-3 text-sm">
+                    {r.in_network ? <span className="font-bold text-emerald-400">✓ {isAr ? "نعم" : "Yes"}</span> : <span className="text-red-400">✗ {isAr ? "لا" : "No"}</span>}
+                  </td>
+                  <td className="border-b border-ink/10 px-4 py-3">
+                    <span className="rounded px-2 py-0.5 text-xs font-semibold" style={{ background: `${STATUS_COLOR[r.status]}22`, color: STATUS_COLOR[r.status], border: `1px solid ${STATUS_COLOR[r.status]}55` }}>{r.status}</span>
+                    <div className="mt-0.5 text-[11px] text-ink/50">{r.verified_on}</div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

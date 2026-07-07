@@ -74,42 +74,42 @@ export default function LaboratoryPortal() {
   const filtered = priorityFilter === "all" ? ORDERS : ORDERS.filter(o => o.priority === priorityFilter);
 
   return (
-    <div className="dashboard-container">
-      <header className="dashboard-header">
+    <div className="mx-auto max-w-6xl">
+      <header className="mb-6 flex items-start justify-between">
         <div>
-          <h1 style={{ fontSize: "1.5rem", fontWeight: 700, color: "var(--color-primary)" }}>
+          <h1 className="font-heading text-2xl font-bold text-brand-400">
             {lang === "en" ? "CyMed Laboratory" : "مختبر سايمد"}
           </h1>
-          <p style={{ color: "var(--color-text-muted)", fontSize: "0.875rem" }}>
+          <p className="mt-1 text-sm text-ink/50">
             {lang === "en" ? "Laboratory Information System" : "نظام معلومات المختبر"}
           </p>
         </div>
-        <div style={{ display: "flex", gap: "0.5rem", alignItems: "center" }}>
+        <div className="flex items-center gap-2">
           {METRICS.critical_pending > 0 && (
-            <div style={{ background: "#fef2f2", border: "2px solid #ef4444", borderRadius: "8px", padding: "0.4rem 0.8rem", fontSize: "0.8rem", fontWeight: 700, color: "#dc2626" }}>
+            <div className="rounded-lg border-2 border-red-500 bg-red-500/10 px-3 py-1.5 text-sm font-bold text-red-400">
               ⚠ {METRICS.critical_pending} {lang === "en" ? "Critical Pending" : "حرجة معلقة"}
             </div>
           )}
-          <button onClick={() => setLang(l => l === "en" ? "ar" : "en")} style={{ padding: "0.4rem 0.8rem", borderRadius: "4px", border: "1px solid var(--color-border)", cursor: "pointer", background: "var(--color-surface)", color: "var(--color-text)", fontSize: "0.8rem" }}>
+          <button onClick={() => setLang(l => l === "en" ? "ar" : "en")} className="cy-btn cy-btn-ghost !min-h-0 !py-2 !px-4 text-sm">
             {lang === "en" ? "العربية" : "English"}
           </button>
         </div>
       </header>
 
-      <nav style={{ display: "flex", gap: "0.5rem", marginBottom: "1.5rem", flexWrap: "wrap" }}>
+      <nav className="mb-6 flex flex-wrap gap-2">
         {[
           { href: "/laboratory/orders", label: lang === "en" ? "Orders" : "الطلبات" },
           { href: "/laboratory/specimens", label: lang === "en" ? "Specimens" : "العينات" },
           { href: "/laboratory/worklists", label: lang === "en" ? "Worklists" : "قوائم العمل" },
           { href: "/laboratory/results", label: lang === "en" ? "Results" : "النتائج" },
         ].map(item => (
-          <a key={item.href} href={item.href} style={{ padding: "0.4rem 1rem", borderRadius: "4px", background: "var(--color-surface)", border: "1px solid var(--color-border)", color: "var(--color-text)", textDecoration: "none", fontSize: "0.875rem", fontWeight: 500 }}>
+          <a key={item.href} href={item.href} className="rounded-lg border border-ink/10 px-4 py-1.5 text-sm font-medium text-ink/70 hover:bg-ink/5">
             {item.label}
           </a>
         ))}
       </nav>
 
-      <div className="metrics-grid" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: "1rem", marginBottom: "1.5rem" }}>
+      <div className="mb-6 grid grid-cols-4 gap-4 sm:grid-cols-8">
         {[
           { label: lang === "en" ? "Orders Today" : "طلبات اليوم", value: METRICS.orders_today, color: "#6366f1" },
           { label: lang === "en" ? "Pending" : "معلقة", value: METRICS.pending, color: "#f59e0b" },
@@ -120,67 +120,75 @@ export default function LaboratoryPortal() {
           { label: lang === "en" ? "Specimens" : "العينات", value: METRICS.specimens_collected, color: "#14b8a6" },
           { label: lang === "en" ? "QC Failures" : "إخفاقات الجودة", value: METRICS.qc_failures, color: METRICS.qc_failures > 0 ? "#ef4444" : "#22c55e" },
         ].map(m => (
-          <div key={m.label} className="glass-card" style={{ textAlign: "center", padding: "1rem" }}>
-            <p style={{ fontSize: "1.75rem", fontWeight: 700, color: m.color }}>{m.value}</p>
-            <p style={{ fontSize: "0.7rem", color: "var(--color-text-muted)", marginTop: "0.2rem" }}>{m.label}</p>
+          <div key={m.label} className="cy-card p-4 text-center">
+            <p className="text-2xl font-bold" style={{ color: m.color }}>{m.value}</p>
+            <p className="mt-1 text-xs text-ink/50">{m.label}</p>
           </div>
         ))}
       </div>
 
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
-        <h2 style={{ fontSize: "1.1rem", fontWeight: 600 }}>{lang === "en" ? "Active Lab Orders" : "طلبات المختبر النشطة"}</h2>
-        <div style={{ display: "flex", gap: "0.25rem" }}>
+      <div className="mb-4 flex items-center justify-between">
+        <h2 className="text-lg font-bold">{lang === "en" ? "Active Lab Orders" : "طلبات المختبر النشطة"}</h2>
+        <div className="flex gap-1">
           {(["all", "stat", "urgent", "routine"] as const).map(f => (
-            <button key={f} onClick={() => setPriorityFilter(f)} style={{ padding: "0.3rem 0.75rem", borderRadius: "4px", border: "1px solid var(--color-border)", cursor: "pointer", fontSize: "0.8rem", background: priorityFilter === f ? priorityColor(f === "all" ? "routine" : f) : "var(--color-surface)", color: priorityFilter === f ? "#fff" : "var(--color-text)" }}>
+            <button
+              key={f}
+              onClick={() => setPriorityFilter(f)}
+              className="rounded-md px-3 py-1.5 text-xs font-semibold"
+              style={{
+                background: priorityFilter === f ? priorityColor(f === "all" ? "routine" : f) : "var(--color-surface)",
+                color: priorityFilter === f ? "#fff" : "var(--color-text)",
+              }}
+            >
               {f === "all" ? (lang === "en" ? "All" : "الكل") : f.toUpperCase()}
             </button>
           ))}
         </div>
       </div>
 
-      <div className="glass-card" style={{ overflowX: "auto", padding: 0 }}>
-        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+      <div className="cy-card overflow-auto p-0">
+        <table className="w-full min-w-[900px] border-collapse">
           <thead>
-            <tr style={{ background: "var(--color-surface-elevated)", borderBottom: "2px solid var(--color-border)" }}>
+            <tr className="border-b border-ink/10">
               {["Order #", "Patient", "Test/Panel", "Priority", "Status", "TAT Progress", "Actions"].map(h => (
-                <th key={h} style={{ padding: "0.75rem 1rem", textAlign: "left", fontSize: "0.75rem", fontWeight: 600, color: "var(--color-text-muted)", textTransform: "uppercase" }}>{h}</th>
+                <th key={h} className="px-4 py-3.5 text-left text-xs font-semibold text-ink/50">{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
-            {filtered.map((order, i) => (
-              <tr key={order.id} style={{ borderBottom: "1px solid var(--color-border)", background: i % 2 === 0 ? "transparent" : "var(--color-surface)" }}>
-                <td style={{ padding: "0.75rem 1rem", fontSize: "0.8rem", fontFamily: "monospace", color: "var(--color-primary)" }}>{order.order_number}</td>
-                <td style={{ padding: "0.75rem 1rem" }}>
-                  <div style={{ fontWeight: 500, fontSize: "0.875rem" }}>{lang === "ar" ? order.patient_name_ar : order.patient_name}</div>
-                  <div style={{ fontSize: "0.75rem", color: "var(--color-text-muted)" }}>{order.mrn}</div>
+            {filtered.map(order => (
+              <tr key={order.id} className="border-b border-ink/5">
+                <td className="px-4 py-3.5 font-mono text-xs text-brand-400">{order.order_number}</td>
+                <td className="px-4 py-3.5">
+                  <div className="text-sm font-medium">{lang === "ar" ? order.patient_name_ar : order.patient_name}</div>
+                  <div className="text-xs text-ink/50">{order.mrn}</div>
                 </td>
-                <td style={{ padding: "0.75rem 1rem" }}>
-                  <div style={{ fontSize: "0.875rem" }}>{order.panel_name}</div>
-                  <div style={{ fontSize: "0.75rem", color: "var(--color-text-muted)" }}>{order.ordered_by}</div>
+                <td className="px-4 py-3.5">
+                  <div className="text-sm">{order.panel_name}</div>
+                  <div className="text-xs text-ink/50">{order.ordered_by}</div>
                 </td>
-                <td style={{ padding: "0.75rem 1rem" }}>
-                  <span style={{ padding: "0.2rem 0.6rem", borderRadius: "12px", fontSize: "0.75rem", fontWeight: 700, background: priorityColor(order.priority) + "22", color: priorityColor(order.priority), border: `1px solid ${priorityColor(order.priority)}` }}>
+                <td className="px-4 py-3.5">
+                  <span className="rounded-full px-2.5 py-1 text-xs font-bold" style={{ background: priorityColor(order.priority) + "22", color: priorityColor(order.priority), border: `1px solid ${priorityColor(order.priority)}` }}>
                     {order.priority.toUpperCase()}
                   </span>
                 </td>
-                <td style={{ padding: "0.75rem 1rem" }}>
-                  <span style={{ padding: "0.2rem 0.6rem", borderRadius: "12px", fontSize: "0.75rem", fontWeight: 600, background: statusColor(order.status) + "22", color: statusColor(order.status) }}>
+                <td className="px-4 py-3.5">
+                  <span className="rounded-full px-2.5 py-1 text-xs font-semibold" style={{ background: statusColor(order.status) + "22", color: statusColor(order.status) }}>
                     {order.status}
                   </span>
                 </td>
-                <td style={{ padding: "0.75rem 1rem", minWidth: "140px" }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                    <div style={{ flex: 1, height: "6px", background: "var(--color-border)", borderRadius: "3px" }}>
-                      <div style={{ width: `${Math.min(100, (order.tat_elapsed_hours / order.tat_target_hours) * 100)}%`, height: "100%", background: tatColor(order.tat_elapsed_hours, order.tat_target_hours), borderRadius: "3px" }} />
+                <td className="min-w-[140px] px-4 py-3.5">
+                  <div className="flex items-center gap-2">
+                    <div className="h-1.5 flex-1 rounded-full bg-ink/10">
+                      <div className="h-full rounded-full" style={{ width: `${Math.min(100, (order.tat_elapsed_hours / order.tat_target_hours) * 100)}%`, background: tatColor(order.tat_elapsed_hours, order.tat_target_hours) }} />
                     </div>
-                    <span style={{ fontSize: "0.7rem", color: tatColor(order.tat_elapsed_hours, order.tat_target_hours), minWidth: "50px" }}>
+                    <span className="min-w-[50px] text-xs" style={{ color: tatColor(order.tat_elapsed_hours, order.tat_target_hours) }}>
                       {order.tat_elapsed_hours}h/{order.tat_target_hours}h
                     </span>
                   </div>
                 </td>
-                <td style={{ padding: "0.75rem 1rem" }}>
-                  <button style={{ padding: "0.2rem 0.6rem", fontSize: "0.75rem", borderRadius: "4px", background: "var(--color-primary)", color: "#fff", border: "none", cursor: "pointer" }}>
+                <td className="px-4 py-3.5">
+                  <button className="cy-btn cy-btn-primary !min-h-0 !py-1 !px-2.5 text-xs">
                     {lang === "en" ? "View" : "عرض"}
                   </button>
                 </td>

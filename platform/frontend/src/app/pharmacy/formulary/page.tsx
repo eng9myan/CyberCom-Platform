@@ -117,93 +117,93 @@ export default function FormularyPage() {
   const dir = lang === "ar" ? "rtl" : "ltr";
 
   if (!isAuthenticated) {
-    return (
-      <div style={{ padding: "4rem", textAlign: "center" }}>
-        <h1 style={{ fontSize: "1.25rem", fontWeight: 700 }}>Sign in required</h1>
-      </div>
-    );
+    return <div className="mx-auto mt-16 max-w-lg text-center"><h1 className="text-xl font-bold">Sign in required</h1></div>;
   }
 
   return (
-    <div style={{ padding: "2rem", maxWidth: "1400px", margin: "0 auto", direction: dir }}>
+    <div className="mx-auto max-w-6xl" style={{ direction: dir }}>
       {fetchError && (
-        <div style={{ background: "#fee2e2", border: "1px solid #fca5a5", color: "#b91c1c", padding: "0.9rem 1rem", borderRadius: "8px", marginBottom: "1.5rem", fontSize: "0.88rem" }}>
+        <div className="mb-6 rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-400">
           {fetchError}
         </div>
       )}
       {/* Header */}
-      <header style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "2rem" }}>
+      <header className="mb-8 flex items-start justify-between">
         <div>
-          <h1 style={{ fontSize: "1.875rem", fontWeight: 700, color: "#22D3EE", margin: 0 }}>
+          <h1 className="font-heading text-2xl font-bold text-brand-400">
             {lang === "en" ? "Hospital Formulary" : "دليل الأدوية المعتمدة"}
           </h1>
-          <p style={{ color: "var(--color-text-muted)", fontSize: "0.9rem", marginTop: "0.35rem" }}>
+          <p className="mt-1.5 text-sm text-ink/50">
             {lang === "en" ? "Approved drug list — formulary, non-formulary and restricted items" : "قائمة الأدوية المعتمدة — المدرجة وغير المدرجة والمقيّدة"}
           </p>
         </div>
-        <div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
-          <button onClick={() => setLang(l => l === "en" ? "ar" : "en")} style={{ padding: "0.45rem 0.9rem", borderRadius: "8px", border: "1px solid var(--color-border)", cursor: "pointer", background: "var(--color-surface)", color: "var(--color-text)", fontSize: "0.85rem" }}>
+        <div className="flex items-center gap-3">
+          <button onClick={() => setLang(l => l === "en" ? "ar" : "en")} className="cy-btn cy-btn-ghost !min-h-0 !py-2 !px-4 text-sm">
             {lang === "en" ? "العربية" : "English"}
           </button>
         </div>
       </header>
 
       {/* Navigation */}
-      <nav style={{ display: "flex", gap: "0.6rem", marginBottom: "2rem", flexWrap: "wrap" }}>
+      <nav className="mb-8 flex flex-wrap gap-2.5">
         {[
           { href: "/pharmacy", label: lang === "en" ? "← Pharmacy Home" : "← الصيدلية" },
           { href: "/pharmacy/prescriptions", label: lang === "en" ? "Prescriptions" : "الوصفات" },
           { href: "/pharmacy/dispensing", label: lang === "en" ? "Dispensing" : "طابور الصرف" },
           { href: "/pharmacy/inventory", label: lang === "en" ? "Inventory" : "المخزون" },
         ].map(item => (
-          <a key={item.href} href={item.href} style={{ padding: "0.5rem 1rem", borderRadius: "6px", background: "var(--color-surface)", border: "1px solid var(--color-border)", color: "var(--color-text)", textDecoration: "none", fontSize: "0.82rem", fontWeight: 600 }}>
+          <a key={item.href} href={item.href} className="rounded-md border border-ink/10 bg-surface px-4 py-2 text-xs font-semibold hover:bg-ink/5">
             {item.label}
           </a>
         ))}
       </nav>
 
       {/* Stats */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: "1rem", marginBottom: "2rem" }}>
+      <div className="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-4">
         {[
           { label: lang === "en" ? "Total Drugs" : "إجمالي الأدوية", value: (drugs || []).length, color: "#22D3EE" },
           { label: lang === "en" ? "Formulary" : "مدرجة", value: (drugs || []).filter(d => d.status === "formulary").length, color: "#22c55e" },
           { label: lang === "en" ? "Non-Formulary" : "غير مدرجة", value: (drugs || []).filter(d => d.status === "non-formulary").length, color: "#ef4444" },
           { label: lang === "en" ? "Restricted" : "مقيّدة", value: (drugs || []).filter(d => d.status === "restricted").length, color: "#f59e0b" },
         ].map(m => (
-          <div key={m.label} style={{ background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: "10px", padding: "1.25rem", textAlign: "center" }}>
-            <p style={{ fontSize: "2rem", fontWeight: 700, color: m.color, margin: 0 }}>{m.value}</p>
-            <p style={{ fontSize: "0.8rem", color: "var(--color-text-muted)", marginTop: "0.3rem" }}>{m.label}</p>
+          <div key={m.label} className="cy-card p-5 text-center">
+            <p className="text-2xl font-bold" style={{ color: m.color }}>{m.value}</p>
+            <p className="mt-1 text-xs text-ink/50">{m.label}</p>
           </div>
         ))}
       </div>
 
       {/* Filters */}
-      <div style={{ display: "flex", gap: "1rem", marginBottom: "1.5rem", flexWrap: "wrap", alignItems: "center" }}>
+      <div className="mb-6 flex flex-wrap items-center gap-4">
         <input
           type="text"
           value={search}
           onChange={e => setSearch(e.target.value)}
           placeholder={lang === "en" ? "Search by drug name or class…" : "ابحث باسم الدواء أو الفئة الدوائية…"}
-          style={{ padding: "0.5rem 0.9rem", borderRadius: "8px", border: "1px solid var(--color-border)", background: "var(--color-background)", color: "var(--color-text)", fontSize: "0.85rem", minWidth: "240px", flex: 1 }}
+          className="min-w-[240px] flex-1 rounded-lg border border-ink/10 bg-surface px-3.5 py-2.5 text-sm text-ink"
         />
-        <div style={{ display: "flex", gap: "0.4rem" }}>
+        <div className="flex gap-1.5">
           {(["all", "formulary", "non-formulary", "restricted"] as StatusFilter[]).map(f => (
-            <button key={f} onClick={() => setStatusFilter(f)} style={{ padding: "0.4rem 0.8rem", borderRadius: "5px", border: "1px solid var(--color-border)", cursor: "pointer", fontSize: "0.78rem", fontWeight: 600, background: statusFilter === f ? "#22D3EE" : "var(--color-surface)", color: statusFilter === f ? "#000" : "var(--color-text)" }}>
+            <button
+              key={f}
+              onClick={() => setStatusFilter(f)}
+              className={`rounded-md px-3 py-1.5 text-xs font-semibold border ${statusFilter === f ? "border-brand-400 bg-brand-500 text-white" : "border-ink/10 bg-surface text-ink"}`}
+            >
               {f === "all" ? (lang === "en" ? "All" : "الكل") : (lang === "en" ? statusStyle[f]?.label.en : statusStyle[f]?.label.ar)}
             </button>
           ))}
         </div>
-        <select value={classFilter} onChange={e => setClassFilter(e.target.value)} style={{ padding: "0.4rem 0.75rem", borderRadius: "6px", border: "1px solid var(--color-border)", background: "var(--color-surface)", color: "var(--color-text)", fontSize: "0.82rem" }}>
+        <select value={classFilter} onChange={e => setClassFilter(e.target.value)} className="rounded-lg border border-ink/10 bg-surface px-3 py-2 text-sm text-ink">
           {drugClasses.map(c => <option key={c} value={c}>{c === "all" ? (lang === "en" ? "All Drug Classes" : "جميع الفئات") : c}</option>)}
         </select>
-        {loading && <span style={{ fontSize: "0.8rem", color: "var(--color-text-muted)" }}>{lang === "en" ? "Loading…" : "جارٍ التحميل…"}</span>}
+        {loading && <span className="text-sm text-ink/50">{lang === "en" ? "Loading…" : "جارٍ التحميل…"}</span>}
       </div>
 
       {/* Table */}
-      <div style={{ background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: "12px", overflow: "auto" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse", minWidth: "900px" }}>
+      <div className="cy-card overflow-hidden p-0">
+        <table className="w-full min-w-[900px] border-collapse">
           <thead>
-            <tr style={{ borderBottom: "2px solid var(--color-border)" }}>
+            <tr className="bg-brand-500/5">
               {[
                 lang === "en" ? "Generic Name" : "الاسم العلمي",
                 lang === "en" ? "Brand Name" : "الاسم التجاري",
@@ -213,32 +213,32 @@ export default function FormularyPage() {
                 lang === "en" ? "Status" : "الحالة",
                 lang === "en" ? "Notes / Alternative" : "ملاحظات / البديل",
               ].map(h => (
-                <th key={h} style={{ padding: "0.9rem 1rem", textAlign: lang === "ar" ? "right" : "left", fontSize: "0.75rem", fontWeight: 700, color: "var(--color-text-muted)", textTransform: "uppercase", letterSpacing: "0.04em" }}>{h}</th>
+                <th key={h} className={`px-4 py-3 text-[13px] font-semibold text-ink/50 ${lang === "ar" ? "text-right" : "text-left"}`}>{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
-            {filtered.map((drug, i) => (
-              <tr key={drug.id} style={{ borderBottom: "1px solid var(--color-border)", background: i % 2 === 0 ? "transparent" : "rgb(var(--color-ink-rgb) / 0.02)" }}>
-                <td style={{ padding: "0.85rem 1rem", fontWeight: 700, fontSize: "0.88rem" }}>{drug.genericName}</td>
-                <td style={{ padding: "0.85rem 1rem", fontSize: "0.85rem", color: "var(--color-text-muted)" }}>{drug.brandName}</td>
-                <td style={{ padding: "0.85rem 1rem", fontSize: "0.8rem" }}>{drug.drugClass}</td>
-                <td style={{ padding: "0.85rem 1rem", fontSize: "0.8rem", color: "var(--color-text-muted)" }}>{drug.dosageForm}</td>
-                <td style={{ padding: "0.85rem 1rem", fontSize: "0.8rem", color: "var(--color-text-muted)" }}>{drug.strength}</td>
-                <td style={{ padding: "0.85rem 1rem" }}>
-                  <span style={{ padding: "0.25rem 0.65rem", borderRadius: "20px", fontSize: "0.72rem", fontWeight: 700, background: statusStyle[drug.status]?.bg, color: statusStyle[drug.status]?.color }}>
+            {filtered.map(drug => (
+              <tr key={drug.id}>
+                <td className="border-b border-ink/10 px-4 py-3 text-sm font-bold">{drug.genericName}</td>
+                <td className="border-b border-ink/10 px-4 py-3 text-sm text-ink/50">{drug.brandName}</td>
+                <td className="border-b border-ink/10 px-4 py-3 text-sm">{drug.drugClass}</td>
+                <td className="border-b border-ink/10 px-4 py-3 text-sm text-ink/50">{drug.dosageForm}</td>
+                <td className="border-b border-ink/10 px-4 py-3 text-sm text-ink/50">{drug.strength}</td>
+                <td className="border-b border-ink/10 px-4 py-3">
+                  <span className="rounded-full px-2.5 py-1 text-xs font-bold" style={{ background: statusStyle[drug.status]?.bg, color: statusStyle[drug.status]?.color }}>
                     {lang === "en" ? statusStyle[drug.status]?.label.en : statusStyle[drug.status]?.label.ar}
                   </span>
                 </td>
-                <td style={{ padding: "0.85rem 1rem", fontSize: "0.8rem" }}>
+                <td className="border-b border-ink/10 px-4 py-3 text-sm">
                   {drug.restrictionNotes && (
-                    <div style={{ color: "#f59e0b", marginBottom: drug.preferredAlternative ? "0.3rem" : 0 }}>{drug.restrictionNotes}</div>
+                    <div className="text-amber-500" style={{ marginBottom: drug.preferredAlternative ? "0.3rem" : 0 }}>{drug.restrictionNotes}</div>
                   )}
                   {drug.preferredAlternative && (
-                    <div style={{ color: "#22c55e", fontWeight: 600 }}>{lang === "en" ? "Alt: " : "البديل: "}{drug.preferredAlternative}</div>
+                    <div className="font-semibold text-emerald-500">{lang === "en" ? "Alt: " : "البديل: "}{drug.preferredAlternative}</div>
                   )}
                   {!drug.restrictionNotes && !drug.preferredAlternative && (
-                    <span style={{ color: "var(--color-text-muted)" }}>—</span>
+                    <span className="text-ink/40">—</span>
                   )}
                 </td>
               </tr>
@@ -246,12 +246,12 @@ export default function FormularyPage() {
           </tbody>
         </table>
         {filtered.length === 0 && (
-          <div style={{ padding: "3rem", textAlign: "center", color: "var(--color-text-muted)" }}>
+          <div className="p-12 text-center text-sm text-ink/50">
             {lang === "en" ? "No drugs match your search." : "لا توجد أدوية تطابق بحثك."}
           </div>
         )}
       </div>
-      <p style={{ marginTop: "0.75rem", fontSize: "0.78rem", color: "var(--color-text-muted)" }}>
+      <p className="mt-3 text-xs text-ink/50">
         {lang === "en" ? `Showing ${filtered.length} of ${(drugs || []).length} formulary items` : `عرض ${filtered.length} من ${(drugs || []).length} دواء`}
       </p>
     </div>

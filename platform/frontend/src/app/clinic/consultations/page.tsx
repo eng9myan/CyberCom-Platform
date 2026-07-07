@@ -345,84 +345,80 @@ export default function ConsultationsPage() {
     { key: "plan",        label_en: "Plan (P)",        label_ar: "خطة (P)",       hint_en: "Treatment plan, orders, follow-up", hint_ar: "خطة العلاج والطلبات والمتابعة" },
   ];
 
+  const inputCls = "w-full rounded-lg border border-ink/10 bg-surface px-3.5 py-2.5 text-sm text-ink";
+  const labelCls = "mb-1 block text-[13px] font-bold text-brand-400";
+
   return (
-    <div dir={dir} style={{ padding: "2rem", maxWidth: "1400px", margin: "0 auto", fontFamily: "system-ui, sans-serif", color: "var(--color-text)", background: "var(--color-background)", minHeight: "100vh" }}>
+    <div dir={dir} className="mx-auto max-w-6xl">
 
       {/* Header */}
-      <header style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "2rem", flexWrap: "wrap", gap: "1rem" }}>
+      <header className="mb-8 flex flex-wrap items-start justify-between gap-4">
         <div>
-          <a href="/clinic" style={{ color: "var(--color-text-muted)", textDecoration: "none", fontSize: "0.875rem" }}>
+          <a href="/clinic" className="text-sm text-ink/50 hover:text-ink">
             {lang === "en" ? "← Clinic" : "العيادة ←"}
           </a>
-          <h1 style={{ fontSize: "1.875rem", fontWeight: 700, color: "#22D3EE", margin: "0.25rem 0 0" }}>
+          <h1 className="mt-1 font-heading text-3xl font-bold">
             {lang === "en" ? "Consultations & EMR" : "الاستشارات والسجلات الطبية"}
           </h1>
-          <p style={{ color: "var(--color-text-muted)", marginTop: "0.25rem", fontSize: "0.95rem" }}>
+          <p className="mt-1 text-sm text-ink/50">
             {lang === "en" ? "Active consultations, SOAP documentation, and clinical orders" : "الاستشارات النشطة وتوثيق SOAP والطلبات السريرية"}
           </p>
         </div>
-        <div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
-          {loading && <span style={{ fontSize: "0.875rem", color: "var(--color-text-muted)" }}>{lang === "en" ? "Syncing..." : "جارٍ التزامن..."}</span>}
-          <button
-            onClick={() => setLang(l => l === "en" ? "ar" : "en")}
-            style={{ padding: "0.5rem 1.1rem", borderRadius: "8px", border: "1px solid var(--color-border)", background: "var(--color-surface)", color: "var(--color-text)", cursor: "pointer", fontWeight: 600, fontSize: "0.875rem" }}
-          >
+        <div className="flex items-center gap-3">
+          {loading && <span className="text-sm text-ink/50">{lang === "en" ? "Syncing..." : "جارٍ التزامن..."}</span>}
+          <button onClick={() => setLang(l => l === "en" ? "ar" : "en")} className="cy-btn cy-btn-ghost !min-h-0 !py-2 !px-4 text-sm">
             {lang === "en" ? "العربية" : "English"}
           </button>
         </div>
       </header>
 
       {/* Sibling nav */}
-      <nav style={{ display: "flex", gap: "0.625rem", marginBottom: "2rem", flexWrap: "wrap" }}>
+      <nav className="mb-8 flex flex-wrap gap-2.5">
         {[
           { href: "/clinic/appointments",  label: lang === "en" ? "Appointments"  : "المواعيد" },
           { href: "/clinic/reception",     label: lang === "en" ? "Reception"     : "الاستقبال" },
           { href: "/clinic/triage",        label: lang === "en" ? "Triage"        : "الفرز" },
           { href: "/clinic/telemedicine",  label: lang === "en" ? "Telemedicine"  : "التطبيب عن بُعد" },
         ].map(n => (
-          <a key={n.href} href={n.href} style={{ padding: "0.5rem 1rem", borderRadius: "6px", background: "var(--color-surface)", border: "1px solid var(--color-border)", color: "var(--color-text)", textDecoration: "none", fontSize: "0.8rem", fontWeight: 600 }}>
+          <a key={n.href} href={n.href} className="rounded-md border border-ink/10 bg-surface px-4 py-2 text-xs font-semibold hover:bg-ink/5">
             {n.label}
           </a>
         ))}
       </nav>
 
       {/* Summary metrics */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: "1rem", marginBottom: "2rem" }}>
+      <div className="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-4">
         {[
           { label: lang === "en" ? "Active"          : "نشطة",              value: consultations.filter(c => c.status === "active").length,         color: "#3b82f6" },
           { label: lang === "en" ? "Pending Review"  : "بانتظار المراجعة", value: consultations.filter(c => c.status === "pending_review").length,  color: "#f59e0b" },
           { label: lang === "en" ? "Completed"       : "مكتملة",            value: consultations.filter(c => c.status === "completed").length,       color: "#22c55e" },
           { label: lang === "en" ? "Total Today"     : "إجمالي اليوم",      value: consultations.length,                                             color: "#22D3EE" },
         ].map(m => (
-          <div key={m.label} style={{ background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: "10px", padding: "1.25rem", textAlign: "center" }}>
-            <p style={{ fontSize: "2rem", fontWeight: 700, color: m.color, margin: 0 }}>{m.value}</p>
-            <p style={{ fontSize: "0.78rem", color: "var(--color-text-muted)", marginTop: "0.35rem", fontWeight: 500 }}>{m.label}</p>
+          <div key={m.label} className="cy-card p-5 text-center">
+            <p className="text-3xl font-bold" style={{ color: m.color }}>{m.value}</p>
+            <p className="mt-1 text-xs font-medium text-ink/50">{m.label}</p>
           </div>
         ))}
       </div>
 
       {/* Main layout */}
-      <div style={{ display: "grid", gridTemplateColumns: "300px 1fr", gap: "1.5rem", alignItems: "start" }}>
+      <div className="grid grid-cols-[300px_1fr] items-start gap-6">
 
         {/* LEFT — consultation list */}
         <div>
-          <div style={{ display: "flex", gap: "0.4rem", marginBottom: "0.75rem", flexWrap: "wrap" }}>
+          <div className="mb-3 flex flex-wrap gap-1.5">
             {(["all", "active", "pending_review", "completed"] as const).map(f => (
               <button
                 key={f}
                 onClick={() => setFilterStatus(f)}
-                style={{
-                  padding: "0.3rem 0.6rem", borderRadius: "5px", border: "1px solid var(--color-border)", cursor: "pointer", fontSize: "0.72rem", fontWeight: 600,
-                  background: filterStatus === f ? "#22D3EE" : "var(--color-surface)",
-                  color: filterStatus === f ? "#0a0a0a" : "var(--color-text)",
-                }}
+                className={`rounded px-2.5 py-1.5 text-xs font-semibold border ${filterStatus === f ? "border-brand-400 bg-brand-500 text-white" : "border-ink/10 bg-surface text-ink hover:bg-ink/5"}`}
               >
                 {f === "all" ? (lang === "en" ? "All" : "الكل") : statusLabel(f, lang)}
               </button>
             ))}
           </div>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: "0.625rem" }}>
+          <div className="flex flex-col gap-2.5">
             {filtered.map(c => {
               const ss = statusStyle(c.status);
               const isSelected = c.id === selectedId;
@@ -430,23 +426,20 @@ export default function ConsultationsPage() {
                 <div
                   key={c.id}
                   onClick={() => handleSelectConsultation(c)}
-                  style={{
-                    background: "var(--color-surface)", border: isSelected ? "2px solid #22D3EE" : "1px solid var(--color-border)", borderRadius: "10px",
-                    padding: "0.875rem 1rem", cursor: "pointer", boxShadow: isSelected ? "0 0 0 3px rgba(34,211,238,0.12)" : "none",
-                  }}
+                  className={`cursor-pointer rounded-xl border p-3.5 ${isSelected ? "border-2 border-brand-400 shadow-[0_0_0_3px_rgba(237,108,0,0.12)]" : "border-ink/10 bg-surface"}`}
                 >
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "0.25rem" }}>
-                    <span style={{ fontWeight: 700, fontSize: "0.875rem", color: "var(--color-text)" }}>
+                  <div className="mb-1 flex items-start justify-between">
+                    <span className="text-sm font-bold">
                       {lang === "ar" ? c.patient_name_ar : c.patient_name}
                     </span>
-                    <span style={{ padding: "0.2rem 0.5rem", borderRadius: "12px", fontSize: "0.65rem", fontWeight: 700, background: ss.bg, color: ss.text, whiteSpace: "nowrap", marginLeft: "0.5rem" }}>
+                    <span className="ml-2 whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-bold" style={{ background: ss.bg, color: ss.text }}>
                       {statusLabel(c.status, lang)}
                     </span>
                   </div>
-                  <div style={{ fontSize: "0.75rem", color: "var(--color-text-muted)", marginBottom: "0.25rem" }}>{c.mrn}</div>
-                  <div style={{ fontSize: "0.78rem", color: "var(--color-text)", marginBottom: "0.25rem" }}>{lang === "ar" ? c.specialty_ar : c.specialty}</div>
-                  <div style={{ fontSize: "0.75rem", color: "var(--color-text-muted)" }}>{c.provider} · {lang === "en" ? "Started" : "بدأ"} {c.start_time}</div>
-                  <div style={{ marginTop: "0.5rem", fontSize: "0.75rem", color: "var(--color-text-muted)", fontStyle: "italic", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  <div className="mb-1 text-xs text-ink/50">{c.mrn}</div>
+                  <div className="mb-1 text-[13px]">{lang === "ar" ? c.specialty_ar : c.specialty}</div>
+                  <div className="text-xs text-ink/50">{c.provider} · {lang === "en" ? "Started" : "بدأ"} {c.start_time}</div>
+                  <div className="mt-2 overflow-hidden text-ellipsis whitespace-nowrap text-xs italic text-ink/50">
                     {lang === "ar" ? c.chief_complaint_ar : c.chief_complaint}
                   </div>
                 </div>
@@ -456,48 +449,43 @@ export default function ConsultationsPage() {
         </div>
 
         {/* RIGHT — EMR detail panel */}
-        {!selected ? <div style={{ padding: "2rem", color: "var(--color-text-muted)" }}>No consultation selected.</div> : <div style={{ background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: "12px", overflow: "hidden" }}>
+        {!selected ? <div className="p-8 text-ink/50">No consultation selected.</div> : <div className="cy-card overflow-hidden p-0">
 
           {/* Patient header */}
-          <div style={{ padding: "1.25rem 1.5rem", borderBottom: "1px solid var(--color-border)", background: "var(--color-surface)" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "0.75rem" }}>
+          <div className="border-b border-ink/10 p-6">
+            <div className="flex flex-wrap items-start justify-between gap-3">
               <div>
-                <h2 style={{ margin: 0, fontSize: "1.2rem", fontWeight: 700, color: "var(--color-text)" }}>
+                <h2 className="text-xl font-bold">
                   {lang === "ar" ? selected.patient_name_ar : selected.patient_name}
                 </h2>
-                <div style={{ display: "flex", gap: "1rem", marginTop: "0.35rem", flexWrap: "wrap", fontSize: "0.8rem", color: "var(--color-text-muted)" }}>
+                <div className="mt-1.5 flex flex-wrap gap-4 text-sm text-ink/50">
                   <span>{selected.mrn}</span>
                   <span>{selected.gender}</span>
                   <span>DOB: {selected.dob}</span>
-                  <span style={{ color: selected.allergies === "None known" ? "var(--color-text-muted)" : "#ef4444", fontWeight: selected.allergies === "None known" ? 400 : 700 }}>
+                  <span className={selected.allergies === "None known" ? "text-ink/50" : "font-bold text-red-400"}>
                     {lang === "en" ? "Allergies:" : "الحساسية:"} {selected.allergies}
                   </span>
                 </div>
               </div>
-              <div style={{ textAlign: "right" }}>
-                <div style={{ fontSize: "0.8rem", color: "var(--color-text-muted)" }}>{selected.provider}</div>
-                <div style={{ fontSize: "0.8rem", color: "var(--color-text-muted)" }}>{lang === "ar" ? selected.specialty_ar : selected.specialty}</div>
-                <div style={{ fontSize: "0.78rem", color: "#22D3EE", fontWeight: 700 }}>{lang === "en" ? "Started" : "بدأ"}: {selected.start_time}</div>
+              <div className="text-right">
+                <div className="text-sm text-ink/50">{selected.provider}</div>
+                <div className="text-sm text-ink/50">{lang === "ar" ? selected.specialty_ar : selected.specialty}</div>
+                <div className="text-[13px] font-bold text-brand-400">{lang === "en" ? "Started" : "بدأ"}: {selected.start_time}</div>
               </div>
             </div>
-            <div style={{ marginTop: "0.75rem", padding: "0.6rem 0.875rem", background: "var(--color-background)", borderRadius: "7px", fontSize: "0.85rem", color: "var(--color-text)", fontStyle: "italic", border: "1px solid var(--color-border)" }}>
-              <span style={{ fontWeight: 700, color: "var(--color-text-muted)", marginRight: "0.5rem" }}>{lang === "en" ? "Chief complaint:" : "الشكوى:"}</span>
+            <div className="mt-3 rounded-lg border border-ink/10 bg-surface-overlay px-3.5 py-2.5 text-sm italic">
+              <span className="mr-2 font-bold text-ink/50">{lang === "en" ? "Chief complaint:" : "الشكوى:"}</span>
               {lang === "ar" ? selected.chief_complaint_ar : selected.chief_complaint}
             </div>
           </div>
 
           {/* Tabs */}
-          <div style={{ display: "flex", borderBottom: "1px solid var(--color-border)" }}>
+          <div className="flex border-b border-ink/10">
             {(["soap", "diagnosis", "orders"] as const).map(tab => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
-                style={{
-                  flex: 1, padding: "0.875rem", border: "none", background: activeTab === tab ? "var(--color-background)" : "transparent",
-                  borderBottom: activeTab === tab ? "2px solid #22D3EE" : "2px solid transparent",
-                  color: activeTab === tab ? "#22D3EE" : "var(--color-text-muted)", cursor: "pointer", fontWeight: 700, fontSize: "0.875rem",
-                  marginBottom: activeTab === tab ? "-1px" : 0,
-                }}
+                className={`-mb-px flex-1 border-b-2 p-3.5 text-sm font-bold ${activeTab === tab ? "border-brand-400 bg-surface-overlay text-brand-400" : "border-transparent text-ink/50 hover:text-ink"}`}
               >
                 {tab === "soap"      ? (lang === "en" ? "SOAP Note"  : "ملاحظة SOAP") :
                  tab === "diagnosis" ? (lang === "en" ? "Diagnosis"  : "التشخيص") :
@@ -507,9 +495,9 @@ export default function ConsultationsPage() {
           </div>
 
           {/* Tab content */}
-          <div style={{ padding: "1.5rem" }}>
+          <div className="p-6">
             {saveMsg && (
-              <div style={{ marginBottom: "1rem", padding: "0.65rem 1rem", borderRadius: "7px", background: "#d1fae5", color: "#065f46", fontWeight: 600, fontSize: "0.85rem" }}>
+              <div className="mb-4 rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-4 py-2.5 text-sm font-semibold text-emerald-400">
                 {saveMsg}
               </div>
             )}
@@ -518,25 +506,22 @@ export default function ConsultationsPage() {
             {activeTab === "soap" && (
               <div>
                 {soapFields.map(field => (
-                  <div key={field.key} style={{ marginBottom: "1.25rem" }}>
-                    <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 700, color: "#22D3EE", marginBottom: "0.25rem" }}>
+                  <div key={field.key} className="mb-5">
+                    <label className={labelCls}>
                       {lang === "en" ? field.label_en : field.label_ar}
                     </label>
-                    <p style={{ fontSize: "0.72rem", color: "var(--color-text-muted)", margin: "0 0 0.35rem", fontStyle: "italic" }}>
+                    <p className="mb-1.5 text-xs italic text-ink/50">
                       {lang === "en" ? field.hint_en : field.hint_ar}
                     </p>
                     <textarea
                       value={soapEdit[field.key]}
                       onChange={e => setSoapEdit(prev => ({ ...prev, [field.key]: e.target.value }))}
                       rows={field.key === "plan" ? 5 : 4}
-                      style={{ width: "100%", boxSizing: "border-box", padding: "0.6rem 0.875rem", borderRadius: "7px", border: "1px solid var(--color-border)", background: "var(--color-background)", color: "var(--color-text)", fontSize: "0.875rem", resize: "vertical", lineHeight: 1.6 }}
+                      className={`${inputCls} resize-y leading-relaxed`}
                     />
                   </div>
                 ))}
-                <button
-                  onClick={() => { void handleSaveSOAP(); }}
-                  style={{ padding: "0.65rem 1.75rem", borderRadius: "8px", background: "#22D3EE", color: "#0a0a0a", border: "none", cursor: "pointer", fontWeight: 700, fontSize: "0.95rem" }}
-                >
+                <button onClick={() => { void handleSaveSOAP(); }} className="cy-btn cy-btn-primary">
                   {lang === "en" ? "Save SOAP Note" : "حفظ ملاحظة SOAP"}
                 </button>
               </div>
@@ -545,8 +530,8 @@ export default function ConsultationsPage() {
             {/* Diagnosis tab */}
             {activeTab === "diagnosis" && (
               <div>
-                <div style={{ marginBottom: "1.25rem" }}>
-                  <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 700, color: "#22D3EE", marginBottom: "0.35rem" }}>
+                <div className="mb-5">
+                  <label className={labelCls}>
                     {lang === "en" ? "ICD-11 Code" : "رمز ICD-11"}
                   </label>
                   <input
@@ -554,22 +539,22 @@ export default function ConsultationsPage() {
                     value={diagnosisEdit.code}
                     onChange={e => setDiagnosisEdit(prev => ({ ...prev, code: e.target.value }))}
                     placeholder="e.g. E11.65"
-                    style={{ width: "100%", boxSizing: "border-box", padding: "0.6rem 0.875rem", borderRadius: "7px", border: "1px solid var(--color-border)", background: "var(--color-background)", color: "var(--color-text)", fontSize: "0.95rem", fontFamily: "monospace", fontWeight: 700 }}
+                    className={`${inputCls} font-mono font-bold`}
                   />
                 </div>
-                <div style={{ marginBottom: "1.25rem" }}>
-                  <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 700, color: "#22D3EE", marginBottom: "0.35rem" }}>
+                <div className="mb-5">
+                  <label className={labelCls}>
                     {lang === "en" ? "Diagnosis Description (EN)" : "وصف التشخيص (إنجليزي)"}
                   </label>
                   <textarea
                     value={diagnosisEdit.description}
                     onChange={e => setDiagnosisEdit(prev => ({ ...prev, description: e.target.value }))}
                     rows={3}
-                    style={{ width: "100%", boxSizing: "border-box", padding: "0.6rem 0.875rem", borderRadius: "7px", border: "1px solid var(--color-border)", background: "var(--color-background)", color: "var(--color-text)", fontSize: "0.875rem", resize: "vertical" }}
+                    className={`${inputCls} resize-y`}
                   />
                 </div>
-                <div style={{ marginBottom: "1.5rem" }}>
-                  <label style={{ display: "block", fontSize: "0.8rem", fontWeight: 700, color: "#22D3EE", marginBottom: "0.35rem" }}>
+                <div className="mb-6">
+                  <label className={labelCls}>
                     {lang === "en" ? "Diagnosis Description (AR)" : "وصف التشخيص (عربي)"}
                   </label>
                   <textarea
@@ -577,13 +562,10 @@ export default function ConsultationsPage() {
                     onChange={e => setDiagnosisEdit(prev => ({ ...prev, description_ar: e.target.value }))}
                     dir="rtl"
                     rows={3}
-                    style={{ width: "100%", boxSizing: "border-box", padding: "0.6rem 0.875rem", borderRadius: "7px", border: "1px solid var(--color-border)", background: "var(--color-background)", color: "var(--color-text)", fontSize: "0.875rem", resize: "vertical" }}
+                    className={`${inputCls} resize-y`}
                   />
                 </div>
-                <button
-                  onClick={() => { void handleSaveDiagnosis(); }}
-                  style={{ padding: "0.65rem 1.75rem", borderRadius: "8px", background: "#22D3EE", color: "#0a0a0a", border: "none", cursor: "pointer", fontWeight: 700, fontSize: "0.95rem" }}
-                >
+                <button onClick={() => { void handleSaveDiagnosis(); }} className="cy-btn cy-btn-primary">
                   {lang === "en" ? "Save Diagnosis" : "حفظ التشخيص"}
                 </button>
               </div>
@@ -594,34 +576,34 @@ export default function ConsultationsPage() {
               <div>
                 {/* Existing orders */}
                 {selected.orders.length > 0 ? (
-                  <div style={{ marginBottom: "1.5rem" }}>
-                    <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                  <div className="mb-6 overflow-auto">
+                    <table className="w-full border-collapse">
                       <thead>
-                        <tr style={{ borderBottom: "2px solid var(--color-border)" }}>
+                        <tr className="border-b border-ink/10">
                           {[
                             lang === "en" ? "Type"        : "النوع",
                             lang === "en" ? "Description" : "الوصف",
                             lang === "en" ? "Status"      : "الحالة",
                           ].map(h => (
-                            <th key={h} style={{ padding: "0.625rem 0.875rem", textAlign: lang === "ar" ? "right" : "left", fontSize: "0.75rem", fontWeight: 700, color: "var(--color-text-muted)", textTransform: "uppercase" }}>{h}</th>
+                            <th key={h} className={`px-3.5 py-2.5 text-xs font-bold uppercase text-ink/50 ${lang === "ar" ? "text-right" : "text-left"}`}>{h}</th>
                           ))}
                         </tr>
                       </thead>
                       <tbody>
-                        {selected.orders.map((ord, i) => (
-                          <tr key={ord.id} style={{ borderBottom: "1px solid var(--color-border)", background: i % 2 === 0 ? "transparent" : "rgb(var(--color-ink-rgb) / 0.02)" }}>
-                            <td style={{ padding: "0.625rem 0.875rem" }}>
-                              <span style={{ fontSize: "0.875rem", whiteSpace: "nowrap" }}>
+                        {selected.orders.map(ord => (
+                          <tr key={ord.id} className="border-b border-ink/5">
+                            <td className="px-3.5 py-2.5">
+                              <span className="whitespace-nowrap text-sm">
                                 {orderTypeIcon(ord.type)}&nbsp;
-                                <span style={{ fontSize: "0.78rem", fontWeight: 700, color: "var(--color-text-muted)" }}>{orderTypeLabel(ord.type, lang)}</span>
+                                <span className="text-[13px] font-bold text-ink/50">{orderTypeLabel(ord.type, lang)}</span>
                               </span>
                             </td>
-                            <td style={{ padding: "0.625rem 0.875rem", fontSize: "0.875rem", color: "var(--color-text)" }}>
+                            <td className="px-3.5 py-2.5 text-sm">
                               {lang === "ar" ? ord.description_ar : ord.description}
                             </td>
-                            <td style={{ padding: "0.625rem 0.875rem" }}>
-                              <span style={{ width: "10px", height: "10px", borderRadius: "50%", background: orderStatusColor(ord.status), display: "inline-block", marginRight: "0.4rem" }} />
-                              <span style={{ fontSize: "0.78rem", fontWeight: 600, color: orderStatusColor(ord.status) }}>
+                            <td className="px-3.5 py-2.5">
+                              <span className="mr-1.5 inline-block h-2.5 w-2.5 rounded-full" style={{ background: orderStatusColor(ord.status) }} />
+                              <span className="text-[13px] font-semibold" style={{ color: orderStatusColor(ord.status) }}>
                                 {ord.status.charAt(0).toUpperCase() + ord.status.slice(1)}
                               </span>
                             </td>
@@ -631,21 +613,21 @@ export default function ConsultationsPage() {
                     </table>
                   </div>
                 ) : (
-                  <p style={{ color: "var(--color-text-muted)", fontSize: "0.875rem", marginBottom: "1.5rem" }}>
+                  <p className="mb-6 text-sm text-ink/50">
                     {lang === "en" ? "No orders placed yet for this consultation." : "لا توجد طلبات حتى الآن لهذه الاستشارة."}
                   </p>
                 )}
 
                 {/* Add new order */}
-                <div style={{ background: "var(--color-background)", border: "1px solid var(--color-border)", borderRadius: "10px", padding: "1.25rem" }}>
-                  <h3 style={{ fontSize: "0.9rem", fontWeight: 700, margin: "0 0 1rem", color: "#22D3EE" }}>
+                <div className="cy-card p-5">
+                  <h3 className="mb-4 text-sm font-bold text-brand-400">
                     {lang === "en" ? "Add New Order" : "إضافة طلب جديد"}
                   </h3>
-                  <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
+                  <div className="flex flex-wrap gap-3">
                     <select
                       value={newOrderType}
                       onChange={e => setNewOrderType(e.target.value as Order["type"])}
-                      style={{ padding: "0.5rem 0.75rem", borderRadius: "7px", border: "1px solid var(--color-border)", background: "var(--color-surface)", color: "var(--color-text)", fontSize: "0.875rem", minWidth: "120px" }}
+                      className="min-w-[120px] rounded-lg border border-ink/10 bg-surface px-3 py-2 text-sm text-ink"
                     >
                       {(["lab", "imaging", "medication", "referral"] as const).map(t => (
                         <option key={t} value={t}>{orderTypeLabel(t, lang)}</option>
@@ -656,12 +638,9 @@ export default function ConsultationsPage() {
                       value={newOrderDesc}
                       onChange={e => setNewOrderDesc(e.target.value)}
                       placeholder={lang === "en" ? "Order description..." : "وصف الطلب..."}
-                      style={{ flex: 1, padding: "0.5rem 0.75rem", borderRadius: "7px", border: "1px solid var(--color-border)", background: "var(--color-surface)", color: "var(--color-text)", fontSize: "0.875rem", minWidth: "180px" }}
+                      className="min-w-[180px] flex-1 rounded-lg border border-ink/10 bg-surface px-3 py-2 text-sm text-ink"
                     />
-                    <button
-                      onClick={handleAddOrder}
-                      style={{ padding: "0.5rem 1.25rem", borderRadius: "7px", background: "#22D3EE", color: "#0a0a0a", border: "none", cursor: "pointer", fontWeight: 700, fontSize: "0.875rem", whiteSpace: "nowrap" }}
-                    >
+                    <button onClick={handleAddOrder} className="cy-btn cy-btn-primary !min-h-0 whitespace-nowrap !py-2 !px-5 text-sm">
                       {lang === "en" ? "Add Order" : "إضافة طلب"}
                     </button>
                   </div>
@@ -672,7 +651,7 @@ export default function ConsultationsPage() {
         </div>}
       </div>
 
-      <div style={{ marginTop: "1.5rem", fontSize: "0.75rem", color: "var(--color-text-muted)", textAlign: "center" }}>
+      <div className="mt-6 text-center text-xs text-ink/50">
         CyMed Clinic · {lang === "en" ? "Consultations & EMR" : "الاستشارات والسجلات الطبية"} · {new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
       </div>
     </div>

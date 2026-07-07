@@ -99,67 +99,68 @@ export default function PatientPortal() {
     }
   };
 
+  const isAr = lang === "ar";
+  const inputCls = "w-full rounded-lg border border-ink/10 bg-surface px-3.5 py-2.5 text-sm text-ink";
+
   return (
-    <div className="dashboard-container" style={{ padding: "2rem", maxWidth: "1200px", margin: "0 auto", direction: lang === "ar" ? "rtl" : "ltr" }}>
-      <header className="dashboard-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "2rem" }}>
+    <div className="mx-auto max-w-6xl" style={{ direction: isAr ? "rtl" : "ltr" }}>
+      <header className="mb-8 flex items-center justify-between">
         <div>
-          <h1 style={{ fontSize: "2rem", fontWeight: 700, color: "var(--color-primary)" }}>
+          <h1 className="font-heading text-2xl font-bold">
             {lang === "en" ? "MyCyMed Patient Portal" : "بوابة المريض ماي سايمد"}
           </h1>
-          <p style={{ color: "var(--color-text-muted)", fontSize: "1rem", marginTop: "0.25rem" }}>
+          <p className="mt-1 text-sm text-ink/50">
             {lang === "en" ? "Manage Appointments, Secure Messages, Medical Records & Payments" : "إدارة المواعيد، الرسائل الآمنة، السجلات الطبية والمدفوعات"}
           </p>
         </div>
-        <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
-          <button onClick={() => setLang(l => l === "en" ? "ar" : "en")} style={{ padding: "0.5rem 1rem", borderRadius: "8px", border: "1px solid var(--color-border)", cursor: "pointer", background: "var(--color-surface)", color: "var(--color-text)", fontSize: "0.875rem", fontWeight: 500 }}>
-            {lang === "en" ? "العربية" : "English"}
-          </button>
-        </div>
+        <button onClick={() => setLang(l => l === "en" ? "ar" : "en")} className="cy-btn cy-btn-ghost !min-h-0 !py-2 !px-4 text-sm">
+          {lang === "en" ? "العربية" : "English"}
+        </button>
       </header>
 
       {/* Main Layout */}
-      <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: "2rem" }}>
-        
+      <div className="grid grid-cols-[2fr_1fr] gap-6">
+
         {/* Left Side: Medical Record & Messaging */}
-        <div style={{ display: "flex", flexDirection: "column", gap: "2rem" }}>
-          
+        <div className="flex flex-col gap-6">
+
           {/* Medical Records Summary */}
-          <div style={{ background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: "16px", padding: "2rem" }}>
-            <h2 style={{ fontSize: "1.25rem", fontWeight: 600, color: "var(--color-text)", marginBottom: "1.5rem" }}>
+          <div className="cy-card p-6">
+            <h2 className="mb-6 text-lg font-bold">
               {lang === "en" ? "My Medical Summary" : "ملخصي الطبي الشخصي"}
             </h2>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.5rem" }}>
+            <div className="grid grid-cols-2 gap-6">
               <div>
-                <h3 style={{ fontSize: "0.95rem", fontWeight: 600, color: "var(--color-text-muted)", marginBottom: "0.5rem" }}>
+                <h3 className="mb-2 text-sm font-semibold text-ink/50">
                   {lang === "en" ? "Allergies" : "الحساسية"}
                 </h3>
-                <ul style={{ paddingLeft: "1.25rem", margin: 0 }}>
+                <ul className="m-0 list-disc pl-5">
                   {summary.allergies.map((item, idx) => (
-                    <li key={idx} style={{ color: "#ef4444", fontWeight: 500 }}>{item}</li>
+                    <li key={idx} className="font-medium text-red-400">{item}</li>
                   ))}
                 </ul>
               </div>
               <div>
-                <h3 style={{ fontSize: "0.95rem", fontWeight: 600, color: "var(--color-text-muted)", marginBottom: "0.5rem" }}>
+                <h3 className="mb-2 text-sm font-semibold text-ink/50">
                   {lang === "en" ? "Chronic Conditions" : "الأمراض المزمنة"}
                 </h3>
-                <ul style={{ paddingLeft: "1.25rem", margin: 0 }}>
+                <ul className="m-0 list-disc pl-5">
                   {summary.conditions.map((item, idx) => (
-                    <li key={idx} style={{ fontWeight: 500 }}>{item}</li>
+                    <li key={idx} className="font-medium">{item}</li>
                   ))}
                 </ul>
               </div>
             </div>
-            
-            <div style={{ marginTop: "1.5rem" }}>
-              <h3 style={{ fontSize: "0.95rem", fontWeight: 600, color: "var(--color-text-muted)", marginBottom: "0.5rem" }}>
+
+            <div className="mt-6">
+              <h3 className="mb-2 text-sm font-semibold text-ink/50">
                 {lang === "en" ? "Active Medications" : "الأدوية النشطة الحالية"}
               </h3>
-              <div style={{ display: "grid", gap: "0.75rem" }}>
+              <div className="grid gap-3">
                 {summary.medications.map((item, idx) => (
-                  <div key={idx} style={{ borderBottom: "1px solid var(--color-border)", paddingBottom: "0.5rem" }}>
-                    <div style={{ fontWeight: 600 }}>{item.name}</div>
-                    <div style={{ fontSize: "0.8125rem", color: "var(--color-text-muted)" }}>{item.dosage} — {item.prescriber}</div>
+                  <div key={idx} className="border-b border-ink/10 pb-2">
+                    <div className="font-semibold">{item.name}</div>
+                    <div className="text-[13px] text-ink/50">{item.dosage} — {item.prescriber}</div>
                   </div>
                 ))}
               </div>
@@ -167,31 +168,31 @@ export default function PatientPortal() {
           </div>
 
           {/* Secure Messaging Form */}
-          <div style={{ background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: "16px", padding: "2rem" }}>
-            <h2 style={{ fontSize: "1.25rem", fontWeight: 600, color: "var(--color-text)", marginBottom: "1.5rem" }}>
+          <div className="cy-card p-6">
+            <h2 className="mb-6 text-lg font-bold">
               {lang === "en" ? "Secure Message to Care Team" : "رسالة آمنة إلى فريق الرعاية"}
             </h2>
             {success && (
-              <div style={{ background: "#d1fae5", border: "1px solid #34d399", color: "#065f46", padding: "1rem", borderRadius: "8px", marginBottom: "1.5rem" }}>
+              <div className="mb-6 rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-5 py-3.5 text-sm font-semibold text-emerald-400">
                 {lang === "en" ? "Message sent securely to your primary care physician." : "تم إرسال الرسالة بشكل آمن لطبيب الرعاية الأولية."}
               </div>
             )}
-            <form onSubmit={(e) => { void handleSendMessage(e); }} style={{ display: "grid", gap: "1rem" }}>
+            <form onSubmit={(e) => { void handleSendMessage(e); }} className="grid gap-4">
               <input
                 type="text"
                 placeholder={lang === "en" ? "Subject" : "الموضوع"}
                 value={subject}
                 onChange={(e) => setSubject(e.target.value)}
-                style={{ padding: "0.75rem", borderRadius: "8px", border: "1px solid var(--color-border)", background: "var(--color-background)", color: "var(--color-text)" }}
+                className={inputCls}
               />
               <textarea
                 placeholder={lang === "en" ? "Describe your symptoms or question..." : "اكتب هنا الأعراض أو استفسارك الطبي..."}
                 value={message}
                 onChange={(e) => setMessage(e.target.value)}
                 rows={4}
-                style={{ padding: "0.75rem", borderRadius: "8px", border: "1px solid var(--color-border)", background: "var(--color-background)", color: "var(--color-text)" }}
+                className={`${inputCls} resize-y`}
               />
-              <button type="submit" style={{ padding: "0.75rem 1.5rem", background: "var(--color-primary)", color: "white", borderRadius: "8px", border: "none", fontWeight: 600, cursor: "pointer" }}>
+              <button type="submit" className="cy-btn cy-btn-primary">
                 {lang === "en" ? "Send Message" : "إرسال الرسالة الآمنة"}
               </button>
             </form>
@@ -199,26 +200,26 @@ export default function PatientPortal() {
         </div>
 
         {/* Right Side: Outstanding Invoices */}
-        <div style={{ background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: "16px", padding: "2rem" }}>
-          <h2 style={{ fontSize: "1.25rem", fontWeight: 600, color: "var(--color-text)", marginBottom: "1.5rem" }}>
+        <div className="cy-card p-6">
+          <h2 className="mb-6 text-lg font-bold">
             {lang === "en" ? "Outstanding Balance" : "المدفوعات المستحقة"}
           </h2>
           {invoices.length === 0 ? (
-            <div style={{ color: "#22c55e", fontWeight: 600, textAlign: "center", padding: "2rem 0" }}>
+            <div className="py-8 text-center font-semibold text-emerald-400">
               {lang === "en" ? "No outstanding balances due." : "لا توجد أي مبالغ مستحقة الدفع."}
             </div>
           ) : (
-            <div style={{ display: "grid", gap: "1.5rem" }}>
+            <div className="grid gap-6">
               {invoices.map((inv) => (
-                <div key={inv.invoice_id} style={{ border: "1px solid var(--color-border)", borderRadius: "12px", padding: "1.25rem", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 600 }}>
+                <div key={inv.invoice_id} className="flex flex-col gap-2 rounded-xl border border-ink/10 p-5">
+                  <div className="flex justify-between font-semibold">
                     <span>{inv.invoice_number}</span>
-                    <span style={{ color: "#ef4444" }}>SAR {inv.amount_due.toFixed(2)}</span>
+                    <span className="text-red-400">SAR {inv.amount_due.toFixed(2)}</span>
                   </div>
-                  <div style={{ fontSize: "0.8125rem", color: "var(--color-text-muted)" }}>
+                  <div className="text-[13px] text-ink/50">
                     {lang === "en" ? `Due by ${inv.due_date}` : `مستحق السداد بحلول ${inv.due_date}`}
                   </div>
-                  <button onClick={() => { void handlePayInvoice(inv.invoice_id); }} style={{ marginTop: "0.5rem", padding: "0.5rem", background: "#22c55e", color: "white", border: "none", borderRadius: "6px", fontWeight: 600, cursor: "pointer" }}>
+                  <button onClick={() => { void handlePayInvoice(inv.invoice_id); }} className="cy-btn mt-2 bg-emerald-500 text-white">
                     {lang === "en" ? "Pay Now" : "سدد الآن"}
                   </button>
                 </div>

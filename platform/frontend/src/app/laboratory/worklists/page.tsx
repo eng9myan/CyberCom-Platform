@@ -102,33 +102,31 @@ export default function WorklistsPage() {
   const t = (en: string, ar: string) => lang === "en" ? en : ar;
 
   if (!isAuthenticated) {
-    return (
-      <div style={{ padding: "4rem", textAlign: "center" }}>
-        <h1 style={{ fontSize: "1.25rem", fontWeight: 700 }}>Sign in required</h1>
-      </div>
-    );
+    return <div className="mx-auto mt-16 max-w-lg text-center"><h1 className="text-xl font-bold">Sign in required</h1></div>;
   }
 
   const totalItems = (worklists || []).reduce((sum, w) => sum + (w.items || []).length, 0);
   const pendingItems = (worklists || []).reduce((sum, w) => sum + (w.items || []).filter(i => i.status === "pending").length, 0);
   const inProgressItems = (worklists || []).reduce((sum, w) => sum + (w.items || []).filter(i => i.status === "in_progress").length, 0);
 
+  const dir = lang === "ar" ? "rtl" : "ltr";
+
   return (
-    <div style={{ padding: "2rem", maxWidth: "1400px", margin: "0 auto", direction: lang === "ar" ? "rtl" : "ltr", background: "var(--color-background)", minHeight: "100vh", color: "var(--color-text)" }}>
-      <header style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "1.5rem" }}>
+    <div dir={dir} className="mx-auto max-w-6xl">
+      <header className="mb-6 flex items-start justify-between">
         <div>
-          <a href="/laboratory" style={{ color: "#22D3EE", textDecoration: "none", fontSize: "0.875rem" }}>{t("← Laboratory", "← المختبر")}</a>
-          <h1 style={{ fontSize: "1.75rem", fontWeight: 700, color: "#22D3EE" }}>{t("Worklists", "قوائم العمل")}</h1>
-          <p style={{ color: "var(--color-text-muted)", fontSize: "0.875rem", marginTop: "0.25rem" }}>
+          <a href="/laboratory" className="text-sm text-brand-400">{t("← Laboratory", "← المختبر")}</a>
+          <h1 className="font-heading text-2xl font-bold text-brand-400">{t("Worklists", "قوائم العمل")}</h1>
+          <p className="mt-1 text-sm text-ink/50">
             {t("Real per-department analyzer worklists", "قوائم عمل حقيقية لكل قسم/محلل")}
           </p>
         </div>
-        <button onClick={() => setLang(l => l === "en" ? "ar" : "en")} style={{ padding: "0.4rem 0.8rem", borderRadius: "4px", border: "1px solid var(--color-border)", cursor: "pointer", background: "var(--color-surface)", color: "var(--color-text)", fontSize: "0.8rem" }}>
+        <button onClick={() => setLang(l => l === "en" ? "ar" : "en")} className="cy-btn cy-btn-ghost !min-h-0 !py-2 !px-4 text-sm">
           {lang === "en" ? "العربية" : "English"}
         </button>
       </header>
 
-      <nav style={{ display: "flex", gap: "0.5rem", marginBottom: "1.5rem", flexWrap: "wrap" }}>
+      <nav className="mb-6 flex flex-wrap gap-2">
         {[
           { href: "/laboratory", label: t("Overview", "نظرة عامة") },
           { href: "/laboratory/orders", label: t("Orders", "الطلبات") },
@@ -136,67 +134,71 @@ export default function WorklistsPage() {
           { href: "/laboratory/worklists", label: t("Worklists", "قوائم العمل") },
           { href: "/laboratory/results", label: t("Results", "النتائج") },
         ].map(item => (
-          <a key={item.href} href={item.href} style={{ padding: "0.4rem 1rem", borderRadius: "4px", background: item.href === "/laboratory/worklists" ? "#22D3EE22" : "var(--color-surface)", border: `1px solid ${item.href === "/laboratory/worklists" ? "#22D3EE" : "var(--color-border)"}`, color: item.href === "/laboratory/worklists" ? "#22D3EE" : "var(--color-text)", textDecoration: "none", fontSize: "0.875rem", fontWeight: 500 }}>
+          <a
+            key={item.href}
+            href={item.href}
+            className={`rounded-lg px-4 py-1.5 text-sm font-medium ${item.href === "/laboratory/worklists" ? "border border-brand-400/60 bg-brand-500/15 text-brand-300" : "border border-ink/10 text-ink/70 hover:bg-ink/5"}`}
+          >
             {item.label}
           </a>
         ))}
       </nav>
 
       {fetchError && (
-        <div style={{ background: "#fee2e2", border: "1px solid #fca5a5", color: "#b91c1c", padding: "0.9rem 1rem", borderRadius: "8px", marginBottom: "1.5rem", fontSize: "0.88rem" }}>
+        <div className="mb-6 rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-3.5 text-sm text-red-400">
           {fetchError}
         </div>
       )}
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: "1rem", marginBottom: "1.5rem" }}>
+      <div className="mb-6 grid grid-cols-4 gap-4">
         {[
           { label: t("Worklists", "قوائم العمل"), value: (worklists || []).length, color: "#6366f1" },
           { label: t("Total Items", "إجمالي البنود"), value: totalItems, color: "#3b82f6" },
           { label: t("Pending", "معلقة"), value: pendingItems, color: "#6b7280" },
           { label: t("In Progress", "قيد المعالجة"), value: inProgressItems, color: "#f59e0b" },
         ].map(m => (
-          <div key={m.label} style={{ background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: "10px", padding: "1rem", textAlign: "center" }}>
-            <p style={{ fontSize: "1.75rem", fontWeight: 700, color: m.color }}>{m.value}</p>
-            <p style={{ fontSize: "0.7rem", color: "var(--color-text-muted)", marginTop: "0.2rem" }}>{m.label}</p>
+          <div key={m.label} className="cy-card p-4 text-center">
+            <p className="text-2xl font-bold" style={{ color: m.color }}>{m.value}</p>
+            <p className="mt-1 text-xs text-ink/50">{m.label}</p>
           </div>
         ))}
       </div>
 
-      {loading && <p style={{ color: "var(--color-text-muted)", fontSize: "0.85rem", marginBottom: "1rem" }}>{t("Loading…", "جارٍ التحميل…")}</p>}
+      {loading && <p className="mb-4 text-sm text-ink/50">{t("Loading…", "جارٍ التحميل…")}</p>}
 
       {!loading && (worklists || []).length === 0 && (
-        <div style={{ background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: "10px", padding: "2rem", textAlign: "center", color: "var(--color-text-muted)" }}>
+        <div className="cy-card p-8 text-center text-sm text-ink/40">
           {t("No worklists for this tenant yet.", "لا توجد قوائم عمل لهذا المستأجر بعد.")}
         </div>
       )}
 
-      <div style={{ display: "grid", gap: "1rem" }}>
+      <div className="grid gap-4">
         {(worklists || []).map(wl => (
-          <div key={wl.id} style={{ background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: "10px", padding: "1.25rem" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.75rem" }}>
+          <div key={wl.id} className="cy-card p-5">
+            <div className="mb-3 flex items-center justify-between">
               <div>
-                <p style={{ fontWeight: 700, fontSize: "0.95rem", margin: 0 }}>{wl.name}</p>
-                <p style={{ fontSize: "0.78rem", color: "var(--color-text-muted)", margin: "0.15rem 0 0", textTransform: "capitalize" }}>{wl.department}</p>
+                <p className="text-[0.95rem] font-bold">{wl.name}</p>
+                <p className="mt-0.5 text-xs capitalize text-ink/50">{wl.department}</p>
               </div>
-              <span style={{ padding: "0.2rem 0.6rem", borderRadius: "12px", fontSize: "0.72rem", fontWeight: 700, background: (STATUS_COLORS[wl.status] || "#6b7280") + "22", color: STATUS_COLORS[wl.status] || "#6b7280" }}>
+              <span className="rounded-full px-2.5 py-1 text-xs font-bold" style={{ background: (STATUS_COLORS[wl.status] || "#6b7280") + "22", color: STATUS_COLORS[wl.status] || "#6b7280" }}>
                 {wl.status}
               </span>
             </div>
             {(wl.items || []).length === 0 ? (
-              <p style={{ fontSize: "0.8rem", color: "var(--color-text-muted)" }}>{t("No items queued.", "لا توجد بنود في القائمة.")}</p>
+              <p className="text-sm text-ink/50">{t("No items queued.", "لا توجد بنود في القائمة.")}</p>
             ) : (
-              <div style={{ display: "grid", gap: "0.35rem" }}>
+              <div className="grid gap-1.5">
                 {wl.items.map(item => (
-                  <div key={item.id} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "0.4rem 0.6rem", borderRadius: "6px", background: "var(--color-background)" }}>
-                    <span style={{ fontSize: "0.82rem" }}>
+                  <div key={item.id} className="flex items-center justify-between rounded-md bg-surface-raised px-2.5 py-1.5">
+                    <span className="text-sm">
                       #{item.sequence} — {t("Order Item", "بند الطلب")} {item.order_item.slice(0, 8)}
                     </span>
-                    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                      <span style={{ padding: "0.15rem 0.5rem", borderRadius: "10px", fontSize: "0.7rem", fontWeight: 600, background: (ITEM_STATUS_COLORS[item.status] || "#6b7280") + "22", color: ITEM_STATUS_COLORS[item.status] || "#6b7280" }}>
+                    <div className="flex items-center gap-2">
+                      <span className="rounded-full px-2 py-0.5 text-xs font-semibold" style={{ background: (ITEM_STATUS_COLORS[item.status] || "#6b7280") + "22", color: ITEM_STATUS_COLORS[item.status] || "#6b7280" }}>
                         {item.status}
                       </span>
                       {item.status === "pending" && (
-                        <button disabled={busyId === item.id} onClick={() => updateItemStatus(item.id, "in_progress")} style={{ padding: "0.2rem 0.5rem", fontSize: "0.7rem", borderRadius: "4px", background: "#f59e0b", color: "#fff", border: "none", cursor: "pointer", opacity: busyId === item.id ? 0.5 : 1 }}>
+                        <button disabled={busyId === item.id} onClick={() => updateItemStatus(item.id, "in_progress")} className="rounded-md bg-amber-500 px-2.5 py-1 text-xs font-semibold text-white hover:bg-amber-600 disabled:opacity-50">
                           {t("Start", "بدء")}
                         </button>
                       )}

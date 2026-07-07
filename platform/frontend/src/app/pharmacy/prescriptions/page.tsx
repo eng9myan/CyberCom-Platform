@@ -152,9 +152,9 @@ export default function PrescriptionsPage() {
 
   if (!isAuthenticated) {
     return (
-      <div style={{ padding: "4rem", textAlign: "center" }}>
-        <h1 style={{ fontSize: "1.25rem", fontWeight: 700 }}>Sign in required</h1>
-        <p style={{ color: "var(--color-text-muted)", marginTop: "0.5rem" }}>
+      <div className="mx-auto mt-16 max-w-lg text-center">
+        <h1 className="text-xl font-bold">Sign in required</h1>
+        <p className="mt-1 text-sm text-ink/50">
           The prescription queue requires an authenticated session.
         </p>
       </div>
@@ -172,41 +172,41 @@ export default function PrescriptionsPage() {
   };
 
   return (
-    <div style={{ padding: "2rem", maxWidth: "1400px", margin: "0 auto", direction: dir }}>
-      <header style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "2rem" }}>
+    <div className="mx-auto max-w-6xl" style={{ direction: dir }}>
+      <header className="mb-8 flex items-start justify-between">
         <div>
-          <h1 style={{ fontSize: "1.875rem", fontWeight: 700, color: "#22D3EE", margin: 0 }}>
+          <h1 className="font-heading text-2xl font-bold text-brand-400">
             {lang === "en" ? "Medication Order Queue" : "طابور طلبات الأدوية"}
           </h1>
-          <p style={{ color: "var(--color-text-muted)", fontSize: "0.9rem", marginTop: "0.35rem" }}>
+          <p className="mt-1.5 text-sm text-ink/50">
             {lang === "en" ? "Real inpatient medication orders (CPOE-fed) — review, verify, and manage" : "طلبات الأدوية الحقيقية للمرضى الداخليين — مراجعة والتحقق والإدارة"}
           </p>
         </div>
-        <button onClick={() => setLang(l => l === "en" ? "ar" : "en")} style={{ padding: "0.45rem 0.9rem", borderRadius: "8px", border: "1px solid var(--color-border)", cursor: "pointer", background: "var(--color-surface)", color: "var(--color-text)", fontSize: "0.85rem" }}>
+        <button onClick={() => setLang(l => l === "en" ? "ar" : "en")} className="cy-btn cy-btn-ghost !min-h-0 !py-2 !px-4 text-sm">
           {lang === "en" ? "العربية" : "English"}
         </button>
       </header>
 
-      <nav style={{ display: "flex", gap: "0.6rem", marginBottom: "2rem", flexWrap: "wrap" }}>
+      <nav className="mb-8 flex flex-wrap gap-2.5">
         {[
           { href: "/pharmacy", label: lang === "en" ? "← Pharmacy Home" : "← الصيدلية" },
           { href: "/pharmacy/dispensing", label: lang === "en" ? "Dispensing Queue" : "طابور الصرف" },
           { href: "/pharmacy/formulary", label: lang === "en" ? "Formulary" : "دليل الأدوية" },
           { href: "/pharmacy/inventory", label: lang === "en" ? "Inventory" : "المخزون" },
         ].map(item => (
-          <a key={item.href} href={item.href} style={{ padding: "0.5rem 1rem", borderRadius: "6px", background: "var(--color-surface)", border: "1px solid var(--color-border)", color: "var(--color-text)", textDecoration: "none", fontSize: "0.82rem", fontWeight: 600 }}>
+          <a key={item.href} href={item.href} className="rounded-md border border-ink/10 bg-surface px-4 py-2 text-xs font-semibold hover:bg-ink/5">
             {item.label}
           </a>
         ))}
       </nav>
 
       {fetchError && (
-        <div style={{ background: "#fee2e2", border: "1px solid #fca5a5", color: "#b91c1c", padding: "0.9rem 1rem", borderRadius: "8px", marginBottom: "1.5rem", fontSize: "0.88rem" }}>
+        <div className="mb-6 rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-400">
           {fetchError}
         </div>
       )}
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: "1rem", marginBottom: "2rem" }}>
+      <div className="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
         {[
           { label: lang === "en" ? "Total" : "الإجمالي", value: statusCounts.total, color: "#22D3EE" },
           { label: lang === "en" ? "New" : "جديد", value: statusCounts.pending_verification, color: "#3b82f6" },
@@ -215,32 +215,36 @@ export default function PrescriptionsPage() {
           { label: lang === "en" ? "On Hold" : "معلقة", value: statusCounts.on_hold, color: "#ef4444" },
           { label: lang === "en" ? "Patients w/ Interaction Alerts" : "مرضى بتنبيهات تفاعل", value: statusCounts.alerts, color: "#f97316" },
         ].map(m => (
-          <div key={m.label} style={{ background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: "10px", padding: "1.25rem", textAlign: "center" }}>
-            <p style={{ fontSize: "2rem", fontWeight: 700, color: m.color, margin: 0 }}>{m.value}</p>
-            <p style={{ fontSize: "0.78rem", color: "var(--color-text-muted)", marginTop: "0.3rem" }}>{m.label}</p>
+          <div key={m.label} className="cy-card p-5 text-center">
+            <p className="text-2xl font-bold" style={{ color: m.color }}>{m.value}</p>
+            <p className="mt-1 text-xs text-ink/50">{m.label}</p>
           </div>
         ))}
       </div>
 
-      <div style={{ display: "flex", gap: "0.4rem", marginBottom: "1.5rem", flexWrap: "wrap" }}>
+      <div className="mb-6 flex flex-wrap gap-1.5">
         {["all", "pending_verification", "verified", "active", "on_hold", "completed", "cancelled"].map(f => (
-          <button key={f} onClick={() => setStatusFilter(f)} style={{ padding: "0.35rem 0.75rem", borderRadius: "5px", border: "1px solid var(--color-border)", cursor: "pointer", fontSize: "0.78rem", fontWeight: 600, background: statusFilter === f ? "#22D3EE" : "var(--color-surface)", color: statusFilter === f ? "#000" : "var(--color-text)" }}>
+          <button
+            key={f}
+            onClick={() => setStatusFilter(f)}
+            className={`rounded-md px-3 py-1.5 text-xs font-semibold border ${statusFilter === f ? "border-brand-400 bg-brand-500 text-white" : "border-ink/10 bg-surface text-ink"}`}
+          >
             {f === "all" ? (lang === "en" ? "All" : "الكل") : STATUS_LABELS[f]}
           </button>
         ))}
-        {loading && <span style={{ fontSize: "0.8rem", color: "var(--color-text-muted)", alignSelf: "center" }}>{lang === "en" ? "Loading…" : "جارٍ التحميل…"}</span>}
+        {loading && <span className="self-center text-sm text-ink/50">{lang === "en" ? "Loading…" : "جارٍ التحميل…"}</span>}
       </div>
 
       {actionMsg && (
-        <div style={{ background: "#d1fae5", border: "1px solid #34d399", color: "#065f46", padding: "0.75rem 1rem", borderRadius: "8px", marginBottom: "1rem", fontSize: "0.9rem", fontWeight: 600 }}>
+        <div className="mb-4 rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-4 py-3 text-sm font-semibold text-emerald-400">
           {actionMsg}
         </div>
       )}
 
-      <div style={{ background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: "12px", overflow: "auto" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse", minWidth: "1000px" }}>
+      <div className="cy-card overflow-hidden p-0">
+        <table className="w-full min-w-[1000px] border-collapse">
           <thead>
-            <tr style={{ borderBottom: "2px solid var(--color-border)" }}>
+            <tr className="bg-brand-500/5">
               {[
                 lang === "en" ? "Order #" : "رقم الطلب",
                 lang === "en" ? "Patient" : "المريض",
@@ -251,14 +255,14 @@ export default function PrescriptionsPage() {
                 lang === "en" ? "Status" : "الحالة",
                 lang === "en" ? "Actions" : "إجراءات",
               ].map(h => (
-                <th key={h} style={{ padding: "0.9rem 1rem", textAlign: lang === "ar" ? "right" : "left", fontSize: "0.78rem", fontWeight: 700, color: "var(--color-text-muted)", textTransform: "uppercase", letterSpacing: "0.04em" }}>{h}</th>
+                <th key={h} className={`px-4 py-3 text-[13px] font-semibold text-ink/50 ${lang === "ar" ? "text-right" : "text-left"}`}>{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {!loading && filtered.length === 0 && (
               <tr>
-                <td colSpan={8} style={{ padding: "3rem", textAlign: "center", color: "var(--color-text-muted)" }}>
+                <td colSpan={8} className="px-4 py-12 text-center text-sm text-ink/50">
                   {lang === "en" ? "No medication orders for this tenant yet." : "لا توجد طلبات أدوية لهذا المستأجر بعد."}
                 </td>
               </tr>
@@ -269,45 +273,45 @@ export default function PrescriptionsPage() {
               const alerts = interactionsByPatient[o.patient_id];
               return (
                 <>
-                  <tr key={o.id} style={{ borderBottom: "1px solid var(--color-border)" }}>
-                    <td style={{ padding: "0.85rem 1rem", fontFamily: "monospace", fontSize: "0.8rem", color: "var(--color-text-muted)" }}>{o.order_number}</td>
-                    <td style={{ padding: "0.85rem 1rem", fontWeight: 600, fontSize: "0.88rem" }}>
-                      {patientLabel}{patient?.mrn && <span style={{ marginLeft: "0.4rem", fontSize: "0.75rem", color: "var(--color-text-muted)" }}>({patient.mrn})</span>}
+                  <tr key={o.id}>
+                    <td className="border-b border-ink/10 px-4 py-3 font-mono text-xs text-ink/50">{o.order_number}</td>
+                    <td className="border-b border-ink/10 px-4 py-3 text-sm font-semibold">
+                      {patientLabel}{patient?.mrn && <span className="ml-1.5 text-xs text-ink/50">({patient.mrn})</span>}
                     </td>
-                    <td style={{ padding: "0.85rem 1rem", fontSize: "0.88rem", fontWeight: 500 }}>{o.drug_name}</td>
-                    <td style={{ padding: "0.85rem 1rem", fontSize: "0.8rem", color: "var(--color-text-muted)" }}>{o.dose} {o.dose_unit} · {o.frequency}</td>
-                    <td style={{ padding: "0.85rem 1rem", fontSize: "0.8rem" }}>{o.is_controlled ? `⚠ ${o.dea_schedule}` : "—"}</td>
-                    <td style={{ padding: "0.85rem 1rem", fontSize: "0.8rem", color: "var(--color-text-muted)" }}>
+                    <td className="border-b border-ink/10 px-4 py-3 text-sm font-medium">{o.drug_name}</td>
+                    <td className="border-b border-ink/10 px-4 py-3 text-sm text-ink/50">{o.dose} {o.dose_unit} · {o.frequency}</td>
+                    <td className="border-b border-ink/10 px-4 py-3 text-sm">{o.is_controlled ? `⚠ ${o.dea_schedule}` : "—"}</td>
+                    <td className="border-b border-ink/10 px-4 py-3 text-sm text-ink/50">
                       {o.created_at ? new Date(o.created_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "—"}
                     </td>
-                    <td style={{ padding: "0.85rem 1rem" }}>
-                      <span style={{ padding: "0.25rem 0.6rem", borderRadius: "20px", fontSize: "0.72rem", fontWeight: 700, background: STATUS_COLORS[o.status]?.bg || "#f3f4f6", color: STATUS_COLORS[o.status]?.color || "#374151" }}>
+                    <td className="border-b border-ink/10 px-4 py-3">
+                      <span className="rounded-full px-2.5 py-1 text-xs font-bold" style={{ background: STATUS_COLORS[o.status]?.bg || "#f3f4f6", color: STATUS_COLORS[o.status]?.color || "#374151" }}>
                         {STATUS_LABELS[o.status] || o.status}
                       </span>
                     </td>
-                    <td style={{ padding: "0.85rem 1rem" }}>
+                    <td className="border-b border-ink/10 px-4 py-3">
                       {o.status === "pending_verification" ? (
-                        <div style={{ display: "flex", gap: "0.4rem" }}>
-                          <button disabled={busyId === o.id} onClick={() => handleAction(o.id, "verified")} style={{ padding: "0.3rem 0.65rem", fontSize: "0.75rem", fontWeight: 700, borderRadius: "5px", background: "#22c55e", color: "#fff", border: "none", cursor: "pointer", opacity: busyId === o.id ? 0.5 : 1 }}>
+                        <div className="flex gap-1.5">
+                          <button disabled={busyId === o.id} onClick={() => handleAction(o.id, "verified")} className="cy-btn bg-emerald-500 text-white disabled:opacity-50 !min-h-0 !py-1.5 !px-3 text-xs">
                             {lang === "en" ? "Verify" : "تحقق"}
                           </button>
-                          <button disabled={busyId === o.id} onClick={() => handleAction(o.id, "on_hold")} style={{ padding: "0.3rem 0.65rem", fontSize: "0.75rem", fontWeight: 700, borderRadius: "5px", background: "#f59e0b", color: "#fff", border: "none", cursor: "pointer", opacity: busyId === o.id ? 0.5 : 1 }}>
+                          <button disabled={busyId === o.id} onClick={() => handleAction(o.id, "on_hold")} className="cy-btn bg-amber-500 text-white disabled:opacity-50 !min-h-0 !py-1.5 !px-3 text-xs">
                             {lang === "en" ? "Hold" : "تعليق"}
                           </button>
-                          <button disabled={busyId === o.id} onClick={() => handleAction(o.id, "cancelled")} style={{ padding: "0.3rem 0.65rem", fontSize: "0.75rem", fontWeight: 700, borderRadius: "5px", background: "#ef4444", color: "#fff", border: "none", cursor: "pointer", opacity: busyId === o.id ? 0.5 : 1 }}>
+                          <button disabled={busyId === o.id} onClick={() => handleAction(o.id, "cancelled")} className="cy-btn bg-red-500 text-white disabled:opacity-50 !min-h-0 !py-1.5 !px-3 text-xs">
                             {lang === "en" ? "Reject" : "رفض"}
                           </button>
                         </div>
                       ) : (
-                        <span style={{ fontSize: "0.78rem", color: "var(--color-text-muted)" }}>—</span>
+                        <span className="text-xs text-ink/50">—</span>
                       )}
                     </td>
                   </tr>
                   {alerts && alerts.length > 0 && (
-                    <tr key={`${o.id}-alert`} style={{ background: "#fef2f2", borderBottom: "1px solid var(--color-border)" }}>
-                      <td colSpan={8} style={{ padding: "0.5rem 1rem" }}>
+                    <tr key={`${o.id}-alert`} className="bg-red-500/5">
+                      <td colSpan={8} className="border-b border-ink/10 px-4 py-2">
                         {alerts.map((a, i) => (
-                          <div key={i} style={{ fontSize: "0.8rem", color: "#b91c1c", fontWeight: 600 }}>
+                          <div key={i} className="text-sm font-semibold text-red-400">
                             {lang === "en" ? "⚠ Drug Interaction Alert: " : "⚠ تنبيه تفاعل دوائي: "}
                             {a.drug_a_name}{a.drug_b_name ? ` × ${a.drug_b_name}` : ""} ({a.severity})
                           </div>
@@ -322,7 +326,7 @@ export default function PrescriptionsPage() {
         </table>
       </div>
 
-      <p style={{ marginTop: "1rem", fontSize: "0.78rem", color: "var(--color-text-muted)" }}>
+      <p className="mt-4 text-xs text-ink/50">
         {lang === "en" ? `Showing ${filtered.length} of ${statusCounts.total} orders` : `عرض ${filtered.length} من ${statusCounts.total} طلب`}
       </p>
     </div>

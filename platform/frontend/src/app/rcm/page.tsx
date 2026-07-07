@@ -96,92 +96,85 @@ export default function RCMDashboard() {
   const targetColor = metrics.denial_rate_pct > 10 ? "#ef4444" : metrics.denial_rate_pct > 5 ? "#f59e0b" : "#22c55e";
 
   return (
-    <div className="dashboard-container" style={{ padding: "2rem", maxWidth: "1200px", margin: "0 auto", direction: lang === "ar" ? "rtl" : "ltr" }}>
-      <header className="dashboard-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "2rem" }}>
+    <div style={{ direction: lang === "ar" ? "rtl" : "ltr" }} className="mx-auto max-w-5xl">
+      <header className="mb-8 flex items-center justify-between">
         <div>
-          <h1 style={{ fontSize: "2rem", fontWeight: 700, color: "var(--color-primary)" }}>
+          <h1 className="font-heading text-2xl font-bold">
             {lang === "en" ? "CyMed Revenue Cycle (RCM)" : "دورة الإيرادات سايمد (RCM)"}
           </h1>
-          <p style={{ color: "var(--color-text-muted)", fontSize: "1rem", marginTop: "0.25rem" }}>
+          <p className="mt-1 text-sm text-ink/50">
             {lang === "en" ? "Financial Performance & Accounts Receivable" : "الأداء المالي وحسابات المدينين"}
           </p>
         </div>
-        <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
-          <button onClick={() => setLang(l => l === "en" ? "ar" : "en")} style={{ padding: "0.5rem 1rem", borderRadius: "8px", border: "1px solid var(--color-border)", cursor: "pointer", background: "var(--color-surface)", color: "var(--color-text)", fontSize: "0.875rem", fontWeight: 500 }}>
-            {lang === "en" ? "العربية" : "English"}
-          </button>
-        </div>
+        <button onClick={() => setLang(l => l === "en" ? "ar" : "en")} className="cy-btn cy-btn-ghost !min-h-0 !py-2 !px-4 text-sm">
+          {lang === "en" ? "العربية" : "English"}
+        </button>
       </header>
 
-      {/* KPI Cards */}
-      <section style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "1.5rem", marginBottom: "2.5rem" }}>
-        <div style={{ background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: "12px", padding: "1.5rem" }}>
-          <div style={{ color: "var(--color-text-muted)", fontSize: "0.875rem", fontWeight: 500 }}>{lang === "en" ? "Days in A/R" : "أيام حسابات المدينين"}</div>
-          <div style={{ fontSize: "2rem", fontWeight: 700, color: "var(--color-text)", marginTop: "0.5rem" }}>{metrics.days_in_ar} {lang === "en" ? "days" : "يوم"}</div>
+      <div className="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-4">
+        <div className="cy-card p-5">
+          <div className="text-sm font-medium text-ink/50">{lang === "en" ? "Days in A/R" : "أيام حسابات المدينين"}</div>
+          <div className="mt-2 text-2xl font-bold">{metrics.days_in_ar} {lang === "en" ? "days" : "يوم"}</div>
         </div>
-        <div style={{ background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: "12px", padding: "1.5rem" }}>
-          <div style={{ color: "var(--color-text-muted)", fontSize: "0.875rem", fontWeight: 500 }}>{lang === "en" ? "Clean Claim Rate" : "معدل المطالبات النظيفة"}</div>
-          <div style={{ fontSize: "2rem", fontWeight: 700, color: "var(--color-text)", marginTop: "0.5rem" }}>{metrics.collection_rate_pct}%</div>
+        <div className="cy-card p-5">
+          <div className="text-sm font-medium text-ink/50">{lang === "en" ? "Clean Claim Rate" : "معدل المطالبات النظيفة"}</div>
+          <div className="mt-2 text-2xl font-bold">{metrics.collection_rate_pct}%</div>
         </div>
-        <div style={{ background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: "12px", padding: "1.5rem" }}>
-          <div style={{ color: "var(--color-text-muted)", fontSize: "0.875rem", fontWeight: 500 }}>{lang === "en" ? "Claim Denial Rate" : "معدل رفض المطالبات"}</div>
-          <div style={{ fontSize: "2rem", fontWeight: 700, color: targetColor, marginTop: "0.5rem" }}>{metrics.denial_rate_pct}%</div>
+        <div className="cy-card p-5">
+          <div className="text-sm font-medium text-ink/50">{lang === "en" ? "Claim Denial Rate" : "معدل رفض المطالبات"}</div>
+          <div className="mt-2 text-2xl font-bold" style={{ color: targetColor }}>{metrics.denial_rate_pct}%</div>
         </div>
-        <div style={{ background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: "12px", padding: "1.5rem" }}>
-          <div style={{ color: "var(--color-text-muted)", fontSize: "0.875rem", fontWeight: 500 }}>{lang === "en" ? "Net Collection Rate" : "صافي معدل التحصيل"}</div>
-          <div style={{ fontSize: "2rem", fontWeight: 700, color: "var(--color-text)", marginTop: "0.5rem" }}>{metrics.net_collection_rate_pct}%</div>
+        <div className="cy-card p-5">
+          <div className="text-sm font-medium text-ink/50">{lang === "en" ? "Net Collection Rate" : "صافي معدل التحصيل"}</div>
+          <div className="mt-2 text-2xl font-bold">{metrics.net_collection_rate_pct}%</div>
         </div>
-      </section>
+      </div>
 
-      {/* Main Grid */}
-      <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: "2rem" }}>
-        {/* Financial Summary */}
-        <div style={{ background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: "16px", padding: "2rem" }}>
-          <h2 style={{ fontSize: "1.25rem", fontWeight: 600, color: "var(--color-text)", marginBottom: "1.5rem" }}>
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-[2fr_1fr]">
+        <div className="cy-card p-6">
+          <h2 className="mb-5 text-lg font-bold">
             {lang === "en" ? "Financial Rollup Summary" : "ملخص تسوية الإيرادات والتحصيل"}
           </h2>
-          <div style={{ display: "grid", gap: "1rem" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid var(--color-border)", paddingBottom: "0.75rem" }}>
-              <span style={{ color: "var(--color-text-muted)" }}>{lang === "en" ? "Gross Charges" : "إجمالي الرسوم الباهظة"}</span>
-              <span style={{ fontWeight: 600 }}>SAR {metrics.gross_charges.toLocaleString()}</span>
+          <div className="grid gap-3">
+            <div className="flex justify-between border-b border-ink/10 pb-3">
+              <span className="text-sm text-ink/50">{lang === "en" ? "Gross Charges" : "إجمالي الرسوم الباهظة"}</span>
+              <span className="font-semibold">SAR {metrics.gross_charges.toLocaleString()}</span>
             </div>
-            <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid var(--color-border)", paddingBottom: "0.75rem" }}>
-              <span style={{ color: "var(--color-text-muted)" }}>{lang === "en" ? "Net Expected Revenue" : "صافي الإيرادات المتوقعة"}</span>
-              <span style={{ fontWeight: 600 }}>SAR {metrics.net_revenue.toLocaleString()}</span>
+            <div className="flex justify-between border-b border-ink/10 pb-3">
+              <span className="text-sm text-ink/50">{lang === "en" ? "Net Expected Revenue" : "صافي الإيرادات المتوقعة"}</span>
+              <span className="font-semibold">SAR {metrics.net_revenue.toLocaleString()}</span>
             </div>
-            <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid var(--color-border)", paddingBottom: "0.75rem" }}>
-              <span style={{ color: "var(--color-text-muted)" }}>{lang === "en" ? "Contractual Adjustments" : "التسويات التعاقدية"}</span>
-              <span style={{ fontWeight: 600 }}>SAR {metrics.adjustments.toLocaleString()}</span>
+            <div className="flex justify-between border-b border-ink/10 pb-3">
+              <span className="text-sm text-ink/50">{lang === "en" ? "Contractual Adjustments" : "التسويات التعاقدية"}</span>
+              <span className="font-semibold">SAR {metrics.adjustments.toLocaleString()}</span>
             </div>
-            <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid var(--color-border)", paddingBottom: "0.75rem" }}>
-              <span style={{ color: "var(--color-text-muted)" }}>{lang === "en" ? "Cash Collected" : "النقد المحصل فعلياً"}</span>
-              <span style={{ fontWeight: 600, color: "#22c55e" }}>SAR {totalCollected.toLocaleString()}</span>
+            <div className="flex justify-between border-b border-ink/10 pb-3">
+              <span className="text-sm text-ink/50">{lang === "en" ? "Cash Collected" : "النقد المحصل فعلياً"}</span>
+              <span className="font-semibold text-emerald-400">SAR {totalCollected.toLocaleString()}</span>
             </div>
-            <div style={{ display: "flex", justifyContent: "space-between", paddingBottom: "0.75rem" }}>
-              <span style={{ color: "var(--color-text-muted)" }}>{lang === "en" ? "Outstanding Balance" : "الرصيد المتبقي المستحق"}</span>
-              <span style={{ fontWeight: 600, color: "#ef4444" }}>SAR {metrics.outstanding.toLocaleString()}</span>
+            <div className="flex justify-between pb-3">
+              <span className="text-sm text-ink/50">{lang === "en" ? "Outstanding Balance" : "الرصيد المتبقي المستحق"}</span>
+              <span className="font-semibold text-red-400">SAR {metrics.outstanding.toLocaleString()}</span>
             </div>
           </div>
         </div>
 
-        {/* AR Aging */}
-        <div style={{ background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: "16px", padding: "2rem" }}>
-          <h2 style={{ fontSize: "1.25rem", fontWeight: 600, color: "var(--color-text)", marginBottom: "1.5rem" }}>
+        <div className="cy-card p-6">
+          <h2 className="mb-5 text-lg font-bold">
             {lang === "en" ? "A/R Aging Buckets" : "أعمار الديون المستحقة"}
           </h2>
-          <div style={{ display: "grid", gap: "1rem" }}>
+          <div className="grid gap-4">
             {aging.map((item) => (
-              <div key={item.bucket} style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.875rem" }}>
-                  <span style={{ color: "var(--color-text)" }}>{item.bucket}</span>
-                  <span style={{ fontWeight: 600 }}>SAR {item.amount.toLocaleString()}</span>
+              <div key={item.bucket} className="flex flex-col gap-1">
+                <div className="flex justify-between text-sm">
+                  <span>{item.bucket}</span>
+                  <span className="font-semibold">SAR {item.amount.toLocaleString()}</span>
                 </div>
-                <div style={{ height: "8px", background: "rgba(0,0,0,0.05)", borderRadius: "4px", overflow: "hidden" }}>
-                  <div style={{
-                    width: `${Math.min(100, (item.amount / metrics.total_ar) * 100)}%`,
-                    height: "100%",
-                    background: "var(--color-primary)",
-                  }} />
+                <div className="h-2 overflow-hidden rounded bg-ink/5">
+                  <div
+                    className="h-full bg-brand-400"
+                    style={{ width: `${Math.min(100, (item.amount / metrics.total_ar) * 100)}%` }}
+                  />
                 </div>
               </div>
             ))}

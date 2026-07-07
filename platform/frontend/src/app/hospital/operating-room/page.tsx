@@ -115,13 +115,13 @@ export default function ORPage() {
   }
 
   if (!isAuthenticated) {
-    return <div style={{ padding: "2rem", textAlign: "center", marginTop: "4rem" }}><h1 style={{ fontWeight: 700, fontSize: "1.25rem" }}>Sign in required</h1></div>;
+    return <div className="mx-auto mt-16 max-w-lg text-center"><h1 className="text-xl font-bold">Sign in required</h1></div>;
   }
   if (fetchError) {
-    return <div style={{ padding: "2rem", textAlign: "center", marginTop: "4rem" }}><h1 style={{ fontWeight: 700, fontSize: "1.25rem", color: "#ef4444" }}>Unable to load OR schedule</h1><p style={{ color: "var(--color-text-muted)" }}>{fetchError}</p></div>;
+    return <div className="mx-auto mt-16 max-w-lg text-center"><h1 className="text-xl font-bold text-red-400">Unable to load OR schedule</h1><p className="mt-1 text-sm text-ink/50">{fetchError}</p></div>;
   }
   if (cases === null) {
-    return <div style={{ padding: "2rem", textAlign: "center", marginTop: "4rem", color: "var(--color-text-muted)" }}>Loading live OR schedule...</div>;
+    return <div className="mx-auto mt-16 max-w-lg text-center text-sm text-ink/40">Loading live OR schedule...</div>;
   }
 
   const patientName = (id: string) => {
@@ -140,7 +140,7 @@ export default function ORPage() {
   const sorted = cases.slice().sort((a, b) => a.scheduled_start.localeCompare(b.scheduled_start));
 
   return (
-    <div style={{ padding: "2rem", maxWidth: 1300, margin: "0 auto", direction: isAr ? "rtl" : "ltr" }}>
+    <div className="mx-auto max-w-6xl" style={{ direction: isAr ? "rtl" : "ltr" }}>
       <header className="mb-6 flex items-center justify-between border-b border-ink/10 pb-4">
         <div>
           <h1 className="flex items-center gap-2 font-heading text-2xl font-bold"><Scissors size={22} /> {isAr ? "جدول غرف العمليات" : "Operating Room Schedule"}</h1>

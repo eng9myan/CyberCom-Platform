@@ -89,66 +89,62 @@ export default function PopulationHealthDashboard() {
     void fetchPopHealthData();
   }, []);
 
+  const isAr = lang === "ar";
+
   return (
-    <div className="dashboard-container" style={{ padding: "2rem", maxWidth: "1200px", margin: "0 auto", direction: lang === "ar" ? "rtl" : "ltr" }}>
-      <header className="dashboard-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "2rem" }}>
+    <div className="mx-auto max-w-6xl" style={{ direction: isAr ? "rtl" : "ltr" }}>
+      <header className="mb-8 flex items-center justify-between">
         <div>
-          <h1 style={{ fontSize: "2rem", fontWeight: 700, color: "var(--color-primary)" }}>
+          <h1 className="font-heading text-2xl font-bold">
             {lang === "en" ? "CyMed Population Health" : "الصحة السكانية سايمد"}
           </h1>
-          <p style={{ color: "var(--color-text-muted)", fontSize: "1rem", marginTop: "0.25rem" }}>
+          <p className="mt-1 text-sm text-ink/50">
             {lang === "en" ? "Risk Stratification, Preventive Care Gaps & Epidemiological Surveillance" : "تصنيف المخاطر، فجوات الرعاية الوقائية والمراقبة الوبائية"}
           </p>
         </div>
-        <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
-          <button onClick={() => setLang(l => l === "en" ? "ar" : "en")} style={{ padding: "0.5rem 1rem", borderRadius: "8px", border: "1px solid var(--color-border)", cursor: "pointer", background: "var(--color-surface)", color: "var(--color-text)", fontSize: "0.875rem", fontWeight: 500 }}>
-            {lang === "en" ? "العربية" : "English"}
-          </button>
-        </div>
+        <button onClick={() => setLang(l => l === "en" ? "ar" : "en")} className="cy-btn cy-btn-ghost !min-h-0 !py-2 !px-4 text-sm">
+          {lang === "en" ? "العربية" : "English"}
+        </button>
       </header>
 
       {/* KPI Cards */}
-      <section style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "1.5rem", marginBottom: "2.5rem" }}>
-        <div style={{ background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: "12px", padding: "1.5rem" }}>
-          <div style={{ color: "var(--color-text-muted)", fontSize: "0.875rem", fontWeight: 500 }}>{lang === "en" ? "Chronic Registry Enrollment" : "المسجلين في السجلات المزمنة"}</div>
-          <div style={{ fontSize: "2rem", fontWeight: 700, color: "var(--color-text)", marginTop: "0.5rem" }}>{metrics.enrolled_patients.toLocaleString()}</div>
+      <section className="mb-10 grid grid-cols-2 gap-4 sm:grid-cols-4">
+        <div className="cy-card p-5">
+          <div className="text-sm font-medium text-ink/50">{lang === "en" ? "Chronic Registry Enrollment" : "المسجلين في السجلات المزمنة"}</div>
+          <div className="mt-2 text-2xl font-bold">{metrics.enrolled_patients.toLocaleString()}</div>
         </div>
-        <div style={{ background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: "12px", padding: "1.5rem" }}>
-          <div style={{ color: "var(--color-text-muted)", fontSize: "0.875rem", fontWeight: 500 }}>{lang === "en" ? "HEDIS Compliance Rate" : "معدل الامتثال الوقائي"}</div>
-          <div style={{ fontSize: "2rem", fontWeight: 700, color: "#22c55e", marginTop: "0.5rem" }}>{metrics.compliance_rate_pct}%</div>
+        <div className="cy-card p-5">
+          <div className="text-sm font-medium text-ink/50">{lang === "en" ? "HEDIS Compliance Rate" : "معدل الامتثال الوقائي"}</div>
+          <div className="mt-2 text-2xl font-bold text-emerald-400">{metrics.compliance_rate_pct}%</div>
         </div>
-        <div style={{ background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: "12px", padding: "1.5rem" }}>
-          <div style={{ color: "var(--color-text-muted)", fontSize: "0.875rem", fontWeight: 500 }}>{lang === "en" ? "Active Outbreaks" : "فاشيات وبائية نشطة"}</div>
-          <div style={{ fontSize: "2rem", fontWeight: 700, color: "#ef4444", marginTop: "0.5rem" }}>{metrics.active_outbreaks}</div>
+        <div className="cy-card p-5">
+          <div className="text-sm font-medium text-ink/50">{lang === "en" ? "Active Outbreaks" : "فاشيات وبائية نشطة"}</div>
+          <div className="mt-2 text-2xl font-bold text-red-400">{metrics.active_outbreaks}</div>
         </div>
-        <div style={{ background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: "12px", padding: "1.5rem" }}>
-          <div style={{ color: "var(--color-text-muted)", fontSize: "0.875rem", fontWeight: 500 }}>{lang === "en" ? "Total Risk Profiles" : "إجمالي ملفات تصنيف المخاطر"}</div>
-          <div style={{ fontSize: "2rem", fontWeight: 700, color: "var(--color-text)", marginTop: "0.5rem" }}>{metrics.total_risk_evaluated.toLocaleString()}</div>
+        <div className="cy-card p-5">
+          <div className="text-sm font-medium text-ink/50">{lang === "en" ? "Total Risk Profiles" : "إجمالي ملفات تصنيف المخاطر"}</div>
+          <div className="mt-2 text-2xl font-bold">{metrics.total_risk_evaluated.toLocaleString()}</div>
         </div>
       </section>
 
       {/* Main Grid */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "2rem" }}>
+      <div className="grid grid-cols-2 gap-6">
         {/* Risk Stratification */}
-        <div style={{ background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: "16px", padding: "2rem" }}>
-          <h2 style={{ fontSize: "1.25rem", fontWeight: 600, color: "var(--color-text)", marginBottom: "1.5rem" }}>
+        <div className="cy-card p-6">
+          <h2 className="mb-6 text-lg font-bold">
             {lang === "en" ? "Clinical Risk Stratification" : "تصنيف المخاطر السريرية"}
           </h2>
-          <div style={{ display: "grid", gap: "1rem" }}>
+          <div className="grid gap-4">
             {riskDist.map((item) => (
-              <div key={item.level} style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
-                <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.875rem" }}>
-                  <span style={{ fontWeight: 500, color: "var(--color-text)" }}>{lang === "en" ? item.level : item.level_ar}</span>
-                  <span style={{ color: "var(--color-text-muted)" }}>
+              <div key={item.level} className="flex flex-col gap-1">
+                <div className="flex justify-between text-sm">
+                  <span className="font-medium">{lang === "en" ? item.level : item.level_ar}</span>
+                  <span className="text-ink/50">
                     {item.count.toLocaleString()} ({item.percentage}%)
                   </span>
                 </div>
-                <div style={{ height: "8px", background: "rgba(0,0,0,0.05)", borderRadius: "4px", overflow: "hidden" }}>
-                  <div style={{
-                    width: `${item.percentage}%`,
-                    height: "100%",
-                    background: item.color,
-                  }} />
+                <div className="h-2 overflow-hidden rounded-full bg-ink/[0.06]">
+                  <div className="h-full rounded-full" style={{ width: `${item.percentage}%`, background: item.color }} />
                 </div>
               </div>
             ))}
@@ -156,20 +152,20 @@ export default function PopulationHealthDashboard() {
         </div>
 
         {/* Epidemiology Alerts */}
-        <div style={{ background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: "16px", padding: "2rem" }}>
-          <h2 style={{ fontSize: "1.25rem", fontWeight: 600, color: "var(--color-text)", marginBottom: "1.5rem" }}>
+        <div className="cy-card p-6">
+          <h2 className="mb-6 text-lg font-bold">
             {lang === "en" ? "Epidemiological Surveillance & Alerts" : "التنبيهات والمراقبة الوبائية"}
           </h2>
-          <div style={{ display: "grid", gap: "1rem" }}>
-            <div style={{ borderLeft: "4px solid #ef4444", padding: "0.75rem 1rem", background: "rgba(239, 68, 68, 0.05)", borderRadius: "0 8px 8px 0" }}>
-              <div style={{ fontWeight: 600, fontSize: "0.875rem" }}>{lang === "en" ? "Outbreak Detected: Influenza A" : "تم رصد فاشية: إنفلونزا أ"}</div>
-              <div style={{ fontSize: "0.8125rem", color: "var(--color-text-muted)", marginTop: "0.25rem" }}>
+          <div className="grid gap-4">
+            <div className="rounded-r-lg border-l-4 border-red-500 bg-red-500/5 px-4 py-3">
+              <div className="text-sm font-semibold">{lang === "en" ? "Outbreak Detected: Influenza A" : "تم رصد فاشية: إنفلونزا أ"}</div>
+              <div className="mt-1 text-[13px] text-ink/50">
                 {lang === "en" ? "5 confirmed cases in Ward A. Increased surveillance active." : "5 حالات مؤكدة في الجناح أ. تفعيل المراقبة المكثفة."}
               </div>
             </div>
-            <div style={{ borderLeft: "4px solid #f59e0b", padding: "0.75rem 1rem", background: "rgba(245, 158, 11, 0.05)", borderRadius: "0 8px 8px 0" }}>
-              <div style={{ fontWeight: 600, fontSize: "0.875rem" }}>{lang === "en" ? "Mandatory Notification logged to MoH" : "تسجيل إخطار إلزامي لوزارة الصحة"}</div>
-              <div style={{ fontSize: "0.8125rem", color: "var(--color-text-muted)", marginTop: "0.25rem" }}>
+            <div className="rounded-r-lg border-l-4 border-amber-500 bg-amber-500/5 px-4 py-3">
+              <div className="text-sm font-semibold">{lang === "en" ? "Mandatory Notification logged to MoH" : "تسجيل إخطار إلزامي لوزارة الصحة"}</div>
+              <div className="mt-1 text-[13px] text-ink/50">
                 {lang === "en" ? "Active tuberculosis case reported from Pulmonology clinic." : "الإبلاغ عن حالة سل نشطة من عيادة الأمراض الصدرية."}
               </div>
             </div>

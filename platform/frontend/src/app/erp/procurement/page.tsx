@@ -107,89 +107,86 @@ export default function ProcurementPage() {
   }
 
   if (!isAuthenticated) {
-    return (
-      <div style={{ padding: "4rem", textAlign: "center" }}>
-        <h1 style={{ fontSize: "1.25rem", fontWeight: 700 }}>Sign in required</h1>
-      </div>
-    );
+    return <div className="mx-auto mt-16 max-w-lg text-center"><h1 className="text-xl font-bold">Sign in required</h1></div>;
   }
 
   const filtered = filter === "all" ? (orders || []) : (orders || []).filter(o => o.status === filter);
   const totalSpend = (orders || []).filter(o => o.status !== "cancelled").reduce((a, o) => a + parseFloat(o.total_amount), 0);
   const fmt = (n: number) => n >= 1000000 ? `${(n / 1000000).toFixed(2)}M` : n >= 1000 ? `${(n / 1000).toFixed(0)}K` : n.toFixed(0);
 
-  const s: Record<string, React.CSSProperties> = {
-    page: { padding: "2rem", maxWidth: 1200, margin: "0 auto", direction: isAr ? "rtl" : "ltr" },
-    header: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem", borderBottom: "2px solid rgba(34,211,238,0.3)", paddingBottom: "1rem" },
-    h1: { fontSize: "1.6rem", fontWeight: 700, color: "#22D3EE" },
-    btn: { background: "var(--color-surface)", border: "1px solid var(--color-border)", color: "var(--color-text)", padding: "0.4rem 1rem", borderRadius: 6, cursor: "pointer", fontWeight: 600, textDecoration: "none" as const },
-    metricGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px,1fr))", gap: "1rem", marginBottom: "1.25rem" },
-    card: { background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: 8, padding: "1rem" },
-    table: { width: "100%", borderCollapse: "collapse" as const },
-    th: { padding: "0.75rem", textAlign: (isAr ? "right" : "left") as "left" | "right", color: "var(--color-text-muted)", fontWeight: 600, borderBottom: "1px solid var(--color-border)", fontSize: "0.85rem" },
-    td: { padding: "0.75rem", borderBottom: "1px solid var(--color-border)", fontSize: "0.875rem" },
-  };
-
   return (
-    <div style={s.page}>
-      <header style={s.header}>
+    <div className="mx-auto max-w-5xl" style={{ direction: isAr ? "rtl" : "ltr" }}>
+      <header className="mb-6 flex items-center justify-between border-b border-brand-400/30 pb-4">
         <div>
-          <h1 style={s.h1}>{isAr ? "أوامر الشراء" : "Purchase Orders"}</h1>
-          <p style={{ color: "var(--color-text-muted)", fontSize: "0.875rem" }}>{(orders || []).length} {isAr ? "أمر شراء" : "POs"}</p>
+          <h1 className="font-heading text-2xl font-bold">{isAr ? "أوامر الشراء" : "Purchase Orders"}</h1>
+          <p className="text-sm text-ink/50">{(orders || []).length} {isAr ? "أمر شراء" : "POs"}</p>
         </div>
-        <div style={{ display: "flex", gap: "0.75rem" }}>
-          {loading && <span style={{ color: "var(--color-text-muted)", fontSize: "0.8rem" }}>●</span>}
-          <a href="/erp" style={s.btn}>{isAr ? "← نظام ERP" : "← ERP"}</a>
-          <button style={s.btn} onClick={() => setLang(isAr ? "en" : "ar")}>{isAr ? "English" : "العربية"}</button>
+        <div className="flex gap-3">
+          {loading && <span className="text-xs text-ink/50">●</span>}
+          <a href="/erp" className="cy-btn cy-btn-ghost !min-h-0 !py-2 !px-4 text-sm">{isAr ? "← نظام ERP" : "← ERP"}</a>
+          <button className="cy-btn cy-btn-ghost !min-h-0 !py-2 !px-4 text-sm" onClick={() => setLang(isAr ? "en" : "ar")}>{isAr ? "English" : "العربية"}</button>
         </div>
       </header>
 
       {fetchError && (
-        <div style={{ background: "#fee2e2", border: "1px solid #fca5a5", color: "#b91c1c", padding: "0.9rem 1rem", borderRadius: "8px", marginBottom: "1.5rem", fontSize: "0.88rem" }}>
+        <div className="mb-6 rounded-lg border border-red-500/40 bg-red-500/10 px-5 py-3.5 text-sm font-semibold text-red-400">
           {fetchError}
         </div>
       )}
 
-      <div style={s.metricGrid}>
+      <div className="mb-5 grid grid-cols-2 gap-4 sm:grid-cols-4">
         {[
           { label: isAr ? "إجمالي الإنفاق" : "Total Spend", value: `SAR ${fmt(totalSpend)}`, color: "#22D3EE" },
           { label: isAr ? "قيد المعالجة" : "Open POs", value: (orders || []).filter(o => ["draft", "approved", "sent", "partial"].includes(o.status)).length, color: "#f59e0b" },
           { label: isAr ? "بانتظار الموافقة" : "Awaiting Approval", value: (orders || []).filter(o => o.status === "draft").length, color: "#ef4444" },
           { label: isAr ? "مستلمة" : "Received", value: (orders || []).filter(o => o.status === "received").length, color: "#22c55e" },
-        ].map(m => <div key={m.label} style={s.card}><div style={{ fontSize: "1.6rem", fontWeight: 700, color: m.color }}>{m.value}</div><div style={{ fontSize: "0.8rem", color: "var(--color-text-muted)", marginTop: 4 }}>{m.label}</div></div>)}
+        ].map(m => (
+          <div key={m.label} className="cy-card p-4">
+            <div className="text-2xl font-bold" style={{ color: m.color }}>{m.value}</div>
+            <div className="mt-1 text-xs text-ink/50">{m.label}</div>
+          </div>
+        ))}
       </div>
 
-      <div style={{ display: "flex", gap: "0.5rem", marginBottom: "1.25rem", flexWrap: "wrap" }}>
+      <div className="mb-5 flex flex-wrap gap-2">
         {["all", "draft", "approved", "sent", "partial", "received", "cancelled"].map(f => (
-          <button key={f} onClick={() => setFilter(f)} style={{ ...s.btn, background: filter === f ? "#22D3EE" : "var(--color-surface)", color: filter === f ? "#000" : "var(--color-text)", padding: "0.35rem 0.75rem", fontSize: "0.8rem" }}>
+          <button key={f} onClick={() => setFilter(f)} className={`rounded-md px-3 py-1.5 text-xs font-semibold border ${filter === f ? "border-brand-400 bg-brand-500 text-white" : "border-ink/10 bg-surface text-ink"}`}>
             {f === "all" ? (isAr ? "الكل" : "All") : f}
           </button>
         ))}
       </div>
 
-      <div style={{ background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: 8, overflow: "hidden" }}>
+      <div className="cy-card overflow-hidden p-0">
         {!loading && filtered.length === 0 ? (
-          <p style={{ color: "var(--color-text-muted)", fontSize: "0.875rem", padding: "1.5rem", textAlign: "center" }}>
+          <p className="p-6 text-center text-sm text-ink/50">
             {isAr ? "لا توجد أوامر شراء لهذا المستأجر بعد." : "No purchase orders for this tenant yet."}
           </p>
         ) : (
-          <table style={s.table}>
-            <thead><tr style={{ background: "rgba(34,211,238,0.05)" }}><th style={s.th}>{isAr ? "رقم الأمر" : "PO #"}</th><th style={s.th}>{isAr ? "المورد" : "Vendor"}</th><th style={s.th}>{isAr ? "الأصناف" : "Items"}</th><th style={s.th}>{isAr ? "الإجمالي" : "Total"}</th><th style={s.th}>{isAr ? "التاريخ" : "Ordered"}</th><th style={s.th}>{isAr ? "التسليم" : "Delivery"}</th><th style={s.th}>{isAr ? "الحالة" : "Status"}</th><th style={s.th}></th></tr></thead>
+          <table className="w-full border-collapse">
+            <thead>
+              <tr className="bg-brand-500/5">
+                {[isAr ? "رقم الأمر" : "PO #", isAr ? "المورد" : "Vendor", isAr ? "الأصناف" : "Items", isAr ? "الإجمالي" : "Total", isAr ? "التاريخ" : "Ordered", isAr ? "التسليم" : "Delivery", isAr ? "الحالة" : "Status", ""].map((h, i) => (
+                  <th key={i} className={`px-4 py-3 text-[13px] font-semibold text-ink/50 ${isAr ? "text-right" : "text-left"}`}>{h}</th>
+                ))}
+              </tr>
+            </thead>
             <tbody>
               {filtered.map(o => {
                 const vendor = vendors[o.vendor_id];
                 return (
                   <tr key={o.id}>
-                    <td style={{ ...s.td, fontFamily: "monospace", fontSize: "0.8rem" }}>{o.po_number}</td>
-                    <td style={s.td}><div style={{ fontWeight: 600 }}>{vendor ? (isAr ? (vendor.name_ar || vendor.name) : vendor.name) : `Vendor ${o.vendor_id.slice(0, 8)}`}</div></td>
-                    <td style={s.td}>{(o.lines || []).length}</td>
-                    <td style={{ ...s.td, fontFamily: "monospace", fontWeight: 700 }}>SAR {parseFloat(o.total_amount).toLocaleString()}</td>
-                    <td style={{ ...s.td, fontFamily: "monospace", fontSize: "0.8rem" }}>{o.po_date}</td>
-                    <td style={{ ...s.td, fontFamily: "monospace", fontSize: "0.8rem" }}>{o.expected_delivery || "—"}</td>
-                    <td style={s.td}><span style={{ background: `${STATUS_COLOR[o.status]}22`, color: STATUS_COLOR[o.status], border: `1px solid ${STATUS_COLOR[o.status]}55`, borderRadius: 4, padding: "2px 8px", fontSize: "0.75rem", fontWeight: 600 }}>{o.status}</span></td>
-                    <td style={s.td}>
+                    <td className="border-b border-ink/10 px-4 py-3 font-mono text-xs">{o.po_number}</td>
+                    <td className="border-b border-ink/10 px-4 py-3 text-sm font-semibold">{vendor ? (isAr ? (vendor.name_ar || vendor.name) : vendor.name) : `Vendor ${o.vendor_id.slice(0, 8)}`}</td>
+                    <td className="border-b border-ink/10 px-4 py-3 text-sm">{(o.lines || []).length}</td>
+                    <td className="border-b border-ink/10 px-4 py-3 font-mono text-sm font-bold">SAR {parseFloat(o.total_amount).toLocaleString()}</td>
+                    <td className="border-b border-ink/10 px-4 py-3 font-mono text-xs">{o.po_date}</td>
+                    <td className="border-b border-ink/10 px-4 py-3 font-mono text-xs">{o.expected_delivery || "—"}</td>
+                    <td className="border-b border-ink/10 px-4 py-3">
+                      <span className="rounded px-2 py-0.5 text-xs font-semibold" style={{ background: `${STATUS_COLOR[o.status]}22`, color: STATUS_COLOR[o.status], border: `1px solid ${STATUS_COLOR[o.status]}55` }}>{o.status}</span>
+                    </td>
+                    <td className="border-b border-ink/10 px-4 py-3">
                       {o.status === "draft" && (
-                        <button disabled={busyId === o.id} onClick={() => handleApprove(o.id)} style={{ background: "#22c55e22", color: "#22c55e", border: "1px solid #22c55e55", borderRadius: 4, padding: "3px 10px", cursor: "pointer", fontSize: "0.78rem", fontWeight: 600, opacity: busyId === o.id ? 0.5 : 1 }}>
+                        <button disabled={busyId === o.id} onClick={() => handleApprove(o.id)} className="rounded border border-emerald-500/40 bg-emerald-500/10 px-2.5 py-1 text-xs font-semibold text-emerald-400 disabled:opacity-50">
                           {isAr ? "موافقة" : "Approve"}
                         </button>
                       )}

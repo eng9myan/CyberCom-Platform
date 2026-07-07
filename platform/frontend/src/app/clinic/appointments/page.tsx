@@ -67,14 +67,14 @@ const SPECIALTIES = ["All", "Internal Medicine", "Cardiology", "General Practice
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-function statusColor(status: string): { bg: string; text: string } {
+function statusColor(status: string): string {
   switch (status) {
-    case "scheduled":   return { bg: "#e0f2fe", text: "#0369a1" };
-    case "confirmed":   return { bg: "#d1fae5", text: "#065f46" };
-    case "in_progress": return { bg: "#dbeafe", text: "#1e40af" };
-    case "completed":   return { bg: "#f0fdf4", text: "#166534" };
-    case "cancelled":   return { bg: "#fee2e2", text: "#991b1b" };
-    default:            return { bg: "#f3f4f6", text: "#374151" };
+    case "scheduled":   return "bg-sky-500/15 text-sky-300";
+    case "confirmed":   return "bg-emerald-500/15 text-emerald-300";
+    case "in_progress": return "bg-blue-500/15 text-blue-300";
+    case "completed":   return "bg-emerald-500/10 text-emerald-400";
+    case "cancelled":   return "bg-red-500/15 text-red-300";
+    default:            return "bg-ink/10 text-ink/60";
   }
 }
 
@@ -168,30 +168,30 @@ export default function AppointmentsPage() {
   };
 
   const dir = lang === "ar" ? "rtl" : "ltr";
+  const inputCls = "w-full rounded-lg border border-ink/10 bg-surface px-3.5 py-2.5 text-sm text-ink";
+  const labelCls = "mb-1.5 block text-[13px] font-semibold text-ink/50";
 
   return (
-    <div dir={dir} style={{ padding: "2rem", maxWidth: "1280px", margin: "0 auto", fontFamily: "system-ui, sans-serif", color: "var(--color-text)", background: "var(--color-background)", minHeight: "100vh" }}>
+    <div dir={dir} className="mx-auto max-w-5xl">
 
       {/* Header */}
-      <header style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "2rem", flexWrap: "wrap", gap: "1rem" }}>
+      <header className="mb-8 flex flex-wrap items-start justify-between gap-4">
         <div>
-          <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", marginBottom: "0.25rem" }}>
-            <a href="/clinic" style={{ color: "var(--color-text-muted)", textDecoration: "none", fontSize: "0.875rem" }}>
-              {lang === "en" ? "← Clinic" : "العيادة ←"}
-            </a>
-          </div>
-          <h1 style={{ fontSize: "1.875rem", fontWeight: 700, color: "#22D3EE", margin: 0 }}>
+          <a href="/clinic" className="text-sm text-ink/50 hover:text-ink">
+            {lang === "en" ? "← Clinic" : "العيادة ←"}
+          </a>
+          <h1 className="mt-1 font-heading text-2xl font-bold">
             {lang === "en" ? "Appointment Scheduling" : "جدولة المواعيد"}
           </h1>
-          <p style={{ color: "var(--color-text-muted)", marginTop: "0.25rem", fontSize: "0.95rem" }}>
+          <p className="mt-1 text-sm text-ink/50">
             {lang === "en" ? "Manage clinic appointments for today" : "إدارة مواعيد العيادة لليوم"}
           </p>
         </div>
-        <div style={{ display: "flex", gap: "0.75rem", alignItems: "center", flexWrap: "wrap" }}>
-          {loading && <span style={{ fontSize: "0.875rem", color: "var(--color-text-muted)" }}>⏳ {lang === "en" ? "Syncing..." : "جارٍ التزامن..."}</span>}
+        <div className="flex flex-wrap items-center gap-3">
+          {loading && <span className="text-sm text-ink/50">{lang === "en" ? "Syncing..." : "جارٍ التزامن..."}</span>}
           <button
             onClick={() => setLang(l => l === "en" ? "ar" : "en")}
-            style={{ padding: "0.5rem 1.1rem", borderRadius: "8px", border: "1px solid var(--color-border)", background: "var(--color-surface)", color: "var(--color-text)", cursor: "pointer", fontWeight: 600, fontSize: "0.875rem" }}
+            className="cy-btn cy-btn-ghost !min-h-0 !py-2 !px-4 text-sm"
           >
             {lang === "en" ? "العربية" : "English"}
           </button>
@@ -199,14 +199,14 @@ export default function AppointmentsPage() {
       </header>
 
       {/* Sibling navigation */}
-      <nav style={{ display: "flex", gap: "0.625rem", marginBottom: "2rem", flexWrap: "wrap" }}>
+      <nav className="mb-8 flex flex-wrap gap-2.5">
         {[
           { href: "/clinic/reception",     label: lang === "en" ? "Reception"     : "الاستقبال" },
           { href: "/clinic/triage",        label: lang === "en" ? "Triage"        : "الفرز" },
           { href: "/clinic/consultations", label: lang === "en" ? "Consultations" : "الاستشارات" },
           { href: "/clinic/telemedicine",  label: lang === "en" ? "Telemedicine"  : "التطبيب عن بُعد" },
         ].map(n => (
-          <a key={n.href} href={n.href} style={{ padding: "0.5rem 1rem", borderRadius: "6px", background: "var(--color-surface)", border: "1px solid var(--color-border)", color: "var(--color-text)", textDecoration: "none", fontSize: "0.8rem", fontWeight: 600 }}>
+          <a key={n.href} href={n.href} className="cy-btn cy-btn-ghost !min-h-0 !py-2 !px-4 text-sm">
             {n.label}
           </a>
         ))}
@@ -214,13 +214,13 @@ export default function AppointmentsPage() {
 
       {/* Action feedback */}
       {actionMsg && (
-        <div style={{ marginBottom: "1rem", padding: "0.75rem 1.25rem", borderRadius: "8px", background: "#d1fae5", color: "#065f46", fontWeight: 600, fontSize: "0.9rem" }}>
+        <div className="mb-4 rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-5 py-3 text-sm font-semibold text-emerald-400">
           {actionMsg}
         </div>
       )}
 
       {/* Metrics cards */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: "1rem", marginBottom: "2rem" }}>
+      <div className="mb-8 grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-6">
         {[
           { label: lang === "en" ? "Total"       : "الإجمالي",    value: metrics.total,       color: "#22D3EE" },
           { label: lang === "en" ? "Scheduled"   : "مجدول",       value: metrics.scheduled,   color: "#0ea5e9" },
@@ -229,64 +229,64 @@ export default function AppointmentsPage() {
           { label: lang === "en" ? "Completed"   : "مكتمل",       value: metrics.completed,   color: "#8b5cf6" },
           { label: lang === "en" ? "Cancelled"   : "ملغي",        value: metrics.cancelled,   color: "#ef4444" },
         ].map(m => (
-          <div key={m.label} style={{ background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: "10px", padding: "1.25rem", textAlign: "center" }}>
-            <p style={{ fontSize: "2rem", fontWeight: 700, color: m.color, margin: 0 }}>{m.value}</p>
-            <p style={{ fontSize: "0.8rem", color: "var(--color-text-muted)", marginTop: "0.35rem", fontWeight: 500 }}>{m.label}</p>
+          <div key={m.label} className="cy-card p-4 text-center">
+            <p className="text-2xl font-bold" style={{ color: m.color }}>{m.value}</p>
+            <p className="mt-1 text-xs font-medium text-ink/50">{m.label}</p>
           </div>
         ))}
       </div>
 
       {/* Filters */}
-      <div style={{ display: "flex", gap: "1rem", marginBottom: "1.5rem", flexWrap: "wrap", alignItems: "center", background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: "10px", padding: "1rem 1.25rem" }}>
-        <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
-          <label style={{ fontSize: "0.75rem", color: "var(--color-text-muted)", fontWeight: 600 }}>
+      <div className="mb-6 flex flex-wrap items-center gap-4 rounded-xl border border-ink/10 bg-surface p-4">
+        <div className="flex flex-col gap-1">
+          <label className="text-xs font-semibold text-ink/50">
             {lang === "en" ? "DATE" : "التاريخ"}
           </label>
           <input
             type="date"
             value={filterDate}
             onChange={e => setFilterDate(e.target.value)}
-            style={{ padding: "0.4rem 0.75rem", borderRadius: "6px", border: "1px solid var(--color-border)", background: "var(--color-background)", color: "var(--color-text)", fontSize: "0.875rem" }}
+            className="rounded-md border border-ink/10 bg-surface px-3 py-1.5 text-sm text-ink"
           />
         </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
-          <label style={{ fontSize: "0.75rem", color: "var(--color-text-muted)", fontWeight: 600 }}>
+        <div className="flex flex-col gap-1">
+          <label className="text-xs font-semibold text-ink/50">
             {lang === "en" ? "STATUS" : "الحالة"}
           </label>
           <select
             value={filterStatus}
             onChange={e => setFilterStatus(e.target.value)}
-            style={{ padding: "0.4rem 0.75rem", borderRadius: "6px", border: "1px solid var(--color-border)", background: "var(--color-background)", color: "var(--color-text)", fontSize: "0.875rem" }}
+            className="rounded-md border border-ink/10 bg-surface px-3 py-1.5 text-sm text-ink"
           >
             {["all", "scheduled", "confirmed", "in_progress", "completed", "cancelled"].map(s => (
               <option key={s} value={s}>{s === "all" ? (lang === "en" ? "All Statuses" : "كل الحالات") : statusLabel(s, lang)}</option>
             ))}
           </select>
         </div>
-        <div style={{ display: "flex", flexDirection: "column", gap: "0.25rem" }}>
-          <label style={{ fontSize: "0.75rem", color: "var(--color-text-muted)", fontWeight: 600 }}>
+        <div className="flex flex-col gap-1">
+          <label className="text-xs font-semibold text-ink/50">
             {lang === "en" ? "SPECIALTY" : "التخصص"}
           </label>
           <select
             value={filterSpecialty}
             onChange={e => setFilterSpecialty(e.target.value)}
-            style={{ padding: "0.4rem 0.75rem", borderRadius: "6px", border: "1px solid var(--color-border)", background: "var(--color-background)", color: "var(--color-text)", fontSize: "0.875rem", maxWidth: "220px" }}
+            className="max-w-[220px] rounded-md border border-ink/10 bg-surface px-3 py-1.5 text-sm text-ink"
           >
             {SPECIALTIES.map(s => (
               <option key={s} value={s}>{s === "All" ? (lang === "en" ? "All Specialties" : "كل التخصصات") : s}</option>
             ))}
           </select>
         </div>
-        <div style={{ marginLeft: "auto", color: "var(--color-text-muted)", fontSize: "0.875rem", alignSelf: "flex-end", paddingBottom: "0.4rem" }}>
+        <div className="ml-auto self-end pb-1.5 text-sm text-ink/50">
           {lang === "en" ? `Showing ${filtered.length} of ${appointments.length}` : `عرض ${filtered.length} من ${appointments.length}`}
         </div>
       </div>
 
       {/* Appointments table */}
-      <div style={{ background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: "12px", overflow: "hidden" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+      <div className="cy-card overflow-auto p-0">
+        <table className="w-full min-w-[900px] border-collapse">
           <thead>
-            <tr style={{ background: "var(--color-surface)", borderBottom: "2px solid var(--color-border)" }}>
+            <tr className="border-b border-ink/10">
               {[
                 lang === "en" ? "Time"      : "الوقت",
                 lang === "en" ? "MRN"       : "الرقم الطبي",
@@ -297,81 +297,76 @@ export default function AppointmentsPage() {
                 lang === "en" ? "Notes"     : "ملاحظات",
                 lang === "en" ? "Actions"   : "إجراءات",
               ].map(h => (
-                <th key={h} style={{ padding: "0.875rem 1rem", textAlign: lang === "ar" ? "right" : "left", fontSize: "0.8rem", fontWeight: 700, color: "var(--color-text-muted)", textTransform: "uppercase", letterSpacing: "0.04em" }}>{h}</th>
+                <th key={h} className={`px-4 py-3.5 text-xs font-semibold text-ink/50 ${lang === "ar" ? "text-right" : "text-left"}`}>{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
-            {filtered.map((apt, i) => {
-              const sc = statusColor(apt.status);
-              return (
-                <tr key={apt.id} style={{ borderBottom: "1px solid var(--color-border)", background: i % 2 === 0 ? "transparent" : "rgb(var(--color-ink-rgb) / 0.02)" }}>
-                  <td style={{ padding: "0.875rem 1rem", fontWeight: 700, color: "#22D3EE", fontSize: "0.9rem", whiteSpace: "nowrap" }}>{apt.time}</td>
-                  <td style={{ padding: "0.875rem 1rem", fontSize: "0.8rem", fontFamily: "monospace", color: "var(--color-text-muted)" }}>{apt.mrn}</td>
-                  <td style={{ padding: "0.875rem 1rem" }}>
-                    <div style={{ fontWeight: 600, color: "var(--color-text)", fontSize: "0.9rem" }}>
-                      {lang === "ar" ? apt.patient_name_ar : apt.patient_name}
-                    </div>
-                    <div style={{ fontSize: "0.75rem", color: "var(--color-text-muted)", marginTop: "0.15rem" }}>{apt.id}</div>
-                  </td>
-                  <td style={{ padding: "0.875rem 1rem", fontSize: "0.875rem", color: "var(--color-text)" }}>
-                    {lang === "ar" ? apt.specialty_ar : apt.specialty}
-                  </td>
-                  <td style={{ padding: "0.875rem 1rem", fontSize: "0.875rem", color: "var(--color-text)" }}>{apt.provider}</td>
-                  <td style={{ padding: "0.875rem 1rem" }}>
-                    <span style={{ padding: "0.3rem 0.7rem", borderRadius: "20px", fontSize: "0.75rem", fontWeight: 700, background: sc.bg, color: sc.text, whiteSpace: "nowrap" }}>
-                      {statusLabel(apt.status, lang)}
-                    </span>
-                  </td>
-                  <td style={{ padding: "0.875rem 1rem", fontSize: "0.8rem", color: "var(--color-text-muted)", maxWidth: "200px" }}>
-                    <span title={apt.notes} style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", display: "block" }}>{apt.notes}</span>
-                  </td>
-                  <td style={{ padding: "0.875rem 1rem" }}>
-                    <div style={{ display: "flex", gap: "0.4rem", flexWrap: "nowrap" }}>
-                      {apt.status === "scheduled" && (
-                        <button
-                          onClick={() => { void handleAction(apt, "confirm"); }}
-                          style={{ padding: "0.35rem 0.7rem", fontSize: "0.75rem", fontWeight: 700, borderRadius: "6px", background: "#22c55e", color: "#fff", border: "none", cursor: "pointer", whiteSpace: "nowrap" }}
-                        >
-                          {lang === "en" ? "Confirm" : "تأكيد"}
-                        </button>
-                      )}
-                      {(apt.status === "scheduled" || apt.status === "confirmed") && (
-                        <>
-                          <button
-                            onClick={() => { void handleAction(apt, "reschedule"); }}
-                            style={{ padding: "0.35rem 0.7rem", fontSize: "0.75rem", fontWeight: 700, borderRadius: "6px", background: "#f59e0b", color: "#fff", border: "none", cursor: "pointer", whiteSpace: "nowrap" }}
-                          >
-                            {lang === "en" ? "Reschedule" : "إعادة جدولة"}
-                          </button>
-                          <button
-                            onClick={() => { void handleAction(apt, "cancel"); }}
-                            style={{ padding: "0.35rem 0.7rem", fontSize: "0.75rem", fontWeight: 700, borderRadius: "6px", background: "#ef4444", color: "#fff", border: "none", cursor: "pointer", whiteSpace: "nowrap" }}
-                          >
-                            {lang === "en" ? "Cancel" : "إلغاء"}
-                          </button>
-                        </>
-                      )}
+            {filtered.map(apt => (
+              <tr key={apt.id} className="border-b border-ink/5">
+                <td className="whitespace-nowrap px-4 py-3.5 text-sm font-bold text-brand-400">{apt.time}</td>
+                <td className="px-4 py-3.5 font-mono text-xs text-ink/50">{apt.mrn}</td>
+                <td className="px-4 py-3.5">
+                  <div className="text-sm font-semibold">
+                    {lang === "ar" ? apt.patient_name_ar : apt.patient_name}
+                  </div>
+                  <div className="mt-0.5 text-xs text-ink/50">{apt.id}</div>
+                </td>
+                <td className="px-4 py-3.5 text-sm">
+                  {lang === "ar" ? apt.specialty_ar : apt.specialty}
+                </td>
+                <td className="px-4 py-3.5 text-sm">{apt.provider}</td>
+                <td className="px-4 py-3.5">
+                  <span className={`whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-bold ${statusColor(apt.status)}`}>
+                    {statusLabel(apt.status, lang)}
+                  </span>
+                </td>
+                <td className="max-w-[200px] px-4 py-3.5 text-xs text-ink/50">
+                  <span title={apt.notes} className="block truncate">{apt.notes}</span>
+                </td>
+                <td className="px-4 py-3.5">
+                  <div className="flex flex-nowrap gap-1.5">
+                    {apt.status === "scheduled" && (
                       <button
-                        style={{ padding: "0.35rem 0.7rem", fontSize: "0.75rem", fontWeight: 600, borderRadius: "6px", background: "var(--color-surface)", border: "1px solid var(--color-border)", cursor: "pointer", color: "var(--color-text)", whiteSpace: "nowrap" }}
+                        onClick={() => { void handleAction(apt, "confirm"); }}
+                        className="whitespace-nowrap rounded-md bg-emerald-500 px-2.5 py-1.5 text-xs font-bold text-white"
                       >
-                        {lang === "en" ? "View" : "عرض"}
+                        {lang === "en" ? "Confirm" : "تأكيد"}
                       </button>
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
+                    )}
+                    {(apt.status === "scheduled" || apt.status === "confirmed") && (
+                      <>
+                        <button
+                          onClick={() => { void handleAction(apt, "reschedule"); }}
+                          className="whitespace-nowrap rounded-md bg-amber-500 px-2.5 py-1.5 text-xs font-bold text-white"
+                        >
+                          {lang === "en" ? "Reschedule" : "إعادة جدولة"}
+                        </button>
+                        <button
+                          onClick={() => { void handleAction(apt, "cancel"); }}
+                          className="whitespace-nowrap rounded-md bg-red-500 px-2.5 py-1.5 text-xs font-bold text-white"
+                        >
+                          {lang === "en" ? "Cancel" : "إلغاء"}
+                        </button>
+                      </>
+                    )}
+                    <button className="cy-btn cy-btn-ghost !min-h-0 whitespace-nowrap !py-1.5 !px-2.5 text-xs">
+                      {lang === "en" ? "View" : "عرض"}
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            ))}
           </tbody>
         </table>
         {filtered.length === 0 && (
-          <div style={{ padding: "3rem", textAlign: "center", color: "var(--color-text-muted)" }}>
+          <div className="p-12 text-center text-sm text-ink/40">
             {lang === "en" ? "No appointments match the selected filters." : "لا توجد مواعيد تطابق عوامل التصفية المحددة."}
           </div>
         )}
       </div>
 
-      <div style={{ marginTop: "1.5rem", fontSize: "0.75rem", color: "var(--color-text-muted)", textAlign: "center" }}>
+      <div className="mt-6 text-center text-xs text-ink/40">
         CyMed Clinic · {lang === "en" ? "Appointment Management" : "إدارة المواعيد"} · {new Date().toLocaleDateString(lang === "ar" ? "ar-SA" : "en-GB", { year: "numeric", month: "long", day: "numeric" })}
       </div>
     </div>

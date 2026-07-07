@@ -107,31 +107,29 @@ export default function SpecimensPage() {
   const t = (en: string, ar: string) => lang === "en" ? en : ar;
 
   if (!isAuthenticated) {
-    return (
-      <div style={{ padding: "4rem", textAlign: "center" }}>
-        <h1 style={{ fontSize: "1.25rem", fontWeight: 700 }}>Sign in required</h1>
-      </div>
-    );
+    return <div className="mx-auto mt-16 max-w-lg text-center"><h1 className="text-xl font-bold">Sign in required</h1></div>;
   }
 
   const filtered = (specimens || []).filter(s => statusFilter === "all" || s.status === statusFilter);
 
+  const dir = lang === "ar" ? "rtl" : "ltr";
+
   return (
-    <div style={{ padding: "2rem", maxWidth: "1400px", margin: "0 auto", direction: lang === "ar" ? "rtl" : "ltr", background: "var(--color-background)", minHeight: "100vh", color: "var(--color-text)" }}>
-      <header style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "1.5rem" }}>
+    <div dir={dir} className="mx-auto max-w-6xl">
+      <header className="mb-6 flex items-start justify-between">
         <div>
-          <a href="/laboratory" style={{ color: "#22D3EE", textDecoration: "none", fontSize: "0.875rem" }}>{t("← Laboratory", "← المختبر")}</a>
-          <h1 style={{ fontSize: "1.75rem", fontWeight: 700, color: "#22D3EE" }}>{t("Specimen Tracking", "تتبع العينات")}</h1>
-          <p style={{ color: "var(--color-text-muted)", fontSize: "0.875rem", marginTop: "0.25rem" }}>
+          <a href="/laboratory" className="text-sm text-brand-400">{t("← Laboratory", "← المختبر")}</a>
+          <h1 className="font-heading text-2xl font-bold text-brand-400">{t("Specimen Tracking", "تتبع العينات")}</h1>
+          <p className="mt-1 text-sm text-ink/50">
             {t("Real specimen chain-of-custody", "سلسلة حفظ العينات الحقيقية")}
           </p>
         </div>
-        <button onClick={() => setLang(l => l === "en" ? "ar" : "en")} style={{ padding: "0.4rem 0.8rem", borderRadius: "4px", border: "1px solid var(--color-border)", cursor: "pointer", background: "var(--color-surface)", color: "var(--color-text)", fontSize: "0.8rem" }}>
+        <button onClick={() => setLang(l => l === "en" ? "ar" : "en")} className="cy-btn cy-btn-ghost !min-h-0 !py-2 !px-4 text-sm">
           {lang === "en" ? "العربية" : "English"}
         </button>
       </header>
 
-      <nav style={{ display: "flex", gap: "0.5rem", marginBottom: "1.5rem", flexWrap: "wrap" }}>
+      <nav className="mb-6 flex flex-wrap gap-2">
         {[
           { href: "/laboratory", label: t("Overview", "نظرة عامة") },
           { href: "/laboratory/orders", label: t("Orders", "الطلبات") },
@@ -139,74 +137,82 @@ export default function SpecimensPage() {
           { href: "/laboratory/worklists", label: t("Worklists", "قوائم العمل") },
           { href: "/laboratory/results", label: t("Results", "النتائج") },
         ].map(item => (
-          <a key={item.href} href={item.href} style={{ padding: "0.4rem 1rem", borderRadius: "4px", background: item.href === "/laboratory/specimens" ? "#22D3EE22" : "var(--color-surface)", border: `1px solid ${item.href === "/laboratory/specimens" ? "#22D3EE" : "var(--color-border)"}`, color: item.href === "/laboratory/specimens" ? "#22D3EE" : "var(--color-text)", textDecoration: "none", fontSize: "0.875rem", fontWeight: 500 }}>
+          <a
+            key={item.href}
+            href={item.href}
+            className={`rounded-lg px-4 py-1.5 text-sm font-medium ${item.href === "/laboratory/specimens" ? "border border-brand-400/60 bg-brand-500/15 text-brand-300" : "border border-ink/10 text-ink/70 hover:bg-ink/5"}`}
+          >
             {item.label}
           </a>
         ))}
       </nav>
 
       {fetchError && (
-        <div style={{ background: "#fee2e2", border: "1px solid #fca5a5", color: "#b91c1c", padding: "0.9rem 1rem", borderRadius: "8px", marginBottom: "1.5rem", fontSize: "0.88rem" }}>
+        <div className="mb-6 rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-3.5 text-sm text-red-400">
           {fetchError}
         </div>
       )}
 
-      <div style={{ display: "flex", gap: "0.4rem", marginBottom: "1.25rem", flexWrap: "wrap" }}>
+      <div className="mb-5 flex flex-wrap items-center gap-2">
         {["all", "pending", "collected", "in_transit", "received", "accessioned", "in_processing", "stored", "rejected"].map(f => (
-          <button key={f} onClick={() => setStatusFilter(f)} style={{ padding: "0.3rem 0.7rem", borderRadius: "5px", border: "1px solid var(--color-border)", cursor: "pointer", fontSize: "0.75rem", fontWeight: 600, background: statusFilter === f ? "#22D3EE" : "var(--color-surface)", color: statusFilter === f ? "#000" : "var(--color-text)" }}>
+          <button
+            key={f}
+            onClick={() => setStatusFilter(f)}
+            className={`rounded-md px-2.5 py-1 text-xs font-semibold ${statusFilter === f ? "bg-brand-400 text-black" : "border border-ink/10 text-ink/70 hover:bg-ink/5"}`}
+          >
             {f === "all" ? t("All", "الكل") : f}
           </button>
         ))}
-        {loading && <span style={{ fontSize: "0.8rem", color: "var(--color-text-muted)", alignSelf: "center" }}>{t("Loading…", "جارٍ التحميل…")}</span>}
-        <div style={{ marginLeft: "auto", fontSize: "0.8rem", color: "var(--color-text-muted)" }}>
+        {loading && <span className="self-center text-sm text-ink/50">{t("Loading…", "جارٍ التحميل…")}</span>}
+        <div className="ms-auto text-sm text-ink/50">
           {t("Showing", "عرض")} {filtered.length} / {(specimens || []).length}
         </div>
       </div>
 
-      <div style={{ background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: "10px", overflowX: "auto" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+      <div className="cy-card overflow-auto p-0">
+        <table className="w-full min-w-[900px] border-collapse">
           <thead>
-            <tr style={{ borderBottom: "2px solid var(--color-border)" }}>
+            <tr className="border-b border-ink/10">
               {[t("Specimen #", "رقم العينة"), t("Patient", "المريض"), t("Type", "النوع"), t("Site", "موقع الجمع"), t("Status", "الحالة"), t("Collected", "وقت الجمع"), t("Actions", "الإجراءات")].map(h => (
-                <th key={h} style={{ padding: "0.75rem 0.875rem", textAlign: lang === "ar" ? "right" : "left", fontSize: "0.72rem", fontWeight: 600, color: "var(--color-text-muted)", textTransform: "uppercase", whiteSpace: "nowrap" }}>{h}</th>
+                <th key={h} className="whitespace-nowrap px-4 py-3.5 text-left text-xs font-semibold text-ink/50">{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {!loading && filtered.length === 0 && (
-              <tr><td colSpan={7} style={{ padding: "2rem", textAlign: "center", color: "var(--color-text-muted)" }}>
+              <tr><td colSpan={7} className="p-8 text-center text-sm text-ink/40">
                 {t("No specimens for this tenant yet.", "لا توجد عينات لهذا المستأجر بعد.")}
               </td></tr>
             )}
-            {filtered.map((sp, i) => {
+            {filtered.map(sp => {
               const patient = patients[sp.patient_id];
               const patientLabel = patient ? `${patient.first_name} ${patient.last_name}` : `Patient ${sp.patient_id.slice(0, 8)}`;
               return (
-                <tr key={sp.id} style={{ borderBottom: "1px solid var(--color-border)", background: i % 2 === 0 ? "transparent" : "var(--color-background)" }}>
-                  <td style={{ padding: "0.75rem 0.875rem", fontSize: "0.78rem", fontFamily: "monospace", color: "#22D3EE" }}>{sp.specimen_number}</td>
-                  <td style={{ padding: "0.75rem 0.875rem" }}>
-                    <div style={{ fontWeight: 500, fontSize: "0.875rem" }}>{patientLabel}</div>
-                    {patient?.mrn && <div style={{ fontSize: "0.72rem", color: "var(--color-text-muted)" }}>{patient.mrn}</div>}
+                <tr key={sp.id} className="border-b border-ink/5">
+                  <td className="px-4 py-3.5 font-mono text-xs text-brand-400">{sp.specimen_number}</td>
+                  <td className="px-4 py-3.5">
+                    <div className="text-sm font-medium">{patientLabel}</div>
+                    {patient?.mrn && <div className="text-xs text-ink/50">{patient.mrn}</div>}
                   </td>
-                  <td style={{ padding: "0.75rem 0.875rem", fontSize: "0.85rem" }}>{sp.specimen_type}</td>
-                  <td style={{ padding: "0.75rem 0.875rem", fontSize: "0.8rem", color: "var(--color-text-muted)" }}>{sp.collection_site || "—"}</td>
-                  <td style={{ padding: "0.75rem 0.875rem" }}>
-                    <span style={{ padding: "0.2rem 0.55rem", borderRadius: "12px", fontSize: "0.72rem", fontWeight: 600, background: (STATUS_COLORS[sp.status] || "#6b7280") + "22", color: STATUS_COLORS[sp.status] || "#6b7280" }}>
+                  <td className="px-4 py-3.5 text-sm">{sp.specimen_type}</td>
+                  <td className="px-4 py-3.5 text-sm text-ink/50">{sp.collection_site || "—"}</td>
+                  <td className="px-4 py-3.5">
+                    <span className="rounded-full px-2.5 py-1 text-xs font-semibold" style={{ background: (STATUS_COLORS[sp.status] || "#6b7280") + "22", color: STATUS_COLORS[sp.status] || "#6b7280" }}>
                       {sp.status}
                     </span>
                   </td>
-                  <td style={{ padding: "0.75rem 0.875rem", fontSize: "0.8rem", color: "var(--color-text-muted)", whiteSpace: "nowrap" }}>
+                  <td className="whitespace-nowrap px-4 py-3.5 text-sm text-ink/50">
                     {sp.collected_at ? new Date(sp.collected_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "—"}
                   </td>
-                  <td style={{ padding: "0.75rem 0.875rem" }}>
-                    <div style={{ display: "flex", gap: "0.3rem" }}>
+                  <td className="px-4 py-3.5">
+                    <div className="flex gap-1.5">
                       {sp.status === "collected" && (
-                        <button disabled={busyId === sp.id} onClick={() => updateStatus(sp.id, "received")} style={{ padding: "0.2rem 0.5rem", fontSize: "0.7rem", borderRadius: "4px", background: "#3b82f6", color: "#fff", border: "none", cursor: "pointer", whiteSpace: "nowrap", opacity: busyId === sp.id ? 0.5 : 1 }}>
+                        <button disabled={busyId === sp.id} onClick={() => updateStatus(sp.id, "received")} className="whitespace-nowrap rounded-md bg-sky-500 px-2.5 py-1 text-xs font-semibold text-white hover:bg-sky-600 disabled:opacity-50">
                           {t("Receive", "استلام")}
                         </button>
                       )}
                       {(sp.status === "pending" || sp.status === "collected" || sp.status === "received") && (
-                        <button disabled={busyId === sp.id} onClick={() => updateStatus(sp.id, "rejected")} style={{ padding: "0.2rem 0.5rem", fontSize: "0.7rem", borderRadius: "4px", background: "#ef444422", color: "#ef4444", border: "1px solid #ef4444", cursor: "pointer", whiteSpace: "nowrap", opacity: busyId === sp.id ? 0.5 : 1 }}>
+                        <button disabled={busyId === sp.id} onClick={() => updateStatus(sp.id, "rejected")} className="whitespace-nowrap rounded-md border border-red-500/40 px-2.5 py-1 text-xs font-semibold text-red-400 hover:bg-red-500/10 disabled:opacity-50">
                           {t("Reject", "رفض")}
                         </button>
                       )}

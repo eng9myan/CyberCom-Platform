@@ -144,16 +144,16 @@ const MOCK_FHIR: FHIRResource[] = [
 
 function StatusBadge({ status }: { status: string }) {
   const colors: Record<string, string> = {
-    active: "bg-green-100 text-green-700",
-    deprecated: "bg-yellow-100 text-yellow-700",
-    draft: "bg-gray-100 text-gray-600",
-    suspended: "bg-orange-100 text-orange-700",
-    revoked: "bg-red-100 text-red-700",
-    failed: "bg-red-100 text-red-700",
-    paused: "bg-yellow-100 text-yellow-700",
+    active: "bg-emerald-500/15 text-emerald-400",
+    deprecated: "bg-amber-500/15 text-amber-400",
+    draft: "bg-ink/10 text-ink/50",
+    suspended: "bg-orange-500/15 text-orange-400",
+    revoked: "bg-red-500/15 text-red-400",
+    failed: "bg-red-500/15 text-red-400",
+    paused: "bg-amber-500/15 text-amber-400",
   };
   return (
-    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${colors[status] ?? "bg-gray-100 text-gray-600"}`}>
+    <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${colors[status] ?? "bg-ink/10 text-ink/50"}`}>
       {status}
     </span>
   );
@@ -161,14 +161,14 @@ function StatusBadge({ status }: { status: string }) {
 
 function ClassificationBadge({ value }: { value: string }) {
   const colors: Record<string, string> = {
-    fhir: "bg-blue-100 text-blue-700",
-    internal: "bg-gray-100 text-gray-600",
-    partner: "bg-purple-100 text-purple-700",
-    government: "bg-indigo-100 text-indigo-700",
-    public: "bg-green-100 text-green-700",
+    fhir: "bg-brand-500/15 text-brand-300",
+    internal: "bg-ink/10 text-ink/50",
+    partner: "bg-purple-500/15 text-purple-400",
+    government: "bg-indigo-500/15 text-indigo-400",
+    public: "bg-emerald-500/15 text-emerald-400",
   };
   return (
-    <span className={`text-xs px-2 py-0.5 rounded ${colors[value] ?? "bg-gray-100 text-gray-500"}`}>
+    <span className={`text-xs px-2 py-0.5 rounded ${colors[value] ?? "bg-ink/10 text-ink/50"}`}>
       {value}
     </span>
   );
@@ -182,26 +182,26 @@ function ApiCatalogTab() {
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold text-gray-800">API Catalog</h2>
-        <button className="bg-blue-600 text-white px-3 py-1.5 rounded text-sm hover:bg-blue-700">+ Register API</button>
+        <h2 className="text-lg font-bold text-ink">API Catalog</h2>
+        <button className="bg-brand-500 text-white px-3 py-1.5 rounded text-sm hover:bg-brand-600">+ Register API</button>
       </div>
       <div className="grid gap-3">
         {MOCK_CATALOG.map((api) => (
-          <div key={api.id} className="border border-gray-200 rounded-lg p-4 bg-white hover:shadow-sm transition-shadow">
+          <div key={api.id} className="border border-ink/10 rounded-lg p-4 bg-surface-raised hover:shadow-sm transition-shadow">
             <div className="flex items-start justify-between">
               <div>
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="font-medium text-gray-900">{api.name}</span>
+                  <span className="font-medium text-ink">{api.name}</span>
                   <ClassificationBadge value={api.classification} />
                   <StatusBadge status={api.status} />
                 </div>
-                <div className="text-xs text-gray-500 font-mono mb-1">{api.base_path}</div>
-                <div className="text-xs text-gray-400">Owner: {api.owner_team}</div>
+                <div className="text-xs text-ink/50 font-mono mb-1">{api.base_path}</div>
+                <div className="text-xs text-ink/40">Owner: {api.owner_team}</div>
               </div>
               <div className="flex gap-2">
-                <button className="text-xs text-blue-600 hover:underline">OpenAPI</button>
-                <button className="text-xs text-gray-500 hover:underline">SDK</button>
-                <button className="text-xs text-gray-500 hover:underline">Edit</button>
+                <button className="text-xs text-brand-400 hover:underline">OpenAPI</button>
+                <button className="text-xs text-ink/50 hover:underline">SDK</button>
+                <button className="text-xs text-ink/50 hover:underline">Edit</button>
               </div>
             </div>
           </div>
@@ -215,32 +215,32 @@ function ApplicationsTab() {
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold text-gray-800">Applications</h2>
-        <button className="bg-blue-600 text-white px-3 py-1.5 rounded text-sm hover:bg-blue-700">+ Register App</button>
+        <h2 className="text-lg font-bold text-ink">Applications</h2>
+        <button className="bg-brand-500 text-white px-3 py-1.5 rounded text-sm hover:bg-brand-600">+ Register App</button>
       </div>
       <table className="w-full text-sm">
         <thead>
-          <tr className="text-left border-b border-gray-200">
-            <th className="pb-2 font-medium text-gray-600">Name</th>
-            <th className="pb-2 font-medium text-gray-600">Classification</th>
-            <th className="pb-2 font-medium text-gray-600">Status</th>
-            <th className="pb-2 font-medium text-gray-600">Owner</th>
-            <th className="pb-2 font-medium text-gray-600">Keys</th>
-            <th className="pb-2 font-medium text-gray-600">Actions</th>
+          <tr className="text-left border-b border-ink/10">
+            <th className="pb-2 font-medium text-ink/50">Name</th>
+            <th className="pb-2 font-medium text-ink/50">Classification</th>
+            <th className="pb-2 font-medium text-ink/50">Status</th>
+            <th className="pb-2 font-medium text-ink/50">Owner</th>
+            <th className="pb-2 font-medium text-ink/50">Keys</th>
+            <th className="pb-2 font-medium text-ink/50">Actions</th>
           </tr>
         </thead>
         <tbody>
           {MOCK_APPLICATIONS.map((app) => (
-            <tr key={app.id} className="border-b border-gray-100 hover:bg-gray-50">
+            <tr key={app.id} className="border-b border-ink/5 hover:bg-ink/5">
               <td className="py-2.5 font-medium">{app.name}</td>
               <td className="py-2.5"><ClassificationBadge value={app.classification} /></td>
               <td className="py-2.5"><StatusBadge status={app.status} /></td>
-              <td className="py-2.5 text-gray-500 text-xs">{app.owner_email}</td>
+              <td className="py-2.5 text-ink/50 text-xs">{app.owner_email}</td>
               <td className="py-2.5">{app.key_count}</td>
               <td className="py-2.5">
                 <div className="flex gap-2">
-                  <button className="text-xs text-blue-600 hover:underline">Keys</button>
-                  <button className="text-xs text-gray-500 hover:underline">{app.status === "active" ? "Suspend" : "Activate"}</button>
+                  <button className="text-xs text-brand-400 hover:underline">Keys</button>
+                  <button className="text-xs text-ink/50 hover:underline">{app.status === "active" ? "Suspend" : "Activate"}</button>
                 </div>
               </td>
             </tr>
@@ -255,43 +255,43 @@ function ApiKeysTab() {
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold text-gray-800">API Keys</h2>
-        <button className="bg-blue-600 text-white px-3 py-1.5 rounded text-sm hover:bg-blue-700">+ Generate Key</button>
+        <h2 className="text-lg font-bold text-ink">API Keys</h2>
+        <button className="bg-brand-500 text-white px-3 py-1.5 rounded text-sm hover:bg-brand-600">+ Generate Key</button>
       </div>
       <table className="w-full text-sm">
         <thead>
-          <tr className="text-left border-b border-gray-200">
-            <th className="pb-2 font-medium text-gray-600">Name</th>
-            <th className="pb-2 font-medium text-gray-600">Application</th>
-            <th className="pb-2 font-medium text-gray-600">Prefix</th>
-            <th className="pb-2 font-medium text-gray-600">Status</th>
-            <th className="pb-2 font-medium text-gray-600">Scopes</th>
-            <th className="pb-2 font-medium text-gray-600">Last Used</th>
-            <th className="pb-2 font-medium text-gray-600">Expires</th>
-            <th className="pb-2 font-medium text-gray-600">Actions</th>
+          <tr className="text-left border-b border-ink/10">
+            <th className="pb-2 font-medium text-ink/50">Name</th>
+            <th className="pb-2 font-medium text-ink/50">Application</th>
+            <th className="pb-2 font-medium text-ink/50">Prefix</th>
+            <th className="pb-2 font-medium text-ink/50">Status</th>
+            <th className="pb-2 font-medium text-ink/50">Scopes</th>
+            <th className="pb-2 font-medium text-ink/50">Last Used</th>
+            <th className="pb-2 font-medium text-ink/50">Expires</th>
+            <th className="pb-2 font-medium text-ink/50">Actions</th>
           </tr>
         </thead>
         <tbody>
           {MOCK_KEYS.map((key) => (
-            <tr key={key.id} className="border-b border-gray-100 hover:bg-gray-50">
+            <tr key={key.id} className="border-b border-ink/5 hover:bg-ink/5">
               <td className="py-2.5 font-medium">{key.name}</td>
-              <td className="py-2.5 text-xs text-gray-500">{key.application}</td>
-              <td className="py-2.5 font-mono text-xs text-gray-600">{key.key_prefix}...</td>
+              <td className="py-2.5 text-xs text-ink/50">{key.application}</td>
+              <td className="py-2.5 font-mono text-xs text-ink/50">{key.key_prefix}...</td>
               <td className="py-2.5"><StatusBadge status={key.status} /></td>
               <td className="py-2.5">
                 <div className="flex flex-wrap gap-1">
                   {key.scopes.map((s) => (
-                    <span key={s} className="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">{s}</span>
+                    <span key={s} className="text-xs bg-ink/10 text-ink/50 px-1.5 py-0.5 rounded">{s}</span>
                   ))}
                 </div>
               </td>
-              <td className="py-2.5 text-xs text-gray-500">{key.last_used_at ? new Date(key.last_used_at).toLocaleDateString() : "—"}</td>
-              <td className="py-2.5 text-xs text-gray-500">{key.expires_at ?? "Never"}</td>
+              <td className="py-2.5 text-xs text-ink/50">{key.last_used_at ? new Date(key.last_used_at).toLocaleDateString() : "—"}</td>
+              <td className="py-2.5 text-xs text-ink/50">{key.expires_at ?? "Never"}</td>
               <td className="py-2.5">
                 {key.status === "active" && (
                   <div className="flex gap-2">
-                    <button className="text-xs text-blue-600 hover:underline">Rotate</button>
-                    <button className="text-xs text-red-500 hover:underline">Revoke</button>
+                    <button className="text-xs text-brand-400 hover:underline">Rotate</button>
+                    <button className="text-xs text-red-400 hover:underline">Revoke</button>
                   </div>
                 )}
               </td>
@@ -307,35 +307,35 @@ function WebhooksTab() {
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold text-gray-800">Webhooks</h2>
-        <button className="bg-blue-600 text-white px-3 py-1.5 rounded text-sm hover:bg-blue-700">+ Register Webhook</button>
+        <h2 className="text-lg font-bold text-ink">Webhooks</h2>
+        <button className="bg-brand-500 text-white px-3 py-1.5 rounded text-sm hover:bg-brand-600">+ Register Webhook</button>
       </div>
       <div className="grid gap-3">
         {MOCK_WEBHOOKS.map((wh) => (
-          <div key={wh.id} className={`border rounded-lg p-4 bg-white ${wh.failure_count > 10 ? "border-red-200" : "border-gray-200"}`}>
+          <div key={wh.id} className={`border rounded-lg p-4 bg-surface-raised ${wh.failure_count > 10 ? "border-red-400/30" : "border-ink/10"}`}>
             <div className="flex items-start justify-between">
               <div>
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="font-medium text-gray-900">{wh.name}</span>
+                  <span className="font-medium text-ink">{wh.name}</span>
                   <StatusBadge status={wh.status} />
                   {wh.failure_count > 0 && (
-                    <span className="text-xs text-red-500 font-medium">{wh.failure_count} failures</span>
+                    <span className="text-xs text-red-400 font-medium">{wh.failure_count} failures</span>
                   )}
                 </div>
-                <div className="text-xs font-mono text-gray-500 mb-1">{wh.target_url}</div>
+                <div className="text-xs font-mono text-ink/50 mb-1">{wh.target_url}</div>
                 <div className="flex gap-1">
                   {wh.events.map((e) => (
-                    <span key={e} className="text-xs bg-blue-50 text-blue-600 px-1.5 py-0.5 rounded">{e}</span>
+                    <span key={e} className="text-xs bg-brand-500/10 text-brand-400 px-1.5 py-0.5 rounded">{e}</span>
                   ))}
                 </div>
               </div>
               <div className="flex gap-2 items-start">
-                <button className="text-xs text-blue-600 hover:underline">Deliveries</button>
-                <button className="text-xs text-gray-500 hover:underline">Pause</button>
+                <button className="text-xs text-brand-400 hover:underline">Deliveries</button>
+                <button className="text-xs text-ink/50 hover:underline">Pause</button>
               </div>
             </div>
             {wh.last_delivery_at && (
-              <div className="mt-2 text-xs text-gray-400">Last delivery: {new Date(wh.last_delivery_at).toLocaleString()}</div>
+              <div className="mt-2 text-xs text-ink/40">Last delivery: {new Date(wh.last_delivery_at).toLocaleString()}</div>
             )}
           </div>
         ))}
@@ -351,42 +351,42 @@ function UsageTab() {
 
   return (
     <div>
-      <h2 className="text-lg font-semibold text-gray-800 mb-4">API Usage Analytics</h2>
+      <h2 className="text-lg font-bold text-ink mb-4">API Usage Analytics</h2>
 
       <div className="grid grid-cols-3 gap-4 mb-6">
-        <div className="bg-blue-50 border border-blue-100 rounded-lg p-4">
-          <div className="text-2xl font-bold text-blue-700">{totalRequests.toLocaleString()}</div>
-          <div className="text-xs text-blue-500 mt-1">Total Requests (30d)</div>
+        <div className="bg-brand-500/10 border border-brand-400/20 rounded-lg p-4">
+          <div className="text-2xl font-bold text-brand-300">{totalRequests.toLocaleString()}</div>
+          <div className="text-xs text-brand-400 mt-1">Total Requests (30d)</div>
         </div>
-        <div className="bg-red-50 border border-red-100 rounded-lg p-4">
-          <div className="text-2xl font-bold text-red-600">{errorRate}%</div>
+        <div className="bg-red-500/10 border border-red-400/20 rounded-lg p-4">
+          <div className="text-2xl font-bold text-red-400">{errorRate}%</div>
           <div className="text-xs text-red-400 mt-1">Error Rate</div>
         </div>
-        <div className="bg-green-50 border border-green-100 rounded-lg p-4">
-          <div className="text-2xl font-bold text-green-700">38ms</div>
-          <div className="text-xs text-green-500 mt-1">Avg Latency</div>
+        <div className="bg-emerald-500/10 border border-emerald-400/20 rounded-lg p-4">
+          <div className="text-2xl font-bold text-emerald-400">38ms</div>
+          <div className="text-xs text-emerald-400 mt-1">Avg Latency</div>
         </div>
       </div>
 
-      <h3 className="font-medium text-gray-700 mb-3 text-sm">Top Endpoints</h3>
+      <h3 className="font-medium text-ink/70 mb-3 text-sm">Top Endpoints</h3>
       <table className="w-full text-sm">
         <thead>
-          <tr className="text-left border-b border-gray-200">
-            <th className="pb-2 font-medium text-gray-600">Endpoint</th>
-            <th className="pb-2 font-medium text-gray-600">Method</th>
-            <th className="pb-2 font-medium text-gray-600">Requests</th>
-            <th className="pb-2 font-medium text-gray-600">Errors</th>
-            <th className="pb-2 font-medium text-gray-600">Avg Latency</th>
-            <th className="pb-2 font-medium text-gray-600">P99</th>
+          <tr className="text-left border-b border-ink/10">
+            <th className="pb-2 font-medium text-ink/50">Endpoint</th>
+            <th className="pb-2 font-medium text-ink/50">Method</th>
+            <th className="pb-2 font-medium text-ink/50">Requests</th>
+            <th className="pb-2 font-medium text-ink/50">Errors</th>
+            <th className="pb-2 font-medium text-ink/50">Avg Latency</th>
+            <th className="pb-2 font-medium text-ink/50">P99</th>
           </tr>
         </thead>
         <tbody>
           {MOCK_USAGE.map((u, i) => (
-            <tr key={i} className="border-b border-gray-100 hover:bg-gray-50">
-              <td className="py-2.5 font-mono text-xs text-gray-600">{u.endpoint}</td>
-              <td className="py-2.5"><span className="text-xs font-medium text-blue-600">{u.method}</span></td>
+            <tr key={i} className="border-b border-ink/5 hover:bg-ink/5">
+              <td className="py-2.5 font-mono text-xs text-ink/50">{u.endpoint}</td>
+              <td className="py-2.5"><span className="text-xs font-medium text-brand-400">{u.method}</span></td>
               <td className="py-2.5">{u.total.toLocaleString()}</td>
-              <td className="py-2.5 text-red-500">{u.errors}</td>
+              <td className="py-2.5 text-red-400">{u.errors}</td>
               <td className="py-2.5">{u.avg_latency_ms}ms</td>
               <td className="py-2.5">{u.p99_latency_ms}ms</td>
             </tr>
@@ -401,35 +401,35 @@ function ContractsTab() {
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold text-gray-800">API Contracts</h2>
-        <button className="bg-blue-600 text-white px-3 py-1.5 rounded text-sm hover:bg-blue-700">+ Register Contract</button>
+        <h2 className="text-lg font-bold text-ink">API Contracts</h2>
+        <button className="bg-brand-500 text-white px-3 py-1.5 rounded text-sm hover:bg-brand-600">+ Register Contract</button>
       </div>
-      <div className="mb-4 p-3 bg-blue-50 border border-blue-100 rounded-lg text-sm text-blue-700">
+      <div className="mb-4 p-3 bg-brand-500/10 border border-brand-400/20 rounded-lg text-sm text-brand-300">
         Contract testing ensures backward compatibility when API schemas change. {MOCK_CONTRACTS.filter(c => !c.is_valid).length} contract(s) currently have schema drift detected.
       </div>
       <table className="w-full text-sm">
         <thead>
-          <tr className="text-left border-b border-gray-200">
-            <th className="pb-2 font-medium text-gray-600">Catalog</th>
-            <th className="pb-2 font-medium text-gray-600">Consumer</th>
-            <th className="pb-2 font-medium text-gray-600">Status</th>
-            <th className="pb-2 font-medium text-gray-600">Last Validated</th>
-            <th className="pb-2 font-medium text-gray-600">Actions</th>
+          <tr className="text-left border-b border-ink/10">
+            <th className="pb-2 font-medium text-ink/50">Catalog</th>
+            <th className="pb-2 font-medium text-ink/50">Consumer</th>
+            <th className="pb-2 font-medium text-ink/50">Status</th>
+            <th className="pb-2 font-medium text-ink/50">Last Validated</th>
+            <th className="pb-2 font-medium text-ink/50">Actions</th>
           </tr>
         </thead>
         <tbody>
           {MOCK_CONTRACTS.map((c) => (
-            <tr key={c.id} className="border-b border-gray-100 hover:bg-gray-50">
+            <tr key={c.id} className="border-b border-ink/5 hover:bg-ink/5">
               <td className="py-2.5 font-mono text-xs">{c.catalog}</td>
               <td className="py-2.5 font-medium">{c.consumer_name}</td>
               <td className="py-2.5">
                 {c.is_valid
-                  ? <span className="text-xs text-green-600 font-medium">Valid</span>
-                  : <span className="text-xs text-red-600 font-medium">Schema Drift</span>}
+                  ? <span className="text-xs text-emerald-400 font-medium">Valid</span>
+                  : <span className="text-xs text-red-400 font-medium">Schema Drift</span>}
               </td>
-              <td className="py-2.5 text-xs text-gray-500">{new Date(c.last_validated_at).toLocaleString()}</td>
+              <td className="py-2.5 text-xs text-ink/50">{new Date(c.last_validated_at).toLocaleString()}</td>
               <td className="py-2.5">
-                <button className="text-xs text-blue-600 hover:underline">Re-validate</button>
+                <button className="text-xs text-brand-400 hover:underline">Re-validate</button>
               </td>
             </tr>
           ))}
@@ -442,39 +442,39 @@ function ContractsTab() {
 function FHIRTab() {
   return (
     <div>
-      <h2 className="text-lg font-semibold text-gray-800 mb-2">FHIR API</h2>
-      <div className="text-sm text-gray-500 mb-4">
-        SMART on FHIR R4/R5 endpoints. Authentication via CyIdentity (OAuth 2.1 + PKCE). Base: <code className="bg-gray-100 px-1 rounded">/api/v1/fhir/</code>
+      <h2 className="text-lg font-bold text-ink mb-2">FHIR API</h2>
+      <div className="text-sm text-ink/50 mb-4">
+        SMART on FHIR R4/R5 endpoints. Authentication via CyIdentity (OAuth 2.1 + PKCE). Base: <code className="bg-ink/10 px-1 rounded">/api/v1/fhir/</code>
       </div>
 
       <div className="flex gap-2 mb-4">
-        <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full font-medium">R4 Stable</span>
-        <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full font-medium">R5 Preview</span>
-        <span className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded-full font-medium">SMART on FHIR</span>
+        <span className="text-xs bg-emerald-500/15 text-emerald-400 px-2 py-1 rounded-full font-medium">R4 Stable</span>
+        <span className="text-xs bg-brand-500/15 text-brand-300 px-2 py-1 rounded-full font-medium">R5 Preview</span>
+        <span className="text-xs bg-purple-500/15 text-purple-400 px-2 py-1 rounded-full font-medium">SMART on FHIR</span>
       </div>
 
       <div className="grid gap-3">
         {MOCK_FHIR.map((r) => (
-          <div key={r.resource_type} className="border border-gray-200 rounded-lg p-4 bg-white">
+          <div key={r.resource_type} className="border border-ink/10 rounded-lg p-4 bg-surface-raised">
             <div className="flex items-start justify-between">
               <div>
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="font-medium text-gray-900">{r.resource_type}</span>
-                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${r.fhir_version === "R4" ? "bg-green-100 text-green-700" : "bg-blue-100 text-blue-700"}`}>
+                  <span className="font-medium text-ink">{r.resource_type}</span>
+                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${r.fhir_version === "R4" ? "bg-emerald-500/15 text-emerald-400" : "bg-brand-500/15 text-brand-300"}`}>
                     {r.fhir_version}
                   </span>
                 </div>
-                <div className="text-xs font-mono text-gray-500 mb-2">{r.endpoint}</div>
-                <div className="text-xs text-gray-500 mb-2">{r.description}</div>
+                <div className="text-xs font-mono text-ink/50 mb-2">{r.endpoint}</div>
+                <div className="text-xs text-ink/50 mb-2">{r.description}</div>
                 <div className="flex flex-wrap gap-1">
                   {r.smart_scopes.map((s) => (
-                    <span key={s} className="text-xs bg-purple-50 text-purple-600 px-1.5 py-0.5 rounded font-mono">{s}</span>
+                    <span key={s} className="text-xs bg-purple-500/10 text-purple-400 px-1.5 py-0.5 rounded font-mono">{s}</span>
                   ))}
                 </div>
               </div>
               <div className="flex gap-2">
-                <button className="text-xs text-blue-600 hover:underline">Try it</button>
-                <button className="text-xs text-gray-500 hover:underline">Schema</button>
+                <button className="text-xs text-brand-400 hover:underline">Try it</button>
+                <button className="text-xs text-ink/50 hover:underline">Schema</button>
               </div>
             </div>
           </div>
@@ -488,8 +488,8 @@ function SubscriptionsTab() {
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-lg font-semibold text-gray-800">API Subscriptions</h2>
-        <button className="bg-blue-600 text-white px-3 py-1.5 rounded text-sm hover:bg-blue-700">+ Subscribe</button>
+        <h2 className="text-lg font-bold text-ink">API Subscriptions</h2>
+        <button className="bg-brand-500 text-white px-3 py-1.5 rounded text-sm hover:bg-brand-600">+ Subscribe</button>
       </div>
       <div className="grid gap-3">
         {[
@@ -497,23 +497,23 @@ function SubscriptionsTab() {
           { id: "2", app: "DHA Reporting Service", api: "Audit API", scopes: ["audit:read"], status: "active", approved_by: "security_admin", approved_at: "2026-02-01" },
           { id: "3", app: "CyberCom Analytics Worker", api: "Analytics API", scopes: ["analytics:read"], status: "active", approved_by: "platform_admin", approved_at: "2026-03-10" },
         ].map((sub) => (
-          <div key={sub.id} className="border border-gray-200 rounded-lg p-4 bg-white">
+          <div key={sub.id} className="border border-ink/10 rounded-lg p-4 bg-surface-raised">
             <div className="flex items-start justify-between">
               <div>
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="font-medium text-gray-900">{sub.app}</span>
-                  <span className="text-gray-400">→</span>
-                  <span className="font-medium text-blue-600">{sub.api}</span>
+                  <span className="font-medium text-ink">{sub.app}</span>
+                  <span className="text-ink/40">→</span>
+                  <span className="font-medium text-brand-400">{sub.api}</span>
                   <StatusBadge status={sub.status} />
                 </div>
                 <div className="flex gap-1 mt-1">
                   {sub.scopes.map((s) => (
-                    <span key={s} className="text-xs bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded">{s}</span>
+                    <span key={s} className="text-xs bg-ink/10 text-ink/50 px-1.5 py-0.5 rounded">{s}</span>
                   ))}
                 </div>
-                <div className="text-xs text-gray-400 mt-1">Approved by {sub.approved_by} on {sub.approved_at}</div>
+                <div className="text-xs text-ink/40 mt-1">Approved by {sub.approved_by} on {sub.approved_at}</div>
               </div>
-              <button className="text-xs text-red-500 hover:underline">Revoke</button>
+              <button className="text-xs text-red-400 hover:underline">Revoke</button>
             </div>
           </div>
         ))}
@@ -546,49 +546,49 @@ export default function ApiManagementPage() {
   const failedWebhooks = MOCK_WEBHOOKS.filter((w) => w.status === "failed").length;
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="min-h-screen bg-surface p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">API Management</h1>
-          <p className="text-sm text-gray-500 mt-1">
+          <h1 className="font-heading text-2xl font-bold text-ink">API Management</h1>
+          <p className="text-sm text-ink/50 mt-1">
             CyberCom Platform — OpenAPI 3.1 · RFC 7807 · FHIR R4/R5 · SMART on FHIR
           </p>
         </div>
 
         {/* KPI Strip */}
         <div className="grid grid-cols-4 gap-4 mb-6">
-          <div className="bg-white border border-gray-200 rounded-lg p-4">
-            <div className="text-2xl font-bold text-gray-800">{activeApis}</div>
-            <div className="text-xs text-gray-500 mt-1">Active APIs</div>
+          <div className="bg-surface-raised border border-ink/10 rounded-lg p-4">
+            <div className="text-2xl font-bold text-ink">{activeApis}</div>
+            <div className="text-xs text-ink/50 mt-1">Active APIs</div>
           </div>
-          <div className="bg-white border border-gray-200 rounded-lg p-4">
-            <div className="text-2xl font-bold text-gray-800">{totalApps}</div>
-            <div className="text-xs text-gray-500 mt-1">Active Applications</div>
+          <div className="bg-surface-raised border border-ink/10 rounded-lg p-4">
+            <div className="text-2xl font-bold text-ink">{totalApps}</div>
+            <div className="text-xs text-ink/50 mt-1">Active Applications</div>
           </div>
-          <div className="bg-white border border-gray-200 rounded-lg p-4">
-            <div className="text-2xl font-bold text-gray-800">{totalKeys}</div>
-            <div className="text-xs text-gray-500 mt-1">Active Keys</div>
+          <div className="bg-surface-raised border border-ink/10 rounded-lg p-4">
+            <div className="text-2xl font-bold text-ink">{totalKeys}</div>
+            <div className="text-xs text-ink/50 mt-1">Active Keys</div>
           </div>
-          <div className="bg-white border border-gray-200 rounded-lg p-4">
-            <div className={`text-2xl font-bold ${failedWebhooks > 0 ? "text-red-600" : "text-gray-800"}`}>
+          <div className="bg-surface-raised border border-ink/10 rounded-lg p-4">
+            <div className={`text-2xl font-bold ${failedWebhooks > 0 ? "text-red-400" : "text-ink"}`}>
               {failedWebhooks}
             </div>
-            <div className="text-xs text-gray-500 mt-1">Failed Webhooks</div>
+            <div className="text-xs text-ink/50 mt-1">Failed Webhooks</div>
           </div>
         </div>
 
         {/* Tabs */}
-        <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
-          <div className="flex border-b border-gray-200 overflow-x-auto">
+        <div className="bg-surface-raised border border-ink/10 rounded-xl shadow-sm overflow-hidden">
+          <div className="flex border-b border-ink/10 overflow-x-auto">
             {TABS.map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
                 className={`px-4 py-3 text-sm font-medium whitespace-nowrap transition-colors ${
                   activeTab === tab.id
-                    ? "border-b-2 border-blue-600 text-blue-600"
-                    : "text-gray-500 hover:text-gray-700"
+                    ? "border-b-2 border-brand-500 text-brand-400"
+                    : "text-ink/50 hover:text-ink"
                 }`}
               >
                 {tab.label}

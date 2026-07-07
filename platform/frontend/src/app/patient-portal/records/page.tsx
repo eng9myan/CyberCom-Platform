@@ -67,39 +67,114 @@ export default function PatientRecordsPage() {
     { key: "vitals" as const, label: isAr ? "العلامات الحيوية" : "Vital Signs" },
   ];
 
-  const s: Record<string, React.CSSProperties> = {
-    page: { padding: "2rem", maxWidth: 1000, margin: "0 auto", direction: isAr ? "rtl" : "ltr" },
-    header: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem", borderBottom: "2px solid rgba(34,211,238,0.3)", paddingBottom: "1rem" },
-    h1: { fontSize: "1.6rem", fontWeight: 700, color: "#22D3EE" },
-    btn: { background: "var(--color-surface)", border: "1px solid var(--color-border)", color: "var(--color-text)", padding: "0.4rem 1rem", borderRadius: 6, cursor: "pointer", fontWeight: 600, textDecoration: "none" as const },
-    tabRow: { display: "flex", gap: "0.5rem", flexWrap: "wrap" as const, marginBottom: "1.5rem" },
-    card: { background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: 8, padding: "1rem 1.25rem", marginBottom: "0.75rem" },
-    table: { width: "100%", borderCollapse: "collapse" as const },
-    th: { padding: "0.75rem", textAlign: (isAr ? "right" : "left") as "left" | "right", color: "var(--color-text-muted)", fontWeight: 600, borderBottom: "1px solid var(--color-border)", fontSize: "0.85rem" },
-    td: { padding: "0.75rem", borderBottom: "1px solid var(--color-border)", fontSize: "0.875rem" },
-  };
+  const thCls = `px-4 py-3 text-[13px] font-semibold text-ink/50 ${isAr ? "text-right" : "text-left"}`;
+  const tdCls = "border-b border-ink/10 px-4 py-3 text-sm";
 
   return (
-    <div style={s.page}>
-      <header style={s.header}>
+    <div className="mx-auto max-w-5xl" style={{ direction: isAr ? "rtl" : "ltr" }}>
+      <header className="mb-6 flex items-center justify-between">
         <div>
-          <h1 style={s.h1}>{isAr ? "سجلي الطبي" : "My Medical Records"}</h1>
-          <p style={{ color: "var(--color-text-muted)", fontSize: "0.875rem" }}>{isAr ? "ملخص صحتي — FHIR R4 متوافق" : "Health summary — FHIR R4 compliant"}</p>
+          <h1 className="font-heading text-2xl font-bold">{isAr ? "سجلي الطبي" : "My Medical Records"}</h1>
+          <p className="text-sm text-ink/50">{isAr ? "ملخص صحتي — FHIR R4 متوافق" : "Health summary — FHIR R4 compliant"}</p>
         </div>
-        <div style={{ display: "flex", gap: "0.75rem" }}>
-          {loading && <span style={{ color: "var(--color-text-muted)", fontSize: "0.8rem" }}>●</span>}
-          <a href="/patient-portal" style={s.btn}>{isAr ? "← البوابة" : "← Portal"}</a>
-          <button style={s.btn} onClick={() => setLang(isAr ? "en" : "ar")}>{isAr ? "English" : "العربية"}</button>
+        <div className="flex items-center gap-3">
+          {loading && <span className="text-xs text-ink/50">●</span>}
+          <a href="/patient-portal" className="cy-btn cy-btn-ghost !min-h-0 !py-2 !px-4 text-sm">{isAr ? "← البوابة" : "← Portal"}</a>
+          <button onClick={() => setLang(isAr ? "en" : "ar")} className="cy-btn cy-btn-ghost !min-h-0 !py-2 !px-4 text-sm">{isAr ? "English" : "العربية"}</button>
         </div>
       </header>
-      <div style={s.tabRow}>
-        {TABS.map(t => <button key={t.key} onClick={() => setTab(t.key)} style={{ ...s.btn, background: tab === t.key ? "#22D3EE" : "var(--color-surface)", color: tab === t.key ? "#000" : "var(--color-text)" }}>{t.label}</button>)}
+      <div className="mb-6 flex flex-wrap gap-2">
+        {TABS.map(t => (
+          <button
+            key={t.key}
+            onClick={() => setTab(t.key)}
+            className={`rounded-lg px-4 py-1.5 text-sm font-semibold ${tab === t.key ? "border border-brand-400/60 bg-brand-500/15 text-brand-300" : "border border-ink/10 text-ink/50 hover:bg-ink/5"}`}
+          >
+            {t.label}
+          </button>
+        ))}
       </div>
-      {tab === "conditions" && <div style={{ background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: 8, overflow: "hidden" }}><table style={s.table}><thead><tr><th style={s.th}>ICD-11</th><th style={s.th}>{isAr ? "التشخيص" : "Diagnosis"}</th><th style={s.th}>{isAr ? "البداية" : "Onset"}</th><th style={s.th}>{isAr ? "الحالة" : "Status"}</th></tr></thead><tbody>{records.conditions.map(c => <tr key={c.icd11}><td style={{ ...s.td, fontFamily: "monospace", color: "#a78bfa" }}>{c.icd11}</td><td style={s.td}>{isAr ? c.name_ar : c.name}</td><td style={s.td}>{c.onset}</td><td style={s.td}><span style={{ color: c.status === "Active" ? "#22c55e" : "#6b7280", fontWeight: 600 }}>{c.status}</span></td></tr>)}</tbody></table></div>}
-      {tab === "medications" && <div style={{ background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: 8, overflow: "hidden" }}><table style={s.table}><thead><tr><th style={s.th}>{isAr ? "الدواء" : "Medication"}</th><th style={s.th}>{isAr ? "الجرعة" : "Dose"}</th><th style={s.th}>{isAr ? "التكرار" : "Frequency"}</th><th style={s.th}>{isAr ? "الطبيب" : "Prescriber"}</th></tr></thead><tbody>{records.medications.map(m => <tr key={m.name}><td style={{ ...s.td, fontWeight: 600 }}>{isAr ? m.name_ar : m.name}</td><td style={s.td}>{m.dose}</td><td style={s.td}>{m.frequency}</td><td style={s.td}>{m.prescriber}</td></tr>)}</tbody></table></div>}
-      {tab === "allergies" && <div>{records.allergies.map(a => <div key={a.substance} style={{ ...s.card, borderLeft: `4px solid ${SEV_COLOR[a.severity]}` }}><div style={{ display: "flex", justifyContent: "space-between" }}><div><div style={{ fontWeight: 700 }}>{isAr ? a.substance_ar : a.substance}</div><div style={{ fontSize: "0.875rem", color: "var(--color-text-muted)" }}>{a.reaction}</div></div><span style={{ background: `${SEV_COLOR[a.severity]}22`, color: SEV_COLOR[a.severity], border: `1px solid ${SEV_COLOR[a.severity]}55`, borderRadius: 4, padding: "2px 10px", fontWeight: 700, fontSize: "0.8rem", alignSelf: "center" }}>{a.severity}</span></div></div>)}</div>}
-      {tab === "immunizations" && <div style={{ background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: 8, overflow: "hidden" }}><table style={s.table}><thead><tr><th style={s.th}>{isAr ? "اللقاح" : "Vaccine"}</th><th style={s.th}>{isAr ? "التاريخ" : "Date"}</th><th style={s.th}>{isAr ? "الجرعة" : "Dose"}</th></tr></thead><tbody>{records.immunizations.map(i => <tr key={i.vaccine}><td style={{ ...s.td, fontWeight: 600 }}>{isAr ? i.vaccine_ar : i.vaccine}</td><td style={{ ...s.td, fontFamily: "monospace" }}>{i.date}</td><td style={s.td}>{i.dose}</td></tr>)}</tbody></table></div>}
-      {tab === "vitals" && <div style={{ background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: 8, overflow: "hidden" }}><table style={s.table}><thead><tr><th style={s.th}>{isAr ? "التاريخ" : "Date"}</th><th style={s.th}>{isAr ? "ض.الدم" : "BP"}</th><th style={s.th}>{isAr ? "نبض" : "HR"}</th><th style={s.th}>{isAr ? "حرارة" : "Temp"}</th><th style={s.th}>SpO₂</th><th style={s.th}>{isAr ? "وزن" : "Weight"}</th></tr></thead><tbody>{records.vitals.map(v => <tr key={v.date}><td style={{ ...s.td, fontFamily: "monospace" }}>{v.date}</td><td style={s.td}>{v.bp}</td><td style={s.td}>{v.hr} bpm</td><td style={s.td}>{v.temp}°C</td><td style={s.td}>{v.spo2}%</td><td style={s.td}>{v.weight} kg</td></tr>)}</tbody></table></div>}
+
+      {tab === "conditions" && (
+        <div className="cy-card overflow-hidden p-0">
+          <table className="w-full border-collapse">
+            <thead><tr className="border-b border-ink/10"><th className={thCls}>ICD-11</th><th className={thCls}>{isAr ? "التشخيص" : "Diagnosis"}</th><th className={thCls}>{isAr ? "البداية" : "Onset"}</th><th className={thCls}>{isAr ? "الحالة" : "Status"}</th></tr></thead>
+            <tbody>{records.conditions.map(c => (
+              <tr key={c.icd11}>
+                <td className={`${tdCls} font-mono text-violet-400`}>{c.icd11}</td>
+                <td className={tdCls}>{isAr ? c.name_ar : c.name}</td>
+                <td className={tdCls}>{c.onset}</td>
+                <td className={tdCls}><span className={`font-semibold ${c.status === "Active" ? "text-emerald-400" : "text-ink/50"}`}>{c.status}</span></td>
+              </tr>
+            ))}</tbody>
+          </table>
+        </div>
+      )}
+
+      {tab === "medications" && (
+        <div className="cy-card overflow-hidden p-0">
+          <table className="w-full border-collapse">
+            <thead><tr className="border-b border-ink/10"><th className={thCls}>{isAr ? "الدواء" : "Medication"}</th><th className={thCls}>{isAr ? "الجرعة" : "Dose"}</th><th className={thCls}>{isAr ? "التكرار" : "Frequency"}</th><th className={thCls}>{isAr ? "الطبيب" : "Prescriber"}</th></tr></thead>
+            <tbody>{records.medications.map(m => (
+              <tr key={m.name}>
+                <td className={`${tdCls} font-semibold`}>{isAr ? m.name_ar : m.name}</td>
+                <td className={tdCls}>{m.dose}</td>
+                <td className={tdCls}>{m.frequency}</td>
+                <td className={tdCls}>{m.prescriber}</td>
+              </tr>
+            ))}</tbody>
+          </table>
+        </div>
+      )}
+
+      {tab === "allergies" && (
+        <div>
+          {records.allergies.map(a => (
+            <div key={a.substance} className="cy-card mb-3 p-0" style={{ borderLeft: `4px solid ${SEV_COLOR[a.severity]}` }}>
+              <div className="flex items-center justify-between p-5">
+                <div>
+                  <div className="font-bold">{isAr ? a.substance_ar : a.substance}</div>
+                  <div className="text-sm text-ink/50">{a.reaction}</div>
+                </div>
+                <span className="rounded px-2.5 py-0.5 text-[13px] font-bold" style={{ background: `${SEV_COLOR[a.severity]}22`, color: SEV_COLOR[a.severity], border: `1px solid ${SEV_COLOR[a.severity]}55` }}>{a.severity}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {tab === "immunizations" && (
+        <div className="cy-card overflow-hidden p-0">
+          <table className="w-full border-collapse">
+            <thead><tr className="border-b border-ink/10"><th className={thCls}>{isAr ? "اللقاح" : "Vaccine"}</th><th className={thCls}>{isAr ? "التاريخ" : "Date"}</th><th className={thCls}>{isAr ? "الجرعة" : "Dose"}</th></tr></thead>
+            <tbody>{records.immunizations.map(i => (
+              <tr key={i.vaccine}>
+                <td className={`${tdCls} font-semibold`}>{isAr ? i.vaccine_ar : i.vaccine}</td>
+                <td className={`${tdCls} font-mono`}>{i.date}</td>
+                <td className={tdCls}>{i.dose}</td>
+              </tr>
+            ))}</tbody>
+          </table>
+        </div>
+      )}
+
+      {tab === "vitals" && (
+        <div className="cy-card overflow-hidden p-0">
+          <table className="w-full border-collapse">
+            <thead><tr className="border-b border-ink/10"><th className={thCls}>{isAr ? "التاريخ" : "Date"}</th><th className={thCls}>{isAr ? "ض.الدم" : "BP"}</th><th className={thCls}>{isAr ? "نبض" : "HR"}</th><th className={thCls}>{isAr ? "حرارة" : "Temp"}</th><th className={thCls}>SpO₂</th><th className={thCls}>{isAr ? "وزن" : "Weight"}</th></tr></thead>
+            <tbody>{records.vitals.map(v => (
+              <tr key={v.date}>
+                <td className={`${tdCls} font-mono`}>{v.date}</td>
+                <td className={tdCls}>{v.bp}</td>
+                <td className={tdCls}>{v.hr} bpm</td>
+                <td className={tdCls}>{v.temp}°C</td>
+                <td className={tdCls}>{v.spo2}%</td>
+                <td className={tdCls}>{v.weight} kg</td>
+              </tr>
+            ))}</tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }

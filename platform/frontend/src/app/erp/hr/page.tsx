@@ -62,13 +62,13 @@ export default function HRPage() {
   };
 
   if (!isAuthenticated) {
-    return <div style={{ padding: "2rem", textAlign: "center", marginTop: "4rem" }}><h1 style={{ fontWeight: 700, fontSize: "1.25rem" }}>Sign in required</h1></div>;
+    return <div className="mx-auto mt-16 max-w-lg text-center"><h1 className="text-xl font-bold">Sign in required</h1></div>;
   }
   if (fetchError) {
-    return <div style={{ padding: "2rem", textAlign: "center", marginTop: "4rem" }}><h1 style={{ fontWeight: 700, fontSize: "1.25rem", color: "#ef4444" }}>Unable to load HR data</h1><p style={{ color: "var(--color-text-muted)" }}>{fetchError}</p></div>;
+    return <div className="mx-auto mt-16 max-w-lg text-center"><h1 className="text-xl font-bold text-red-400">Unable to load HR data</h1><p className="mt-1 text-sm text-ink/50">{fetchError}</p></div>;
   }
   if (employees === null) {
-    return <div style={{ padding: "2rem", textAlign: "center", marginTop: "4rem", color: "var(--color-text-muted)" }}>Loading live HR data...</div>;
+    return <div className="mx-auto mt-16 max-w-lg text-center text-sm text-ink/40">Loading live HR data...</div>;
   }
 
   const departmentName = (id: string | null) => departments.find(d => d.id === id)?.name || (isAr ? "غير محدد" : "Unassigned");
@@ -80,73 +80,79 @@ export default function HRPage() {
   const pending = leaves.filter(l => l.status === "pending");
   const filtered = filter === "all" ? leaves : leaves.filter(l => l.status === filter);
 
-  const s: Record<string, React.CSSProperties> = {
-    page: { padding: "2rem", maxWidth: 1200, margin: "0 auto", direction: isAr ? "rtl" : "ltr" },
-    header: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem", borderBottom: "2px solid rgba(34,211,238,0.3)", paddingBottom: "1rem" },
-    h1: { fontSize: "1.6rem", fontWeight: 700, color: "#22D3EE" },
-    btn: { background: "var(--color-surface)", border: "1px solid var(--color-border)", color: "var(--color-text)", padding: "0.4rem 1rem", borderRadius: 6, cursor: "pointer", fontWeight: 600, textDecoration: "none" as const },
-    twoCol: { display: "grid", gridTemplateColumns: "1fr 1.5fr", gap: "1.5rem", marginBottom: "1.5rem" },
-    card: { background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: 8, padding: "1.25rem" },
-    sectionTitle: { fontSize: "0.95rem", fontWeight: 700, color: "#22D3EE", marginBottom: "0.75rem" },
-    table: { width: "100%", borderCollapse: "collapse" as const },
-    th: { padding: "0.6rem 0.75rem", textAlign: (isAr ? "right" : "left") as "left" | "right", color: "var(--color-text-muted)", fontWeight: 600, borderBottom: "1px solid var(--color-border)", fontSize: "0.82rem" },
-    td: { padding: "0.6rem 0.75rem", borderBottom: "1px solid var(--color-border)", fontSize: "0.85rem" },
-  };
-
   return (
-    <div style={s.page}>
-      <header style={s.header}>
+    <div className="mx-auto max-w-5xl" style={{ direction: isAr ? "rtl" : "ltr" }}>
+      <header className="mb-6 flex items-center justify-between border-b border-brand-400/30 pb-4">
         <div>
-          <h1 style={s.h1}>{isAr ? "الموارد البشرية" : "Human Resources"}</h1>
-          <p style={{ color: "var(--color-text-muted)", fontSize: "0.875rem" }}>{employees.length} {isAr ? "موظف" : "staff"} · {pending.length} {isAr ? "طلب إجازة معلق" : "pending leave requests"}</p>
+          <h1 className="font-heading text-2xl font-bold">{isAr ? "الموارد البشرية" : "Human Resources"}</h1>
+          <p className="text-sm text-ink/50">{employees.length} {isAr ? "موظف" : "staff"} · {pending.length} {isAr ? "طلب إجازة معلق" : "pending leave requests"}</p>
         </div>
-        <div style={{ display: "flex", gap: "0.75rem" }}>
-          <a href="/erp" style={s.btn}>{isAr ? "← نظام ERP" : "← ERP"}</a>
-          <button style={s.btn} onClick={() => setLang(isAr ? "en" : "ar")}>{isAr ? "English" : "العربية"}</button>
+        <div className="flex gap-3">
+          <a href="/erp" className="cy-btn cy-btn-ghost !min-h-0 !py-2 !px-4 text-sm">{isAr ? "← نظام ERP" : "← ERP"}</a>
+          <button className="cy-btn cy-btn-ghost !min-h-0 !py-2 !px-4 text-sm" onClick={() => setLang(isAr ? "en" : "ar")}>{isAr ? "English" : "العربية"}</button>
         </div>
       </header>
-      <div style={s.twoCol}>
+      <div className="mb-6 grid grid-cols-[1fr_1.5fr] gap-6">
         <div>
-          <div style={s.card}>
-            <div style={s.sectionTitle}>{isAr ? "القوى العاملة حسب القسم" : "Headcount by Department"}</div>
+          <div className="cy-card p-5">
+            <div className="mb-3 text-sm font-bold text-brand-400">{isAr ? "القوى العاملة حسب القسم" : "Headcount by Department"}</div>
             {headcountByDept.length === 0 && unassignedCount === 0 && (
-              <p style={{ color: "var(--color-text-muted)", fontSize: "0.85rem" }}>{isAr ? "لا توجد بيانات" : "No department data yet."}</p>
+              <p className="text-sm text-ink/50">{isAr ? "لا توجد بيانات" : "No department data yet."}</p>
             )}
-            {headcountByDept.map(({ dept, count }) => <div key={dept.id} style={{ display: "flex", justifyContent: "space-between", padding: "0.5rem 0", borderBottom: "1px solid var(--color-border)" }}><span style={{ fontSize: "0.875rem" }}>{dept.name}</span><span style={{ fontWeight: 700, color: "#22D3EE" }}>{count}</span></div>)}
-            {unassignedCount > 0 && <div style={{ display: "flex", justifyContent: "space-between", padding: "0.5rem 0", borderBottom: "1px solid var(--color-border)" }}><span style={{ fontSize: "0.875rem" }}>{isAr ? "غير محدد" : "Unassigned"}</span><span style={{ fontWeight: 700, color: "#22D3EE" }}>{unassignedCount}</span></div>}
-            <div style={{ display: "flex", justifyContent: "space-between", padding: "0.5rem 0", fontWeight: 700 }}><span>{isAr ? "الإجمالي" : "Total"}</span><span style={{ color: "#22D3EE" }}>{employees.length}</span></div>
+            {headcountByDept.map(({ dept, count }) => <div key={dept.id} className="flex justify-between border-b border-ink/10 py-2"><span className="text-sm">{dept.name}</span><span className="font-bold text-brand-400">{count}</span></div>)}
+            {unassignedCount > 0 && <div className="flex justify-between border-b border-ink/10 py-2"><span className="text-sm">{isAr ? "غير محدد" : "Unassigned"}</span><span className="font-bold text-brand-400">{unassignedCount}</span></div>}
+            <div className="flex justify-between py-2 font-bold"><span>{isAr ? "الإجمالي" : "Total"}</span><span className="text-brand-400">{employees.length}</span></div>
           </div>
-          <div style={{ ...s.card, marginTop: "1rem" }}>
-            <div style={s.sectionTitle}>{isAr ? "التوظيف الجديد (30 يوماً)" : "Recently Hired (last 30 days)"}</div>
-            {recentHires.length === 0 && <p style={{ color: "var(--color-text-muted)", fontSize: "0.85rem" }}>{isAr ? "لا يوجد موظفون جدد" : "No new hires in the last 30 days."}</p>}
+          <div className="cy-card mt-4 p-5">
+            <div className="mb-3 text-sm font-bold text-brand-400">{isAr ? "التوظيف الجديد (30 يوماً)" : "Recently Hired (last 30 days)"}</div>
+            {recentHires.length === 0 && <p className="text-sm text-ink/50">{isAr ? "لا يوجد موظفون جدد" : "No new hires in the last 30 days."}</p>}
             {recentHires.map(e => (
-              <div key={e.id} style={{ display: "flex", justifyContent: "space-between", padding: "0.4rem 0", borderBottom: "1px solid var(--color-border)" }}>
+              <div key={e.id} className="flex justify-between border-b border-ink/10 py-1.5">
                 <div>
-                  <div style={{ fontWeight: 600, fontSize: "0.875rem" }}>{e.first_name} {e.last_name}</div>
-                  <div style={{ fontSize: "0.75rem", color: "var(--color-text-muted)" }}>{e.job_title} · {e.hire_date}</div>
+                  <div className="text-sm font-semibold">{e.first_name} {e.last_name}</div>
+                  <div className="text-xs text-ink/50">{e.job_title} · {e.hire_date}</div>
                 </div>
               </div>
             ))}
           </div>
         </div>
-        <div style={{ ...s.card, overflowX: "auto" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.75rem" }}>
-            <div style={s.sectionTitle}>{isAr ? "طلبات الإجازة" : "Leave Requests"}</div>
-            <div style={{ display: "flex", gap: "0.4rem" }}>
-              {["all", "pending", "approved", "rejected"].map(f => <button key={f} onClick={() => setFilter(f)} style={{ ...s.btn, background: filter === f ? "#22D3EE" : "var(--color-surface)", color: filter === f ? "#000" : "var(--color-text)", padding: "0.25rem 0.6rem", fontSize: "0.75rem" }}>{f === "all" ? (isAr ? "الكل" : "All") : f}</button>)}
+        <div className="cy-card overflow-x-auto p-5">
+          <div className="mb-3 flex items-center justify-between">
+            <div className="text-sm font-bold text-brand-400">{isAr ? "طلبات الإجازة" : "Leave Requests"}</div>
+            <div className="flex gap-1.5">
+              {["all", "pending", "approved", "rejected"].map(f => (
+                <button key={f} onClick={() => setFilter(f)} className={`rounded-md px-2.5 py-1 text-xs font-semibold border ${filter === f ? "border-brand-400 bg-brand-500 text-white" : "border-ink/10 bg-surface text-ink"}`}>
+                  {f === "all" ? (isAr ? "الكل" : "All") : f}
+                </button>
+              ))}
             </div>
           </div>
-          <table style={s.table}>
-            <thead><tr><th style={s.th}>{isAr ? "الموظف" : "Employee"}</th><th style={s.th}>{isAr ? "النوع" : "Type"}</th><th style={s.th}>{isAr ? "الفترة" : "Period"}</th><th style={s.th}>{isAr ? "الحالة" : "Status"}</th><th style={s.th}></th></tr></thead>
+          <table className="w-full border-collapse">
+            <thead>
+              <tr>
+                {[isAr ? "الموظف" : "Employee", isAr ? "النوع" : "Type", isAr ? "الفترة" : "Period", isAr ? "الحالة" : "Status", ""].map((h, i) => (
+                  <th key={i} className={`border-b border-ink/10 px-3 py-2.5 text-[13px] font-semibold text-ink/50 ${isAr ? "text-right" : "text-left"}`}>{h}</th>
+                ))}
+              </tr>
+            </thead>
             <tbody>
-              {filtered.length === 0 && <tr><td colSpan={5} style={{ ...s.td, textAlign: "center", color: "var(--color-text-muted)" }}>{isAr ? "لا توجد طلبات إجازة" : "No leave requests."}</td></tr>}
+              {filtered.length === 0 && <tr><td colSpan={5} className="border-b border-ink/10 px-3 py-2.5 text-center text-sm text-ink/40">{isAr ? "لا توجد طلبات إجازة" : "No leave requests."}</td></tr>}
               {filtered.map(l => (
                 <tr key={l.id}>
-                  <td style={s.td}><div style={{ fontWeight: 600 }}>{employees.find(e => e.id === l.employee) ? `${employees.find(e => e.id === l.employee)!.first_name} ${employees.find(e => e.id === l.employee)!.last_name}` : "Unknown"}</div></td>
-                  <td style={s.td}>{l.leave_type}</td>
-                  <td style={s.td}><div style={{ fontSize: "0.78rem" }}>{l.start_date} → {l.end_date}</div></td>
-                  <td style={s.td}><span style={{ background: `${STATUS_COLOR[l.status]}22`, color: STATUS_COLOR[l.status], border: `1px solid ${STATUS_COLOR[l.status]}55`, borderRadius: 4, padding: "1px 7px", fontSize: "0.73rem", fontWeight: 600 }}>{l.status}</span></td>
-                  <td style={s.td}>{l.status === "pending" && <div style={{ display: "flex", gap: 4 }}><button onClick={() => handleLeave(l.id, "approved")} style={{ background: "#22c55e22", color: "#22c55e", border: "1px solid #22c55e55", borderRadius: 4, padding: "2px 8px", cursor: "pointer", fontSize: "0.72rem", fontWeight: 600 }}>✓</button><button onClick={() => handleLeave(l.id, "rejected")} style={{ background: "#ef444422", color: "#ef4444", border: "1px solid #ef444455", borderRadius: 4, padding: "2px 8px", cursor: "pointer", fontSize: "0.72rem", fontWeight: 600 }}>✗</button></div>}</td>
+                  <td className="border-b border-ink/10 px-3 py-2.5 text-sm font-semibold">{employees.find(e => e.id === l.employee) ? `${employees.find(e => e.id === l.employee)!.first_name} ${employees.find(e => e.id === l.employee)!.last_name}` : "Unknown"}</td>
+                  <td className="border-b border-ink/10 px-3 py-2.5 text-sm">{l.leave_type}</td>
+                  <td className="border-b border-ink/10 px-3 py-2.5 text-xs">{l.start_date} → {l.end_date}</td>
+                  <td className="border-b border-ink/10 px-3 py-2.5">
+                    <span className="rounded px-2 py-0.5 text-xs font-semibold" style={{ background: `${STATUS_COLOR[l.status]}22`, color: STATUS_COLOR[l.status], border: `1px solid ${STATUS_COLOR[l.status]}55` }}>{l.status}</span>
+                  </td>
+                  <td className="border-b border-ink/10 px-3 py-2.5">
+                    {l.status === "pending" && (
+                      <div className="flex gap-1">
+                        <button onClick={() => handleLeave(l.id, "approved")} className="rounded border border-emerald-500/40 bg-emerald-500/10 px-2 py-0.5 text-xs font-semibold text-emerald-400">✓</button>
+                        <button onClick={() => handleLeave(l.id, "rejected")} className="rounded border border-red-500/40 bg-red-500/10 px-2 py-0.5 text-xs font-semibold text-red-400">✗</button>
+                      </div>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>

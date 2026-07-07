@@ -72,53 +72,52 @@ export default function DataAdminConsole() {
     { id: "l2", source: "erp_ledger_transactions", target: "financial_revenue_dashboard", job: "dbt_revenue_reconciliation" }
   ]);
 
+  const navBtnCls = (active: boolean) =>
+    `w-full rounded-lg border px-3 py-2.5 text-sm font-semibold transition ${isRtl ? "text-right" : "text-left"} ${
+      active ? "border-brand-400/60 bg-brand-500 text-white" : "border-ink/10 text-ink/70 hover:bg-ink/5"
+    }`;
+
   return (
-    <div className="dashboard-container" style={{ direction: isRtl ? "rtl" : "ltr" }}>
-      <header className="dashboard-header">
+    <div dir={isRtl ? "rtl" : "ltr"} className="mx-auto max-w-6xl">
+      <header className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1>{t.title}</h1>
-          <p style={{ color: "var(--color-text-muted)" }}>{t.subtitle}</p>
+          <h1 className="font-heading text-2xl font-bold">{t.title}</h1>
+          <p className="mt-1 text-sm text-ink/50">{t.subtitle}</p>
         </div>
-        <button onClick={() => setLang(lang === "en" ? "ar" : "en")} className="theme-toggle-btn">
+        <button onClick={() => setLang(lang === "en" ? "ar" : "en")} className="cy-btn cy-btn-ghost !min-h-0 !py-2 !px-4 text-sm">
           {t.toggleLang}
         </button>
       </header>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(12, 1fr)", gap: "var(--spacing-lg)" }}>
-        <aside className="glass-card" style={{ gridColumn: "span 3", display: "flex", flexDirection: "column", gap: "var(--spacing-sm)", height: "fit-content" }}>
-          <button onClick={() => setActiveTab("catalog")} style={{ background: activeTab === "catalog" ? "var(--color-primary)" : "none", color: "white", padding: "10px", borderRadius: "4px", border: "1px solid rgb(var(--color-ink-rgb) / 0.1)", cursor: "pointer", textAlign: isRtl ? "right" : "left" }}>{t.catalogTab}</button>
-          <button onClick={() => setActiveTab("lineage")} style={{ background: activeTab === "lineage" ? "var(--color-primary)" : "none", color: "white", padding: "10px", borderRadius: "4px", border: "1px solid rgb(var(--color-ink-rgb) / 0.1)", cursor: "pointer", textAlign: isRtl ? "right" : "left" }}>{t.lineageTab}</button>
+      <div className="grid grid-cols-12 gap-6">
+        <aside className="cy-card col-span-3 flex h-fit flex-col gap-2 p-4">
+          <button onClick={() => setActiveTab("catalog")} className={navBtnCls(activeTab === "catalog")}>{t.catalogTab}</button>
+          <button onClick={() => setActiveTab("lineage")} className={navBtnCls(activeTab === "lineage")}>{t.lineageTab}</button>
         </aside>
 
-        <main className="glass-card" style={{ gridColumn: "span 9" }}>
+        <main className="cy-card col-span-9 p-6">
           {activeTab === "catalog" && (
             <div>
-              <h2>{t.catalogTab}</h2>
-              <table style={{ width: "100%", borderCollapse: "collapse", marginTop: "var(--spacing-md)" }}>
+              <h2 className="text-lg font-bold">{t.catalogTab}</h2>
+              <table className="mt-4 w-full border-collapse text-sm">
                 <thead>
-                  <tr style={{ borderBottom: "1px solid rgb(var(--color-ink-rgb) / 0.1)" }}>
-                    <th style={{ padding: "8px", textAlign: isRtl ? "right" : "left" }}>{t.name}</th>
-                    <th style={{ padding: "8px", textAlign: isRtl ? "right" : "left" }}>{t.type}</th>
-                    <th style={{ padding: "8px", textAlign: isRtl ? "right" : "left" }}>{t.path}</th>
-                    <th style={{ padding: "8px", textAlign: isRtl ? "right" : "left" }}>{t.region}</th>
-                    <th style={{ padding: "8px", textAlign: isRtl ? "right" : "left" }}>{t.pii}</th>
+                  <tr className="border-b border-ink/10">
+                    <th className={`px-4 py-3 text-[13px] font-semibold text-ink/50 ${isRtl ? "text-right" : "text-left"}`}>{t.name}</th>
+                    <th className={`px-4 py-3 text-[13px] font-semibold text-ink/50 ${isRtl ? "text-right" : "text-left"}`}>{t.type}</th>
+                    <th className={`px-4 py-3 text-[13px] font-semibold text-ink/50 ${isRtl ? "text-right" : "text-left"}`}>{t.path}</th>
+                    <th className={`px-4 py-3 text-[13px] font-semibold text-ink/50 ${isRtl ? "text-right" : "text-left"}`}>{t.region}</th>
+                    <th className={`px-4 py-3 text-[13px] font-semibold text-ink/50 ${isRtl ? "text-right" : "text-left"}`}>{t.pii}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {assets.map(a => (
-                    <tr key={a.id} style={{ borderBottom: "1px solid rgb(var(--color-ink-rgb) / 0.05)" }}>
-                      <td style={{ padding: "8px", fontWeight: "bold" }}>{a.name}</td>
-                      <td style={{ padding: "8px" }}><span style={{ background: "rgb(var(--color-ink-rgb) / 0.1)", padding: "2px 6px", borderRadius: "4px" }}>{a.type.toUpperCase()}</span></td>
-                      <td style={{ padding: "8px" }}><code>{a.path}</code></td>
-                      <td style={{ padding: "8px" }}>{a.region}</td>
-                      <td style={{ padding: "8px" }}>
-                        <span style={{
-                          background: a.piiCount > 0 ? "rgba(239, 68, 68, 0.2)" : "rgba(16, 185, 129, 0.2)",
-                          color: a.piiCount > 0 ? "#f87171" : "#34d399",
-                          padding: "2px 6px",
-                          borderRadius: "4px",
-                          fontSize: "0.85rem"
-                        }}>
+                    <tr key={a.id} className="border-b border-ink/5">
+                      <td className="px-4 py-3 font-bold">{a.name}</td>
+                      <td className="px-4 py-3"><span className="rounded bg-ink/10 px-2 py-0.5 text-xs">{a.type.toUpperCase()}</span></td>
+                      <td className="px-4 py-3"><code className="font-mono text-xs">{a.path}</code></td>
+                      <td className="px-4 py-3">{a.region}</td>
+                      <td className="px-4 py-3">
+                        <span className={`rounded px-2 py-0.5 text-xs ${a.piiCount > 0 ? "bg-red-500/20 text-red-400" : "bg-emerald-500/20 text-emerald-400"}`}>
                           {a.piiCount} fields marked
                         </span>
                       </td>
@@ -131,21 +130,21 @@ export default function DataAdminConsole() {
 
           {activeTab === "lineage" && (
             <div>
-              <h2>{t.lineageTab}</h2>
-              <table style={{ width: "100%", borderCollapse: "collapse", marginTop: "var(--spacing-md)" }}>
+              <h2 className="text-lg font-bold">{t.lineageTab}</h2>
+              <table className="mt-4 w-full border-collapse text-sm">
                 <thead>
-                  <tr style={{ borderBottom: "1px solid rgb(var(--color-ink-rgb) / 0.1)" }}>
-                    <th style={{ padding: "8px", textAlign: isRtl ? "right" : "left" }}>{t.source}</th>
-                    <th style={{ padding: "8px", textAlign: isRtl ? "right" : "left" }}>{t.target}</th>
-                    <th style={{ padding: "8px", textAlign: isRtl ? "right" : "left" }}>{t.job}</th>
+                  <tr className="border-b border-ink/10">
+                    <th className={`px-4 py-3 text-[13px] font-semibold text-ink/50 ${isRtl ? "text-right" : "text-left"}`}>{t.source}</th>
+                    <th className={`px-4 py-3 text-[13px] font-semibold text-ink/50 ${isRtl ? "text-right" : "text-left"}`}>{t.target}</th>
+                    <th className={`px-4 py-3 text-[13px] font-semibold text-ink/50 ${isRtl ? "text-right" : "text-left"}`}>{t.job}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {lineages.map(l => (
-                    <tr key={l.id} style={{ borderBottom: "1px solid rgb(var(--color-ink-rgb) / 0.05)" }}>
-                      <td style={{ padding: "8px" }}><code>{l.source}</code></td>
-                      <td style={{ padding: "8px" }}><code>{l.target}</code></td>
-                      <td style={{ padding: "8px" }}><span style={{ color: "var(--color-primary-light)" }}>{l.job}</span></td>
+                    <tr key={l.id} className="border-b border-ink/5">
+                      <td className="px-4 py-3"><code className="font-mono text-xs">{l.source}</code></td>
+                      <td className="px-4 py-3"><code className="font-mono text-xs">{l.target}</code></td>
+                      <td className="px-4 py-3"><span className="text-brand-300">{l.job}</span></td>
                     </tr>
                   ))}
                 </tbody>

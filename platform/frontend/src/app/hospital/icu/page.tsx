@@ -125,13 +125,13 @@ export default function ICUPage() {
   }
 
   if (!isAuthenticated) {
-    return <div style={{ padding: "2rem", textAlign: "center", marginTop: "4rem" }}><h1 style={{ fontWeight: 700, fontSize: "1.25rem" }}>Sign in required</h1></div>;
+    return <div className="mx-auto mt-16 max-w-lg text-center"><h1 className="text-xl font-bold">Sign in required</h1></div>;
   }
   if (fetchError) {
-    return <div style={{ padding: "2rem", textAlign: "center", marginTop: "4rem" }}><h1 style={{ fontWeight: 700, fontSize: "1.25rem", color: "#ef4444" }}>Unable to load ICU data</h1><p style={{ color: "var(--color-text-muted)" }}>{fetchError}</p></div>;
+    return <div className="mx-auto mt-16 max-w-lg text-center"><h1 className="text-xl font-bold text-red-400">Unable to load ICU data</h1><p className="mt-1 text-sm text-ink/50">{fetchError}</p></div>;
   }
   if (stays === null) {
-    return <div style={{ padding: "2rem", textAlign: "center", marginTop: "4rem", color: "var(--color-text-muted)" }}>Loading live ICU data...</div>;
+    return <div className="mx-auto mt-16 max-w-lg text-center text-sm text-ink/40">Loading live ICU data...</div>;
   }
 
   const activeStays = stays.filter(s => !s.icu_released_at);
@@ -155,7 +155,7 @@ export default function ICUPage() {
   const avgLOS = activeStays.length ? Math.round(activeStays.reduce((a, s) => a + daysInICU(s.icu_admitted_at), 0) / activeStays.length) : 0;
 
   return (
-    <div style={{ padding: "2rem", maxWidth: 1200, margin: "0 auto", direction: isAr ? "rtl" : "ltr" }}>
+    <div className="mx-auto max-w-5xl" style={{ direction: isAr ? "rtl" : "ltr" }}>
       <header className="mb-6 flex items-center justify-between border-b border-ink/10 pb-4">
         <div>
           <h1 className="flex items-center gap-2 font-heading text-2xl font-bold"><HeartPulse size={22} /> {isAr ? "وحدة العناية المركزة" : "Intensive Care Unit"}</h1>

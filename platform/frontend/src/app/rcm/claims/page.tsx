@@ -40,50 +40,84 @@ export default function ClaimsPage() {
   const totalPaid = claims.reduce((a, c) => a + c.amount_paid, 0);
   const rejRate = Math.round(claims.filter(c => c.status === "rejected").length / claims.length * 100);
 
-  const s: Record<string, React.CSSProperties> = {
-    page: { padding: "2rem", maxWidth: 1200, margin: "0 auto", direction: isAr ? "rtl" : "ltr" },
-    header: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem", borderBottom: "2px solid rgba(34,211,238,0.3)", paddingBottom: "1rem" },
-    h1: { fontSize: "1.6rem", fontWeight: 700, color: "#22D3EE" },
-    btn: { background: "var(--color-surface)", border: "1px solid var(--color-border)", color: "var(--color-text)", padding: "0.4rem 1rem", borderRadius: 6, cursor: "pointer", fontWeight: 600, textDecoration: "none" as const },
-    metricGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(170px,1fr))", gap: "1rem", marginBottom: "1.25rem" },
-    card: { background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: 8, padding: "1rem" },
-    table: { width: "100%", borderCollapse: "collapse" as const },
-    th: { padding: "0.75rem", textAlign: (isAr ? "right" : "left") as "left" | "right", color: "var(--color-text-muted)", fontWeight: 600, borderBottom: "1px solid var(--color-border)", fontSize: "0.85rem" },
-    td: { padding: "0.75rem", borderBottom: "1px solid var(--color-border)", fontSize: "0.875rem" },
-  };
-
   const fmt = (n: number) => `SAR ${(n / 1000).toFixed(1)}K`;
 
   return (
-    <div style={s.page}>
-      <header style={s.header}>
+    <div style={{ direction: isAr ? "rtl" : "ltr" }} className="mx-auto max-w-6xl">
+      <header className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 style={s.h1}>{isAr ? "إدارة المطالبات" : "Claims Management"}</h1>
-          <p style={{ color: "var(--color-text-muted)", fontSize: "0.875rem" }}>{claims.length} {isAr ? "مطالبة" : "claims"}</p>
+          <h1 className="font-heading text-2xl font-bold">{isAr ? "إدارة المطالبات" : "Claims Management"}</h1>
+          <p className="mt-1 text-sm text-ink/50">{claims.length} {isAr ? "مطالبة" : "claims"}</p>
         </div>
-        <div style={{ display: "flex", gap: "0.75rem" }}>
-          {loading && <span style={{ color: "var(--color-text-muted)", fontSize: "0.8rem" }}>●</span>}
-          <a href="/rcm" style={s.btn}>{isAr ? "← دورة الإيرادات" : "← RCM"}</a>
-          <button style={s.btn} onClick={() => setLang(isAr ? "en" : "ar")}>{isAr ? "English" : "العربية"}</button>
+        <div className="flex items-center gap-3">
+          {loading && <span className="text-xs text-ink/40">●</span>}
+          <a href="/rcm" className="cy-btn cy-btn-ghost !min-h-0 !py-2 !px-4 text-sm">{isAr ? "← دورة الإيرادات" : "← RCM"}</a>
+          <button onClick={() => setLang(isAr ? "en" : "ar")} className="cy-btn cy-btn-ghost !min-h-0 !py-2 !px-4 text-sm">{isAr ? "English" : "العربية"}</button>
         </div>
       </header>
-      <div style={s.metricGrid}>
+
+      <div className="mb-5 grid grid-cols-2 gap-4 sm:grid-cols-5">
         {[
           { label: isAr ? "إجمالي مقدم" : "Total Billed", value: fmt(totalBilled), color: "#22D3EE" },
           { label: isAr ? "إجمالي مدفوع" : "Total Paid", value: fmt(totalPaid), color: "#22c55e" },
           { label: isAr ? "في المعالجة" : "Processing", value: claims.filter(c => c.status === "processing").length, color: "#f59e0b" },
           { label: isAr ? "مرفوضة" : "Rejected", value: claims.filter(c => c.status === "rejected").length, color: "#ef4444" },
           { label: isAr ? "معدل الرفض" : "Rejection Rate", value: `${rejRate}%`, color: "#a78bfa" },
-        ].map(m => <div key={m.label} style={s.card}><div style={{ fontSize: "1.6rem", fontWeight: 700, color: m.color }}>{m.value}</div><div style={{ fontSize: "0.8rem", color: "var(--color-text-muted)", marginTop: 4 }}>{m.label}</div></div>)}
+        ].map(m => (
+          <div key={m.label} className="cy-card p-4">
+            <div className="text-xl font-bold" style={{ color: m.color }}>{m.value}</div>
+            <div className="mt-1 text-xs text-ink/50">{m.label}</div>
+          </div>
+        ))}
       </div>
-      <div style={{ display: "flex", gap: "0.5rem", marginBottom: "1.25rem", flexWrap: "wrap" }}>
-        {["all", "submitted", "processing", "paid", "rejected", "appealing"].map(f => <button key={f} onClick={() => setFilter(f)} style={{ ...s.btn, background: filter === f ? "#22D3EE" : "var(--color-surface)", color: filter === f ? "#000" : "var(--color-text)", padding: "0.35rem 0.75rem", fontSize: "0.8rem" }}>{f === "all" ? (isAr ? "الكل" : "All") : f}</button>)}
+
+      <div className="mb-5 flex flex-wrap gap-2">
+        {["all", "submitted", "processing", "paid", "rejected", "appealing"].map(f => (
+          <button
+            key={f}
+            onClick={() => setFilter(f)}
+            className={`rounded-md px-3 py-1.5 text-xs font-semibold border ${filter === f ? "border-brand-400 bg-brand-500 text-white" : "border-ink/10 bg-surface text-ink"}`}
+          >
+            {f === "all" ? (isAr ? "الكل" : "All") : f}
+          </button>
+        ))}
       </div>
-      <div style={{ background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: 8, overflow: "hidden" }}>
-        <table style={s.table}>
-          <thead><tr style={{ background: "rgba(34,211,238,0.05)" }}><th style={s.th}>{isAr ? "رقم المطالبة" : "Claim #"}</th><th style={s.th}>{isAr ? "المريض" : "Patient"}</th><th style={s.th}>{isAr ? "الجهة" : "Payer"}</th><th style={s.th}>{isAr ? "مقدم" : "Billed"}</th><th style={s.th}>{isAr ? "مدفوع" : "Paid"}</th><th style={s.th}>{isAr ? "التاريخ" : "Date"}</th><th style={s.th}>{isAr ? "الحالة" : "Status"}</th><th style={s.th}></th></tr></thead>
-          <tbody>{filtered.map(c => <tr key={c.id}><td style={{ ...s.td, fontFamily: "monospace", fontSize: "0.8rem" }}>{c.claim_no}</td><td style={s.td}><div style={{ fontWeight: 600 }}>{isAr ? c.patient_ar : c.patient}</div></td><td style={s.td}>{c.payer}</td><td style={{ ...s.td, fontFamily: "monospace" }}>SAR {c.amount_billed.toLocaleString()}</td><td style={{ ...s.td, fontFamily: "monospace", color: "#22c55e", fontWeight: c.amount_paid > 0 ? 700 : 400 }}>{c.amount_paid > 0 ? `SAR ${c.amount_paid.toLocaleString()}` : "—"}</td><td style={{ ...s.td, fontFamily: "monospace", fontSize: "0.8rem" }}>{c.date_submitted}</td><td style={s.td}><div><span style={{ background: `${STATUS_COLOR[c.status]}22`, color: STATUS_COLOR[c.status], border: `1px solid ${STATUS_COLOR[c.status]}55`, borderRadius: 4, padding: "2px 8px", fontSize: "0.75rem", fontWeight: 600 }}>{c.status}</span>{c.rejection_reason && <div style={{ fontSize: "0.7rem", color: "#fca5a5", marginTop: 2 }}>{c.rejection_reason}</div>}</div></td><td style={s.td}>{(c.status === "rejected") && <button style={{ background: "#a78bfa22", color: "#a78bfa", border: "1px solid #a78bfa55", borderRadius: 4, padding: "3px 10px", cursor: "pointer", fontSize: "0.78rem", fontWeight: 600 }}>{isAr ? "استئناف" : "Appeal"}</button>}</td></tr>)}</tbody>
-        </table>
+
+      <div className="cy-card overflow-hidden p-0">
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse text-sm">
+            <thead>
+              <tr className="border-b border-ink/10 bg-ink/5">
+                {[isAr ? "رقم المطالبة" : "Claim #", isAr ? "المريض" : "Patient", isAr ? "الجهة" : "Payer", isAr ? "مقدم" : "Billed", isAr ? "مدفوع" : "Paid", isAr ? "التاريخ" : "Date", isAr ? "الحالة" : "Status", ""].map((h, i) => (
+                  <th key={i} className="px-4 py-3 text-left text-[13px] font-semibold text-ink/50">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map(c => (
+                <tr key={c.id}>
+                  <td className="border-b border-ink/10 px-4 py-3 font-mono text-xs">{c.claim_no}</td>
+                  <td className="border-b border-ink/10 px-4 py-3 text-sm font-semibold">{isAr ? c.patient_ar : c.patient}</td>
+                  <td className="border-b border-ink/10 px-4 py-3 text-sm">{c.payer}</td>
+                  <td className="border-b border-ink/10 px-4 py-3 font-mono text-sm">SAR {c.amount_billed.toLocaleString()}</td>
+                  <td className={`border-b border-ink/10 px-4 py-3 font-mono text-sm text-emerald-400 ${c.amount_paid > 0 ? "font-bold" : ""}`}>{c.amount_paid > 0 ? `SAR ${c.amount_paid.toLocaleString()}` : "—"}</td>
+                  <td className="border-b border-ink/10 px-4 py-3 font-mono text-xs">{c.date_submitted}</td>
+                  <td className="border-b border-ink/10 px-4 py-3">
+                    <span className="rounded px-2 py-0.5 text-xs font-semibold" style={{ background: `${STATUS_COLOR[c.status]}22`, color: STATUS_COLOR[c.status], border: `1px solid ${STATUS_COLOR[c.status]}55` }}>{c.status}</span>
+                    {c.rejection_reason && <div className="mt-0.5 text-[11px] text-red-300">{c.rejection_reason}</div>}
+                  </td>
+                  <td className="border-b border-ink/10 px-4 py-3">
+                    {c.status === "rejected" && (
+                      <button className="rounded px-2.5 py-1 text-xs font-semibold" style={{ background: "#a78bfa22", color: "#a78bfa", border: "1px solid #a78bfa55" }}>
+                        {isAr ? "استئناف" : "Appeal"}
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

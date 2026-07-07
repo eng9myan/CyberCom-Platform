@@ -269,7 +269,6 @@ export default function TenantAdminPage() {
   const { locale: lang, setLocale: _setLangRaw } = usePreferences();
   const setLang = (updater: "en" | "ar" | ((prev: "en" | "ar") => "en" | "ar")) =>
     _setLangRaw(typeof updater === "function" ? (updater as (prev: "en" | "ar") => "en" | "ar")(lang) : updater);
-  const [theme, setTheme] = useState<"dark" | "light">("dark");
   const [tab, setTab] = useState(0);
   const [search, setSearch] = useState("");
   const [selectedTenant, setSelectedTenant] = useState<Tenant>(MOCK_TENANTS[0]!);
@@ -278,12 +277,9 @@ export default function TenantAdminPage() {
 
   const t = T[lang];
   const isRTL = lang === "ar";
-  const isDark = theme === "dark";
 
-  const bg = isDark ? "bg-slate-900 text-slate-100" : "bg-gray-50 text-gray-900";
-  const cardBg = isDark ? "bg-slate-800 border-slate-700" : "bg-white border-gray-200";
-  const inputBg = isDark ? "bg-slate-700 border-slate-600 text-white placeholder-slate-400" : "bg-white border-gray-300 text-gray-900";
-  const tableHdr = isDark ? "bg-slate-700 text-slate-300" : "bg-gray-100 text-gray-600";
+  const inputCls = "rounded-lg border border-ink/10 bg-surface-overlay px-3 py-2 text-sm text-ink placeholder:text-ink/40 focus:border-brand-400 focus:outline-none";
+  const tableHdrRowCls = "border-b border-ink/10 bg-ink/5";
 
   const notify = (msg: string) => {
     setNotification(msg);
@@ -314,24 +310,24 @@ export default function TenantAdminPage() {
           { label: t.provisioning, value: stats.provisioning, color: "text-blue-400" },
           { label: t.suspended, value: stats.suspended, color: "text-orange-400" },
         ].map(s => (
-          <div key={s.label} className={`${cardBg} border rounded-xl p-4`}>
+          <div key={s.label} className="cy-card p-4">
             <div className={`text-3xl font-bold ${s.color}`}>{s.value}</div>
-            <div className="text-sm text-slate-400 mt-1">{s.label}</div>
+            <div className="mt-1 text-sm text-ink/50">{s.label}</div>
           </div>
         ))}
       </div>
 
       {/* Tenant list */}
-      <div className={`${cardBg} border rounded-xl overflow-hidden`}>
-        <div className="p-4 flex items-center gap-3">
+      <div className="cy-card overflow-hidden">
+        <div className="flex items-center gap-3 p-4">
           <input
-            className={`${inputBg} border rounded-lg px-3 py-2 text-sm flex-1`}
+            className={`${inputCls} flex-1`}
             placeholder={t.search}
             value={search}
             onChange={e => setSearch(e.target.value)}
           />
           <button
-            className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg text-sm"
+            className="cy-btn cy-btn-primary !min-h-0 !py-2 !px-4 text-sm"
             onClick={() => notify("Provision flow — connect to /api/v1/tenants/bootstrap/")}
           >
             + {t.provision}
@@ -340,9 +336,9 @@ export default function TenantAdminPage() {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className={tableHdr}>
+              <tr className={tableHdrRowCls}>
                 {[t.name, t.type, t.tier, t.status, t.region, t.realm, t.created].map(h => (
-                  <th key={h} className={`px-4 py-3 text-xs font-medium uppercase tracking-wide ${isRTL ? "text-right" : "text-left"}`}>{h}</th>
+                  <th key={h} className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-ink/50">{h}</th>
                 ))}
               </tr>
             </thead>
@@ -350,25 +346,25 @@ export default function TenantAdminPage() {
               {filtered.map(tenant => (
                 <tr
                   key={tenant.id}
-                  className={`border-t ${isDark ? "border-slate-700 hover:bg-slate-700/50" : "border-gray-100 hover:bg-gray-50"} cursor-pointer transition-colors`}
+                  className="cursor-pointer border-t border-ink/10 transition-colors hover:bg-ink/5"
                   onClick={() => { setSelectedTenant(tenant); setTab(2); }}
                 >
                   <td className="px-4 py-3">
                     <div className="font-medium">{tenant.display_name || tenant.name}</div>
-                    <div className="text-xs text-slate-500">{tenant.slug}</div>
+                    <div className="text-xs text-ink/40">{tenant.slug}</div>
                   </td>
-                  <td className="px-4 py-3 capitalize text-slate-400">{tenant.tenant_type.replace("_", " ")}</td>
+                  <td className="px-4 py-3 capitalize text-ink/50">{tenant.tenant_type.replace("_", " ")}</td>
                   <td className={`px-4 py-3 capitalize font-medium ${tierColor[tenant.tier]}`}>{tenant.tier}</td>
                   <td className="px-4 py-3">
                     <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusColor[tenant.status]}`}>
                       {tenant.status}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-slate-400">{tenant.home_region}</td>
-                  <td className="px-4 py-3 text-slate-400 font-mono text-xs">
-                    {tenant.keycloak_realm_name || <span className="text-slate-600">{t.noRealm}</span>}
+                  <td className="px-4 py-3 text-ink/50">{tenant.home_region}</td>
+                  <td className="px-4 py-3 font-mono text-xs text-ink/50">
+                    {tenant.keycloak_realm_name || <span className="text-ink/30">{t.noRealm}</span>}
                   </td>
-                  <td className="px-4 py-3 text-slate-400">{fmtDate(tenant.created_at)}</td>
+                  <td className="px-4 py-3 text-ink/50">{fmtDate(tenant.created_at)}</td>
                 </tr>
               ))}
             </tbody>
@@ -379,8 +375,8 @@ export default function TenantAdminPage() {
   );
 
   const renderProvisioning = () => (
-    <div className={`${cardBg} border rounded-xl p-6 max-w-2xl`}>
-      <h2 className="text-lg font-semibold mb-6">{t.provision}</h2>
+    <div className="cy-card max-w-2xl p-6">
+      <h2 className="mb-6 text-lg font-semibold">{t.provision}</h2>
       <div className="space-y-4">
         {[
           { label: t.name, field: "name", placeholder: "King Faisal Specialist Hospital" },
@@ -389,14 +385,14 @@ export default function TenantAdminPage() {
           { label: "Contact Email", field: "contact_email", placeholder: "admin@hospital.sa" },
         ].map(f => (
           <div key={f.field}>
-            <label className="block text-sm font-medium text-slate-400 mb-1">{f.label}</label>
-            <input className={`${inputBg} border rounded-lg px-3 py-2 text-sm w-full`} placeholder={f.placeholder} />
+            <label className="mb-1 block text-sm font-medium text-ink/50">{f.label}</label>
+            <input className={`${inputCls} w-full`} placeholder={f.placeholder} />
           </div>
         ))}
         <div className="grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-slate-400 mb-1">Tenant Type</label>
-            <select className={`${inputBg} border rounded-lg px-3 py-2 text-sm w-full`}>
+            <label className="mb-1 block text-sm font-medium text-ink/50">Tenant Type</label>
+            <select className={`${inputCls} w-full`}>
               <option value="saas">SaaS</option>
               <option value="dedicated">Dedicated DB</option>
               <option value="dedicated_cluster">Dedicated Cluster</option>
@@ -406,8 +402,8 @@ export default function TenantAdminPage() {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-400 mb-1">Isolation Tier (ADR-0002)</label>
-            <select className={`${inputBg} border rounded-lg px-3 py-2 text-sm w-full`}>
+            <label className="mb-1 block text-sm font-medium text-ink/50">Isolation Tier (ADR-0002)</label>
+            <select className={`${inputCls} w-full`}>
               <option value="shared">Shared + RLS</option>
               <option value="schema">Schema-per-Tenant</option>
               <option value="database">Database-per-Tenant</option>
@@ -415,16 +411,16 @@ export default function TenantAdminPage() {
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-400 mb-1">Country</label>
-            <select className={`${inputBg} border rounded-lg px-3 py-2 text-sm w-full`}>
+            <label className="mb-1 block text-sm font-medium text-ink/50">Country</label>
+            <select className={`${inputCls} w-full`}>
               {[["SA", "Saudi Arabia"], ["AE", "UAE"], ["JO", "Jordan"], ["QA", "Qatar"], ["KW", "Kuwait"]].map(([code, name]) => (
                 <option key={code} value={code}>{name}</option>
               ))}
             </select>
           </div>
           <div>
-            <label className="block text-sm font-medium text-slate-400 mb-1">Plan</label>
-            <select className={`${inputBg} border rounded-lg px-3 py-2 text-sm w-full`}>
+            <label className="mb-1 block text-sm font-medium text-ink/50">Plan</label>
+            <select className={`${inputCls} w-full`}>
               <option value="starter">Starter</option>
               <option value="professional">Professional</option>
               <option value="enterprise">Enterprise</option>
@@ -433,10 +429,10 @@ export default function TenantAdminPage() {
           </div>
         </div>
         <div>
-          <label className="block text-sm font-medium text-slate-400 mb-2">Compliance Frameworks</label>
+          <label className="mb-2 block text-sm font-medium text-ink/50">Compliance Frameworks</label>
           <div className="flex flex-wrap gap-2">
             {(["hipaa", "gdpr", "pdpl", "uae_dp", "jordan_dp", "iso27001"] as ComplianceFramework[]).map(fw => (
-              <label key={fw} className="flex items-center gap-1.5 text-sm cursor-pointer">
+              <label key={fw} className="flex cursor-pointer items-center gap-1.5 text-sm">
                 <input type="checkbox" className="rounded" />
                 <span>{fmtFramework(fw)}</span>
               </label>
@@ -444,7 +440,7 @@ export default function TenantAdminPage() {
           </div>
         </div>
         <button
-          className="w-full bg-blue-600 hover:bg-blue-500 text-white py-2.5 rounded-lg font-medium"
+          className="cy-btn cy-btn-primary w-full"
           onClick={() => notify("POST /api/v1/tenants/bootstrap/ — provisioning tenant…")}
         >
           {t.provision}
@@ -454,40 +450,40 @@ export default function TenantAdminPage() {
   );
 
   const renderConfiguration = () => (
-    <div className="space-y-4 max-w-3xl">
-      <div className={`${cardBg} border rounded-xl p-5`}>
-        <h3 className="font-semibold mb-4">Selected: {selectedTenant.display_name}</h3>
+    <div className="max-w-3xl space-y-4">
+      <div className="cy-card p-5">
+        <h3 className="mb-4 font-semibold">Selected: {selectedTenant.display_name}</h3>
         <div className="grid grid-cols-2 gap-x-8 gap-y-3 text-sm">
           {[
             ["Max Users", "100"], ["Max API Calls/Day", "10,000"], ["Max Storage (GB)", "50"],
             ["MFA Required", "Yes"], ["Session Timeout", "900s"], ["Idle Timeout", "1800s"],
             ["Data Residency", "me-central-1 (SA)"], ["BYOK", "Disabled"], ["Guest Access", "Disabled"],
           ].map(([k, v]) => (
-            <div key={k} className="flex justify-between border-b border-slate-700/40 pb-2">
-              <span className="text-slate-400">{k}</span>
+            <div key={k} className="flex justify-between border-b border-ink/10 pb-2">
+              <span className="text-ink/50">{k}</span>
               <span className="font-medium">{v}</span>
             </div>
           ))}
         </div>
         <div className="mt-4 flex gap-2">
-          <button className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg text-sm"
+          <button className="cy-btn cy-btn-primary !min-h-0 !py-2 !px-4 text-sm"
             onClick={() => notify("PATCH /api/v1/tenants/configurations/{id}/")}>Save Changes</button>
         </div>
       </div>
-      <div className={`${cardBg} border rounded-xl p-5`}>
-        <h3 className="font-semibold mb-3">Lifecycle Actions</h3>
-        <div className="flex gap-3 flex-wrap">
+      <div className="cy-card p-5">
+        <h3 className="mb-3 font-semibold">Lifecycle Actions</h3>
+        <div className="flex flex-wrap gap-3">
           {selectedTenant.status !== "active" && (
-            <button className="bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-lg text-sm"
+            <button className="cy-btn !min-h-0 !py-2 !px-4 bg-emerald-600 text-sm text-white hover:bg-emerald-500"
               onClick={() => notify(`POST /api/v1/tenants/${selectedTenant.id}/activate/`)}>{t.activate}</button>
           )}
           {selectedTenant.status === "active" && (
-            <button className="bg-orange-600 hover:bg-orange-500 text-white px-4 py-2 rounded-lg text-sm"
+            <button className="cy-btn !min-h-0 !py-2 !px-4 bg-orange-600 text-sm text-white hover:bg-orange-500"
               onClick={() => notify(`POST /api/v1/tenants/${selectedTenant.id}/suspend/`)}>{t.suspend}</button>
           )}
-          <button className="bg-slate-600 hover:bg-slate-500 text-white px-4 py-2 rounded-lg text-sm"
+          <button className="cy-btn cy-btn-ghost !min-h-0 !py-2 !px-4 text-sm"
             onClick={() => notify(`POST /api/v1/tenants/${selectedTenant.id}/archive/`)}>{t.archive}</button>
-          <button className="bg-red-700 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm"
+          <button className="cy-btn !min-h-0 !py-2 !px-4 bg-red-700 text-sm text-white hover:bg-red-600"
             onClick={() => notify(`POST /api/v1/tenants/${selectedTenant.id}/terminate/`)}>{t.terminate}</button>
         </div>
       </div>
@@ -495,8 +491,8 @@ export default function TenantAdminPage() {
   );
 
   const renderBranding = () => (
-    <div className={`${cardBg} border rounded-xl p-6 max-w-2xl`}>
-      <h2 className="text-lg font-semibold mb-5">Branding — {selectedTenant.display_name}</h2>
+    <div className="cy-card max-w-2xl p-6">
+      <h2 className="mb-5 text-lg font-semibold">Branding — {selectedTenant.display_name}</h2>
       <div className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
           {[
@@ -506,10 +502,10 @@ export default function TenantAdminPage() {
             { label: "Background", val: "#FFFFFF" },
           ].map(c => (
             <div key={c.label} className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-md border border-slate-600" style={{ backgroundColor: c.val }} />
+              <div className="h-8 w-8 rounded-md border border-ink/20" style={{ backgroundColor: c.val }} />
               <div>
                 <div className="text-sm font-medium">{c.label}</div>
-                <div className="text-xs font-mono text-slate-400">{c.val}</div>
+                <div className="font-mono text-xs text-ink/50">{c.val}</div>
               </div>
             </div>
           ))}
@@ -520,12 +516,12 @@ export default function TenantAdminPage() {
             { label: "Tagline", placeholder: "Excellence in Healthcare" },
           ].map(f => (
             <div key={f.label}>
-              <label className="block text-sm font-medium text-slate-400 mb-1">{f.label}</label>
-              <input className={`${inputBg} border rounded-lg px-3 py-2 text-sm w-full`} placeholder={f.placeholder} />
+              <label className="mb-1 block text-sm font-medium text-ink/50">{f.label}</label>
+              <input className={`${inputCls} w-full`} placeholder={f.placeholder} />
             </div>
           ))}
         </div>
-        <div className="flex gap-4 items-center">
+        <div className="flex items-center gap-4">
           <label className="flex items-center gap-2 text-sm">
             <input type="checkbox" defaultChecked className="rounded" />
             RTL Default
@@ -535,7 +531,7 @@ export default function TenantAdminPage() {
             Dark Theme Default
           </label>
         </div>
-        <button className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg text-sm"
+        <button className="cy-btn cy-btn-primary !min-h-0 !py-2 !px-4 text-sm"
           onClick={() => notify("PATCH /api/v1/tenants/brandings/{id}/")}>Save Branding</button>
       </div>
     </div>
@@ -543,28 +539,28 @@ export default function TenantAdminPage() {
 
   const renderLicensing = () => (
     <div className="space-y-4">
-      <div className={`${cardBg} border rounded-xl overflow-hidden`}>
-        <div className="p-4 flex justify-between items-center">
+      <div className="cy-card overflow-hidden">
+        <div className="flex items-center justify-between p-4">
           <h3 className="font-semibold">Licenses — {selectedTenant.display_name}</h3>
-          <button className="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 text-sm rounded-lg"
+          <button className="cy-btn cy-btn-primary !min-h-0 !py-1.5 !px-3 text-sm"
             onClick={() => notify("POST /api/v1/tenants/licenses/")}>+ Grant License</button>
         </div>
         <table className="w-full text-sm">
           <thead>
-            <tr className={tableHdr}>
+            <tr className={tableHdrRowCls}>
               {[t.module, "Type", "Edition", t.seats, t.expires, t.valid].map(h => (
-                <th key={h} className={`px-4 py-3 text-xs font-medium uppercase tracking-wide ${isRTL ? "text-right" : "text-left"}`}>{h}</th>
+                <th key={h} className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-ink/50">{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {MOCK_LICENSES.map(lic => (
-              <tr key={lic.id} className={`border-t ${isDark ? "border-slate-700" : "border-gray-100"}`}>
+              <tr key={lic.id} className="border-t border-ink/10">
                 <td className="px-4 py-3 font-mono font-medium">{lic.module}</td>
                 <td className="px-4 py-3 capitalize">{lic.license_type}</td>
-                <td className="px-4 py-3 text-slate-400">{lic.edition}</td>
+                <td className="px-4 py-3 text-ink/50">{lic.edition}</td>
                 <td className="px-4 py-3">{lic.max_seats ?? "Unlimited"}</td>
-                <td className="px-4 py-3 text-slate-400">{fmtDate(lic.valid_until)}</td>
+                <td className="px-4 py-3 text-ink/50">{fmtDate(lic.valid_until)}</td>
                 <td className="px-4 py-3">
                   <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${lic.is_valid ? "bg-emerald-500/20 text-emerald-300" : "bg-red-500/20 text-red-300"}`}>
                     {lic.is_valid ? "Valid" : "Expired"}
@@ -575,17 +571,17 @@ export default function TenantAdminPage() {
           </tbody>
         </table>
       </div>
-      <div className={`${cardBg} border rounded-xl p-4`}>
-        <h3 className="font-semibold mb-3">Subscriptions</h3>
+      <div className="cy-card p-4">
+        <h3 className="mb-3 font-semibold">Subscriptions</h3>
         {MOCK_SUBSCRIPTIONS.map(sub => (
           <div key={sub.id} className="flex items-center justify-between py-2">
             <div>
               <span className="capitalize font-medium">{sub.plan}</span>
-              <span className="text-slate-400 text-sm ml-2">starts {fmtDate(sub.started_at)}</span>
+              <span className="ml-2 text-sm text-ink/50">starts {fmtDate(sub.started_at)}</span>
             </div>
             <div className="text-right">
               <div className="font-medium">${sub.monthly_price_usd}/mo</div>
-              <div className="text-xs text-slate-400">ends {fmtDate(sub.ends_at)}</div>
+              <div className="text-xs text-ink/50">ends {fmtDate(sub.ends_at)}</div>
             </div>
           </div>
         ))}
@@ -594,33 +590,33 @@ export default function TenantAdminPage() {
   );
 
   const renderFeatures = () => (
-    <div className={`${cardBg} border rounded-xl overflow-hidden max-w-2xl`}>
-      <div className="p-4 flex justify-between items-center">
+    <div className="cy-card max-w-2xl overflow-hidden">
+      <div className="flex items-center justify-between p-4">
         <h3 className="font-semibold">Feature Flags — {selectedTenant.display_name}</h3>
-        <button className="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 text-sm rounded-lg"
+        <button className="cy-btn cy-btn-primary !min-h-0 !py-1.5 !px-3 text-sm"
           onClick={() => notify("POST /api/v1/tenants/feature-flags/toggle/")}>+ New Flag</button>
       </div>
       <table className="w-full text-sm">
         <thead>
-          <tr className={tableHdr}>
+          <tr className={tableHdrRowCls}>
             {[t.feature, "Description", t.expires, t.enabled].map(h => (
-              <th key={h} className={`px-4 py-3 text-xs font-medium uppercase tracking-wide ${isRTL ? "text-right" : "text-left"}`}>{h}</th>
+              <th key={h} className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-ink/50">{h}</th>
             ))}
           </tr>
         </thead>
         <tbody>
           {flags.map(flag => (
-            <tr key={flag.id} className={`border-t ${isDark ? "border-slate-700" : "border-gray-100"}`}>
+            <tr key={flag.id} className="border-t border-ink/10">
               <td className="px-4 py-3 font-mono text-xs">{flag.key}</td>
-              <td className="px-4 py-3 text-slate-400">{flag.description}</td>
-              <td className="px-4 py-3 text-slate-500">{fmtDate(flag.expires_at)}</td>
+              <td className="px-4 py-3 text-ink/50">{flag.description}</td>
+              <td className="px-4 py-3 text-ink/40">{fmtDate(flag.expires_at)}</td>
               <td className="px-4 py-3">
                 <button
                   onClick={() => {
                     setFlags(prev => prev.map(f => f.id === flag.id ? { ...f, enabled: !f.enabled } : f));
                     notify(`Flag '${flag.key}' ${flag.enabled ? "disabled" : "enabled"}`);
                   }}
-                  className={`relative w-11 h-6 rounded-full transition-colors ${flag.enabled ? "bg-emerald-600" : "bg-slate-600"}`}
+                  className={`relative h-6 w-11 rounded-full transition-colors ${flag.enabled ? "bg-emerald-600" : "bg-ink/20"}`}
                 >
                   <span className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${flag.enabled ? "translate-x-5" : "translate-x-0.5"}`} />
                 </button>
@@ -633,28 +629,28 @@ export default function TenantAdminPage() {
   );
 
   const renderCompliance = () => (
-    <div className="space-y-4 max-w-3xl">
-      <div className={`${cardBg} border rounded-xl overflow-hidden`}>
-        <div className="p-4 flex justify-between items-center">
+    <div className="max-w-3xl space-y-4">
+      <div className="cy-card overflow-hidden">
+        <div className="flex items-center justify-between p-4">
           <h3 className="font-semibold">Compliance Profiles — {selectedTenant.display_name}</h3>
-          <button className="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 text-sm rounded-lg"
+          <button className="cy-btn cy-btn-primary !min-h-0 !py-1.5 !px-3 text-sm"
             onClick={() => notify("POST /api/v1/tenants/compliance/")}>+ Add Framework</button>
         </div>
         <table className="w-full text-sm">
           <thead>
-            <tr className={tableHdr}>
+            <tr className={tableHdrRowCls}>
               {[t.framework, t.certBody, "Certified", t.certExpires, t.current].map(h => (
-                <th key={h} className={`px-4 py-3 text-xs font-medium uppercase tracking-wide ${isRTL ? "text-right" : "text-left"}`}>{h}</th>
+                <th key={h} className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-ink/50">{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {MOCK_COMPLIANCE.map(cp => (
-              <tr key={cp.id} className={`border-t ${isDark ? "border-slate-700" : "border-gray-100"}`}>
+              <tr key={cp.id} className="border-t border-ink/10">
                 <td className="px-4 py-3 font-bold">{fmtFramework(cp.framework)}</td>
-                <td className="px-4 py-3 text-slate-400">{cp.certification_body}</td>
-                <td className="px-4 py-3 text-slate-400">{fmtDate(cp.certified_at)}</td>
-                <td className="px-4 py-3 text-slate-400">{fmtDate(cp.expires_at)}</td>
+                <td className="px-4 py-3 text-ink/50">{cp.certification_body}</td>
+                <td className="px-4 py-3 text-ink/50">{fmtDate(cp.certified_at)}</td>
+                <td className="px-4 py-3 text-ink/50">{fmtDate(cp.expires_at)}</td>
                 <td className="px-4 py-3">
                   <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${cp.is_current ? "bg-emerald-500/20 text-emerald-300" : "bg-red-500/20 text-red-300"}`}>
                     {cp.is_current ? "Current" : "Expired"}
@@ -665,18 +661,18 @@ export default function TenantAdminPage() {
           </tbody>
         </table>
       </div>
-      <div className={`${cardBg} border rounded-xl p-4`}>
-        <h3 className="font-semibold mb-3">Data Residency Requirements</h3>
+      <div className="cy-card p-4">
+        <h3 className="mb-3 font-semibold">Data Residency Requirements</h3>
         <div className="space-y-2 text-sm">
           {[
             ["PHI / ePHI", "me-central-1 (SA) only", "HIPAA"],
             ["Personal Data (EU)", "me-west-1 (AE) or EU region", "GDPR"],
             ["Personal Data (SA)", "me-central-1 (SA) only", "PDPL"],
           ].map(([category, region, basis]) => (
-            <div key={category} className="flex justify-between items-center py-2 border-b border-slate-700/30">
+            <div key={category} className="flex items-center justify-between border-b border-ink/10 py-2">
               <span className="font-medium">{category}</span>
-              <span className="text-slate-400">{region}</span>
-              <span className="text-xs bg-slate-700 px-2 py-0.5 rounded">{basis}</span>
+              <span className="text-ink/50">{region}</span>
+              <span className="rounded bg-ink/10 px-2 py-0.5 text-xs">{basis}</span>
             </div>
           ))}
         </div>
@@ -685,35 +681,35 @@ export default function TenantAdminPage() {
   );
 
   const renderDomains = () => (
-    <div className={`${cardBg} border rounded-xl overflow-hidden max-w-2xl`}>
-      <div className="p-4 flex justify-between items-center">
+    <div className="cy-card max-w-2xl overflow-hidden">
+      <div className="flex items-center justify-between p-4">
         <h3 className="font-semibold">Domains — {selectedTenant.display_name}</h3>
-        <button className="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1.5 text-sm rounded-lg"
+        <button className="cy-btn cy-btn-primary !min-h-0 !py-1.5 !px-3 text-sm"
           onClick={() => notify("POST /api/v1/tenants/domains/")}>+ Add Domain</button>
       </div>
       <table className="w-full text-sm">
         <thead>
-          <tr className={tableHdr}>
+          <tr className={tableHdrRowCls}>
             {[t.domain, t.primary, t.verified, t.ssl, "Verified At", "Actions"].map(h => (
-              <th key={h} className={`px-4 py-3 text-xs font-medium uppercase tracking-wide ${isRTL ? "text-right" : "text-left"}`}>{h}</th>
+              <th key={h} className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-ink/50">{h}</th>
             ))}
           </tr>
         </thead>
         <tbody>
           {MOCK_DOMAINS.map(d => (
-            <tr key={d.id} className={`border-t ${isDark ? "border-slate-700" : "border-gray-100"}`}>
+            <tr key={d.id} className="border-t border-ink/10">
               <td className="px-4 py-3 font-mono">{d.domain}</td>
-              <td className="px-4 py-3">{d.is_primary ? <span className="text-blue-400 font-medium">✓ Primary</span> : "—"}</td>
+              <td className="px-4 py-3">{d.is_primary ? <span className="font-medium text-brand-400">✓ Primary</span> : "—"}</td>
               <td className="px-4 py-3">
                 <span className={`px-2 py-0.5 rounded-full text-xs ${d.is_verified ? "bg-emerald-500/20 text-emerald-300" : "bg-yellow-500/20 text-yellow-300"}`}>
                   {d.is_verified ? "Verified" : "Pending"}
                 </span>
               </td>
-              <td className="px-4 py-3">{d.ssl_enabled ? <span className="text-emerald-400">✓</span> : <span className="text-slate-600">—</span>}</td>
-              <td className="px-4 py-3 text-slate-400">{fmtDate(d.verified_at)}</td>
+              <td className="px-4 py-3">{d.ssl_enabled ? <span className="text-emerald-400">✓</span> : <span className="text-ink/30">—</span>}</td>
+              <td className="px-4 py-3 text-ink/50">{fmtDate(d.verified_at)}</td>
               <td className="px-4 py-3">
                 {!d.is_verified && (
-                  <button className="text-xs text-blue-400 hover:text-blue-300"
+                  <button className="text-xs text-brand-400 hover:text-brand-300"
                     onClick={() => notify(`POST /api/v1/tenants/domains/${d.id}/verify/`)}>Verify</button>
                 )}
               </td>
@@ -721,23 +717,23 @@ export default function TenantAdminPage() {
           ))}
         </tbody>
       </table>
-      <div className="p-4 border-t border-slate-700">
-        <div className="text-xs text-slate-500">Add CNAME record: <span className="font-mono text-slate-300">tenants.cybercom.io</span> to verify ownership.</div>
+      <div className="border-t border-ink/10 p-4">
+        <div className="text-xs text-ink/40">Add CNAME record: <span className="font-mono text-ink/70">tenants.cybercom.io</span> to verify ownership.</div>
       </div>
     </div>
   );
 
   const renderAudit = () => (
-    <div className={`${cardBg} border rounded-xl overflow-hidden`}>
+    <div className="cy-card overflow-hidden">
       <div className="p-4">
-        <h3 className="font-semibold mb-1">Tenant Audit Log</h3>
-        <p className="text-sm text-slate-400">Platform-wide audit trail for tenant lifecycle and configuration changes.</p>
+        <h3 className="mb-1 font-semibold">Tenant Audit Log</h3>
+        <p className="text-sm text-ink/50">Platform-wide audit trail for tenant lifecycle and configuration changes.</p>
       </div>
       <table className="w-full text-sm">
         <thead>
-          <tr className={tableHdr}>
+          <tr className={tableHdrRowCls}>
             {["Timestamp", "Tenant", "Action", "Resource", "Actor", "Details"].map(h => (
-              <th key={h} className={`px-4 py-3 text-xs font-medium uppercase tracking-wide ${isRTL ? "text-right" : "text-left"}`}>{h}</th>
+              <th key={h} className="px-4 py-3 text-left text-xs font-medium uppercase tracking-wide text-ink/50">{h}</th>
             ))}
           </tr>
         </thead>
@@ -749,13 +745,13 @@ export default function TenantAdminPage() {
             { ts: "2026-06-21 14:22", tenant: "dha", action: "tenant.feature.enabled", resource: "FeatureFlag", actor: "ops@cybercom.io", detail: "Key: beta.ai_assist" },
             { ts: "2026-06-21 11:15", tenant: "acme", action: "tenant.license.updated", resource: "License", actor: "admin@cybercom.io", detail: "Module: cyanalytics" },
           ].map((row, i) => (
-            <tr key={i} className={`border-t ${isDark ? "border-slate-700" : "border-gray-100"} text-xs`}>
-              <td className="px-4 py-3 font-mono text-slate-400">{row.ts}</td>
+            <tr key={i} className="border-t border-ink/10 text-xs">
+              <td className="px-4 py-3 font-mono text-ink/50">{row.ts}</td>
               <td className="px-4 py-3 font-mono">{row.tenant}</td>
-              <td className="px-4 py-3"><span className="font-mono text-blue-400">{row.action}</span></td>
-              <td className="px-4 py-3 text-slate-400">{row.resource}</td>
-              <td className="px-4 py-3 text-slate-400">{row.actor}</td>
-              <td className="px-4 py-3 text-slate-400">{row.detail}</td>
+              <td className="px-4 py-3"><span className="font-mono text-brand-400">{row.action}</span></td>
+              <td className="px-4 py-3 text-ink/50">{row.resource}</td>
+              <td className="px-4 py-3 text-ink/50">{row.actor}</td>
+              <td className="px-4 py-3 text-ink/50">{row.detail}</td>
             </tr>
           ))}
         </tbody>
@@ -770,38 +766,34 @@ export default function TenantAdminPage() {
   ];
 
   return (
-    <div className={`min-h-screen ${bg} font-sans`} dir={isRTL ? "rtl" : "ltr"}>
+    <div className="min-h-screen bg-surface font-sans text-ink" dir={isRTL ? "rtl" : "ltr"}>
       {/* Header */}
-      <div className={`${isDark ? "bg-slate-800 border-slate-700" : "bg-white border-gray-200"} border-b px-6 py-4`}>
+      <div className="border-b border-ink/10 bg-surface-raised px-6 py-4">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-lg flex items-center justify-center text-white font-bold text-sm">T</div>
+            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-brand-500 to-brand-600 text-sm font-bold text-white">T</div>
             <div>
-              <h1 className="font-semibold text-lg">{t.title}</h1>
-              <p className="text-xs text-slate-400">ADR-0002 · Multi-Tenant Framework</p>
+              <h1 className="font-heading text-lg font-semibold">{t.title}</h1>
+              <p className="text-xs text-ink/50">ADR-0002 · Multi-Tenant Framework</p>
             </div>
           </div>
           <div className="flex items-center gap-2">
             <button onClick={() => setLang(l => l === "en" ? "ar" : "en")}
-              className={`px-3 py-1.5 rounded-lg text-sm border ${isDark ? "border-slate-600 hover:bg-slate-700" : "border-gray-300 hover:bg-gray-100"}`}>
+              className="cy-btn cy-btn-ghost !min-h-0 !py-1.5 !px-3 text-sm">
               {lang === "en" ? "AR" : "EN"}
-            </button>
-            <button onClick={() => setTheme(t2 => t2 === "dark" ? "light" : "dark")}
-              className={`px-3 py-1.5 rounded-lg text-sm border ${isDark ? "border-slate-600 hover:bg-slate-700" : "border-gray-300 hover:bg-gray-100"}`}>
-              {isDark ? "☀" : "◑"}
             </button>
           </div>
         </div>
         {/* Tenant selector */}
-        <div className="flex gap-2 mt-3 flex-wrap">
+        <div className="mt-3 flex flex-wrap gap-2">
           {MOCK_TENANTS.map(t2 => (
             <button
               key={t2.id}
               onClick={() => setSelectedTenant(t2)}
-              className={`px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+              className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
                 selectedTenant.id === t2.id
-                  ? "bg-blue-600 text-white"
-                  : isDark ? "bg-slate-700 text-slate-300 hover:bg-slate-600" : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                  ? "bg-brand-500 text-white"
+                  : "bg-ink/10 text-ink/70 hover:bg-ink/15"
               }`}
             >
               {t2.slug}
@@ -811,16 +803,16 @@ export default function TenantAdminPage() {
       </div>
 
       {/* Tabs */}
-      <div className={`${isDark ? "bg-slate-800 border-slate-700" : "bg-white border-gray-200"} border-b px-6`}>
+      <div className="border-b border-ink/10 bg-surface-raised px-6">
         <div className="flex gap-0 overflow-x-auto">
           {t.tabs.map((label, i) => (
             <button
               key={i}
               onClick={() => setTab(i)}
-              className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+              className={`whitespace-nowrap border-b-2 px-4 py-3 text-sm font-medium transition-colors ${
                 tab === i
-                  ? "border-blue-500 text-blue-400"
-                  : `border-transparent ${isDark ? "text-slate-400 hover:text-slate-200" : "text-gray-500 hover:text-gray-900"}`
+                  ? "border-brand-500 text-brand-400"
+                  : "border-transparent text-ink/50 hover:text-ink"
               }`}
             >
               {label}
@@ -831,7 +823,7 @@ export default function TenantAdminPage() {
 
       {/* Notification */}
       {notification && (
-        <div className="fixed top-4 right-4 bg-emerald-600 text-white px-4 py-2 rounded-lg shadow-lg text-sm z-50">
+        <div className="fixed right-4 top-4 z-50 rounded-lg bg-emerald-600 px-4 py-2 text-sm text-white shadow-lg">
           {notification}
         </div>
       )}

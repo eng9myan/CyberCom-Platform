@@ -94,53 +94,61 @@ export default function EventsAdminConsole() {
     setTimeout(() => setNotification(null), 3000);
   };
 
+  const navBtnCls = (active: boolean) =>
+    `w-full rounded-lg border px-3 py-2.5 text-sm font-semibold transition ${isRtl ? "text-right" : "text-left"} ${
+      active ? "border-brand-400/60 bg-brand-500 text-white" : "border-ink/10 text-ink/70 hover:bg-ink/5"
+    }`;
+
+  const inputCls = "w-full rounded-lg border border-ink/10 bg-surface px-3.5 py-2.5 text-sm text-ink";
+  const labelCls = "mb-1.5 block text-[13px] font-semibold text-ink/50";
+
   return (
-    <div className="dashboard-container" style={{ direction: isRtl ? "rtl" : "ltr" }}>
-      <header className="dashboard-header">
+    <div dir={isRtl ? "rtl" : "ltr"} className="mx-auto max-w-6xl">
+      <header className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1>{t.title}</h1>
-          <p style={{ color: "var(--color-text-muted)" }}>{t.subtitle}</p>
+          <h1 className="font-heading text-2xl font-bold">{t.title}</h1>
+          <p className="mt-1 text-sm text-ink/50">{t.subtitle}</p>
         </div>
-        <button onClick={() => setLang(lang === "en" ? "ar" : "en")} className="theme-toggle-btn">
+        <button onClick={() => setLang(lang === "en" ? "ar" : "en")} className="cy-btn cy-btn-ghost !min-h-0 !py-2 !px-4 text-sm">
           {t.toggleLang}
         </button>
       </header>
 
       {notification && (
-        <div className="glass-card" style={{ marginBottom: "var(--spacing-md)", borderLeft: "4px solid var(--color-success)", color: "white" }}>
+        <div className="mb-4 rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-5 py-3.5 text-sm font-semibold text-emerald-400">
           {notification}
         </div>
       )}
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(12, 1fr)", gap: "var(--spacing-lg)" }}>
-        <aside className="glass-card" style={{ gridColumn: "span 3", display: "flex", flexDirection: "column", gap: "var(--spacing-sm)", height: "fit-content" }}>
-          <button onClick={() => setActiveTab("outbox")} style={{ background: activeTab === "outbox" ? "var(--color-primary)" : "none", color: "white", padding: "10px", borderRadius: "4px", border: "1px solid rgb(var(--color-ink-rgb) / 0.1)", textAlign: isRtl ? "right" : "left", cursor: "pointer" }}>{t.outboxTab}</button>
-          <button onClick={() => setActiveTab("dlq")} style={{ background: activeTab === "dlq" ? "var(--color-primary)" : "none", color: "white", padding: "10px", borderRadius: "4px", border: "1px solid rgb(var(--color-ink-rgb) / 0.1)", textAlign: isRtl ? "right" : "left", cursor: "pointer" }}>{t.dlqTab}</button>
-          <button onClick={() => setActiveTab("replay")} style={{ background: activeTab === "replay" ? "var(--color-primary)" : "none", color: "white", padding: "10px", borderRadius: "4px", border: "1px solid rgb(var(--color-ink-rgb) / 0.1)", textAlign: isRtl ? "right" : "left", cursor: "pointer" }}>{t.replayTab}</button>
+      <div className="grid grid-cols-12 gap-6">
+        <aside className="cy-card col-span-3 flex h-fit flex-col gap-2 p-4">
+          <button onClick={() => setActiveTab("outbox")} className={navBtnCls(activeTab === "outbox")}>{t.outboxTab}</button>
+          <button onClick={() => setActiveTab("dlq")} className={navBtnCls(activeTab === "dlq")}>{t.dlqTab}</button>
+          <button onClick={() => setActiveTab("replay")} className={navBtnCls(activeTab === "replay")}>{t.replayTab}</button>
         </aside>
 
-        <main className="glass-card" style={{ gridColumn: "span 9" }}>
+        <main className="cy-card col-span-9 p-6">
           {activeTab === "outbox" && (
             <div>
-              <h2>{t.outboxTab}</h2>
-              <table style={{ width: "100%", borderCollapse: "collapse", marginTop: "var(--spacing-md)" }}>
+              <h2 className="text-lg font-bold">{t.outboxTab}</h2>
+              <table className="mt-4 w-full border-collapse text-sm">
                 <thead>
-                  <tr style={{ borderBottom: "1px solid rgb(var(--color-ink-rgb) / 0.1)" }}>
-                    <th style={{ padding: "8px", textAlign: isRtl ? "right" : "left" }}>ID</th>
-                    <th style={{ padding: "8px", textAlign: isRtl ? "right" : "left" }}>{t.topic}</th>
-                    <th style={{ padding: "8px", textAlign: isRtl ? "right" : "left" }}>{t.eventType}</th>
-                    <th style={{ padding: "8px", textAlign: isRtl ? "right" : "left" }}>{t.status}</th>
-                    <th style={{ padding: "8px", textAlign: isRtl ? "right" : "left" }}>{t.createdAt}</th>
+                  <tr className="border-b border-ink/10">
+                    <th className={`px-4 py-3 text-[13px] font-semibold text-ink/50 ${isRtl ? "text-right" : "text-left"}`}>ID</th>
+                    <th className={`px-4 py-3 text-[13px] font-semibold text-ink/50 ${isRtl ? "text-right" : "text-left"}`}>{t.topic}</th>
+                    <th className={`px-4 py-3 text-[13px] font-semibold text-ink/50 ${isRtl ? "text-right" : "text-left"}`}>{t.eventType}</th>
+                    <th className={`px-4 py-3 text-[13px] font-semibold text-ink/50 ${isRtl ? "text-right" : "text-left"}`}>{t.status}</th>
+                    <th className={`px-4 py-3 text-[13px] font-semibold text-ink/50 ${isRtl ? "text-right" : "text-left"}`}>{t.createdAt}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {outbox.map(e => (
-                    <tr key={e.id} style={{ borderBottom: "1px solid rgb(var(--color-ink-rgb) / 0.05)" }}>
-                      <td style={{ padding: "8px" }}>{e.id}</td>
-                      <td style={{ padding: "8px" }}><code>{e.topic}</code></td>
-                      <td style={{ padding: "8px" }}>{e.eventType}</td>
-                      <td style={{ padding: "8px", color: e.status === "published" ? "var(--color-success)" : e.status === "pending" ? "var(--color-warning)" : "var(--color-error)" }}>{e.status.toUpperCase()}</td>
-                      <td style={{ padding: "8px" }}><small>{new Date(e.createdAt).toLocaleTimeString()}</small></td>
+                    <tr key={e.id} className="border-b border-ink/5">
+                      <td className="px-4 py-3">{e.id}</td>
+                      <td className="px-4 py-3"><code className="font-mono text-xs">{e.topic}</code></td>
+                      <td className="px-4 py-3">{e.eventType}</td>
+                      <td className={`px-4 py-3 font-semibold ${e.status === "published" ? "text-emerald-400" : e.status === "pending" ? "text-amber-400" : "text-red-400"}`}>{e.status.toUpperCase()}</td>
+                      <td className="px-4 py-3"><small className="text-xs text-ink/50">{new Date(e.createdAt).toLocaleTimeString()}</small></td>
                     </tr>
                   ))}
                 </tbody>
@@ -150,27 +158,27 @@ export default function EventsAdminConsole() {
 
           {activeTab === "dlq" && (
             <div>
-              <h2>{t.dlqTab}</h2>
-              <table style={{ width: "100%", borderCollapse: "collapse", marginTop: "var(--spacing-md)" }}>
+              <h2 className="text-lg font-bold">{t.dlqTab}</h2>
+              <table className="mt-4 w-full border-collapse text-sm">
                 <thead>
-                  <tr style={{ borderBottom: "1px solid rgb(var(--color-ink-rgb) / 0.1)" }}>
-                    <th style={{ padding: "8px", textAlign: isRtl ? "right" : "left" }}>{t.topic}</th>
-                    <th style={{ padding: "8px", textAlign: isRtl ? "right" : "left" }}>{t.errorMsg}</th>
-                    <th style={{ padding: "8px", textAlign: isRtl ? "right" : "left" }}>{t.createdAt}</th>
-                    <th style={{ padding: "8px", textAlign: isRtl ? "right" : "left" }}>{t.actions}</th>
+                  <tr className="border-b border-ink/10">
+                    <th className={`px-4 py-3 text-[13px] font-semibold text-ink/50 ${isRtl ? "text-right" : "text-left"}`}>{t.topic}</th>
+                    <th className={`px-4 py-3 text-[13px] font-semibold text-ink/50 ${isRtl ? "text-right" : "text-left"}`}>{t.errorMsg}</th>
+                    <th className={`px-4 py-3 text-[13px] font-semibold text-ink/50 ${isRtl ? "text-right" : "text-left"}`}>{t.createdAt}</th>
+                    <th className={`px-4 py-3 text-[13px] font-semibold text-ink/50 ${isRtl ? "text-right" : "text-left"}`}>{t.actions}</th>
                   </tr>
                 </thead>
                 <tbody>
                   {dlq.length === 0 ? (
-                    <tr><td colSpan={4} style={{ padding: "16px", textAlign: "center", color: "var(--color-text-muted)" }}>No toxic events found.</td></tr>
+                    <tr><td colSpan={4} className="p-4 text-center text-sm text-ink/50">No toxic events found.</td></tr>
                   ) : (
                     dlq.map(e => (
-                      <tr key={e.id} style={{ borderBottom: "1px solid rgb(var(--color-ink-rgb) / 0.05)" }}>
-                        <td style={{ padding: "8px" }}><code>{e.topic}</code></td>
-                        <td style={{ padding: "8px", color: "var(--color-warning)" }}>{e.errorMessage}</td>
-                        <td style={{ padding: "8px" }}><small>{new Date(e.failedAt).toLocaleTimeString()}</small></td>
-                        <td style={{ padding: "8px" }}>
-                          <button onClick={() => handleRetry(e.id)} style={{ background: "var(--color-success)", border: "none", color: "white", padding: "4px 8px", borderRadius: "4px", cursor: "pointer" }}>{t.retry}</button>
+                      <tr key={e.id} className="border-b border-ink/5">
+                        <td className="px-4 py-3"><code className="font-mono text-xs">{e.topic}</code></td>
+                        <td className="px-4 py-3 text-amber-400">{e.errorMessage}</td>
+                        <td className="px-4 py-3"><small className="text-xs text-ink/50">{new Date(e.failedAt).toLocaleTimeString()}</small></td>
+                        <td className="px-4 py-3">
+                          <button onClick={() => handleRetry(e.id)} className="rounded-md bg-emerald-500 px-2 py-1 text-xs font-semibold text-white hover:bg-emerald-600">{t.retry}</button>
                         </td>
                       </tr>
                     ))
@@ -181,17 +189,17 @@ export default function EventsAdminConsole() {
           )}
 
           {activeTab === "replay" && (
-            <form onSubmit={handleReplay} style={{ display: "flex", flexDirection: "column", gap: "var(--spacing-md)" }}>
-              <h2>{t.replayTab}</h2>
-              <div className="form-group">
-                <label>{t.tenantId}</label>
-                <input type="text" required value={replayParams.tenantId} onChange={e => setReplayParams({ ...replayParams, tenantId: e.target.value })} placeholder="00000000-0000-0000-0000-000000000000" style={{ background: "rgba(0,0,0,0.2)", border: "1px solid rgb(var(--color-ink-rgb) / 0.1)", padding: "8px", color: "white", borderRadius: "4px", width: "100%" }} />
+            <form onSubmit={handleReplay} className="flex flex-col gap-4">
+              <h2 className="text-lg font-bold">{t.replayTab}</h2>
+              <div>
+                <label className={labelCls}>{t.tenantId}</label>
+                <input type="text" required value={replayParams.tenantId} onChange={e => setReplayParams({ ...replayParams, tenantId: e.target.value })} placeholder="00000000-0000-0000-0000-000000000000" className={inputCls} />
               </div>
-              <div className="form-group">
-                <label>{t.topic}</label>
-                <input type="text" required value={replayParams.topic} onChange={e => setReplayParams({ ...replayParams, topic: e.target.value })} placeholder="platform.identity.events" style={{ background: "rgba(0,0,0,0.2)", border: "1px solid rgb(var(--color-ink-rgb) / 0.1)", padding: "8px", color: "white", borderRadius: "4px", width: "100%" }} />
+              <div>
+                <label className={labelCls}>{t.topic}</label>
+                <input type="text" required value={replayParams.topic} onChange={e => setReplayParams({ ...replayParams, topic: e.target.value })} placeholder="platform.identity.events" className={inputCls} />
               </div>
-              <button type="submit" style={{ background: "var(--color-primary)", border: "none", color: "white", padding: "10px", borderRadius: "4px", cursor: "pointer", fontWeight: "bold" }}>{t.triggerReplay}</button>
+              <button type="submit" className="cy-btn cy-btn-primary">{t.triggerReplay}</button>
             </form>
           )}
         </main>

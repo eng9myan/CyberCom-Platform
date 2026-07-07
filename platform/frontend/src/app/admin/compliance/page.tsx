@@ -65,23 +65,23 @@ export default function ComplianceAdminConsole() {
     : controls.filter(c => c.framework.toLowerCase() === filterFramework.toLowerCase());
 
   return (
-    <div className="dashboard-container" style={{ direction: isRtl ? "rtl" : "ltr" }}>
-      <header className="dashboard-header">
+    <div dir={isRtl ? "rtl" : "ltr"} className="mx-auto max-w-6xl">
+      <header className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1>{t.title}</h1>
-          <p style={{ color: "var(--color-text-muted)" }}>{t.subtitle}</p>
+          <h1 className="font-heading text-2xl font-bold">{t.title}</h1>
+          <p className="mt-1 text-sm text-ink/50">{t.subtitle}</p>
         </div>
-        <button onClick={() => setLang(lang === "en" ? "ar" : "en")} className="theme-toggle-btn">
+        <button onClick={() => setLang(lang === "en" ? "ar" : "en")} className="cy-btn cy-btn-ghost !min-h-0 !py-2 !px-4 text-sm">
           {t.toggleLang}
         </button>
       </header>
 
-      <div style={{ marginBottom: "20px", display: "flex", gap: "10px", alignItems: "center" }}>
-        <span style={{ fontSize: "0.95rem" }}>{t.search}</span>
+      <div className="mb-5 flex items-center gap-3">
+        <span className="text-sm">{t.search}</span>
         <select
           value={filterFramework}
           onChange={e => setFilterFramework(e.target.value)}
-          style={{ background: "rgba(0,0,0,0.2)", border: "1px solid rgb(var(--color-ink-rgb) / 0.1)", padding: "6px 12px", color: "white", borderRadius: "4px" }}
+          className="rounded-lg border border-ink/10 bg-surface px-3 py-1.5 text-sm text-ink"
         >
           <option value="all">Show All Frameworks</option>
           <option value="soc2">SOC2</option>
@@ -93,27 +93,24 @@ export default function ComplianceAdminConsole() {
         </select>
       </div>
 
-      <div className="glass-card" style={{ overflowX: "auto" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+      <div className="cy-card overflow-x-auto p-0">
+        <table className="w-full border-collapse text-sm">
           <thead>
-            <tr style={{ borderBottom: "1px solid rgb(var(--color-ink-rgb) / 0.15)" }}>
-              <th style={{ padding: "12px 8px", textAlign: isRtl ? "right" : "left" }}>{t.framework}</th>
-              <th style={{ padding: "12px 8px", textAlign: isRtl ? "right" : "left" }}>{t.controlName}</th>
-              <th style={{ padding: "12px 8px", textAlign: isRtl ? "right" : "left" }}>{t.description}</th>
-              <th style={{ padding: "12px 8px", textAlign: isRtl ? "right" : "left" }}>{t.status}</th>
+            <tr className="border-b border-ink/10">
+              <th className={`px-4 py-3 text-[13px] font-semibold text-ink/50 ${isRtl ? "text-right" : "text-left"}`}>{t.framework}</th>
+              <th className={`px-4 py-3 text-[13px] font-semibold text-ink/50 ${isRtl ? "text-right" : "text-left"}`}>{t.controlName}</th>
+              <th className={`px-4 py-3 text-[13px] font-semibold text-ink/50 ${isRtl ? "text-right" : "text-left"}`}>{t.description}</th>
+              <th className={`px-4 py-3 text-[13px] font-semibold text-ink/50 ${isRtl ? "text-right" : "text-left"}`}>{t.status}</th>
             </tr>
           </thead>
           <tbody>
             {filteredControls.map(c => (
-              <tr key={c.id} style={{ borderBottom: "1px solid rgb(var(--color-ink-rgb) / 0.05)" }}>
-                <td style={{ padding: "12px 8px" }}><span style={{ background: "var(--color-primary-dark)", padding: "2px 8px", borderRadius: "4px", fontSize: "0.85rem", fontWeight: "bold" }}>{c.framework}</span></td>
-                <td style={{ padding: "12px 8px", fontWeight: "bold" }}>{c.name}</td>
-                <td style={{ padding: "12px 8px", color: "var(--color-text-muted)", fontSize: "0.92rem" }}>{c.description}</td>
-                <td style={{ padding: "12px 8px" }}>
-                  <span style={{
-                    color: c.status === "compliant" ? "var(--color-success)" : c.status === "warning" ? "var(--color-warning)" : "var(--color-error)",
-                    fontWeight: "bold"
-                  }}>
+              <tr key={c.id} className="border-b border-ink/5">
+                <td className="px-4 py-3"><span className="rounded bg-brand-700 px-2 py-0.5 text-xs font-bold text-white">{c.framework}</span></td>
+                <td className="px-4 py-3 font-bold">{c.name}</td>
+                <td className="px-4 py-3 text-sm text-ink/50">{c.description}</td>
+                <td className="px-4 py-3">
+                  <span className={`font-bold ${c.status === "compliant" ? "text-emerald-400" : c.status === "warning" ? "text-amber-400" : "text-red-400"}`}>
                     ● {c.status === "compliant" ? t.compliant : c.status === "warning" ? t.warning : t.failing}
                   </span>
                 </td>

@@ -136,11 +136,7 @@ export default function LabOrdersPage() {
   const t = (en: string, ar: string) => lang === "en" ? en : ar;
 
   if (!isAuthenticated) {
-    return (
-      <div style={{ padding: "4rem", textAlign: "center" }}>
-        <h1 style={{ fontSize: "1.25rem", fontWeight: 700 }}>Sign in required</h1>
-      </div>
-    );
+    return <div className="mx-auto mt-16 max-w-lg text-center"><h1 className="text-xl font-bold">Sign in required</h1></div>;
   }
 
   const filtered = (orders || []).filter(o => {
@@ -149,22 +145,24 @@ export default function LabOrdersPage() {
     return true;
   });
 
+  const dir = lang === "ar" ? "rtl" : "ltr";
+
   return (
-    <div style={{ padding: "2rem", maxWidth: "1400px", margin: "0 auto", direction: lang === "ar" ? "rtl" : "ltr", background: "var(--color-background)", minHeight: "100vh", color: "var(--color-text)" }}>
-      <header style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "1.5rem" }}>
+    <div dir={dir} className="mx-auto max-w-6xl">
+      <header className="mb-6 flex items-start justify-between">
         <div>
-          <a href="/laboratory" style={{ color: "#22D3EE", textDecoration: "none", fontSize: "0.875rem" }}>{t("← Laboratory", "← المختبر")}</a>
-          <h1 style={{ fontSize: "1.75rem", fontWeight: 700, color: "#22D3EE" }}>{t("Lab Order Management", "إدارة طلبات المختبر")}</h1>
-          <p style={{ color: "var(--color-text-muted)", fontSize: "0.875rem", marginTop: "0.25rem" }}>
+          <a href="/laboratory" className="text-sm text-brand-400">{t("← Laboratory", "← المختبر")}</a>
+          <h1 className="font-heading text-2xl font-bold text-brand-400">{t("Lab Order Management", "إدارة طلبات المختبر")}</h1>
+          <p className="mt-1 text-sm text-ink/50">
             {t("Real laboratory test orders (CPOE-fed)", "طلبات الفحوصات المخبرية الحقيقية")}
           </p>
         </div>
-        <button onClick={() => setLang(l => l === "en" ? "ar" : "en")} style={{ padding: "0.4rem 0.8rem", borderRadius: "4px", border: "1px solid var(--color-border)", cursor: "pointer", background: "var(--color-surface)", color: "var(--color-text)", fontSize: "0.8rem" }}>
+        <button onClick={() => setLang(l => l === "en" ? "ar" : "en")} className="cy-btn cy-btn-ghost !min-h-0 !py-2 !px-4 text-sm">
           {lang === "en" ? "العربية" : "English"}
         </button>
       </header>
 
-      <nav style={{ display: "flex", gap: "0.5rem", marginBottom: "1.5rem", flexWrap: "wrap" }}>
+      <nav className="mb-6 flex flex-wrap gap-2">
         {[
           { href: "/laboratory", label: t("Overview", "نظرة عامة") },
           { href: "/laboratory/orders", label: t("Orders", "الطلبات") },
@@ -172,19 +170,23 @@ export default function LabOrdersPage() {
           { href: "/laboratory/worklists", label: t("Worklists", "قوائم العمل") },
           { href: "/laboratory/results", label: t("Results", "النتائج") },
         ].map(item => (
-          <a key={item.href} href={item.href} style={{ padding: "0.4rem 1rem", borderRadius: "4px", background: item.href === "/laboratory/orders" ? "#22D3EE22" : "var(--color-surface)", border: `1px solid ${item.href === "/laboratory/orders" ? "#22D3EE" : "var(--color-border)"}`, color: item.href === "/laboratory/orders" ? "#22D3EE" : "var(--color-text)", textDecoration: "none", fontSize: "0.875rem", fontWeight: 500 }}>
+          <a
+            key={item.href}
+            href={item.href}
+            className={`rounded-lg px-4 py-1.5 text-sm font-medium ${item.href === "/laboratory/orders" ? "border border-brand-400/60 bg-brand-500/15 text-brand-300" : "border border-ink/10 text-ink/70 hover:bg-ink/5"}`}
+          >
             {item.label}
           </a>
         ))}
       </nav>
 
       {fetchError && (
-        <div style={{ background: "#fee2e2", border: "1px solid #fca5a5", color: "#b91c1c", padding: "0.9rem 1rem", borderRadius: "8px", marginBottom: "1.5rem", fontSize: "0.88rem" }}>
+        <div className="mb-6 rounded-lg border border-red-500/40 bg-red-500/10 px-4 py-3.5 text-sm text-red-400">
           {fetchError}
         </div>
       )}
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: "1rem", marginBottom: "1.5rem" }}>
+      <div className="mb-6 grid grid-cols-5 gap-4">
         {[
           { label: t("Total Orders", "إجمالي الطلبات"), value: (orders || []).length, color: "#6366f1" },
           { label: t("Submitted", "مُرسلة"), value: (orders || []).filter(o => o.status === "submitted").length, color: "#3b82f6" },
@@ -192,88 +194,96 @@ export default function LabOrdersPage() {
           { label: t("Completed", "مكتملة"), value: (orders || []).filter(o => o.status === "completed").length, color: "#22c55e" },
           { label: t("STAT Orders", "طلبات عاجلة"), value: (orders || []).filter(o => o.priority === "stat").length, color: "#ef4444" },
         ].map(m => (
-          <div key={m.label} style={{ background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: "10px", padding: "1rem", textAlign: "center" }}>
-            <p style={{ fontSize: "1.75rem", fontWeight: 700, color: m.color }}>{m.value}</p>
-            <p style={{ fontSize: "0.7rem", color: "var(--color-text-muted)", marginTop: "0.2rem" }}>{m.label}</p>
+          <div key={m.label} className="cy-card p-4 text-center">
+            <p className="text-2xl font-bold" style={{ color: m.color }}>{m.value}</p>
+            <p className="mt-1 text-xs text-ink/50">{m.label}</p>
           </div>
         ))}
       </div>
 
-      <div style={{ background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: "10px", padding: "1rem", marginBottom: "1.25rem", display: "flex", gap: "1rem", flexWrap: "wrap", alignItems: "center" }}>
+      <div className="cy-card mb-5 flex flex-wrap items-center gap-4 p-4">
         <div>
-          <span style={{ fontSize: "0.75rem", color: "var(--color-text-muted)", display: "block", marginBottom: "0.3rem" }}>{t("Priority", "الأولوية")}</span>
-          <div style={{ display: "flex", gap: "0.25rem" }}>
+          <span className="mb-1.5 block text-[13px] font-semibold text-ink/50">{t("Priority", "الأولوية")}</span>
+          <div className="flex gap-1">
             {["all", "stat", "urgent", "routine"].map(f => (
-              <button key={f} onClick={() => setPriorityFilter(f)} style={{ padding: "0.25rem 0.6rem", borderRadius: "4px", border: "1px solid var(--color-border)", cursor: "pointer", fontSize: "0.75rem", background: priorityFilter === f ? "#22D3EE" : "var(--color-background)", color: priorityFilter === f ? "#000" : "var(--color-text)" }}>
+              <button
+                key={f}
+                onClick={() => setPriorityFilter(f)}
+                className={`rounded-md px-2.5 py-1 text-xs font-semibold ${priorityFilter === f ? "bg-brand-400 text-black" : "border border-ink/10 text-ink/70 hover:bg-ink/5"}`}
+              >
                 {f === "all" ? t("All", "الكل") : f}
               </button>
             ))}
           </div>
         </div>
         <div>
-          <span style={{ fontSize: "0.75rem", color: "var(--color-text-muted)", display: "block", marginBottom: "0.3rem" }}>{t("Status", "الحالة")}</span>
-          <div style={{ display: "flex", gap: "0.25rem", flexWrap: "wrap" }}>
+          <span className="mb-1.5 block text-[13px] font-semibold text-ink/50">{t("Status", "الحالة")}</span>
+          <div className="flex flex-wrap gap-1">
             {["all", "submitted", "in_progress", "partial", "completed", "cancelled"].map(f => (
-              <button key={f} onClick={() => setStatusFilter(f)} style={{ padding: "0.25rem 0.6rem", borderRadius: "4px", border: "1px solid var(--color-border)", cursor: "pointer", fontSize: "0.75rem", background: statusFilter === f ? "#22D3EE" : "var(--color-background)", color: statusFilter === f ? "#000" : "var(--color-text)" }}>
+              <button
+                key={f}
+                onClick={() => setStatusFilter(f)}
+                className={`rounded-md px-2.5 py-1 text-xs font-semibold ${statusFilter === f ? "bg-brand-400 text-black" : "border border-ink/10 text-ink/70 hover:bg-ink/5"}`}
+              >
                 {f === "all" ? t("All", "الكل") : f}
               </button>
             ))}
           </div>
         </div>
-        {loading && <span style={{ fontSize: "0.8rem", color: "var(--color-text-muted)" }}>{t("Loading…", "جارٍ التحميل…")}</span>}
-        <div style={{ marginLeft: "auto", fontSize: "0.8rem", color: "var(--color-text-muted)" }}>
+        {loading && <span className="text-sm text-ink/50">{t("Loading…", "جارٍ التحميل…")}</span>}
+        <div className="ms-auto text-sm text-ink/50">
           {t("Showing", "عرض")} {filtered.length} / {(orders || []).length} {t("orders", "طلب")}
         </div>
       </div>
 
-      <div style={{ background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: "10px", overflowX: "auto" }}>
-        <table style={{ width: "100%", borderCollapse: "collapse" }}>
+      <div className="cy-card overflow-auto p-0">
+        <table className="w-full min-w-[900px] border-collapse">
           <thead>
-            <tr style={{ borderBottom: "2px solid var(--color-border)" }}>
+            <tr className="border-b border-ink/10">
               {[t("Order #", "رقم الطلب"), t("Patient", "المريض"), t("Test(s)", "الفحوصات"), t("Location", "الموقع"), t("Priority", "الأولوية"), t("Status", "الحالة"), t("Requested", "وقت الطلب"), t("Actions", "الإجراءات")].map(h => (
-                <th key={h} style={{ padding: "0.75rem 0.875rem", textAlign: lang === "ar" ? "right" : "left", fontSize: "0.72rem", fontWeight: 600, color: "var(--color-text-muted)", textTransform: "uppercase", whiteSpace: "nowrap" }}>{h}</th>
+                <th key={h} className="whitespace-nowrap px-4 py-3.5 text-left text-xs font-semibold text-ink/50">{h}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {!loading && filtered.length === 0 && (
-              <tr><td colSpan={8} style={{ padding: "2rem", textAlign: "center", color: "var(--color-text-muted)" }}>
+              <tr><td colSpan={8} className="p-8 text-center text-sm text-ink/40">
                 {t("No lab orders for this tenant yet.", "لا توجد طلبات مخبرية لهذا المستأجر بعد.")}
               </td></tr>
             )}
-            {filtered.map((order, i) => {
+            {filtered.map(order => {
               const patient = patients[order.patient_id];
               const patientLabel = patient ? `${patient.first_name} ${patient.last_name}` : `Patient ${order.patient_id.slice(0, 8)}`;
               const testNames = (order.items || []).map(item => item.test ? tests[item.test]?.name : null).filter(Boolean).join(", ") || "—";
               return (
-                <tr key={order.id} style={{ borderBottom: "1px solid var(--color-border)", background: i % 2 === 0 ? "transparent" : "var(--color-background)" }}>
-                  <td style={{ padding: "0.75rem 0.875rem", fontSize: "0.78rem", fontFamily: "monospace", color: "#22D3EE", whiteSpace: "nowrap" }}>{order.order_number}</td>
-                  <td style={{ padding: "0.75rem 0.875rem" }}>
-                    <div style={{ fontWeight: 500, fontSize: "0.875rem" }}>{patientLabel}</div>
-                    {patient?.mrn && <div style={{ fontSize: "0.72rem", color: "var(--color-text-muted)" }}>{patient.mrn}</div>}
+                <tr key={order.id} className="border-b border-ink/5">
+                  <td className="whitespace-nowrap px-4 py-3.5 font-mono text-xs text-brand-400">{order.order_number}</td>
+                  <td className="px-4 py-3.5">
+                    <div className="text-sm font-medium">{patientLabel}</div>
+                    {patient?.mrn && <div className="text-xs text-ink/50">{patient.mrn}</div>}
                   </td>
-                  <td style={{ padding: "0.75rem 0.875rem", fontSize: "0.85rem" }}>{testNames}</td>
-                  <td style={{ padding: "0.75rem 0.875rem", fontSize: "0.78rem", color: "var(--color-text-muted)", whiteSpace: "nowrap" }}>{order.ordering_location || "—"}</td>
-                  <td style={{ padding: "0.75rem 0.875rem" }}>
-                    <span style={{ padding: "0.2rem 0.55rem", borderRadius: "12px", fontSize: "0.72rem", fontWeight: 700, background: priorityColor(order.priority) + "22", color: priorityColor(order.priority), border: `1px solid ${priorityColor(order.priority)}` }}>
+                  <td className="px-4 py-3.5 text-sm">{testNames}</td>
+                  <td className="whitespace-nowrap px-4 py-3.5 text-xs text-ink/50">{order.ordering_location || "—"}</td>
+                  <td className="px-4 py-3.5">
+                    <span className="rounded-full px-2.5 py-1 text-xs font-bold" style={{ background: priorityColor(order.priority) + "22", color: priorityColor(order.priority), border: `1px solid ${priorityColor(order.priority)}` }}>
                       {order.priority}
                     </span>
                   </td>
-                  <td style={{ padding: "0.75rem 0.875rem" }}>
-                    <span style={{ padding: "0.2rem 0.55rem", borderRadius: "12px", fontSize: "0.72rem", fontWeight: 600, background: (STATUS_COLORS[order.status] || "#6b7280") + "22", color: STATUS_COLORS[order.status] || "#6b7280" }}>
+                  <td className="px-4 py-3.5">
+                    <span className="rounded-full px-2.5 py-1 text-xs font-semibold" style={{ background: (STATUS_COLORS[order.status] || "#6b7280") + "22", color: STATUS_COLORS[order.status] || "#6b7280" }}>
                       {order.status}
                     </span>
                   </td>
-                  <td style={{ padding: "0.75rem 0.875rem", fontSize: "0.82rem", whiteSpace: "nowrap" }}>
+                  <td className="whitespace-nowrap px-4 py-3.5 text-sm">
                     {order.requested_at ? new Date(order.requested_at).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }) : "—"}
                   </td>
-                  <td style={{ padding: "0.75rem 0.875rem" }}>
+                  <td className="px-4 py-3.5">
                     {(order.status === "submitted" || order.status === "in_progress") ? (
-                      <button disabled={busyId === order.id} onClick={() => handleCancel(order.id)} style={{ padding: "0.2rem 0.5rem", fontSize: "0.7rem", borderRadius: "4px", background: "#ef444422", color: "#ef4444", border: "1px solid #ef4444", cursor: "pointer", whiteSpace: "nowrap", opacity: busyId === order.id ? 0.5 : 1 }}>
+                      <button disabled={busyId === order.id} onClick={() => handleCancel(order.id)} className="whitespace-nowrap rounded-md border border-red-500/40 px-2.5 py-1 text-xs font-semibold text-red-400 hover:bg-red-500/10 disabled:opacity-50">
                         {t("Cancel", "إلغاء")}
                       </button>
                     ) : (
-                      <span style={{ fontSize: "0.75rem", color: "var(--color-text-muted)" }}>—</span>
+                      <span className="text-xs text-ink/40">—</span>
                     )}
                   </td>
                 </tr>

@@ -42,70 +42,73 @@ export default function PatientAppointmentsPage() {
     setUpcoming(prev => prev.map(a => a.id === id ? { ...a, status: "cancelled" as const } : a));
   };
 
-  const s: Record<string, React.CSSProperties> = {
-    page: { padding: "2rem", maxWidth: 900, margin: "0 auto", direction: isAr ? "rtl" : "ltr" },
-    header: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem", borderBottom: "2px solid rgba(34,211,238,0.3)", paddingBottom: "1rem" },
-    h1: { fontSize: "1.6rem", fontWeight: 700, color: "#22D3EE" },
-    btn: { background: "var(--color-surface)", border: "1px solid var(--color-border)", color: "var(--color-text)", padding: "0.4rem 1rem", borderRadius: 6, cursor: "pointer", fontWeight: 600, textDecoration: "none" as const },
-    sectionTitle: { fontSize: "1rem", fontWeight: 700, color: "#22D3EE", marginBottom: "0.75rem" },
-    apptCard: { background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: 8, padding: "1rem 1.25rem", marginBottom: "0.75rem", display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap" as const, gap: "0.75rem" },
-    input: { padding: "0.5rem 0.75rem", borderRadius: 6, border: "1px solid var(--color-border)", background: "var(--color-background)", color: "var(--color-text)", fontSize: "0.875rem", width: "100%" },
-  };
+  const inputCls = "w-full rounded-lg border border-ink/10 bg-surface px-3.5 py-2.5 text-sm text-ink";
+  const labelCls = "mb-1.5 block text-[13px] font-semibold text-ink/50";
 
   return (
-    <div style={s.page}>
-      <header style={s.header}>
+    <div className="mx-auto max-w-4xl" style={{ direction: isAr ? "rtl" : "ltr" }}>
+      <header className="mb-6 flex items-center justify-between">
         <div>
-          <h1 style={s.h1}>{isAr ? "مواعيدي" : "My Appointments"}</h1>
-          <p style={{ color: "var(--color-text-muted)", fontSize: "0.875rem" }}>{upcoming.filter(a => a.status === "upcoming").length} {isAr ? "موعد قادم" : "upcoming appointment(s)"}</p>
+          <h1 className="font-heading text-2xl font-bold">{isAr ? "مواعيدي" : "My Appointments"}</h1>
+          <p className="text-sm text-ink/50">{upcoming.filter(a => a.status === "upcoming").length} {isAr ? "موعد قادم" : "upcoming appointment(s)"}</p>
         </div>
-        <div style={{ display: "flex", gap: "0.75rem" }}>
-          {loading && <span style={{ color: "var(--color-text-muted)", fontSize: "0.8rem" }}>●</span>}
-          <a href="/patient-portal" style={s.btn}>{isAr ? "← البوابة" : "← Portal"}</a>
-          <button style={s.btn} onClick={() => setLang(isAr ? "en" : "ar")}>{isAr ? "English" : "العربية"}</button>
+        <div className="flex items-center gap-3">
+          {loading && <span className="text-xs text-ink/50">●</span>}
+          <a href="/patient-portal" className="cy-btn cy-btn-ghost !min-h-0 !py-2 !px-4 text-sm">{isAr ? "← البوابة" : "← Portal"}</a>
+          <button onClick={() => setLang(isAr ? "en" : "ar")} className="cy-btn cy-btn-ghost !min-h-0 !py-2 !px-4 text-sm">{isAr ? "English" : "العربية"}</button>
         </div>
       </header>
-      <div style={{ marginBottom: "2rem" }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.75rem" }}>
-          <div style={s.sectionTitle}>{isAr ? "المواعيد القادمة" : "Upcoming Appointments"}</div>
-          <button onClick={() => setShowBook(!showBook)} style={{ background: "#22D3EE", color: "#000", border: "none", borderRadius: 6, padding: "0.4rem 1rem", cursor: "pointer", fontWeight: 700, fontSize: "0.875rem" }}>{isAr ? "+ حجز موعد" : "+ Book Appointment"}</button>
+      <div className="mb-8">
+        <div className="mb-3 flex items-center justify-between">
+          <div className="text-lg font-bold">{isAr ? "المواعيد القادمة" : "Upcoming Appointments"}</div>
+          <button onClick={() => setShowBook(!showBook)} className="cy-btn cy-btn-primary !min-h-0 !py-2 !px-4 text-sm">{isAr ? "+ حجز موعد" : "+ Book Appointment"}</button>
         </div>
         {showBook && (
-          <div style={{ background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: 8, padding: "1.25rem", marginBottom: "1rem" }}>
-            <div style={{ fontWeight: 700, marginBottom: "1rem" }}>{isAr ? "حجز موعد جديد" : "Book New Appointment"}</div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem", marginBottom: "0.75rem" }}>
-              <div><label style={{ fontSize: "0.8rem", color: "var(--color-text-muted)", display: "block", marginBottom: 4 }}>{isAr ? "التخصص" : "Specialty"}</label><select value={specialty} onChange={e => setSpecialty(e.target.value)} style={s.input}><option value="">{isAr ? "اختر التخصص" : "Select specialty"}</option>{SPECIALTIES.map(sp => <option key={sp} value={sp}>{sp}</option>)}</select></div>
-              <div><label style={{ fontSize: "0.8rem", color: "var(--color-text-muted)", display: "block", marginBottom: 4 }}>{isAr ? "التاريخ المفضل" : "Preferred Date"}</label><input type="date" value={preferredDate} onChange={e => setPreferredDate(e.target.value)} style={s.input} /></div>
+          <div className="cy-card mb-4 p-5">
+            <div className="mb-4 font-bold">{isAr ? "حجز موعد جديد" : "Book New Appointment"}</div>
+            <div className="mb-3 grid grid-cols-2 gap-3">
+              <div>
+                <label className={labelCls}>{isAr ? "التخصص" : "Specialty"}</label>
+                <select value={specialty} onChange={e => setSpecialty(e.target.value)} className={inputCls}>
+                  <option value="">{isAr ? "اختر التخصص" : "Select specialty"}</option>
+                  {SPECIALTIES.map(sp => <option key={sp} value={sp}>{sp}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className={labelCls}>{isAr ? "التاريخ المفضل" : "Preferred Date"}</label>
+                <input type="date" value={preferredDate} onChange={e => setPreferredDate(e.target.value)} className={inputCls} />
+              </div>
             </div>
-            <div style={{ display: "flex", gap: "0.75rem" }}>
-              <button style={{ background: "#22c55e22", color: "#22c55e", border: "1px solid #22c55e55", borderRadius: 6, padding: "0.4rem 1.25rem", cursor: "pointer", fontWeight: 600 }}>{isAr ? "إرسال الطلب" : "Request Appointment"}</button>
-              <button onClick={() => setShowBook(false)} style={{ background: "transparent", color: "var(--color-text-muted)", border: "1px solid var(--color-border)", borderRadius: 6, padding: "0.4rem 1rem", cursor: "pointer" }}>{isAr ? "إلغاء" : "Cancel"}</button>
+            <div className="flex gap-3">
+              <button className="cy-btn bg-emerald-500 text-white">{isAr ? "إرسال الطلب" : "Request Appointment"}</button>
+              <button onClick={() => setShowBook(false)} className="cy-btn cy-btn-ghost">{isAr ? "إلغاء" : "Cancel"}</button>
             </div>
           </div>
         )}
         {upcoming.map(a => (
-          <div key={a.id} style={s.apptCard}>
+          <div key={a.id} className="mb-3 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-ink/10 bg-surface px-5 py-4">
             <div>
-              <div style={{ fontWeight: 700 }}>{isAr ? a.specialty_ar : a.specialty}</div>
-              <div style={{ fontSize: "0.875rem", color: "var(--color-text-muted)" }}>{a.provider} · {a.location}</div>
-              <div style={{ fontSize: "0.8rem", color: "#22D3EE", marginTop: 4 }}>{a.date} {a.time} {a.type === "virtual" ? "🎥" : "🏥"}</div>
+              <div className="font-bold">{isAr ? a.specialty_ar : a.specialty}</div>
+              <div className="text-sm text-ink/50">{a.provider} · {a.location}</div>
+              <div className="mt-1 text-[13px]" style={{ color: "#22D3EE" }}>{a.date} {a.time} {a.type === "virtual" ? "🎥" : "🏥"}</div>
             </div>
-            <div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
-              <span style={{ background: `${STATUS_COLOR[a.status]}22`, color: STATUS_COLOR[a.status], border: `1px solid ${STATUS_COLOR[a.status]}55`, borderRadius: 4, padding: "2px 8px", fontSize: "0.75rem", fontWeight: 600 }}>{a.status}</span>
-              {a.status === "upcoming" && <button onClick={() => handleCancel(a.id)} style={{ background: "transparent", color: "#6b7280", border: "1px solid #6b728055", borderRadius: 4, padding: "3px 10px", cursor: "pointer", fontSize: "0.78rem" }}>{isAr ? "إلغاء" : "Cancel"}</button>}
+            <div className="flex items-center gap-3">
+              <span className="rounded px-2 py-0.5 text-xs font-semibold" style={{ background: `${STATUS_COLOR[a.status]}22`, color: STATUS_COLOR[a.status], border: `1px solid ${STATUS_COLOR[a.status]}55` }}>{a.status}</span>
+              {a.status === "upcoming" && <button onClick={() => handleCancel(a.id)} className="rounded border border-ink/20 px-2.5 py-1 text-xs text-ink/50 hover:bg-ink/5">{isAr ? "إلغاء" : "Cancel"}</button>}
             </div>
           </div>
         ))}
       </div>
-      <div style={{ marginBottom: "1rem" }}><div style={s.sectionTitle}>{isAr ? "المواعيد السابقة" : "Past Appointments"}</div>
+      <div className="mb-4">
+        <div className="mb-3 text-lg font-bold">{isAr ? "المواعيد السابقة" : "Past Appointments"}</div>
         {past.map(a => (
-          <div key={a.id} style={{ ...s.apptCard, opacity: 0.7 }}>
+          <div key={a.id} className="mb-3 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-ink/10 bg-surface px-5 py-4 opacity-70">
             <div>
-              <div style={{ fontWeight: 600 }}>{isAr ? a.specialty_ar : a.specialty}</div>
-              <div style={{ fontSize: "0.875rem", color: "var(--color-text-muted)" }}>{a.provider}</div>
-              <div style={{ fontSize: "0.8rem", color: "var(--color-text-muted)", marginTop: 4 }}>{a.date} {a.time}</div>
+              <div className="font-semibold">{isAr ? a.specialty_ar : a.specialty}</div>
+              <div className="text-sm text-ink/50">{a.provider}</div>
+              <div className="mt-1 text-[13px] text-ink/50">{a.date} {a.time}</div>
             </div>
-            <span style={{ background: `${STATUS_COLOR[a.status]}22`, color: STATUS_COLOR[a.status], border: `1px solid ${STATUS_COLOR[a.status]}55`, borderRadius: 4, padding: "2px 8px", fontSize: "0.75rem", fontWeight: 600 }}>{a.status}</span>
+            <span className="rounded px-2 py-0.5 text-xs font-semibold" style={{ background: `${STATUS_COLOR[a.status]}22`, color: STATUS_COLOR[a.status], border: `1px solid ${STATUS_COLOR[a.status]}55` }}>{a.status}</span>
           </div>
         ))}
       </div>

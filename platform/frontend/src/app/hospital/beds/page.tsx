@@ -64,13 +64,13 @@ export default function BedsPage() {
   useEffect(() => { void loadData(); }, [loadData]);
 
   if (!isAuthenticated) {
-    return <div style={{ padding: "2rem", textAlign: "center", marginTop: "4rem" }}><h1 style={{ fontWeight: 700, fontSize: "1.25rem" }}>Sign in required</h1></div>;
+    return <div className="mx-auto mt-16 max-w-lg text-center"><h1 className="text-xl font-bold">Sign in required</h1></div>;
   }
   if (fetchError) {
-    return <div style={{ padding: "2rem", textAlign: "center", marginTop: "4rem" }}><h1 style={{ fontWeight: 700, fontSize: "1.25rem", color: "#ef4444" }}>Unable to load bed management data</h1><p style={{ color: "var(--color-text-muted)" }}>{fetchError}</p></div>;
+    return <div className="mx-auto mt-16 max-w-lg text-center"><h1 className="text-xl font-bold text-red-400">Unable to load bed management data</h1><p className="mt-1 text-sm text-ink/50">{fetchError}</p></div>;
   }
   if (facilities === null) {
-    return <div style={{ padding: "2rem", textAlign: "center", marginTop: "4rem", color: "var(--color-text-muted)" }}>Loading live bed data...</div>;
+    return <div className="mx-auto mt-16 max-w-lg text-center text-sm text-ink/40">Loading live bed data...</div>;
   }
 
   const wards: WardNode[] = facilities.flatMap(f => f.departments.flatMap(d => d.wards));
@@ -90,7 +90,7 @@ export default function BedsPage() {
   const displayWards = selectedWard ? wards.filter(w => w.id === selectedWard) : wards;
 
   return (
-    <div dir={dir} style={{ maxWidth: "1400px", margin: "0 auto" }}>
+    <div dir={dir} className="mx-auto max-w-6xl">
       <header className="mb-6 flex items-center justify-between">
         <div>
           <h1 className="flex items-center gap-2 text-2xl font-bold"><BedDouble size={22} /> {lang === "en" ? "Bed Management Board" : "لوحة إدارة الأسرة"}</h1>

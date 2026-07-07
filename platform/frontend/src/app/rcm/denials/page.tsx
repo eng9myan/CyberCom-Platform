@@ -46,49 +46,90 @@ export default function DenialsPage() {
   const totalAtRisk = denials.filter(d => ["new", "in_appeal"].includes(d.status)).reduce((a, d) => a + d.amount, 0);
   const urgent = denials.filter(d => d.days_to_deadline > 0 && d.days_to_deadline <= 7 && ["new", "in_appeal"].includes(d.status));
 
-  const s: Record<string, React.CSSProperties> = {
-    page: { padding: "2rem", maxWidth: 1200, margin: "0 auto", direction: isAr ? "rtl" : "ltr" },
-    header: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem", borderBottom: "2px solid rgba(34,211,238,0.3)", paddingBottom: "1rem" },
-    h1: { fontSize: "1.6rem", fontWeight: 700, color: "#22D3EE" },
-    btn: { background: "var(--color-surface)", border: "1px solid var(--color-border)", color: "var(--color-text)", padding: "0.4rem 1rem", borderRadius: 6, cursor: "pointer", fontWeight: 600, textDecoration: "none" as const },
-    metricGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px,1fr))", gap: "1rem", marginBottom: "1.25rem" },
-    card: { background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: 8, padding: "1rem" },
-    table: { width: "100%", borderCollapse: "collapse" as const },
-    th: { padding: "0.75rem", textAlign: (isAr ? "right" : "left") as "left" | "right", color: "var(--color-text-muted)", fontWeight: 600, borderBottom: "1px solid var(--color-border)", fontSize: "0.85rem" },
-    td: { padding: "0.75rem", borderBottom: "1px solid var(--color-border)", fontSize: "0.875rem" },
-  };
-
   return (
-    <div style={s.page}>
-      <header style={s.header}>
+    <div style={{ direction: isAr ? "rtl" : "ltr" }} className="mx-auto max-w-6xl">
+      <header className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 style={s.h1}>{isAr ? "إدارة الرفض والاستئناف" : "Denial Management & Appeals"}</h1>
-          <p style={{ color: "var(--color-text-muted)", fontSize: "0.875rem" }}>{denials.length} {isAr ? "مطالبة مرفوضة" : "denials"}</p>
+          <h1 className="font-heading text-2xl font-bold">{isAr ? "إدارة الرفض والاستئناف" : "Denial Management & Appeals"}</h1>
+          <p className="mt-1 text-sm text-ink/50">{denials.length} {isAr ? "مطالبة مرفوضة" : "denials"}</p>
         </div>
-        <div style={{ display: "flex", gap: "0.75rem" }}>
-          {loading && <span style={{ color: "var(--color-text-muted)", fontSize: "0.8rem" }}>●</span>}
-          <a href="/rcm" style={s.btn}>{isAr ? "← دورة الإيرادات" : "← RCM"}</a>
-          <button style={s.btn} onClick={() => setLang(isAr ? "en" : "ar")}>{isAr ? "English" : "العربية"}</button>
+        <div className="flex items-center gap-3">
+          {loading && <span className="text-xs text-ink/40">●</span>}
+          <a href="/rcm" className="cy-btn cy-btn-ghost !min-h-0 !py-2 !px-4 text-sm">{isAr ? "← دورة الإيرادات" : "← RCM"}</a>
+          <button onClick={() => setLang(isAr ? "en" : "ar")} className="cy-btn cy-btn-ghost !min-h-0 !py-2 !px-4 text-sm">{isAr ? "English" : "العربية"}</button>
         </div>
       </header>
-      {urgent.length > 0 && <div style={{ background: "rgba(239,68,68,0.1)", border: "1px solid rgba(239,68,68,0.3)", borderRadius: 8, padding: "0.75rem 1rem", marginBottom: "1.25rem", color: "#fca5a5", fontSize: "0.875rem" }}>⚠ {urgent.length} {isAr ? "مطالبة تنتهي مهلتها خلال 7 أيام — استئناف فوري مطلوب" : "denial(s) with deadline ≤7 days — immediate action required"}</div>}
-      <div style={s.metricGrid}>
+
+      {urgent.length > 0 && (
+        <div className="mb-5 rounded-lg border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
+          ⚠ {urgent.length} {isAr ? "مطالبة تنتهي مهلتها خلال 7 أيام — استئناف فوري مطلوب" : "denial(s) with deadline ≤7 days — immediate action required"}
+        </div>
+      )}
+
+      <div className="mb-5 grid grid-cols-2 gap-4 sm:grid-cols-5">
         {[
           { label: isAr ? "مبالغ في خطر" : "At Risk Amount", value: `SAR ${(totalAtRisk / 1000).toFixed(0)}K`, color: "#ef4444" },
           { label: isAr ? "جديدة" : "New", value: denials.filter(d => d.status === "new").length, color: "#f59e0b" },
           { label: isAr ? "في الاستئناف" : "In Appeal", value: denials.filter(d => d.status === "in_appeal").length, color: "#22D3EE" },
           { label: isAr ? "فائزة" : "Won", value: denials.filter(d => d.status === "won").length, color: "#22c55e" },
           { label: isAr ? "خاسرة" : "Lost", value: denials.filter(d => d.status === "lost").length, color: "#6b7280" },
-        ].map(m => <div key={m.label} style={s.card}><div style={{ fontSize: "1.6rem", fontWeight: 700, color: m.color }}>{m.value}</div><div style={{ fontSize: "0.8rem", color: "var(--color-text-muted)", marginTop: 4 }}>{m.label}</div></div>)}
+        ].map(m => (
+          <div key={m.label} className="cy-card p-4">
+            <div className="text-xl font-bold" style={{ color: m.color }}>{m.value}</div>
+            <div className="mt-1 text-xs text-ink/50">{m.label}</div>
+          </div>
+        ))}
       </div>
-      <div style={{ display: "flex", gap: "0.5rem", marginBottom: "1.25rem", flexWrap: "wrap" }}>
-        {["all", "new", "in_appeal", "won", "lost", "write_off"].map(f => <button key={f} onClick={() => setFilter(f)} style={{ ...s.btn, background: filter === f ? "#22D3EE" : "var(--color-surface)", color: filter === f ? "#000" : "var(--color-text)", padding: "0.35rem 0.75rem", fontSize: "0.8rem" }}>{f === "all" ? (isAr ? "الكل" : "All") : f.replace("_", " ")}</button>)}
+
+      <div className="mb-5 flex flex-wrap gap-2">
+        {["all", "new", "in_appeal", "won", "lost", "write_off"].map(f => (
+          <button
+            key={f}
+            onClick={() => setFilter(f)}
+            className={`rounded-md px-3 py-1.5 text-xs font-semibold border ${filter === f ? "border-brand-400 bg-brand-500 text-white" : "border-ink/10 bg-surface text-ink"}`}
+          >
+            {f === "all" ? (isAr ? "الكل" : "All") : f.replace("_", " ")}
+          </button>
+        ))}
       </div>
-      <div style={{ background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: 8, overflow: "hidden" }}>
-        <table style={s.table}>
-          <thead><tr style={{ background: "rgba(34,211,238,0.05)" }}><th style={s.th}>{isAr ? "المطالبة" : "Claim"}</th><th style={s.th}>{isAr ? "المريض" : "Patient"}</th><th style={s.th}>{isAr ? "الجهة" : "Payer"}</th><th style={s.th}>{isAr ? "المبلغ" : "Amount"}</th><th style={s.th}>{isAr ? "سبب الرفض" : "Denial Reason"}</th><th style={s.th}>{isAr ? "أيام متبقية" : "Days Left"}</th><th style={s.th}>{isAr ? "الحالة" : "Status"}</th><th style={s.th}></th></tr></thead>
-          <tbody>{filtered.map(d => <tr key={d.id} style={{ background: d.days_to_deadline > 0 && d.days_to_deadline <= 7 ? "rgba(239,68,68,0.04)" : "transparent" }}><td style={{ ...s.td, fontFamily: "monospace", fontSize: "0.8rem" }}>{d.claim_no}</td><td style={s.td}>{isAr ? d.patient_ar : d.patient}</td><td style={s.td}>{d.payer}</td><td style={{ ...s.td, fontFamily: "monospace", fontWeight: 600 }}>SAR {d.amount.toLocaleString()}</td><td style={s.td}><div>{d.denial_reason}</div><div style={{ fontSize: "0.72rem", color: "var(--color-text-muted)", fontFamily: "monospace" }}>{d.denial_code}</div></td><td style={{ ...s.td, fontWeight: 700, color: d.days_to_deadline <= 7 && d.days_to_deadline > 0 ? "#ef4444" : "var(--color-text)" }}>{d.days_to_deadline > 0 ? `${d.days_to_deadline}d` : "—"}</td><td style={s.td}><span style={{ background: `${STATUS_COLOR[d.status]}22`, color: STATUS_COLOR[d.status], border: `1px solid ${STATUS_COLOR[d.status]}55`, borderRadius: 4, padding: "2px 8px", fontSize: "0.75rem", fontWeight: 600 }}>{d.status.replace("_", " ")}</span></td><td style={s.td}>{d.status === "new" && <button onClick={() => handleAppeal(d.id)} style={{ background: "#22D3EE22", color: "#22D3EE", border: "1px solid #22D3EE55", borderRadius: 4, padding: "3px 10px", cursor: "pointer", fontSize: "0.78rem", fontWeight: 600 }}>{isAr ? "استئناف" : "Appeal"}</button>}</td></tr>)}</tbody>
-        </table>
+
+      <div className="cy-card overflow-hidden p-0">
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse text-sm">
+            <thead>
+              <tr className="border-b border-ink/10 bg-ink/5">
+                {[isAr ? "المطالبة" : "Claim", isAr ? "المريض" : "Patient", isAr ? "الجهة" : "Payer", isAr ? "المبلغ" : "Amount", isAr ? "سبب الرفض" : "Denial Reason", isAr ? "أيام متبقية" : "Days Left", isAr ? "الحالة" : "Status", ""].map((h, i) => (
+                  <th key={i} className="px-4 py-3 text-left text-[13px] font-semibold text-ink/50">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map(d => (
+                <tr key={d.id} className={d.days_to_deadline > 0 && d.days_to_deadline <= 7 ? "bg-red-500/5" : ""}>
+                  <td className="border-b border-ink/10 px-4 py-3 font-mono text-xs">{d.claim_no}</td>
+                  <td className="border-b border-ink/10 px-4 py-3 text-sm">{isAr ? d.patient_ar : d.patient}</td>
+                  <td className="border-b border-ink/10 px-4 py-3 text-sm">{d.payer}</td>
+                  <td className="border-b border-ink/10 px-4 py-3 font-mono text-sm font-semibold">SAR {d.amount.toLocaleString()}</td>
+                  <td className="border-b border-ink/10 px-4 py-3">
+                    <div className="text-sm">{d.denial_reason}</div>
+                    <div className="font-mono text-[11px] text-ink/50">{d.denial_code}</div>
+                  </td>
+                  <td className={`border-b border-ink/10 px-4 py-3 text-sm font-bold ${d.days_to_deadline <= 7 && d.days_to_deadline > 0 ? "text-red-400" : "text-ink"}`}>{d.days_to_deadline > 0 ? `${d.days_to_deadline}d` : "—"}</td>
+                  <td className="border-b border-ink/10 px-4 py-3">
+                    <span className="rounded px-2 py-0.5 text-xs font-semibold" style={{ background: `${STATUS_COLOR[d.status]}22`, color: STATUS_COLOR[d.status], border: `1px solid ${STATUS_COLOR[d.status]}55` }}>{d.status.replace("_", " ")}</span>
+                  </td>
+                  <td className="border-b border-ink/10 px-4 py-3">
+                    {d.status === "new" && (
+                      <button onClick={() => handleAppeal(d.id)} className="rounded px-2.5 py-1 text-xs font-semibold" style={{ background: "#22D3EE22", color: "#22D3EE", border: "1px solid #22D3EE55" }}>
+                        {isAr ? "استئناف" : "Appeal"}
+                      </button>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

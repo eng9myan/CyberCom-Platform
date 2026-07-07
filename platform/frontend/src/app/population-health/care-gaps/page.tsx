@@ -38,42 +38,40 @@ export default function CareGapsPage() {
   const categories = ["all", ...Array.from(new Set(gaps.map(g => g.category)))];
   const filtered = filter === "all" ? gaps : gaps.filter(g => g.category === filter);
 
-  const s: Record<string, React.CSSProperties> = {
-    page: { padding: "2rem", maxWidth: 1100, margin: "0 auto", direction: isAr ? "rtl" : "ltr" },
-    header: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem", borderBottom: "2px solid rgba(34,211,238,0.3)", paddingBottom: "1rem" },
-    h1: { fontSize: "1.6rem", fontWeight: 700, color: "#22D3EE" },
-    btn: { background: "var(--color-surface)", border: "1px solid var(--color-border)", color: "var(--color-text)", padding: "0.4rem 1rem", borderRadius: 6, cursor: "pointer", fontWeight: 600, textDecoration: "none" as const },
-    table: { width: "100%", borderCollapse: "collapse" as const },
-    th: { padding: "0.75rem", textAlign: (isAr ? "right" : "left") as "left" | "right", color: "var(--color-text-muted)", fontWeight: 600, borderBottom: "1px solid var(--color-border)", fontSize: "0.85rem" },
-    td: { padding: "0.75rem", borderBottom: "1px solid var(--color-border)", fontSize: "0.875rem" },
-  };
-
   return (
-    <div style={s.page}>
-      <header style={s.header}>
+    <div className="mx-auto max-w-5xl" style={{ direction: isAr ? "rtl" : "ltr" }}>
+      <header className="mb-6 flex items-center justify-between">
         <div>
-          <h1 style={s.h1}>{isAr ? "فجوات الرعاية" : "Care Gaps"}</h1>
-          <p style={{ color: "var(--color-text-muted)", fontSize: "0.875rem" }}>{filtered.length} {isAr ? "مقياس" : "quality measures"}</p>
+          <h1 className="font-heading text-2xl font-bold">{isAr ? "فجوات الرعاية" : "Care Gaps"}</h1>
+          <p className="text-sm text-ink/50">{filtered.length} {isAr ? "مقياس" : "quality measures"}</p>
         </div>
-        <div style={{ display: "flex", gap: "0.75rem" }}>
-          {loading && <span style={{ color: "var(--color-text-muted)", fontSize: "0.8rem" }}>●</span>}
-          <a href="/population-health" style={s.btn}>{isAr ? "← صحة المجتمع" : "← Population Health"}</a>
-          <button style={s.btn} onClick={() => setLang(isAr ? "en" : "ar")}>{isAr ? "English" : "العربية"}</button>
+        <div className="flex items-center gap-3">
+          {loading && <span className="text-xs text-ink/50">●</span>}
+          <a href="/population-health" className="cy-btn cy-btn-ghost !min-h-0 !py-2 !px-4 text-sm">{isAr ? "← صحة المجتمع" : "← Population Health"}</a>
+          <button onClick={() => setLang(isAr ? "en" : "ar")} className="cy-btn cy-btn-ghost !min-h-0 !py-2 !px-4 text-sm">{isAr ? "English" : "العربية"}</button>
         </div>
       </header>
-      <div style={{ display: "flex", gap: "0.5rem", marginBottom: "1.25rem", flexWrap: "wrap" }}>
-        {categories.map(c => <button key={c} onClick={() => setFilter(c)} style={{ ...s.btn, background: filter === c ? "#22D3EE" : "var(--color-surface)", color: filter === c ? "#000" : "var(--color-text)", padding: "0.35rem 0.75rem", fontSize: "0.8rem" }}>{c === "all" ? (isAr ? "الكل" : "All") : c}</button>)}
+      <div className="mb-5 flex flex-wrap gap-2">
+        {categories.map(c => (
+          <button
+            key={c}
+            onClick={() => setFilter(c)}
+            className={`rounded-full px-4 py-1.5 text-xs font-semibold ${filter === c ? "border border-brand-400/60 bg-brand-500/15 text-brand-300" : "border border-ink/10 text-ink/50 hover:bg-ink/5"}`}
+          >
+            {c === "all" ? (isAr ? "الكل" : "All") : c}
+          </button>
+        ))}
       </div>
-      <div style={{ background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: 8, overflow: "hidden" }}>
-        <table style={s.table}>
+      <div className="cy-card overflow-hidden p-0">
+        <table className="w-full border-collapse">
           <thead>
-            <tr style={{ background: "rgba(34,211,238,0.05)" }}>
-              <th style={s.th}>{isAr ? "المقياس" : "Measure"}</th>
-              <th style={s.th}>{isAr ? "الفئة" : "Category"}</th>
-              <th style={s.th}>{isAr ? "المؤهلون" : "Eligible"}</th>
-              <th style={s.th}>{isAr ? "معدل الإنجاز" : "Completion Rate"}</th>
-              <th style={s.th}>{isAr ? "الأولوية" : "Priority"}</th>
-              <th style={s.th}></th>
+            <tr className="border-b border-ink/10">
+              <th className={`px-4 py-3 text-[13px] font-semibold text-ink/50 ${isAr ? "text-right" : "text-left"}`}>{isAr ? "المقياس" : "Measure"}</th>
+              <th className={`px-4 py-3 text-[13px] font-semibold text-ink/50 ${isAr ? "text-right" : "text-left"}`}>{isAr ? "الفئة" : "Category"}</th>
+              <th className={`px-4 py-3 text-[13px] font-semibold text-ink/50 ${isAr ? "text-right" : "text-left"}`}>{isAr ? "المؤهلون" : "Eligible"}</th>
+              <th className={`px-4 py-3 text-[13px] font-semibold text-ink/50 ${isAr ? "text-right" : "text-left"}`}>{isAr ? "معدل الإنجاز" : "Completion Rate"}</th>
+              <th className={`px-4 py-3 text-[13px] font-semibold text-ink/50 ${isAr ? "text-right" : "text-left"}`}>{isAr ? "الأولوية" : "Priority"}</th>
+              <th className="px-4 py-3"></th>
             </tr>
           </thead>
           <tbody>
@@ -81,18 +79,27 @@ export default function CareGapsPage() {
               const pct = Math.round(g.patients_completed / g.patients_eligible * 100);
               const gap = g.patients_eligible - g.patients_completed;
               return (
-                <tr key={g.id}>
-                  <td style={s.td}><div style={{ fontWeight: 600, fontSize: "0.875rem" }}>{isAr ? g.measure_ar : g.measure}</div><div style={{ fontSize: "0.72rem", color: "var(--color-text-muted)" }}>{isAr ? "فجوة" : "Gap"}: {gap.toLocaleString()} {isAr ? "مريض" : "patients"}</div></td>
-                  <td style={s.td}>{g.category}</td>
-                  <td style={s.td}>{g.patients_eligible.toLocaleString()}</td>
-                  <td style={s.td}>
-                    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-                      <div style={{ flex: 1, height: 8, background: "var(--color-background)", borderRadius: 4 }}><div style={{ width: `${pct}%`, height: "100%", background: pct >= 80 ? "#22c55e" : pct >= 60 ? "#f59e0b" : "#ef4444", borderRadius: 4 }} /></div>
-                      <span style={{ fontWeight: 700, minWidth: 38, fontSize: "0.82rem" }}>{pct}%</span>
+                <tr key={g.id} className="border-b border-ink/10">
+                  <td className="px-4 py-3">
+                    <div className="text-sm font-semibold">{isAr ? g.measure_ar : g.measure}</div>
+                    <div className="text-[11px] text-ink/50">{isAr ? "فجوة" : "Gap"}: {gap.toLocaleString()} {isAr ? "مريض" : "patients"}</div>
+                  </td>
+                  <td className="px-4 py-3 text-sm">{g.category}</td>
+                  <td className="px-4 py-3 text-sm">{g.patients_eligible.toLocaleString()}</td>
+                  <td className="px-4 py-3">
+                    <div className="flex items-center gap-2">
+                      <div className="h-2 flex-1 rounded bg-ink/[0.06]">
+                        <div className="h-full rounded" style={{ width: `${pct}%`, background: pct >= 80 ? "#22c55e" : pct >= 60 ? "#f59e0b" : "#ef4444" }} />
+                      </div>
+                      <span className="min-w-[38px] text-[13px] font-bold">{pct}%</span>
                     </div>
                   </td>
-                  <td style={s.td}><span style={{ background: `${PRI_COLOR[g.priority]}22`, color: PRI_COLOR[g.priority], border: `1px solid ${PRI_COLOR[g.priority]}55`, borderRadius: 4, padding: "2px 8px", fontSize: "0.75rem", fontWeight: 700 }}>{g.priority}</span></td>
-                  <td style={s.td}><button style={{ background: "#22D3EE22", color: "#22D3EE", border: "1px solid #22D3EE55", borderRadius: 4, padding: "3px 10px", cursor: "pointer", fontSize: "0.78rem", fontWeight: 600 }}>{isAr ? "قائمة التواصل" : "Outreach List"}</button></td>
+                  <td className="px-4 py-3">
+                    <span className="rounded px-2 py-0.5 text-xs font-bold" style={{ background: `${PRI_COLOR[g.priority]}22`, color: PRI_COLOR[g.priority], border: `1px solid ${PRI_COLOR[g.priority]}55` }}>{g.priority}</span>
+                  </td>
+                  <td className="px-4 py-3">
+                    <button className="rounded px-2.5 py-1 text-xs font-semibold" style={{ background: "#22D3EE22", color: "#22D3EE", border: "1px solid #22D3EE55" }}>{isAr ? "قائمة التواصل" : "Outreach List"}</button>
+                  </td>
                 </tr>
               );
             })}

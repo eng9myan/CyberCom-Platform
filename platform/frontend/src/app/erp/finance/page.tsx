@@ -124,11 +124,7 @@ export default function FinancePage() {
   }, [loadData]);
 
   if (!isAuthenticated) {
-    return (
-      <div style={{ padding: "4rem", textAlign: "center" }}>
-        <h1 style={{ fontSize: "1.25rem", fontWeight: 700 }}>Sign in required</h1>
-      </div>
-    );
+    return <div className="mx-auto mt-16 max-w-lg text-center"><h1 className="text-xl font-bold">Sign in required</h1></div>;
   }
 
   const totalRevenue = (pl || []).reduce((a, m) => a + m.revenue, 0);
@@ -136,110 +132,114 @@ export default function FinancePage() {
   const totalNet = totalRevenue - totalExpenses;
   const maxRev = Math.max(1, ...(pl || []).map(m => m.revenue));
 
-  const s: Record<string, React.CSSProperties> = {
-    page: { padding: "2rem", maxWidth: 1200, margin: "0 auto", direction: isAr ? "rtl" : "ltr" },
-    header: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1.5rem", borderBottom: "2px solid rgba(34,211,238,0.3)", paddingBottom: "1rem" },
-    h1: { fontSize: "1.6rem", fontWeight: 700, color: "#22D3EE" },
-    btn: { background: "var(--color-surface)", border: "1px solid var(--color-border)", color: "var(--color-text)", padding: "0.4rem 1rem", borderRadius: 6, cursor: "pointer", fontWeight: 600, textDecoration: "none" as const },
-    metricGrid: { display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: "1rem", marginBottom: "1.5rem" },
-    card: { background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: 8, padding: "1.25rem" },
-    table: { width: "100%", borderCollapse: "collapse" as const },
-    th: { padding: "0.75rem", textAlign: (isAr ? "right" : "left") as "left" | "right", color: "var(--color-text-muted)", fontWeight: 600, borderBottom: "1px solid var(--color-border)", fontSize: "0.85rem" },
-    td: { padding: "0.75rem", borderBottom: "1px solid var(--color-border)", fontSize: "0.875rem" },
-  };
-
   return (
-    <div style={s.page}>
-      <header style={s.header}>
+    <div dir={isAr ? "rtl" : "ltr"} className="mx-auto max-w-5xl">
+      <header className="mb-6 flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 style={s.h1}>{isAr ? "المالية والحسابات العامة" : "Finance & General Ledger"}</h1>
-          <p style={{ color: "var(--color-text-muted)", fontSize: "0.875rem" }}>
+          <a href="/erp" className="mb-1 inline-block text-sm text-ink/50 hover:text-ink">{isAr ? "← نظام ERP" : "← ERP"}</a>
+          <h1 className="font-heading text-2xl font-bold">{isAr ? "المالية والحسابات العامة" : "Finance & General Ledger"}</h1>
+          <p className="mt-1 text-sm text-ink/50">
             {isAr ? "الأداء المالي (من قيود اليومية الفعلية)" : "Financial Performance (from real posted journal entries)"}
           </p>
         </div>
-        <div style={{ display: "flex", gap: "0.75rem" }}>
-          {loading && <span style={{ color: "var(--color-text-muted)", fontSize: "0.8rem" }}>●</span>}
-          <a href="/erp" style={s.btn}>{isAr ? "← نظام ERP" : "← ERP"}</a>
-          <button style={s.btn} onClick={() => setLang(isAr ? "en" : "ar")}>{isAr ? "English" : "العربية"}</button>
+        <div className="flex items-center gap-3">
+          {loading && <span className="text-xs text-ink/40">●</span>}
+          <button onClick={() => setLang(isAr ? "en" : "ar")} className="cy-btn cy-btn-ghost !min-h-0 !py-2 !px-4 text-sm">{isAr ? "English" : "العربية"}</button>
         </div>
       </header>
 
-      {fetchError && (
-        <div style={{ background: "#fee2e2", border: "1px solid #fca5a5", color: "#b91c1c", padding: "0.9rem 1rem", borderRadius: "8px", marginBottom: "1.5rem", fontSize: "0.88rem" }}>
-          {fetchError}
-        </div>
-      )}
+      {fetchError && <div className="mb-6 rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-400">{fetchError}</div>}
 
-      <div style={s.metricGrid}>
+      <div className="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-3">
         {[
-          { label: isAr ? "الإيرادات" : "Revenue", value: `SAR ${fmt(totalRevenue)}`, color: "#22c55e" },
-          { label: isAr ? "المصروفات" : "Expenses", value: `SAR ${fmt(totalExpenses)}`, color: "#f59e0b" },
-          { label: isAr ? "صافي الدخل" : "Net Income", value: `SAR ${fmt(totalNet)}`, color: "#22D3EE" },
+          { label: isAr ? "الإيرادات" : "Revenue", value: `SAR ${fmt(totalRevenue)}`, className: "text-emerald-400" },
+          { label: isAr ? "المصروفات" : "Expenses", value: `SAR ${fmt(totalExpenses)}`, className: "text-amber-400" },
+          { label: isAr ? "صافي الدخل" : "Net Income", value: `SAR ${fmt(totalNet)}`, className: "text-brand-400" },
         ].map(m => (
-          <div key={m.label} style={s.card}>
-            <div style={{ fontSize: "1.8rem", fontWeight: 700, color: m.color }}>{m.value}</div>
-            <div style={{ fontSize: "0.8rem", color: "var(--color-text-muted)", marginTop: 4 }}>{m.label}</div>
+          <div key={m.label} className="cy-card p-5">
+            <div className={`text-2xl font-bold ${m.className}`}>{m.value}</div>
+            <div className="mt-1 text-xs text-ink/50">{m.label}</div>
           </div>
         ))}
       </div>
 
-      <div style={{ display: "flex", gap: "0.5rem", marginBottom: "1.25rem" }}>
-        <button onClick={() => setTab("pl")} style={{ ...s.btn, background: tab === "pl" ? "#22D3EE" : "var(--color-surface)", color: tab === "pl" ? "#000" : "var(--color-text)" }}>{isAr ? "الأرباح والخسائر" : "P&L Statement"}</button>
-        <button onClick={() => setTab("gl")} style={{ ...s.btn, background: tab === "gl" ? "#22D3EE" : "var(--color-surface)", color: tab === "gl" ? "#000" : "var(--color-text)" }}>{isAr ? "الحسابات العامة" : "GL Accounts"}</button>
+      <div className="mb-5 flex gap-2">
+        <button onClick={() => setTab("pl")} className={`rounded-lg px-3 py-1.5 text-sm font-medium ${tab === "pl" ? "border border-brand-400/40 bg-brand-500/15 text-brand-300" : "border border-ink/10 text-ink/50 hover:bg-ink/5"}`}>{isAr ? "الأرباح والخسائر" : "P&L Statement"}</button>
+        <button onClick={() => setTab("gl")} className={`rounded-lg px-3 py-1.5 text-sm font-medium ${tab === "gl" ? "border border-brand-400/40 bg-brand-500/15 text-brand-300" : "border border-ink/10 text-ink/50 hover:bg-ink/5"}`}>{isAr ? "الحسابات العامة" : "GL Accounts"}</button>
       </div>
 
       {tab === "pl" && (
-        <div style={s.card}>
-          <div style={{ fontWeight: 700, fontSize: "1rem", marginBottom: "1.25rem", color: "#22D3EE" }}>{isAr ? "الأرباح والخسائر الشهرية" : "Monthly P&L"}</div>
+        <div className="cy-card p-5">
+          <h2 className="mb-5 text-lg font-bold">{isAr ? "الأرباح والخسائر الشهرية" : "Monthly P&L"}</h2>
           {!loading && (pl || []).length === 0 && (
-            <p style={{ color: "var(--color-text-muted)", fontSize: "0.875rem" }}>
+            <p className="text-sm text-ink/50">
               {isAr ? "لا توجد قيود يومية مرحّلة لهذا المستأجر بعد." : "No posted journal entries for this tenant yet."}
             </p>
           )}
           {(pl || []).length > 0 && (
-            <table style={s.table}>
-              <thead><tr><th style={s.th}>{isAr ? "الشهر" : "Month"}</th><th style={s.th}>{isAr ? "الإيرادات" : "Revenue"}</th><th style={s.th}>{isAr ? "المصروفات" : "Expenses"}</th><th style={s.th}>{isAr ? "صافي الدخل" : "Net Income"}</th><th style={s.th}>{isAr ? "الهامش" : "Margin %"}</th><th style={{ ...s.th, width: 200 }}>{isAr ? "الإيرادات (بيانياً)" : "Revenue (bar)"}</th></tr></thead>
-              <tbody>
-                {(pl || []).map(m => (
-                  <tr key={m.month}>
-                    <td style={{ ...s.td, fontWeight: 700 }}>{m.month}</td>
-                    <td style={{ ...s.td, color: "#22c55e", fontFamily: "monospace" }}>SAR {fmt(m.revenue)}</td>
-                    <td style={{ ...s.td, color: "#f59e0b", fontFamily: "monospace" }}>SAR {fmt(m.expenses)}</td>
-                    <td style={{ ...s.td, color: "#22D3EE", fontFamily: "monospace", fontWeight: 700 }}>SAR {fmt(m.net)}</td>
-                    <td style={s.td}>{m.revenue !== 0 ? `${Math.round((m.net / m.revenue) * 100)}%` : "—"}</td>
-                    <td style={s.td}><div style={{ height: 16, background: "var(--color-background)", borderRadius: 4 }}><div style={{ width: `${(m.revenue / maxRev) * 100}%`, height: "100%", background: "#22c55e", borderRadius: 4 }} /></div></td>
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[700px] border-collapse text-sm">
+                <thead>
+                  <tr className="border-b border-ink/10">
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-ink/50">{isAr ? "الشهر" : "Month"}</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-ink/50">{isAr ? "الإيرادات" : "Revenue"}</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-ink/50">{isAr ? "المصروفات" : "Expenses"}</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-ink/50">{isAr ? "صافي الدخل" : "Net Income"}</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-ink/50">{isAr ? "الهامش" : "Margin %"}</th>
+                    <th className="w-[200px] px-4 py-3 text-left text-xs font-semibold text-ink/50">{isAr ? "الإيرادات (بيانياً)" : "Revenue (bar)"}</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {(pl || []).map(m => (
+                    <tr key={m.month} className="border-b border-ink/5 last:border-0">
+                      <td className="px-4 py-3 font-semibold">{m.month}</td>
+                      <td className="px-4 py-3 font-mono text-emerald-400">SAR {fmt(m.revenue)}</td>
+                      <td className="px-4 py-3 font-mono text-amber-400">SAR {fmt(m.expenses)}</td>
+                      <td className="px-4 py-3 font-mono font-bold text-brand-400">SAR {fmt(m.net)}</td>
+                      <td className="px-4 py-3">{m.revenue !== 0 ? `${Math.round((m.net / m.revenue) * 100)}%` : "—"}</td>
+                      <td className="px-4 py-3"><div className="h-4 rounded bg-ink/10"><div className="h-full rounded bg-emerald-400" style={{ width: `${(m.revenue / maxRev) * 100}%` }} /></div></td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
       )}
 
       {tab === "gl" && (
-        <div style={{ background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: 8, overflow: "hidden" }}>
+        <div className="cy-card overflow-hidden p-0">
           {!loading && (accounts || []).length === 0 ? (
-            <p style={{ color: "var(--color-text-muted)", fontSize: "0.875rem", padding: "1.5rem" }}>
+            <p className="p-6 text-center text-sm text-ink/50">
               {isAr ? "لا توجد حسابات عامة لهذا المستأجر بعد." : "No GL accounts for this tenant yet."}
             </p>
           ) : (
-            <table style={s.table}>
-              <thead><tr style={{ background: "rgba(34,211,238,0.05)" }}><th style={s.th}>{isAr ? "الرمز" : "Code"}</th><th style={s.th}>{isAr ? "الحساب" : "Account"}</th><th style={s.th}>{isAr ? "النوع" : "Type"}</th><th style={s.th}>{isAr ? "الرصيد" : "Balance"}</th></tr></thead>
-              <tbody>
-                {(accounts || []).map(a => (
-                  <tr key={a.id}>
-                    <td style={{ ...s.td, fontFamily: "monospace", color: "#a78bfa" }}>{a.code}</td>
-                    <td style={s.td}>{isAr ? (a.name_ar || a.name) : a.name}</td>
-                    <td style={s.td}>
-                      <span style={{ background: `${TYPE_COLOR[a.account_type] ?? "#6b7280"}22`, color: TYPE_COLOR[a.account_type] ?? "#6b7280", border: `1px solid ${TYPE_COLOR[a.account_type] ?? "#6b7280"}55`, borderRadius: 4, padding: "2px 8px", fontSize: "0.75rem", fontWeight: 700 }}>
-                        {isAr ? (TYPE_LABEL[a.account_type]?.ar ?? a.account_type) : (TYPE_LABEL[a.account_type]?.en ?? a.account_type)}
-                      </span>
-                    </td>
-                    <td style={{ ...s.td, fontFamily: "monospace", fontWeight: 700 }}>{a.currency} {parseFloat(a.balance).toLocaleString()}</td>
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[600px] border-collapse text-sm">
+                <thead>
+                  <tr className="border-b border-ink/10 bg-ink/5">
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-ink/50">{isAr ? "الرمز" : "Code"}</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-ink/50">{isAr ? "الحساب" : "Account"}</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-ink/50">{isAr ? "النوع" : "Type"}</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-ink/50">{isAr ? "الرصيد" : "Balance"}</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {(accounts || []).map(a => (
+                    <tr key={a.id} className="border-b border-ink/5 last:border-0">
+                      <td className="px-4 py-3 font-mono text-purple-400">{a.code}</td>
+                      <td className="px-4 py-3">{isAr ? (a.name_ar || a.name) : a.name}</td>
+                      <td className="px-4 py-3">
+                        <span className="rounded-full px-2 py-0.5 text-xs font-bold" style={{ background: `${TYPE_COLOR[a.account_type] ?? "#6b7280"}22`, color: TYPE_COLOR[a.account_type] ?? "#6b7280", border: `1px solid ${TYPE_COLOR[a.account_type] ?? "#6b7280"}55` }}>
+                          {isAr ? (TYPE_LABEL[a.account_type]?.ar ?? a.account_type) : (TYPE_LABEL[a.account_type]?.en ?? a.account_type)}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 font-mono font-bold">{a.currency} {parseFloat(a.balance).toLocaleString()}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           )}
         </div>
       )}

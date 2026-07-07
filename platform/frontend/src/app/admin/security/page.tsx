@@ -73,78 +73,92 @@ export default function SecurityAdminConsole() {
   ]);
 
   return (
-    <div className="dashboard-container" style={{ direction: isRtl ? "rtl" : "ltr" }}>
-      <header className="dashboard-header">
+    <div dir={isRtl ? "rtl" : "ltr"} className="mx-auto max-w-6xl">
+      <header className="mb-6 flex items-center justify-between">
         <div>
-          <h1>{t.title}</h1>
-          <p style={{ color: "var(--color-text-muted)" }}>{t.subtitle}</p>
+          <h1 className="font-heading text-2xl font-bold">{t.title}</h1>
+          <p className="mt-1 text-sm text-ink/50">{t.subtitle}</p>
         </div>
-        <button onClick={() => setLang(lang === "en" ? "ar" : "en")} className="theme-toggle-btn">
+        <button onClick={() => setLang(lang === "en" ? "ar" : "en")} className="cy-btn cy-btn-ghost !min-h-0 !py-2 !px-4 text-sm">
           {t.toggleLang}
         </button>
       </header>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(12, 1fr)", gap: "var(--spacing-lg)" }}>
-        <aside className="glass-card" style={{ gridColumn: "span 3", display: "flex", flexDirection: "column", gap: "var(--spacing-sm)", height: "fit-content" }}>
-          <button onClick={() => setActiveTab("vault")} style={{ background: activeTab === "vault" ? "var(--color-primary)" : "none", color: "white", padding: "10px", borderRadius: "4px", border: "1px solid rgb(var(--color-ink-rgb) / 0.1)", cursor: "pointer", textAlign: isRtl ? "right" : "left" }}>{t.vaultTab}</button>
-          <button onClick={() => setActiveTab("opa")} style={{ background: activeTab === "opa" ? "var(--color-primary)" : "none", color: "white", padding: "10px", borderRadius: "4px", border: "1px solid rgb(var(--color-ink-rgb) / 0.1)", cursor: "pointer", textAlign: isRtl ? "right" : "left" }}>{t.opaTab}</button>
+      <div className="grid grid-cols-12 gap-6">
+        <aside className="cy-card col-span-3 flex h-fit flex-col gap-2 p-4">
+          <button
+            onClick={() => setActiveTab("vault")}
+            className={`rounded-lg px-3 py-2.5 text-left text-sm font-semibold transition ${activeTab === "vault" ? "bg-brand-500 text-white" : "text-ink/60 hover:bg-ink/5"}`}
+          >
+            {t.vaultTab}
+          </button>
+          <button
+            onClick={() => setActiveTab("opa")}
+            className={`rounded-lg px-3 py-2.5 text-left text-sm font-semibold transition ${activeTab === "opa" ? "bg-brand-500 text-white" : "text-ink/60 hover:bg-ink/5"}`}
+          >
+            {t.opaTab}
+          </button>
         </aside>
 
-        <main className="glass-card" style={{ gridColumn: "span 9" }}>
+        <main className="cy-card col-span-9 p-6">
           {activeTab === "vault" && (
             <div>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
-                <h2>{t.vaultTab}</h2>
-                <span style={{ color: "var(--color-success)", fontWeight: "bold" }}>● {t.vaultStatus}</span>
+              <div className="mb-4 flex items-center justify-between">
+                <h2 className="text-lg font-bold">{t.vaultTab}</h2>
+                <span className="text-sm font-bold text-emerald-400">● {t.vaultStatus}</span>
               </div>
-              <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                <thead>
-                  <tr style={{ borderBottom: "1px solid rgb(var(--color-ink-rgb) / 0.1)" }}>
-                    <th style={{ padding: "8px", textAlign: isRtl ? "right" : "left" }}>{t.path}</th>
-                    <th style={{ padding: "8px", textAlign: isRtl ? "right" : "left" }}>{t.keys}</th>
-                    <th style={{ padding: "8px", textAlign: isRtl ? "right" : "left" }}>{t.lastRotated}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {secrets.map(s => (
-                    <tr key={s.id} style={{ borderBottom: "1px solid rgb(var(--color-ink-rgb) / 0.05)" }}>
-                      <td style={{ padding: "8px" }}><code>{s.path}</code></td>
-                      <td style={{ padding: "8px" }}>
-                        {s.keys.map(k => (
-                          <span key={k} style={{ background: "rgb(var(--color-ink-rgb) / 0.1)", padding: "2px 6px", marginRight: "4px", borderRadius: "4px", fontSize: "0.8rem" }}>{k}</span>
-                        ))}
-                      </td>
-                      <td style={{ padding: "8px" }}><small>{new Date(s.lastRotated).toLocaleString()}</small></td>
+              <div className="overflow-x-auto rounded-lg border border-ink/10">
+                <table className="w-full border-collapse text-sm">
+                  <thead>
+                    <tr className="border-b border-ink/10">
+                      <th className="px-4 py-3 text-left text-[13px] font-semibold text-ink/50">{t.path}</th>
+                      <th className="px-4 py-3 text-left text-[13px] font-semibold text-ink/50">{t.keys}</th>
+                      <th className="px-4 py-3 text-left text-[13px] font-semibold text-ink/50">{t.lastRotated}</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {secrets.map(s => (
+                      <tr key={s.id} className="border-b border-ink/5">
+                        <td className="px-4 py-3"><code className="text-xs text-ink/70">{s.path}</code></td>
+                        <td className="px-4 py-3">
+                          {s.keys.map(k => (
+                            <span key={k} className="mr-1 rounded-md bg-ink/10 px-2 py-1 text-xs">{k}</span>
+                          ))}
+                        </td>
+                        <td className="px-4 py-3"><small className="text-xs text-ink/50">{new Date(s.lastRotated).toLocaleString()}</small></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
 
           {activeTab === "opa" && (
             <div>
-              <h2>{t.opaTab}</h2>
-              <table style={{ width: "100%", borderCollapse: "collapse", marginTop: "var(--spacing-md)" }}>
-                <thead>
-                  <tr style={{ borderBottom: "1px solid rgb(var(--color-ink-rgb) / 0.1)" }}>
-                    <th style={{ padding: "8px", textAlign: isRtl ? "right" : "left" }}>{t.policy}</th>
-                    <th style={{ padding: "8px", textAlign: isRtl ? "right" : "left" }}>{t.resource}</th>
-                    <th style={{ padding: "8px", textAlign: isRtl ? "right" : "left" }}>{t.action}</th>
-                    <th style={{ padding: "8px", textAlign: isRtl ? "right" : "left" }}>{t.verdict}</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {policies.map(p => (
-                    <tr key={p.id} style={{ borderBottom: "1px solid rgb(var(--color-ink-rgb) / 0.05)" }}>
-                      <td style={{ padding: "8px" }}><code>{p.name}</code></td>
-                      <td style={{ padding: "8px" }}>{p.resource}</td>
-                      <td style={{ padding: "8px" }}>{p.action.toUpperCase()}</td>
-                      <td style={{ padding: "8px", color: p.verdict === "allow" ? "var(--color-success)" : "var(--color-error)", fontWeight: "bold" }}>{p.verdict.toUpperCase()}</td>
+              <h2 className="text-lg font-bold">{t.opaTab}</h2>
+              <div className="mt-4 overflow-x-auto rounded-lg border border-ink/10">
+                <table className="w-full border-collapse text-sm">
+                  <thead>
+                    <tr className="border-b border-ink/10">
+                      <th className="px-4 py-3 text-left text-[13px] font-semibold text-ink/50">{t.policy}</th>
+                      <th className="px-4 py-3 text-left text-[13px] font-semibold text-ink/50">{t.resource}</th>
+                      <th className="px-4 py-3 text-left text-[13px] font-semibold text-ink/50">{t.action}</th>
+                      <th className="px-4 py-3 text-left text-[13px] font-semibold text-ink/50">{t.verdict}</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {policies.map(p => (
+                      <tr key={p.id} className="border-b border-ink/5">
+                        <td className="px-4 py-3"><code className="text-xs text-ink/70">{p.name}</code></td>
+                        <td className="px-4 py-3">{p.resource}</td>
+                        <td className="px-4 py-3">{p.action.toUpperCase()}</td>
+                        <td className={`px-4 py-3 font-bold ${p.verdict === "allow" ? "text-emerald-400" : "text-red-400"}`}>{p.verdict.toUpperCase()}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           )}
         </main>

@@ -88,38 +88,34 @@ export default function PharmacyPortal() {
   }, [loadData]);
 
   if (!isAuthenticated) {
-    return (
-      <div style={{ padding: "4rem", textAlign: "center" }}>
-        <h1 style={{ fontSize: "1.25rem", fontWeight: 700 }}>Sign in required</h1>
-      </div>
-    );
+    return <div className="mx-auto mt-16 max-w-lg text-center"><h1 className="text-xl font-bold">Sign in required</h1></div>;
   }
 
   return (
-    <div style={{ padding: "2rem", maxWidth: "1200px", margin: "0 auto" }}>
-      <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "2rem" }}>
+    <div className="mx-auto max-w-5xl">
+      <header className="mb-6 flex items-center justify-between">
         <div>
-          <h1 style={{ fontSize: "2rem", fontWeight: 700, color: "var(--color-primary)" }}>
+          <h1 className="font-heading text-2xl font-bold">
             {lang === "en" ? "CyMed Pharmacy" : "صيدلية سايمد"}
           </h1>
-          <p style={{ color: "var(--color-text-muted)", fontSize: "1rem", marginTop: "0.25rem" }}>
+          <p className="mt-1 text-sm text-ink/50">
             {lang === "en" ? "Medication Dispensing & Inventory Management" : "صرف الأدوية وإدارة المخزون"}
           </p>
         </div>
-        <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
-          <span style={{ fontSize: "0.875rem", color: "var(--color-text-muted)" }}>
+        <div className="flex items-center gap-4">
+          <span className="text-sm text-ink/50">
             {new Date().toLocaleDateString(lang === "ar" ? "ar-SA" : "en-GB", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}
           </span>
           <button
             onClick={() => setLang(l => l === "en" ? "ar" : "en")}
-            style={{ padding: "0.5rem 1rem", borderRadius: "8px", border: "1px solid var(--color-border)", cursor: "pointer", background: "var(--color-surface)", color: "var(--color-text)", fontSize: "0.875rem", fontWeight: 500 }}
+            className="cy-btn cy-btn-ghost !min-h-0 !py-2 !px-4 text-sm"
           >
             {lang === "en" ? "العربية" : "English"}
           </button>
         </div>
       </header>
 
-      <nav style={{ display: "flex", gap: "0.75rem", marginBottom: "2rem", flexWrap: "wrap" }}>
+      <nav className="mb-8 flex flex-wrap gap-3">
         {[
           { href: "/pharmacy/prescriptions", label: lang === "en" ? "Medication Order Queue" : "طابور طلبات الأدوية" },
           { href: "/pharmacy/dispensing", label: lang === "en" ? "Dispensing Queue" : "طابور الصرف" },
@@ -127,34 +123,30 @@ export default function PharmacyPortal() {
           { href: "/pharmacy/inventory", label: lang === "en" ? "Inventory & Stock" : "المخزون والعهدة" },
           { href: "/pharmacy/pos", label: lang === "en" ? "POS (Point of Sale)" : "نقطة البيع" },
         ].map(item => (
-          <a key={item.href} href={item.href} style={{ padding: "0.6rem 1.2rem", borderRadius: "6px", background: "var(--color-surface)", border: "1px solid var(--color-border)", color: "var(--color-text)", textDecoration: "none", fontSize: "0.875rem", fontWeight: 600 }}>
+          <a key={item.href} href={item.href} className="rounded-lg border border-ink/10 bg-surface px-5 py-2.5 text-sm font-semibold text-ink no-underline hover:bg-ink/5">
             {item.label}
           </a>
         ))}
       </nav>
 
-      {fetchError && (
-        <div style={{ background: "#fee2e2", border: "1px solid #fca5a5", color: "#b91c1c", padding: "0.9rem 1rem", borderRadius: "8px", marginBottom: "1.5rem", fontSize: "0.88rem" }}>
-          {fetchError}
-        </div>
-      )}
+      {fetchError && <div className="mb-6 rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-400">{fetchError}</div>}
 
-      {loading && <p style={{ color: "var(--color-text-muted)", fontSize: "0.875rem", marginBottom: "1rem" }}>{lang === "en" ? "Loading…" : "جارٍ التحميل…"}</p>}
+      {loading && <p className="mb-4 text-sm text-ink/50">{lang === "en" ? "Loading…" : "جارٍ التحميل…"}</p>}
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "1rem", marginBottom: "2.5rem" }}>
+      <div className="mb-10 grid grid-cols-1 gap-4 sm:grid-cols-3">
         {[
           { label: lang === "en" ? "Pending Verification" : "بانتظار التحقق", value: metrics?.pendingOrders ?? "—", color: "#f59e0b" },
           { label: lang === "en" ? "Dispensed Today" : "صرف اليوم", value: metrics?.dispensedToday ?? "—", color: "#22c55e" },
           { label: lang === "en" ? "Out of Stock Items" : "أصناف نفدت من المخزون", value: metrics?.outOfStock ?? "—", color: "#ef4444" },
         ].map(m => (
-          <div key={m.label} style={{ background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: "12px", textAlign: "center", padding: "1.5rem", boxShadow: "0 4px 6px rgba(0, 0, 0, 0.05)" }}>
-            <p style={{ fontSize: "2.25rem", fontWeight: 700, color: m.color }}>{m.value}</p>
-            <p style={{ fontSize: "0.875rem", color: "var(--color-text-muted)", marginTop: "0.5rem", fontWeight: 500 }}>{m.label}</p>
+          <div key={m.label} className="cy-card p-6 text-center">
+            <p className="text-4xl font-bold" style={{ color: m.color }}>{m.value}</p>
+            <p className="mt-2 text-sm font-medium text-ink/50">{m.label}</p>
           </div>
         ))}
       </div>
 
-      <p style={{ fontSize: "0.85rem", color: "var(--color-text-muted)" }}>
+      <p className="text-sm text-ink/50">
         {lang === "en"
           ? "Open the Medication Order Queue to review, verify, or hold real inpatient orders — patient names, drugs, and drug-interaction alerts shown there are pulled live from the pharmacy backend."
           : "افتح طابور طلبات الأدوية لمراجعة أو التحقق من الطلبات الحقيقية للمرضى الداخليين — تُعرض هناك أسماء المرضى والأدوية وتنبيهات التفاعل الدوائي مباشرة من نظام الصيدلية."}

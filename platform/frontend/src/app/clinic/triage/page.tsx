@@ -264,56 +264,61 @@ export default function TriagePage() {
   const filtered = patients.filter(p => filterLevel === "all" || p.triage_level === filterLevel);
   const dir = lang === "ar" ? "rtl" : "ltr";
 
+  const fieldLabelCls = "mb-1.5 block text-[13px] font-semibold text-ink/50";
+  const fieldInputCls = "w-full rounded-lg border border-ink/10 bg-surface px-3.5 py-2.5 text-sm text-ink";
+
   return (
-    <div dir={dir} style={{ padding: "2rem", maxWidth: "1280px", margin: "0 auto", fontFamily: "system-ui, sans-serif", color: "var(--color-text)", background: "var(--color-background)", minHeight: "100vh" }}>
+    <div dir={dir} className="mx-auto max-w-6xl">
 
       {/* Header */}
-      <header style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: "2rem", flexWrap: "wrap", gap: "1rem" }}>
+      <header className="mb-8 flex flex-wrap items-start justify-between gap-4">
         <div>
-          <a href="/clinic" style={{ color: "var(--color-text-muted)", textDecoration: "none", fontSize: "0.875rem" }}>
+          <a href="/clinic" className="text-sm text-ink/50 hover:text-ink">
             {lang === "en" ? "← Clinic" : "العيادة ←"}
           </a>
-          <h1 style={{ fontSize: "1.875rem", fontWeight: 700, color: "#22D3EE", margin: "0.25rem 0 0" }}>
+          <h1 className="mt-1 font-heading text-3xl font-bold">
             {lang === "en" ? "Triage Assessment" : "تقييم الفرز الطبي"}
           </h1>
-          <p style={{ color: "var(--color-text-muted)", marginTop: "0.25rem", fontSize: "0.95rem" }}>
+          <p className="mt-1 text-sm text-ink/50">
             {lang === "en" ? "Assess and prioritize patients by urgency" : "تقييم المرضى وترتيب أولوياتهم حسب الحاجة"}
           </p>
         </div>
-        <div style={{ display: "flex", gap: "0.75rem", alignItems: "center" }}>
-          {loading && <span style={{ fontSize: "0.875rem", color: "var(--color-text-muted)" }}>{lang === "en" ? "Syncing..." : "جارٍ التزامن..."}</span>}
-          <button
-            onClick={() => setLang(l => l === "en" ? "ar" : "en")}
-            style={{ padding: "0.5rem 1.1rem", borderRadius: "8px", border: "1px solid var(--color-border)", background: "var(--color-surface)", color: "var(--color-text)", cursor: "pointer", fontWeight: 600, fontSize: "0.875rem" }}
-          >
+        <div className="flex items-center gap-3">
+          {loading && <span className="text-sm text-ink/50">{lang === "en" ? "Syncing..." : "جارٍ التزامن..."}</span>}
+          <button onClick={() => setLang(l => l === "en" ? "ar" : "en")} className="cy-btn cy-btn-ghost !min-h-0 !py-2 !px-4 text-sm">
             {lang === "en" ? "العربية" : "English"}
           </button>
         </div>
       </header>
 
       {/* Sibling nav */}
-      <nav style={{ display: "flex", gap: "0.625rem", marginBottom: "2rem", flexWrap: "wrap" }}>
+      <nav className="mb-8 flex flex-wrap gap-2.5">
         {[
           { href: "/clinic/appointments",  label: lang === "en" ? "Appointments"  : "المواعيد" },
           { href: "/clinic/reception",     label: lang === "en" ? "Reception"     : "الاستقبال" },
           { href: "/clinic/consultations", label: lang === "en" ? "Consultations" : "الاستشارات" },
           { href: "/clinic/telemedicine",  label: lang === "en" ? "Telemedicine"  : "التطبيب عن بُعد" },
         ].map(n => (
-          <a key={n.href} href={n.href} style={{ padding: "0.5rem 1rem", borderRadius: "6px", background: "var(--color-surface)", border: "1px solid var(--color-border)", color: "var(--color-text)", textDecoration: "none", fontSize: "0.8rem", fontWeight: 600 }}>
+          <a key={n.href} href={n.href} className="rounded-md border border-ink/10 bg-surface px-4 py-2 text-xs font-semibold hover:bg-ink/5">
             {n.label}
           </a>
         ))}
       </nav>
 
       {/* Triage level summary */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "1rem", marginBottom: "2rem" }}>
+      <div className="mb-8 grid grid-cols-3 gap-4">
         {(["urgent", "semi_urgent", "routine"] as const).map(level => {
           const ts = triageStyle(level);
           return (
-            <div key={level} style={{ background: ts.bg, border: `2px solid ${ts.border}`, borderRadius: "12px", padding: "1.25rem", textAlign: "center", cursor: "pointer" }} onClick={() => setFilterLevel(filterLevel === level ? "all" : level)}>
-              <div style={{ width: "14px", height: "14px", borderRadius: "50%", background: ts.dot, margin: "0 auto 0.5rem" }} />
-              <p style={{ fontSize: "2rem", fontWeight: 700, color: ts.text, margin: 0 }}>{countByLevel[level]}</p>
-              <p style={{ fontSize: "0.875rem", fontWeight: 700, color: ts.text, marginTop: "0.35rem" }}>
+            <div
+              key={level}
+              onClick={() => setFilterLevel(filterLevel === level ? "all" : level)}
+              className="cursor-pointer rounded-xl border-2 p-5 text-center"
+              style={{ background: ts.bg, borderColor: ts.border }}
+            >
+              <div className="mx-auto mb-2 h-3.5 w-3.5 rounded-full" style={{ background: ts.dot }} />
+              <p className="text-3xl font-bold" style={{ color: ts.text }}>{countByLevel[level]}</p>
+              <p className="mt-1.5 text-sm font-bold" style={{ color: ts.text }}>
                 {lang === "en" ? ts.label_en : ts.label_ar}
               </p>
             </div>
@@ -322,26 +327,24 @@ export default function TriagePage() {
       </div>
 
       {/* Main two-column layout */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 420px", gap: "1.5rem", alignItems: "start" }}>
+      <div className="grid grid-cols-[1fr_420px] items-start gap-6">
 
         {/* LEFT — Triage queue */}
         <div>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
-            <h2 style={{ fontWeight: 700, fontSize: "1.1rem", margin: 0 }}>
+          <div className="mb-4 flex items-center justify-between">
+            <h2 className="text-lg font-bold">
               {lang === "en" ? "Patients Awaiting Triage" : "المرضى بانتظار الفرز"}
             </h2>
-            <div style={{ display: "flex", gap: "0.5rem" }}>
+            <div className="flex gap-2">
               {(["all", "urgent", "semi_urgent", "routine"] as const).map(f => {
                 const ts = triageStyle(f === "all" ? "routine" : f);
+                const activeColor = f === "urgent" ? "#ef4444" : f === "semi_urgent" ? "#f59e0b" : f === "routine" ? "#22c55e" : "#22D3EE";
                 return (
                   <button
                     key={f}
                     onClick={() => setFilterLevel(f)}
-                    style={{
-                      padding: "0.35rem 0.7rem", borderRadius: "6px", border: "1px solid var(--color-border)", cursor: "pointer", fontSize: "0.75rem", fontWeight: 600,
-                      background: filterLevel === f ? (f === "urgent" ? "#ef4444" : f === "semi_urgent" ? "#f59e0b" : f === "routine" ? "#22c55e" : "#22D3EE") : "var(--color-surface)",
-                      color: filterLevel === f ? "#fff" : "var(--color-text)",
-                    }}
+                    className="rounded-md border border-ink/10 px-2.5 py-1.5 text-xs font-semibold"
+                    style={filterLevel === f ? { background: activeColor, color: "#fff", borderColor: activeColor } : { background: "var(--color-surface)", color: "var(--color-text)" }}
                   >
                     {f === "all" ? (lang === "en" ? "All" : "الكل") : (lang === "en" ? ts.label_en : ts.label_ar)}
                   </button>
@@ -350,7 +353,7 @@ export default function TriagePage() {
             </div>
           </div>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+          <div className="flex flex-col gap-3">
             {filtered.map(p => {
               const ts = triageStyle(p.triage_level);
               const isSelected = p.id === selectedId;
@@ -358,35 +361,32 @@ export default function TriagePage() {
                 <div
                   key={p.id}
                   onClick={() => handleSelect(p)}
-                  style={{
-                    background: "var(--color-surface)", border: isSelected ? `2px solid #22D3EE` : `1px solid var(--color-border)`,
-                    borderLeft: `4px solid ${ts.dot}`, borderRadius: "10px", padding: "1rem 1.25rem", cursor: "pointer",
-                    boxShadow: isSelected ? "0 0 0 3px rgba(34,211,238,0.15)" : "none",
-                  }}
+                  className={`cursor-pointer rounded-xl p-4 ${isSelected ? "border-2 border-brand-400 shadow-[0_0_0_3px_rgba(34,211,238,0.15)]" : "border border-ink/10 bg-surface"}`}
+                  style={{ borderLeft: `4px solid ${ts.dot}` }}
                 >
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "0.5rem" }}>
+                  <div className="flex flex-wrap items-start justify-between gap-2">
                     <div>
-                      <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", marginBottom: "0.25rem" }}>
-                        <span style={{ fontWeight: 700, fontSize: "0.95rem", color: "var(--color-text)" }}>
+                      <div className="mb-1 flex items-center gap-2.5">
+                        <span className="text-sm font-bold">
                           {lang === "ar" ? p.patient_name_ar : p.patient_name}
                         </span>
-                        <span style={{ fontSize: "0.75rem", fontFamily: "monospace", color: "var(--color-text-muted)" }}>{p.mrn}</span>
-                        <span style={{ padding: "0.2rem 0.6rem", borderRadius: "20px", fontSize: "0.7rem", fontWeight: 700, background: ts.bg, color: ts.text, border: `1px solid ${ts.border}` }}>
+                        <span className="font-mono text-xs text-ink/50">{p.mrn}</span>
+                        <span className="rounded-full px-2.5 py-0.5 text-xs font-bold" style={{ background: ts.bg, color: ts.text, border: `1px solid ${ts.border}` }}>
                           {lang === "en" ? ts.label_en : ts.label_ar}
                         </span>
                       </div>
-                      <p style={{ margin: "0 0 0.5rem", fontSize: "0.875rem", color: "var(--color-text-muted)", fontStyle: "italic" }}>
+                      <p className="mb-2 text-sm italic text-ink/50">
                         {lang === "ar" ? p.chief_complaint_ar : p.chief_complaint}
                       </p>
                     </div>
-                    <div style={{ textAlign: "right" }}>
-                      <div style={{ fontSize: "0.78rem", color: "var(--color-text-muted)" }}>{lang === "en" ? "Arrived" : "وصل"}</div>
-                      <div style={{ fontWeight: 700, color: "#22D3EE", fontSize: "0.95rem" }}>{p.arrival_time}</div>
+                    <div className="text-right">
+                      <div className="text-xs text-ink/50">{lang === "en" ? "Arrived" : "وصل"}</div>
+                      <div className="text-sm font-bold text-brand-400">{p.arrival_time}</div>
                     </div>
                   </div>
 
                   {/* Vitals strip */}
-                  <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", marginTop: "0.5rem" }}>
+                  <div className="mt-2 flex flex-wrap gap-4">
                     {[
                       { key: "bp",   label: "BP",    value: p.vitals.bp,   unit: "mmHg", num: 0 },
                       { key: "hr",   label: "HR",    value: p.vitals.hr,   unit: "bpm",  num: p.vitals.hr },
@@ -397,28 +397,28 @@ export default function TriagePage() {
                     ].map(v => {
                       const alert = vitalAlert(v.key, v.num);
                       return (
-                        <div key={v.key} style={{ textAlign: "center", minWidth: "54px" }}>
-                          <div style={{ fontSize: "0.68rem", color: "var(--color-text-muted)", textTransform: "uppercase", letterSpacing: "0.04em" }}>{v.label}</div>
-                          <div style={{ fontWeight: 700, fontSize: "0.9rem", color: alert ? "#ef4444" : "var(--color-text)" }}>
+                        <div key={v.key} className="min-w-[54px] text-center">
+                          <div className="text-[11px] uppercase tracking-wide text-ink/50">{v.label}</div>
+                          <div className={`text-sm font-bold ${alert ? "text-red-400" : "text-ink"}`}>
                             {v.value}
-                            <span style={{ fontWeight: 400, fontSize: "0.65rem", color: "var(--color-text-muted)", marginLeft: "2px" }}>{v.unit}</span>
+                            <span className="ml-0.5 text-[11px] font-normal text-ink/50">{v.unit}</span>
                           </div>
                         </div>
                       );
                     })}
-                    <div style={{ marginLeft: "auto", alignSelf: "center" }}>
+                    <div className="ml-auto self-center">
                       {p.status === "awaiting_triage" && (
-                        <span style={{ padding: "0.2rem 0.6rem", borderRadius: "20px", fontSize: "0.7rem", fontWeight: 700, background: "#fef3c7", color: "#92400e" }}>
+                        <span className="rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-bold text-amber-800">
                           {lang === "en" ? "Awaiting Triage" : "بانتظار الفرز"}
                         </span>
                       )}
                       {p.status === "triaged" && (
-                        <span style={{ padding: "0.2rem 0.6rem", borderRadius: "20px", fontSize: "0.7rem", fontWeight: 700, background: "#d1fae5", color: "#065f46" }}>
+                        <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-bold text-emerald-800">
                           {lang === "en" ? "Triaged" : "تم الفرز"}
                         </span>
                       )}
                       {p.status === "in_consultation" && (
-                        <span style={{ padding: "0.2rem 0.6rem", borderRadius: "20px", fontSize: "0.7rem", fontWeight: 700, background: "#dbeafe", color: "#1e40af" }}>
+                        <span className="rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-bold text-blue-800">
                           {lang === "en" ? "In Consultation" : "في الاستشارة"}
                         </span>
                       )}
@@ -428,7 +428,7 @@ export default function TriagePage() {
               );
             })}
             {filtered.length === 0 && (
-              <div style={{ padding: "2.5rem", textAlign: "center", color: "var(--color-text-muted)", background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: "10px" }}>
+              <div className="cy-card p-10 text-center text-sm text-ink/50">
                 {lang === "en" ? "No patients in this triage level." : "لا يوجد مرضى في هذا مستوى الفرز."}
               </div>
             )}
@@ -436,29 +436,29 @@ export default function TriagePage() {
         </div>
 
         {/* RIGHT — Triage form */}
-        <div style={{ background: "var(--color-surface)", border: "1px solid var(--color-border)", borderRadius: "12px", padding: "1.5rem", position: "sticky", top: "1rem" }}>
-          <h2 style={{ fontWeight: 700, fontSize: "1.1rem", marginTop: 0, marginBottom: "0.25rem", color: "#22D3EE" }}>
+        <div className="cy-card sticky top-4 p-6">
+          <h2 className="mb-1 text-lg font-bold text-brand-400">
             {lang === "en" ? "Triage Assessment Form" : "نموذج تقييم الفرز"}
           </h2>
           {selectedPatient ? (
-            <p style={{ fontSize: "0.85rem", color: "var(--color-text-muted)", marginTop: "0", marginBottom: "1.25rem" }}>
+            <p className="mb-5 text-sm text-ink/50">
               {lang === "en" ? `Patient: ${selectedPatient.patient_name} · ${selectedPatient.mrn}` : `المريض: ${selectedPatient.patient_name_ar} · ${selectedPatient.mrn}`}
             </p>
           ) : (
-            <p style={{ fontSize: "0.85rem", color: "var(--color-text-muted)", marginTop: "0", marginBottom: "1.25rem" }}>
+            <p className="mb-5 text-sm text-ink/50">
               {lang === "en" ? "Select a patient from the queue to begin triage." : "اختر مريضاً من الطابور لبدء تقييم الفرز."}
             </p>
           )}
 
           {submitMsg && (
-            <div style={{ marginBottom: "1rem", padding: "0.65rem 1rem", borderRadius: "7px", background: "#d1fae5", color: "#065f46", fontWeight: 600, fontSize: "0.85rem" }}>
+            <div className="mb-4 rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-4 py-2.5 text-sm font-semibold text-emerald-400">
               {submitMsg}
             </div>
           )}
 
           {/* Chief complaint */}
-          <div style={{ marginBottom: "1rem" }}>
-            <label style={{ display: "block", fontSize: "0.75rem", fontWeight: 700, color: "var(--color-text-muted)", marginBottom: "0.35rem", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+          <div className="mb-4">
+            <label className={fieldLabelCls}>
               {lang === "en" ? "Chief Complaint" : "الشكوى الرئيسية"}
             </label>
             <textarea
@@ -466,92 +466,91 @@ export default function TriagePage() {
               onChange={e => setForm(f => ({ ...f, chief_complaint: e.target.value }))}
               disabled={!selectedId}
               rows={2}
-              style={{ width: "100%", boxSizing: "border-box", padding: "0.5rem 0.75rem", borderRadius: "7px", border: "1px solid var(--color-border)", background: "var(--color-background)", color: "var(--color-text)", fontSize: "0.875rem", resize: "vertical" }}
+              className={`${fieldInputCls} resize-y`}
             />
           </div>
 
           {/* Vitals */}
-          <p style={{ fontSize: "0.75rem", fontWeight: 700, color: "var(--color-text-muted)", textTransform: "uppercase", letterSpacing: "0.04em", marginBottom: "0.75rem" }}>
+          <p className="mb-3 text-[13px] font-semibold text-ink/50">
             {lang === "en" ? "Vital Signs" : "العلامات الحيوية"}
           </p>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem", marginBottom: "1rem" }}>
+          <div className="mb-4 grid grid-cols-2 gap-3">
             <div>
-              <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 600, color: "var(--color-text-muted)", marginBottom: "0.25rem" }}>
+              <label className={fieldLabelCls}>
                 {lang === "en" ? "BP Systolic (mmHg)" : "الضغط الانقباضي (ملم/زئبق)"}
               </label>
               <input type="number" value={form.bp_systolic} onChange={e => setForm(f => ({ ...f, bp_systolic: e.target.value }))} disabled={!selectedId} min={50} max={250}
-                style={{ width: "100%", boxSizing: "border-box", padding: "0.45rem 0.65rem", borderRadius: "6px", border: "1px solid var(--color-border)", background: "var(--color-background)", color: "var(--color-text)", fontSize: "0.875rem" }} />
+                className={fieldInputCls} />
             </div>
             <div>
-              <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 600, color: "var(--color-text-muted)", marginBottom: "0.25rem" }}>
+              <label className={fieldLabelCls}>
                 {lang === "en" ? "BP Diastolic (mmHg)" : "الضغط الانبساطي (ملم/زئبق)"}
               </label>
               <input type="number" value={form.bp_diastolic} onChange={e => setForm(f => ({ ...f, bp_diastolic: e.target.value }))} disabled={!selectedId} min={30} max={150}
-                style={{ width: "100%", boxSizing: "border-box", padding: "0.45rem 0.65rem", borderRadius: "6px", border: "1px solid var(--color-border)", background: "var(--color-background)", color: "var(--color-text)", fontSize: "0.875rem" }} />
+                className={fieldInputCls} />
             </div>
             <div>
-              <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 600, color: "var(--color-text-muted)", marginBottom: "0.25rem" }}>
+              <label className={fieldLabelCls}>
                 {lang === "en" ? "Heart Rate (bpm)" : "معدل القلب (نبضة/دقيقة)"}
               </label>
               <input type="number" value={form.hr} onChange={e => setForm(f => ({ ...f, hr: e.target.value }))} disabled={!selectedId} min={30} max={250}
-                style={{ width: "100%", boxSizing: "border-box", padding: "0.45rem 0.65rem", borderRadius: "6px", border: `1px solid ${vitalAlert("hr", Number(form.hr)) ? "#ef4444" : "var(--color-border)"}`, background: "var(--color-background)", color: vitalAlert("hr", Number(form.hr)) ? "#ef4444" : "var(--color-text)", fontSize: "0.875rem", fontWeight: vitalAlert("hr", Number(form.hr)) ? 700 : 400 }} />
+                className={fieldInputCls}
+                style={vitalAlert("hr", Number(form.hr)) ? { borderColor: "#ef4444", color: "#ef4444", fontWeight: 700 } : undefined} />
             </div>
             <div>
-              <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 600, color: "var(--color-text-muted)", marginBottom: "0.25rem" }}>
+              <label className={fieldLabelCls}>
                 {lang === "en" ? "Temperature (°C)" : "الحرارة (°س)"}
               </label>
               <input type="number" value={form.temp} onChange={e => setForm(f => ({ ...f, temp: e.target.value }))} disabled={!selectedId} min={34} max={42} step={0.1}
-                style={{ width: "100%", boxSizing: "border-box", padding: "0.45rem 0.65rem", borderRadius: "6px", border: "1px solid var(--color-border)", background: "var(--color-background)", color: "var(--color-text)", fontSize: "0.875rem" }} />
+                className={fieldInputCls} />
             </div>
             <div>
-              <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 600, color: "var(--color-text-muted)", marginBottom: "0.25rem" }}>
+              <label className={fieldLabelCls}>
                 {lang === "en" ? "SpO₂ (%)" : "تشبع الأكسجين (%)"}
               </label>
               <input type="number" value={form.spo2} onChange={e => setForm(f => ({ ...f, spo2: e.target.value }))} disabled={!selectedId} min={70} max={100}
-                style={{ width: "100%", boxSizing: "border-box", padding: "0.45rem 0.65rem", borderRadius: "6px", border: `1px solid ${vitalAlert("spo2", Number(form.spo2)) ? "#ef4444" : "var(--color-border)"}`, background: "var(--color-background)", color: vitalAlert("spo2", Number(form.spo2)) ? "#ef4444" : "var(--color-text)", fontSize: "0.875rem", fontWeight: vitalAlert("spo2", Number(form.spo2)) ? 700 : 400 }} />
+                className={fieldInputCls}
+                style={vitalAlert("spo2", Number(form.spo2)) ? { borderColor: "#ef4444", color: "#ef4444", fontWeight: 700 } : undefined} />
             </div>
             <div>
-              <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 600, color: "var(--color-text-muted)", marginBottom: "0.25rem" }}>
+              <label className={fieldLabelCls}>
                 {lang === "en" ? "Resp. Rate (/min)" : "معدل التنفس (في الدقيقة)"}
               </label>
               <input type="number" value={form.rr} onChange={e => setForm(f => ({ ...f, rr: e.target.value }))} disabled={!selectedId} min={8} max={40}
-                style={{ width: "100%", boxSizing: "border-box", padding: "0.45rem 0.65rem", borderRadius: "6px", border: `1px solid ${vitalAlert("rr", Number(form.rr)) ? "#ef4444" : "var(--color-border)"}`, background: "var(--color-background)", color: vitalAlert("rr", Number(form.rr)) ? "#ef4444" : "var(--color-text)", fontSize: "0.875rem", fontWeight: vitalAlert("rr", Number(form.rr)) ? 700 : 400 }} />
+                className={fieldInputCls}
+                style={vitalAlert("rr", Number(form.rr)) ? { borderColor: "#ef4444", color: "#ef4444", fontWeight: 700 } : undefined} />
             </div>
           </div>
 
           {/* Pain score */}
-          <div style={{ marginBottom: "1rem" }}>
-            <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "var(--color-text-muted)", marginBottom: "0.35rem", textTransform: "uppercase" }}>
+          <div className="mb-4">
+            <label className="mb-1.5 block text-[13px] font-semibold uppercase text-ink/50">
               {lang === "en" ? `Pain Score: ${form.pain}/10` : `درجة الألم: ${form.pain}/10`}
             </label>
             <input type="range" min={0} max={10} value={form.pain} onChange={e => setForm(f => ({ ...f, pain: e.target.value }))} disabled={!selectedId}
-              style={{ width: "100%", accentColor: Number(form.pain) >= 7 ? "#ef4444" : Number(form.pain) >= 4 ? "#f59e0b" : "#22c55e" }} />
-            <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.7rem", color: "var(--color-text-muted)" }}>
+              className="w-full" style={{ accentColor: Number(form.pain) >= 7 ? "#ef4444" : Number(form.pain) >= 4 ? "#f59e0b" : "#22c55e" }} />
+            <div className="flex justify-between text-xs text-ink/50">
               <span>{lang === "en" ? "No pain" : "لا ألم"}</span>
-              <span style={{ color: "#ef4444", fontWeight: 700 }}>{lang === "en" ? "Worst pain" : "أشد ألم"}</span>
+              <span className="font-bold text-red-400">{lang === "en" ? "Worst pain" : "أشد ألم"}</span>
             </div>
           </div>
 
           {/* Triage level */}
-          <div style={{ marginBottom: "1rem" }}>
-            <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "var(--color-text-muted)", marginBottom: "0.35rem", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+          <div className="mb-4">
+            <label className={fieldLabelCls}>
               {lang === "en" ? "Triage Level" : "مستوى الفرز"}
             </label>
-            <div style={{ display: "flex", gap: "0.5rem" }}>
+            <div className="flex gap-2">
               {(["urgent", "semi_urgent", "routine"] as const).map(level => {
                 const ts = triageStyle(level);
+                const isActive = form.triage_level === level;
                 return (
                   <button
                     key={level}
                     onClick={() => selectedId && setForm(f => ({ ...f, triage_level: level }))}
                     disabled={!selectedId}
-                    style={{
-                      flex: 1, padding: "0.5rem 0.4rem", borderRadius: "7px", cursor: selectedId ? "pointer" : "not-allowed", fontSize: "0.75rem", fontWeight: 700,
-                      background: form.triage_level === level ? ts.dot : "var(--color-surface)",
-                      color: form.triage_level === level ? "#fff" : ts.text,
-                      border: `1px solid ${form.triage_level === level ? ts.dot : "var(--color-border)"}`,
-                      opacity: !selectedId ? 0.5 : 1,
-                    }}
+                    className={`flex-1 rounded-lg border px-1.5 py-2 text-xs font-bold ${!selectedId ? "opacity-50" : ""} ${selectedId ? "cursor-pointer" : "cursor-not-allowed"}`}
+                    style={{ background: isActive ? ts.dot : "var(--color-surface)", color: isActive ? "#fff" : ts.text, borderColor: isActive ? ts.dot : "var(--color-border)" }}
                   >
                     {lang === "en" ? ts.label_en : ts.label_ar}
                   </button>
@@ -561,8 +560,8 @@ export default function TriagePage() {
           </div>
 
           {/* Notes */}
-          <div style={{ marginBottom: "1.25rem" }}>
-            <label style={{ display: "block", fontSize: "0.72rem", fontWeight: 700, color: "var(--color-text-muted)", marginBottom: "0.35rem", textTransform: "uppercase", letterSpacing: "0.04em" }}>
+          <div className="mb-5">
+            <label className={fieldLabelCls}>
               {lang === "en" ? "Clinical Notes" : "الملاحظات السريرية"}
             </label>
             <textarea
@@ -571,21 +570,21 @@ export default function TriagePage() {
               disabled={!selectedId}
               rows={3}
               placeholder={lang === "en" ? "Observations, allergies, relevant history..." : "الملاحظات والحساسية والتاريخ المرضي..."}
-              style={{ width: "100%", boxSizing: "border-box", padding: "0.5rem 0.75rem", borderRadius: "7px", border: "1px solid var(--color-border)", background: "var(--color-background)", color: "var(--color-text)", fontSize: "0.875rem", resize: "vertical" }}
+              className={`${fieldInputCls} resize-y`}
             />
           </div>
 
           <button
             onClick={() => { void handleSubmit(); }}
             disabled={!selectedId}
-            style={{ width: "100%", padding: "0.75rem", borderRadius: "8px", background: selectedId ? "#22D3EE" : "var(--color-border)", color: selectedId ? "#0a0a0a" : "var(--color-text-muted)", border: "none", cursor: selectedId ? "pointer" : "not-allowed", fontWeight: 700, fontSize: "1rem" }}
+            className="cy-btn cy-btn-primary w-full disabled:cursor-not-allowed disabled:opacity-50"
           >
             {lang === "en" ? "Save Triage Assessment" : "حفظ تقييم الفرز"}
           </button>
         </div>
       </div>
 
-      <div style={{ marginTop: "1.5rem", fontSize: "0.75rem", color: "var(--color-text-muted)", textAlign: "center" }}>
+      <div className="mt-6 text-center text-xs text-ink/50">
         CyMed Clinic · {lang === "en" ? "Triage Assessment" : "تقييم الفرز"} · {new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
       </div>
     </div>
