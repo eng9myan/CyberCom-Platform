@@ -20,6 +20,7 @@ urlpatterns = [
     path("api/v1/identity/", include("platform.cyidentity.urls")),
     path("api/v1/events/", include("platform.events.urls")),
     path("api/v1/integration/", include("platform.cyintegrationhub.urls")),
+    path("api/v1/gateway/", include("products.cymed.rcm.billing.gateway_urls")),
     path("api/v1/data/", include("platform.cydata.urls")),
     path("api/v1/ai/", include("platform.cyai.urls")),
     path("api/v1/common/", include("platform.common.urls")),

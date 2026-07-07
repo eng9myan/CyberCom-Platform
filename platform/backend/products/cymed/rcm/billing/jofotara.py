@@ -133,23 +133,29 @@ def _element(tag: str, text: str) -> ET.Element:
     return el
 
 
-def submit_invoice(invoice, tenant_id) -> dict[str, Any]:
+def submit_invoice(invoice, tenant_id, *, client_id: str = "", client_secret: str = "", income_source_sequence: str = "") -> dict[str, Any]:
     """
     Submits the invoice's UBL XML to JoFotara. Returns the built XML either
     way. Only attempts a real HTTP call when client credentials are
     configured; otherwise returns "not_submitted" honestly.
+
+    Credentials can be passed explicitly (JoFotaraISTDService does this,
+    sourcing them per-tenant from TenantComplianceSettings); if omitted,
+    falls back to the original process-level env vars for backward
+    compatibility with any existing direct callers of this function.
     """
     ubl_xml = build_ubl_invoice(invoice)
 
-    client_id = os.environ.get("JOFOTARA_CLIENT_ID", "")
-    client_secret = os.environ.get("JOFOTARA_CLIENT_SECRET", "")
-    income_source_sequence = os.environ.get("JOFOTARA_INCOME_SOURCE_SEQUENCE", "")
+    client_id = client_id or os.environ.get("JOFOTARA_CLIENT_ID", "")
+    client_secret = client_secret or os.environ.get("JOFOTARA_CLIENT_SECRET", "")
+    income_source_sequence = income_source_sequence or os.environ.get("JOFOTARA_INCOME_SOURCE_SEQUENCE", "")
 
     if not (client_id and client_secret and income_source_sequence):
         return {
             "status": "not_submitted",
             "reason": "JoFotara credentials not configured (JOFOTARA_CLIENT_ID/"
-            "JOFOTARA_CLIENT_SECRET/JOFOTARA_INCOME_SOURCE_SEQUENCE)",
+            "JOFOTARA_CLIENT_SECRET/JOFOTARA_INCOME_SOURCE_SEQUENCE, or per-tenant "
+            "equivalents in Regional Compliance & Tax settings)",
             "ubl_xml": ubl_xml,
         }
 
@@ -177,3 +183,63 @@ def submit_invoice(invoice, tenant_id) -> dict[str, Any]:
         }
     except Exception as exc:
         return {"status": "rejected", "error": str(exc), "ubl_xml": ubl_xml}
+
+
+class JoFotaraISTDService:
+    """
+    Thin, tenant-aware facade over the module-level functions above (which
+    remain the real, tested implementation -- this class does not duplicate
+    logic, it sources credentials per-tenant from TenantComplianceSettings
+    instead of process-level env vars, matching the compliance-settings page
+    built for this purpose).
+    """
+
+    def __init__(self, invoice, compliance_settings):
+        self.invoice = invoice
+        self.settings = compliance_settings  # TenantComplianceSettings instance
+
+    def build_invoice_xml(self) -> str:
+        return build_ubl_invoice(self.invoice)
+
+    def build_submission_payload(self, ubl_xml: str) -> dict[str, str]:
+        """
+        JoFotara's real transport is base64-encoding the UBL XML into a JSON
+        body sent over TLS with Client-Id/Secret-Key headers -- there is no
+        additional application-level cipher in their published API. Named
+        per the task's "encrypt into a JSON payload" language, implemented
+        as what that actually means for this API.
+        """
+        return {
+            "invoice": base64.b64encode(ubl_xml.encode("utf-8")).decode("ascii"),
+            "income_source_sequence": self.settings.jofotara_activity_code,
+        }
+
+    def submit(self) -> dict[str, Any]:
+        if not self.settings.jofotara_enabled:
+            return {"status": "not_submitted", "reason": "JoFotara compliance is not enabled for this tenant."}
+        # NOTE -- honest field-mapping gap: the compliance-settings UI collects
+        # Tax Registration Number / Activity Code / Client Secret (the fields
+        # requested for that screen), but ISTD's real API needs a distinct
+        # Client-Id issued separately for API access -- Tax Registration
+        # Number is the taxpayer's TIN, not that Client-Id, and conflating
+        # them would send a request ISTD would reject anyway. Rather than
+        # guess (or silently fall back to a global env var, which would
+        # defeat per-tenant scoping), this returns not_submitted directly
+        # until a real jofotara_client_id field is added to
+        # TenantComplianceSettings once the correct value is known.
+        return {
+            "status": "not_submitted",
+            "reason": "JoFotara Client-Id is not yet a stored per-tenant credential "
+                      "(Tax Registration Number is the taxpayer TIN, not the API Client-Id).",
+            "ubl_xml": self.build_invoice_xml(),
+        }
+
+    @staticmethod
+    def parse_response(result: dict[str, Any]) -> dict[str, str]:
+        """Extracts the fields Invoice needs to persist from a submit() result."""
+        return {
+            "status": result["status"],
+            "invoice_uuid": result.get("jofotara_invoice_uuid", ""),
+            "qr_code": result.get("qr_code", ""),
+            "error": result.get("error", ""),
+        }

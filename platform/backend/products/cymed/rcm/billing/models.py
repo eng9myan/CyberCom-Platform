@@ -179,6 +179,14 @@ class Invoice(BaseModel):
     notes = models.TextField(blank=True)
     fhir_invoice_id = models.CharField(max_length=200, blank=True, null=True)
 
+    # Provenance for invoices created by the external ingestion gateway
+    # (see gateway.py) -- blank for invoices created normally through the
+    # billing UI. Lets staff reviewing a "draft" invoice see at a glance
+    # that it came from an external/legacy system rather than being typed
+    # in directly.
+    external_source_system = models.CharField(max_length=100, blank=True)
+    external_reference = models.CharField(max_length=200, blank=True)
+
     JOFOTARA_STATUS_CHOICES = [
         ("not_submitted", "Not Submitted"),
         ("submitted", "Submitted"),
@@ -192,6 +200,27 @@ class Invoice(BaseModel):
     jofotara_qr_code = models.TextField(blank=True)
     jofotara_submitted_at = models.DateTimeField(null=True, blank=True)
     jofotara_error = models.TextField(blank=True)
+
+    # ZATCA Phase 2 (KSA) -- mirrors the jofotara_* fields above; a tenant's
+    # country_code determines which of the two schemes actually applies, so
+    # both live on the same Invoice rather than being modeled as separate
+    # subclasses. See products/cymed/rcm/billing/zatca.py for the connector.
+    ZATCA_STATUS_CHOICES = [
+        ("not_submitted", "Not Submitted"),
+        ("submitted", "Submitted"),
+        ("accepted", "Accepted"),
+        ("rejected", "Rejected"),
+    ]
+    zatca_status = models.CharField(max_length=20, choices=ZATCA_STATUS_CHOICES, default="not_submitted")
+    zatca_invoice_uuid = models.UUIDField(null=True, blank=True)
+    zatca_invoice_counter_value = models.PositiveIntegerField(null=True, blank=True)
+    zatca_previous_invoice_hash = models.CharField(max_length=128, blank=True)
+    zatca_cryptographic_stamp = models.TextField(blank=True)
+    zatca_qr_code = models.TextField(blank=True)
+    zatca_submitted_at = models.DateTimeField(null=True, blank=True)
+    zatca_cleared_at = models.DateTimeField(null=True, blank=True)
+    zatca_reported_at = models.DateTimeField(null=True, blank=True)
+    zatca_error = models.TextField(blank=True)
 
     class Meta:
         db_table = "cymed_rcm_bill_invoices"

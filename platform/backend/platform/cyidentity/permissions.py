@@ -152,3 +152,26 @@ class TokenHasScope(permissions.BasePermission):
         scope = token.get("scope") or ""
         scopes = set(scope.split()) if isinstance(scope, str) else set(token.get("scp", []) or [])
         return self.required_scope in scopes
+
+
+class HasExternalGatewayAccess(permissions.BasePermission):
+    """
+    Gates the external-system ingestion gateway (products/cymed/rcm/billing's
+    /api/v1/gateway/external-invoice/) to an explicitly provisioned
+    integration service account -- a Keycloak client-credentials-grant token
+    (OAuth2 client_credentials is exactly what "service account" means here)
+    carrying either the `integration:ingest` scope or the
+    `integration_service` realm role. Never satisfied by an ordinary
+    interactive user session, however privileged -- this endpoint accepts
+    payloads from outside the platform and should only ever be reachable by
+    a token minted specifically for that purpose.
+    """
+
+    message = "A provisioned integration service-account token (integration:ingest scope or integration_service role) is required."
+
+    def has_permission(self, request, view) -> bool:
+        token = getattr(request, "auth_claims", None) or {}
+        roles = set(token.get("realm_access", {}).get("roles", []) or [])
+        scope = token.get("scope") or ""
+        scopes = set(scope.split()) if isinstance(scope, str) else set(token.get("scp", []) or [])
+        return "integration_service" in roles or "integration:ingest" in scopes

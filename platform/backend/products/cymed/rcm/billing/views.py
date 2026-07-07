@@ -1,3 +1,5 @@
+import uuid
+
 from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import status
@@ -108,7 +110,9 @@ class InvoiceViewSet(ModelViewSet):
     @action(detail=True, methods=["post"], url_path="submit-to-jofotara")
     def submit_to_jofotara(self, request, pk=None):
         """Build the invoice's UBL 2.1 XML and submit to JoFotara (Jordan e-invoicing)."""
-        from .jofotara import submit_invoice
+        from products.cymed.commercial.compliance_settings.models import TenantComplianceSettings
+
+        from .jofotara import JoFotaraISTDService
 
         invoice = self.get_object()
         if invoice.status not in ("issued", "sent", "partial", "paid"):
@@ -118,7 +122,8 @@ class InvoiceViewSet(ModelViewSet):
             )
 
         tenant_id = getattr(request, "tenant_id", None)
-        result = submit_invoice(invoice, tenant_id)
+        compliance_settings, _ = TenantComplianceSettings.objects.get_or_create(tenant_id=tenant_id)
+        result = JoFotaraISTDService(invoice, compliance_settings).submit()
 
         invoice.jofotara_status = result["status"]
         if result["status"] == "submitted":
@@ -138,6 +143,63 @@ class InvoiceViewSet(ModelViewSet):
             {
                 "invoice": InvoiceSerializer(invoice, context={"request": request}).data,
                 "jofotara_status": result["status"],
+                "reason": result.get("reason", ""),
+                "ubl_xml": result.get("ubl_xml", ""),
+            }
+        )
+
+    @action(detail=True, methods=["post"], url_path="submit-to-zatca")
+    def submit_to_zatca(self, request, pk=None):
+        """Build the invoice's UBL 2.1 XML, sign it, and submit to ZATCA Phase 2 (KSA e-invoicing)."""
+        from products.cymed.commercial.compliance_settings.models import TenantComplianceSettings
+
+        from .zatca import ZatcaFatoorahService
+
+        invoice = self.get_object()
+        if invoice.status not in ("issued", "sent", "partial", "paid"):
+            return Response(
+                {"detail": f"Cannot submit an invoice with status '{invoice.status}' to ZATCA."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        tenant_id = getattr(request, "tenant_id", None)
+        compliance_settings, _ = TenantComplianceSettings.objects.get_or_create(tenant_id=tenant_id)
+
+        previous_invoice = (
+            Invoice.objects.filter(tenant_id=tenant_id, zatca_status="submitted")
+            .exclude(pk=invoice.pk)
+            .order_by("-zatca_submitted_at")
+            .first()
+        )
+        device_counter = Invoice.objects.filter(tenant_id=tenant_id, zatca_invoice_counter_value__isnull=False).count() + 1
+
+        result = ZatcaFatoorahService(invoice, compliance_settings).submit(
+            previous_invoice=previous_invoice, device_counter=device_counter,
+        )
+
+        invoice.zatca_status = result["status"]
+        if result["status"] in ("submitted", "not_submitted"):
+            invoice.zatca_invoice_uuid = invoice.zatca_invoice_uuid or uuid.uuid4()
+        if result["status"] == "submitted":
+            invoice.zatca_cryptographic_stamp = result.get("cryptographic_stamp", "")
+            invoice.zatca_qr_code = result.get("qr_code", "")
+            invoice.zatca_previous_invoice_hash = result.get("previous_invoice_hash", "")
+            invoice.zatca_invoice_counter_value = result.get("invoice_counter_value")
+            invoice.zatca_submitted_at = timezone.now()
+            invoice.zatca_error = ""
+        elif result["status"] == "rejected":
+            invoice.zatca_error = result.get("error", "")
+        invoice.save(
+            update_fields=[
+                "zatca_status", "zatca_invoice_uuid", "zatca_cryptographic_stamp", "zatca_qr_code",
+                "zatca_previous_invoice_hash", "zatca_invoice_counter_value", "zatca_submitted_at",
+                "zatca_error", "updated_at",
+            ]
+        )
+        return Response(
+            {
+                "invoice": InvoiceSerializer(invoice, context={"request": request}).data,
+                "zatca_status": result["status"],
                 "reason": result.get("reason", ""),
                 "ubl_xml": result.get("ubl_xml", ""),
             }
