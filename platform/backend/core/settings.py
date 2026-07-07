@@ -134,6 +134,10 @@ PRODUCT_APPS = [
     "products.cymed.hospital.discharge",
     "products.cymed.hospital.clinical_command_center",
     "products.cymed.hospital.capacity_management",
+    "products.cymed.hospital.cssd",
+    "products.cymed.hospital.blood_bank",
+    "products.cymed.hospital.housekeeping",
+    "products.cymed.hospital.incident_reporting",
     # CyMed Laboratory Edition (Program 3.3)
     "products.cymed.laboratory.orders",
     "products.cymed.laboratory.specimens",

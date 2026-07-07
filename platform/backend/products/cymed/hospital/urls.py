@@ -14,4 +14,8 @@ urlpatterns = [
     path("discharge/", include("products.cymed.hospital.discharge.urls")),
     path("command-center/", include("products.cymed.hospital.clinical_command_center.urls")),
     path("capacity/", include("products.cymed.hospital.capacity_management.urls")),
+    path("cssd/", include("products.cymed.hospital.cssd.urls")),
+    path("blood-bank/", include("products.cymed.hospital.blood_bank.urls")),
+    path("housekeeping/", include("products.cymed.hospital.housekeeping.urls")),
+    path("incidents/", include("products.cymed.hospital.incident_reporting.urls")),
 ]

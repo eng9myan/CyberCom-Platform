@@ -28,6 +28,10 @@ import {
   ChevronLeft,
   ChevronRight,
   ArrowLeftRight,
+  Zap,
+  Droplet,
+  Sparkles,
+  AlertTriangle,
 } from "lucide-react";
 import { useAuth } from "@/contexts/auth";
 import { usePreferences } from "@/contexts/preferences";
@@ -68,6 +72,10 @@ const NAV_GROUPS = [
       { href: "/hospital/inventory", label: "Inventory Management", icon: Package },
       { href: "/hospital/hr", label: "HR & Payroll", icon: Users },
       { href: "/hospital/reports", label: "Reports & Dashboards", icon: BarChart3 },
+      { href: "/hospital/cssd", label: "CSSD", icon: Zap },
+      { href: "/hospital/blood-bank", label: "Blood Bank", icon: Droplet },
+      { href: "/hospital/housekeeping", label: "Housekeeping", icon: Sparkles },
+      { href: "/hospital/incidents", label: "Incident Reporting", icon: AlertTriangle },
     ],
   },
 ];
