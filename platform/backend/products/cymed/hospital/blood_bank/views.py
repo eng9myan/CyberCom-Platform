@@ -5,23 +5,44 @@ from rest_framework.response import Response
 
 from products.cymed.hospital.views import HospitalModelViewSet
 
-from .models import BloodDonor, BloodIssue, BloodUnit, CrossmatchRequest
+from .models import BloodCompatibility, BloodDonor, BloodInventory, BloodIssue, BloodUnit, CrossmatchRequest
 from .serializers import (
+    BloodCompatibilitySerializer,
     BloodDonorSerializer,
+    BloodInventorySerializer,
     BloodIssueSerializer,
     BloodUnitSerializer,
     CrossmatchRequestSerializer,
 )
 
+# Blood banking is an enterprise-tier hospital capability (donor/unit/crossmatch
+# workflow); gated the same way ICU/OR are (see HOSPITAL_ENTERPRISE_FEATURES).
+BLOOD_BANK_FEATURE = "hospital.blood_bank"
+BLOOD_BANK_STAFF_ROLES = {"physician", "nurse", "lab_technician", "blood_bank_technologist"}
+
 
 class BloodDonorViewSet(HospitalModelViewSet):
     queryset = BloodDonor.objects.all()
     serializer_class = BloodDonorSerializer
+    required_feature = BLOOD_BANK_FEATURE
+    action_required_roles = {
+        "create": BLOOD_BANK_STAFF_ROLES,
+        "update": BLOOD_BANK_STAFF_ROLES,
+        "partial_update": BLOOD_BANK_STAFF_ROLES,
+    }
 
 
 class BloodUnitViewSet(HospitalModelViewSet):
     queryset = BloodUnit.objects.all()
     serializer_class = BloodUnitSerializer
+    required_feature = BLOOD_BANK_FEATURE
+    action_required_roles = {
+        "create": BLOOD_BANK_STAFF_ROLES,
+        "update": BLOOD_BANK_STAFF_ROLES,
+        "partial_update": BLOOD_BANK_STAFF_ROLES,
+        "discard_expired": BLOOD_BANK_STAFF_ROLES,
+        "quarantine_release": BLOOD_BANK_STAFF_ROLES,
+    }
 
     @action(detail=False, methods=["post"], url_path="discard-expired")
     def discard_expired(self, request):
@@ -45,6 +66,14 @@ class BloodUnitViewSet(HospitalModelViewSet):
 class CrossmatchRequestViewSet(HospitalModelViewSet):
     queryset = CrossmatchRequest.objects.all()
     serializer_class = CrossmatchRequestSerializer
+    required_feature = BLOOD_BANK_FEATURE
+    action_required_roles = {
+        "create": BLOOD_BANK_STAFF_ROLES,
+        "update": BLOOD_BANK_STAFF_ROLES,
+        "partial_update": BLOOD_BANK_STAFF_ROLES,
+        "resolve": BLOOD_BANK_STAFF_ROLES,
+        "issue": BLOOD_BANK_STAFF_ROLES,
+    }
 
     @action(detail=True, methods=["post"])
     def resolve(self, request, pk=None):
@@ -78,3 +107,26 @@ class CrossmatchRequestViewSet(HospitalModelViewSet):
 class BloodIssueViewSet(HospitalModelViewSet):
     queryset = BloodIssue.objects.all()
     serializer_class = BloodIssueSerializer
+    required_feature = BLOOD_BANK_FEATURE
+
+
+class BloodCompatibilityViewSet(HospitalModelViewSet):
+    queryset = BloodCompatibility.objects.all()
+    serializer_class = BloodCompatibilitySerializer
+    required_feature = BLOOD_BANK_FEATURE
+    action_required_roles = {
+        "create": BLOOD_BANK_STAFF_ROLES,
+        "update": BLOOD_BANK_STAFF_ROLES,
+        "partial_update": BLOOD_BANK_STAFF_ROLES,
+    }
+
+
+class BloodInventoryViewSet(HospitalModelViewSet):
+    queryset = BloodInventory.objects.all()
+    serializer_class = BloodInventorySerializer
+    required_feature = BLOOD_BANK_FEATURE
+    action_required_roles = {
+        "create": BLOOD_BANK_STAFF_ROLES,
+        "update": BLOOD_BANK_STAFF_ROLES,
+        "partial_update": BLOOD_BANK_STAFF_ROLES,
+    }

@@ -112,60 +112,6 @@ class TestReferenceLab:
 
 
 @pytest.mark.django_db
-class TestBloodBank:
-    def test_blood_product(self):
-        from products.cymed.laboratory.blood_bank_foundation.models import BloodProduct
-
-        unit = BloodProduct.objects.create(
-            tenant_id=TENANT,
-            unit_number="UNIT-001",
-            product_type="prbc",
-            blood_group="O",
-            rh_type="negative",
-            expiry_date=datetime.date(2026, 12, 31),
-        )
-        assert unit.status == "available"
-
-    def test_blood_inventory(self):
-        from products.cymed.laboratory.blood_bank_foundation.models import BloodInventory
-
-        inv = BloodInventory.objects.create(
-            tenant_id=TENANT,
-            product_type="prbc",
-            blood_group="O",
-            rh_type="negative",
-            available_units=10,
-            minimum_threshold=2,
-        )
-        assert inv.available_units == 10
-
-    def test_blood_compatibility(self):
-        from products.cymed.laboratory.blood_bank_foundation.models import BloodCompatibility
-
-        compat = BloodCompatibility.objects.create(
-            tenant_id=TENANT,
-            patient_id=PATIENT,
-            blood_group="A",
-            rh_type="positive",
-            antibody_screen="negative",
-        )
-        assert compat.antibody_screen == "negative"
-
-    def test_transfusion_request(self):
-        from products.cymed.laboratory.blood_bank_foundation.models import TransfusionRequest
-
-        req = TransfusionRequest.objects.create(
-            tenant_id=TENANT,
-            patient_id=PATIENT,
-            product_type="prbc",
-            units_requested=2,
-            urgency="urgent",
-            requested_by=PROVIDER,
-        )
-        assert req.status == "pending"
-
-
-@pytest.mark.django_db
 class TestAnalytics:
     def test_ops_dashboard_snapshot(self):
         from products.cymed.laboratory.analytics.models import LabOperationsDashboard

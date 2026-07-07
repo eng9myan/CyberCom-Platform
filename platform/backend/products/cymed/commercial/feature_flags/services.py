@@ -145,6 +145,7 @@ HOSPITAL_ENTERPRISE_FEATURES = [
     "hospital.maternity",
     "hospital.transfer_center",
     "hospital.capacity_management",
+    "hospital.blood_bank",
 ]
 
 HOSPITAL_MEDICAL_CITY_FEATURES = [
@@ -162,7 +163,6 @@ LAB_BASIC_FEATURES = [
     "lab.accessioning",
     "lab.worklists",
     "lab.results",
-    "lab.blood_bank",
 ]
 
 LAB_ADVANCED_FEATURES = [

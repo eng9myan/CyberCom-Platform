@@ -15,7 +15,6 @@ urlpatterns = [
     path("pathology/", include("products.cymed.laboratory.pathology.urls")),
     path("histopathology/", include("products.cymed.laboratory.histopathology.urls")),
     path("quality/", include("products.cymed.laboratory.quality.urls")),
-    path("blood-bank/", include("products.cymed.laboratory.blood_bank_foundation.urls")),
     path("analytics/", include("products.cymed.laboratory.analytics.urls")),
     path("reference/", include("products.cymed.laboratory.reference_lab.urls")),
 ]

@@ -148,7 +148,6 @@ PRODUCT_APPS = [
     "products.cymed.laboratory.pathology",
     "products.cymed.laboratory.histopathology",
     "products.cymed.laboratory.quality",
-    "products.cymed.laboratory.blood_bank_foundation",
     "products.cymed.laboratory.analytics",
     "products.cymed.laboratory.reference_lab",
     # CyMed Imaging Edition (Program 3.4)

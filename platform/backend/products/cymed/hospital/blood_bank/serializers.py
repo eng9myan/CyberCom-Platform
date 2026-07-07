@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import BloodDonor, BloodIssue, BloodUnit, CrossmatchRequest
+from .models import BloodCompatibility, BloodDonor, BloodInventory, BloodIssue, BloodUnit, CrossmatchRequest
 
 
 class BloodDonorSerializer(serializers.ModelSerializer):
@@ -31,3 +31,17 @@ class CrossmatchRequestSerializer(serializers.ModelSerializer):
         model = CrossmatchRequest
         fields = "__all__"
         read_only_fields = ["id", "created_at", "updated_at"]
+
+
+class BloodCompatibilitySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = BloodCompatibility
+        fields = "__all__"
+        read_only_fields = ["id", "created_at", "updated_at"]
+
+
+class BloodInventorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = BloodInventory
+        fields = "__all__"
+        read_only_fields = ["id", "created_at", "updated_at", "last_updated"]
