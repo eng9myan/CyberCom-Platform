@@ -10,6 +10,7 @@ interface ComplianceSettings {
   jofotara_enabled: boolean;
   jofotara_tax_registration_number: string;
   jofotara_activity_code: string;
+  jofotara_client_id: string;
   jofotara_client_secret_set: boolean;
   zatca_enabled: boolean;
   zatca_csid_set: boolean;
@@ -22,6 +23,7 @@ interface SettingsForm {
   jofotara_enabled: boolean;
   jofotara_tax_registration_number: string;
   jofotara_activity_code: string;
+  jofotara_client_id: string;
   jofotara_client_secret: string;
   zatca_enabled: boolean;
   zatca_csid: string;
@@ -33,6 +35,7 @@ const emptyForm: SettingsForm = {
   jofotara_enabled: false,
   jofotara_tax_registration_number: "",
   jofotara_activity_code: "",
+  jofotara_client_id: "",
   jofotara_client_secret: "",
   zatca_enabled: false,
   zatca_csid: "",
@@ -79,6 +82,7 @@ export default function ComplianceSettingsPage() {
         jofotara_enabled: data.jofotara_enabled,
         jofotara_tax_registration_number: data.jofotara_tax_registration_number,
         jofotara_activity_code: data.jofotara_activity_code,
+        jofotara_client_id: data.jofotara_client_id,
         jofotara_client_secret: "",
         zatca_enabled: data.zatca_enabled,
         zatca_csid: "",
@@ -180,6 +184,18 @@ export default function ComplianceSettingsPage() {
                 placeholder="ISTD activity code"
                 className={inputCls}
               />
+            </div>
+            <div>
+              <label className={labelCls}>Client ID</label>
+              <input
+                value={form.jofotara_client_id}
+                onChange={e => setForm(f => ({ ...f, jofotara_client_id: e.target.value }))}
+                placeholder="ISTD API Client-Id"
+                className={inputCls}
+              />
+              <p className="mt-1.5 text-xs text-ink/40">
+                Issued by ISTD for API access — distinct from the Tax Registration Number above.
+              </p>
             </div>
             <div className="sm:col-span-2">
               <label className={labelCls}>
