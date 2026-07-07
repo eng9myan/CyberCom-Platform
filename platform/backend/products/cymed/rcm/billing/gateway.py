@@ -35,14 +35,21 @@ from platform.audit.models import AuditAction, AuditLog
 from platform.cyidentity.permissions import HasExternalGatewayAccess
 from products.cymed.core.patients.models import Patient
 
-from .models import Invoice, InvoiceLine, PatientAccount
+from .models import Invoice, InvoiceLine, PatientAccount, ServiceClassification
+from .vat import apply_vat_to_line, nationality_codes_for_patient
 
 
 class ExternalInvoiceLinePayloadSerializer(serializers.Serializer):
     description = serializers.CharField(max_length=500)
     quantity = serializers.DecimalField(max_digits=10, decimal_places=2, default=Decimal("1"))
     unit_price = serializers.DecimalField(max_digits=12, decimal_places=2)
-    tax_amount = serializers.DecimalField(max_digits=10, decimal_places=2, default=Decimal("0"))
+    # tax_amount is NOT accepted from the external payload -- an external
+    # system self-reporting its own tax figure was the gap this closes; the
+    # gateway now computes it itself via vat.apply_vat_to_line() so a
+    # third-party system can't under/over-state VAT on ingestion.
+    service_classification = serializers.ChoiceField(
+        choices=ServiceClassification.choices, default=ServiceClassification.MEDICAL_NECESSITY
+    )
     service_code = serializers.CharField(max_length=50, required=False, allow_blank=True, default="")
     service_date = serializers.DateField(required=False)
 
@@ -118,11 +125,13 @@ class ExternalInvoiceGatewayView(APIView):
                     external_reference=data["external_reference"],
                 )
 
+                nationality_codes = nationality_codes_for_patient(patient.id)
+
                 subtotal = Decimal("0")
                 tax_total = Decimal("0")
                 for i, line in enumerate(data["lines"], start=1):
                     line_total = (line["quantity"] * line["unit_price"]).quantize(Decimal("0.01"))
-                    InvoiceLine.objects.create(
+                    line_obj = InvoiceLine(
                         tenant_id=tenant_id,
                         invoice=invoice,
                         line_number=i,
@@ -132,10 +141,12 @@ class ExternalInvoiceGatewayView(APIView):
                         quantity=line["quantity"],
                         unit_price=line["unit_price"],
                         line_total=line_total,
-                        tax_amount=line["tax_amount"],
+                        service_classification=line["service_classification"],
                     )
+                    apply_vat_to_line(line_obj, nationality_codes=nationality_codes)
+                    line_obj.save()
                     subtotal += line_total
-                    tax_total += line["tax_amount"]
+                    tax_total += line_obj.tax_amount
 
                 invoice.amount_subtotal = subtotal
                 invoice.amount_tax = tax_total

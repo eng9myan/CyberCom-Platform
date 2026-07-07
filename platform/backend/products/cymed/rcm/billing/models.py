@@ -272,6 +272,20 @@ class OfflineTaxQueueEntry(BaseModel):
         return f"OfflineTaxQueueEntry({self.invoice.invoice_number}, {self.provider_code}, {self.status})"
 
 
+class ServiceClassification(models.TextChoices):
+    """
+    Drives per-line VAT resolution (see vat.py). "medical_necessity" is the
+    only classification eligible for the citizen zero-rate; elective and
+    retail lines are always standard-rated regardless of the patient's
+    nationality, per the explicit "0% for qualifying citizens, 15% for
+    non-citizens OR elective/retail items" rule.
+    """
+
+    MEDICAL_NECESSITY = "medical_necessity", "Medical Necessity"
+    ELECTIVE = "elective", "Elective"
+    RETAIL = "retail", "Retail"
+
+
 class InvoiceLine(BaseModel):
     """
     Individual line item on an invoice representing a service or charge.
@@ -291,7 +305,22 @@ class InvoiceLine(BaseModel):
     discount_percentage = models.DecimalField(max_digits=5, decimal_places=2, default=0)
     discount_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     line_total = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+
+    # VAT (Phase: Medical Compliance). Previously only tax_amount existed
+    # with nothing anywhere computing it -- every caller just supplied a
+    # number directly (confirmed: gateway.py was the only real writer, and
+    # it trusted whatever an EXTERNAL system's payload claimed the tax was).
+    # tax_rate now stores the resolved RATE itself (auditable -- matches the
+    # tax_rate-field convention already used in cycom.finance.ar/ap and
+    # procurement.purchase_orders, unlike the flat-constant pattern in
+    # pharmacy/pos), and service_classification is the real input the rate
+    # resolver needs. See vat.py::resolve_vat_rate / apply_vat_to_line.
+    service_classification = models.CharField(
+        max_length=20, choices=ServiceClassification.choices, default=ServiceClassification.MEDICAL_NECESSITY,
+    )
+    tax_rate = models.DecimalField(max_digits=5, decimal_places=4, default=0)
     tax_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+
     charge_id = models.UUIDField(null=True, blank=True)
     icd11_diagnosis_code = models.CharField(max_length=20, blank=True)
 
