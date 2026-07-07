@@ -11,4 +11,5 @@ urlpatterns = [
     path("usage/", include("products.cymed.commercial.usage_metering.urls")),
     path("customers/", include("products.cymed.commercial.customer_management.urls")),
     path("partners/", include("products.cymed.commercial.partner_management.urls")),
+    path("compliance-settings/", include("products.cymed.commercial.compliance_settings.urls")),
 ]

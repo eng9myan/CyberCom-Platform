@@ -85,6 +85,7 @@ const SETTINGS_GROUP = {
   items: [
     { href: "/hospital/settings/users", label: "Users", icon: Users },
     { href: "/hospital/settings/roles", label: "Roles & Permissions", icon: ShieldCheck },
+    { href: "/hospital/settings/compliance", label: "Regional Compliance & Tax", icon: ShieldCheck },
   ],
 };
 

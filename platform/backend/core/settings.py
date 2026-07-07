@@ -108,6 +108,7 @@ PRODUCT_APPS = [
     "products.cymed.commercial.usage_metering",
     "products.cymed.commercial.customer_management",
     "products.cymed.commercial.partner_management",
+    "products.cymed.commercial.compliance_settings",
     # CyMed Clinic Edition (Program 3.1)
     "products.cymed.clinic.reception",
     "products.cymed.clinic.appointments",
