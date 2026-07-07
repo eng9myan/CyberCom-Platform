@@ -11,11 +11,13 @@ class TenantComplianceSettingsSerializer(serializers.ModelSerializer):
     zatca_csid = serializers.CharField(write_only=True, required=False, allow_blank=True)
     zatca_production_csid = serializers.CharField(write_only=True, required=False, allow_blank=True)
     zatca_onboarding_otp = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    nphies_client_secret = serializers.CharField(write_only=True, required=False, allow_blank=True)
 
     jofotara_client_secret_set = serializers.SerializerMethodField()
     zatca_csid_set = serializers.SerializerMethodField()
     zatca_production_csid_set = serializers.SerializerMethodField()
     zatca_onboarding_otp_set = serializers.SerializerMethodField()
+    nphies_client_secret_set = serializers.SerializerMethodField()
 
     class Meta:
         model = TenantComplianceSettings
@@ -26,6 +28,8 @@ class TenantComplianceSettingsSerializer(serializers.ModelSerializer):
             "zatca_enabled", "zatca_csid", "zatca_csid_set",
             "zatca_production_csid", "zatca_production_csid_set",
             "zatca_onboarding_otp", "zatca_onboarding_otp_set",
+            "nphies_enabled", "nphies_provider_license", "nphies_client_id",
+            "nphies_client_secret", "nphies_client_secret_set",
             "updated_at",
         ]
         read_only_fields = ["id", "updated_at"]
@@ -42,11 +46,17 @@ class TenantComplianceSettingsSerializer(serializers.ModelSerializer):
     def get_zatca_onboarding_otp_set(self, obj):
         return bool(obj.zatca_onboarding_otp)
 
+    def get_nphies_client_secret_set(self, obj):
+        return bool(obj.nphies_client_secret)
+
     def update(self, instance, validated_data):
         # Blank string on a secret field means "leave unchanged", not "clear it" --
         # clearing is only ever explicit via the connector after OTP consumption,
         # not something a blank form submit should silently trigger.
-        for secret_field in ("jofotara_client_secret", "zatca_csid", "zatca_production_csid", "zatca_onboarding_otp"):
+        for secret_field in (
+            "jofotara_client_secret", "zatca_csid", "zatca_production_csid",
+            "zatca_onboarding_otp", "nphies_client_secret",
+        ):
             if secret_field in validated_data and not validated_data[secret_field]:
                 validated_data.pop(secret_field)
         return super().update(instance, validated_data)

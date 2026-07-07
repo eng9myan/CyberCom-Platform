@@ -79,6 +79,31 @@ class Preauthorization(BaseModel):
     source_order_id = models.UUIDField(null=True, blank=True)
     # Which CyMed module generated the request
     source_module = models.CharField(max_length=30, blank=True)
+    # Loose UUID reference to rcm.billing.Invoice -- matches the established
+    # cross-app-boundary convention within rcm/* (see patient_id above, and
+    # billing.PatientAccount/eligibility.EligibilityRequest, none of which
+    # use a real Django FK across sub-apps). Previously this model had no
+    # link to Invoice at all; a preauth's approved/denied outcome directly
+    # affects what an invoice can bill the patient vs. the payer, so this
+    # closes a real gap, not a speculative one.
+    invoice_id = models.UUIDField(null=True, blank=True, db_index=True)
+
+    # ── NPHIES (KSA) transport -- mirrors zatca_*/jofotara_* prefixing on
+    # rcm.billing.Invoice. `status` above is this preauth's own workflow
+    # state (draft/submitted/approved/...); nphies_status is specifically
+    # whether the Claim(preauthorization) Bundle made it to NPHIES' HSB.
+    NPHIES_STATUS_CHOICES = [
+        ("not_submitted", "Not Submitted"),
+        ("submitted", "Submitted"),
+        ("offline", "Offline (Queued for Retry)"),
+        ("rejected", "Rejected"),
+    ]
+    nphies_status = models.CharField(max_length=20, choices=NPHIES_STATUS_CHOICES, default="not_submitted")
+    # Bundle.id of the outbound Claim(preauthorization) message
+    nphies_claim_bundle_id = models.CharField(max_length=200, blank=True)
+    # Bundle.id of the returned ClaimResponse message
+    nphies_response_bundle_id = models.CharField(max_length=200, blank=True)
+    nphies_error = models.TextField(blank=True)
 
     class Meta:
         app_label = "cymed_rcm_preauthorization"
@@ -91,6 +116,7 @@ class Preauthorization(BaseModel):
             models.Index(fields=["tenant_id", "insurance_plan_id"]),
             models.Index(fields=["tenant_id", "requesting_provider_id"]),
             models.Index(fields=["auth_number"]),
+            models.Index(fields=["tenant_id", "invoice_id"]),
         ]
 
     def __str__(self):

@@ -33,6 +33,19 @@ class TenantComplianceSettings(BaseModel):
     # it (PATCH back to "") once onboarding succeeds so it doesn't linger.
     zatca_onboarding_otp = EncryptedCharField(max_length=20, blank=True)
 
+    # ── KSA NPHIES (National Platform for Health Information Exchange
+    # Services) ── real providers connect to NPHIES' Health Service Bus
+    # (HSB) via OAuth2 client-credentials + the facility's CCHI-issued
+    # provider license, exchanging FHIR Bundles at HSB's $process-message
+    # endpoint. No payer-specific config is needed -- HSB is the single
+    # gateway for all payers.
+    nphies_enabled = models.BooleanField(default=False)
+    nphies_provider_license = models.CharField(
+        max_length=50, blank=True, help_text="Facility's CCHI/NPHIES-issued provider license number."
+    )
+    nphies_client_id = models.CharField(max_length=100, blank=True)
+    nphies_client_secret = EncryptedCharField(max_length=255, blank=True)
+
     class Meta:
         db_table = "cymed_commercial_tenant_compliance_settings"
         unique_together = [("tenant_id",)]

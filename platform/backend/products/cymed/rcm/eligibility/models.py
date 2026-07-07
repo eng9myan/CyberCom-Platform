@@ -50,6 +50,24 @@ class EligibilityRequest(BaseModel):
     payer_transaction_id = models.CharField(max_length=200, blank=True, null=True)
     error_message = models.TextField(blank=True, null=True)
 
+    # ── NPHIES (KSA) transport, mirrors the zatca_*/jofotara_* prefixing
+    # convention used on rcm.billing.Invoice for national e-invoicing status
+    # -- kept separate from `status` above (which tracks this record's
+    # internal workflow state) because "submitted to NPHIES" and "NPHIES
+    # accepted the transport" are different facts: NPHIES can 200 the
+    # message envelope while the embedded CoverageEligibilityResponse
+    # itself still reports the patient as ineligible.
+    NPHIES_STATUS_CHOICES = [
+        ("not_submitted", "Not Submitted"),
+        ("submitted", "Submitted"),
+        ("offline", "Offline (Queued for Retry)"),
+        ("rejected", "Rejected"),
+    ]
+    nphies_status = models.CharField(max_length=20, choices=NPHIES_STATUS_CHOICES, default="not_submitted")
+    # Bundle.id of the outbound message sent to NPHIES' Health Service Bus
+    nphies_bundle_id = models.CharField(max_length=200, blank=True)
+    nphies_error = models.TextField(blank=True)
+
     class Meta:
         app_label = "cymed_rcm_eligibility"
         db_table = "cymed_rcm_elig_requests"
@@ -108,6 +126,12 @@ class EligibilityResponse(BaseModel):
     # Full raw payer response payload
     raw_response = models.JSONField(default=dict)
     fhir_coverage_eligibility_response_id = models.CharField(max_length=200, blank=True, null=True)
+
+    # Bundle.id of the response NPHIES returned (contains the embedded
+    # CoverageEligibilityResponse resource -- distinct from
+    # fhir_coverage_eligibility_response_id above, which is that inner
+    # resource's own id once parsed out).
+    nphies_response_bundle_id = models.CharField(max_length=200, blank=True)
 
     class Meta:
         app_label = "cymed_rcm_eligibility"
