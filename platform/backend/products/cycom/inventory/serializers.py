@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import ReorderAlert, StockItem, StockMovement, Warehouse
+from .models import ReorderAlert, StockBatch, StockItem, StockMovement, Warehouse
 
 
 class WarehouseSerializer(serializers.ModelSerializer):
@@ -33,12 +33,34 @@ class StockItemSerializer(serializers.ModelSerializer):
         read_only_fields = ["id", "quantity", "created_at", "updated_at"]
 
 
+class StockBatchSerializer(serializers.ModelSerializer):
+    is_expired = serializers.BooleanField(read_only=True)
+    stock_item_sku = serializers.CharField(source="stock_item.sku", read_only=True)
+
+    class Meta:
+        model = StockBatch
+        fields = [
+            "id",
+            "stock_item",
+            "stock_item_sku",
+            "batch_number",
+            "expiry_date",
+            "received_date",
+            "quantity_on_hand",
+            "is_expired",
+            "created_at",
+            "updated_at",
+        ]
+        read_only_fields = ["id", "received_date", "quantity_on_hand", "created_at", "updated_at"]
+
+
 class StockMovementSerializer(serializers.ModelSerializer):
     class Meta:
         model = StockMovement
         fields = [
             "id",
             "stock_item",
+            "batch",
             "movement_type",
             "quantity",
             "reference_id",

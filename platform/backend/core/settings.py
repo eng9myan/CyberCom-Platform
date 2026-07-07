@@ -400,6 +400,12 @@ CELERY_BEAT_SCHEDULE = {
         "task": "rcm_billing.retry_offline_tax_queue",
         "schedule": 300.0,  # every 5 minutes
     },
+    # FEFO/SFDA compliance: flags medical stock batches expiring within 60
+    # days so pharmacy can dispense them before they expire on the shelf.
+    "inventory-notify-expiring-batches": {
+        "task": "inventory.notify_expiring_batches",
+        "schedule": 86400.0,  # once a day
+    },
 }
 
 # ---------------------------------------------------------------------------

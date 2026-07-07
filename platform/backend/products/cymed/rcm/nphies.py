@@ -9,15 +9,26 @@ to NPHIES' Health Service Bus (HSB) if credentials are configured. No live
 NPHIES credentials exist in this environment, so submission always resolves
 to the honest "not_submitted" path.
 
-Conformance caveat: NPHIES' real Implementation Guide requires additional
-mandatory extensions, code systems, and cross-resource references beyond
-what's modeled here (e.g. site eligibility, benefit-category-specific
-extensions, full Coverage/Organization/Practitioner resource bundles) --
-this builds a structurally real, minimally-complete FHIR message-Bundle
-shape (MessageHeader + focus resource + the Patient/Coverage/Organization
-resources this schema actually has data for), not a certified
-IG-conformant payload. Treat it as the real transport skeleton to build
-full conformance onto, not a finished NPHIES integration.
+Conformance caveat (read before trusting this against a real NPHIES sandbox):
+NPHIES' Implementation Guide binds many elements to specific mandatory
+KSA-profile extensions and ValueSets -- e.g. site-eligibility flags,
+episode/encounter-class extensions, Practitioner license-authority
+extensions, benefit-subCategory-specific fields, and exact CodeSystem/
+ValueSet URIs published in the NPHIES IG's own artifact registry. This
+module does NOT attempt to reproduce that registry from memory: the
+system/CodeSystem URIs below (ksa-message-events,
+CodeSystem/benefit-category) are plausible, real-shaped FHIR URIs that
+match NPHIES' general naming convention, but have NOT been verified
+against the live IG or a sandbox conformance run, and the mandatory
+extensions the IG requires beyond the base resource fields are not
+included at all. Calling this "IG-conformant" would be a false claim;
+what's real here is: every value comes from an actual Patient/
+InsuranceMember/EligibilityRequest/Preauthorization row (nothing
+invented), the message-Bundle transport shape (MessageHeader + focus +
+supporting resources) is structurally correct FHIR, and the submit path's
+transport-error handling is real. Closing the conformance gap requires
+the actual NPHIES IG artifact set (StructureDefinitions, ValueSets) as
+input, which isn't available in this environment.
 """
 from __future__ import annotations
 
@@ -68,6 +79,22 @@ def _message_header(event_code: str, provider_license: str, focus_reference: str
         },
         "source": {"endpoint": f"http://nphies.sa/license/provider-license/{provider_license}"},
         "focus": [{"reference": focus_reference}],
+    }
+
+
+def build_coverage_resource(member, *, coverage_id: str, patient_id: str) -> dict:
+    """
+    Builds a real FHIR Coverage resource from a real rcm.insurance.
+    InsuranceMember row. Shared by build_eligibility_bundle() and
+    build_preauth_bundle() (previously duplicated inline in both).
+    """
+    return {
+        "resourceType": "Coverage",
+        "id": coverage_id,
+        "status": "active" if member.is_active else "cancelled",
+        "identifier": [{"value": member.member_id}],
+        "beneficiary": {"reference": f"Patient/{patient_id}"},
+        "payor": [{"identifier": {"value": member.insurance_plan.company.payer_id}}],
     }
 
 
@@ -131,16 +158,7 @@ def build_eligibility_bundle(eligibility_request, *, provider_license: str) -> d
             }
         })
     if member is not None:
-        entries.append({
-            "resource": {
-                "resourceType": "Coverage",
-                "id": coverage_id,
-                "status": "active" if member.is_active else "cancelled",
-                "identifier": [{"value": member.member_id}],
-                "beneficiary": {"reference": f"Patient/{patient_id}"},
-                "payor": [{"identifier": {"value": member.insurance_plan.company.payer_id}}],
-            }
-        })
+        entries.append({"resource": build_coverage_resource(member, coverage_id=coverage_id, patient_id=patient_id)})
 
     return {
         "resourceType": "Bundle",
@@ -217,16 +235,7 @@ def build_preauth_bundle(preauthorization, *, provider_license: str) -> dict[str
         {"resource": claim},
     ]
     if member is not None:
-        entries.append({
-            "resource": {
-                "resourceType": "Coverage",
-                "id": coverage_id,
-                "status": "active" if member.is_active else "cancelled",
-                "identifier": [{"value": member.member_id}],
-                "beneficiary": {"reference": f"Patient/{patient_id}"},
-                "payor": [{"identifier": {"value": member.insurance_plan.company.payer_id}}],
-            }
-        })
+        entries.append({"resource": build_coverage_resource(member, coverage_id=coverage_id, patient_id=patient_id)})
 
     return {
         "resourceType": "Bundle",

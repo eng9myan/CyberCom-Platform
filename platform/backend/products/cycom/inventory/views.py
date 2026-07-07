@@ -3,9 +3,10 @@ from rest_framework import viewsets
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from .models import ReorderAlert, StockItem, StockMovement, Warehouse
+from .models import ReorderAlert, StockBatch, StockItem, StockMovement, Warehouse
 from .serializers import (
     ReorderAlertSerializer,
+    StockBatchSerializer,
     StockItemSerializer,
     StockMovementSerializer,
     WarehouseSerializer,
@@ -42,6 +43,25 @@ class StockItemViewSet(BaseInventoryViewSet):
             if item.needs_reorder
         ]
         return Response(StockItemSerializer(items, many=True).data)
+
+
+class StockBatchViewSet(BaseInventoryViewSet):
+    queryset = StockBatch.objects.all()
+    serializer_class = StockBatchSerializer
+
+    @action(detail=False, methods=["get"], url_path="expiring-soon")
+    def expiring_soon(self, request):
+        """Batches expiring within 60 days with stock still on hand -- same window hospital_notify_expiring_batches uses."""
+        from datetime import timedelta
+
+        from django.utils import timezone
+
+        tenant_id = getattr(request, "tenant_id", None)
+        cutoff = timezone.now().date() + timedelta(days=60)
+        batches = StockBatch.objects.filter(
+            tenant_id=tenant_id, expiry_date__lte=cutoff, quantity_on_hand__gt=0
+        ).order_by("expiry_date")
+        return Response(StockBatchSerializer(batches, many=True).data)
 
 
 class StockMovementViewSet(BaseInventoryViewSet):

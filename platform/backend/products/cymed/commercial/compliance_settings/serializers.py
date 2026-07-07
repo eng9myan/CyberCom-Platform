@@ -24,6 +24,7 @@ class TenantComplianceSettingsSerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "jofotara_enabled", "jofotara_tax_registration_number", "jofotara_activity_code",
+            "jofotara_client_id",
             "jofotara_client_secret", "jofotara_client_secret_set",
             "zatca_enabled", "zatca_csid", "zatca_csid_set",
             "zatca_production_csid", "zatca_production_csid_set",

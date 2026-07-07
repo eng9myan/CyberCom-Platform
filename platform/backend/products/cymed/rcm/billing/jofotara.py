@@ -225,22 +225,24 @@ class JoFotaraISTDService:
     def submit(self) -> dict[str, Any]:
         if not self.settings.jofotara_enabled:
             return {"status": "not_submitted", "reason": "JoFotara compliance is not enabled for this tenant."}
-        # NOTE -- honest field-mapping gap: the compliance-settings UI collects
-        # Tax Registration Number / Activity Code / Client Secret (the fields
-        # requested for that screen), but ISTD's real API needs a distinct
-        # Client-Id issued separately for API access -- Tax Registration
-        # Number is the taxpayer's TIN, not that Client-Id, and conflating
-        # them would send a request ISTD would reject anyway. Rather than
-        # guess (or silently fall back to a global env var, which would
-        # defeat per-tenant scoping), this returns not_submitted directly
-        # until a real jofotara_client_id field is added to
-        # TenantComplianceSettings once the correct value is known.
-        return {
-            "status": "not_submitted",
-            "reason": "JoFotara Client-Id is not yet a stored per-tenant credential "
-                      "(Tax Registration Number is the taxpayer TIN, not the API Client-Id).",
-            "ubl_xml": self.build_invoice_xml(),
-        }
+        if not (self.settings.jofotara_client_id and self.settings.jofotara_client_secret):
+            return {
+                "status": "not_submitted",
+                "reason": "JoFotara Client-Id/Client-Secret are not configured for this tenant "
+                          "(Tax Registration Number is the taxpayer TIN, not the API Client-Id -- "
+                          "a distinct jofotara_client_id must be entered separately).",
+                "ubl_xml": self.build_invoice_xml(),
+            }
+        # Delegates to the real, tested module-level submit_invoice(), which
+        # does the actual HTTP call and TransportError/HTTPStatusError
+        # handling -- this class only sources the per-tenant credentials.
+        return submit_invoice(
+            self.invoice,
+            self.invoice.tenant_id,
+            client_id=self.settings.jofotara_client_id,
+            client_secret=self.settings.jofotara_client_secret,
+            income_source_sequence=self.settings.jofotara_activity_code,
+        )
 
     @staticmethod
     def parse_response(result: dict[str, Any]) -> dict[str, str]:

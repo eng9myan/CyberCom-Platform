@@ -6,6 +6,7 @@ router = DefaultRouter()
 router.register("warehouses", views.WarehouseViewSet, basename="warehouse")
 router.register("stock-items", views.StockItemViewSet, basename="stock-item")
 router.register("movements", views.StockMovementViewSet, basename="stock-movement")
+router.register("batches", views.StockBatchViewSet, basename="stock-batch")
 router.register("reorder-alerts", views.ReorderAlertViewSet, basename="reorder-alert")
 
 urlpatterns = router.urls

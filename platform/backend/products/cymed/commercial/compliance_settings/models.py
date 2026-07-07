@@ -22,6 +22,10 @@ class TenantComplianceSettings(BaseModel):
     jofotara_enabled = models.BooleanField(default=False)
     jofotara_tax_registration_number = models.CharField(max_length=50, blank=True)
     jofotara_activity_code = models.CharField(max_length=50, blank=True)
+    # ISTD-issued API Client-Id -- distinct from the taxpayer TIN above.
+    # Previously missing, which forced JoFotaraISTDService.submit() to
+    # always return "not_submitted" even when otherwise fully configured.
+    jofotara_client_id = models.CharField(max_length=100, blank=True)
     jofotara_client_secret = EncryptedCharField(max_length=255, blank=True)
 
     # ── KSA ZATCA Phase 2 ────────────────────────────────────────────────
