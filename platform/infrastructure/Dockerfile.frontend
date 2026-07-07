@@ -6,7 +6,12 @@ FROM node:20-alpine AS deps
 WORKDIR /app
 
 COPY frontend/package.json frontend/package-lock.json* ./
-RUN npm ci --omit=dev
+# Full install (incl. devDependencies) -- the build stage needs typescript/
+# tailwind/etc. from devDependencies to run `npm run build`. --omit=dev here
+# stripped those and would fail the build; the runtime stage below doesn't
+# use node_modules at all (standalone output bundles its own deps), so there
+# was never a size benefit to omitting dev deps at this stage.
+RUN npm ci
 
 # ── Stage 2: Build ────────────────────────────────────────────────────────────
 FROM node:20-alpine AS builder
@@ -15,7 +20,15 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY frontend/ .
 
-ENV NEXT_TELEMETRY_DISABLED=1
+# NEXT_PUBLIC_* vars are inlined into the client bundle at build time, not
+# read at runtime -- without this ARG, the built bundle would hardcode
+# lib/api.ts's http://localhost:8000 fallback regardless of what's set in
+# the container's runtime environment, breaking backend calls from inside
+# the Docker network (where the backend is reachable at http://backend:8000,
+# not localhost).
+ARG NEXT_PUBLIC_API_URL=http://localhost:8000
+ENV NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL} \
+    NEXT_TELEMETRY_DISABLED=1
 RUN npm run build
 
 # ── Stage 3: Runtime ──────────────────────────────────────────────────────────

@@ -243,6 +243,21 @@ class ZatcaFatoorahService:
             response.raise_for_status()
             result["status"] = "submitted"
             result["http_status"] = response.status_code
+        except httpx.TransportError as exc:
+            # No route to ZATCA's gateway at all (DNS failure, connection
+            # refused, timeout) -- this is "the hospital is offline", a
+            # retryable condition, distinct from the authority rejecting a
+            # well-formed request. hybrid_sync_worker.py queues on this
+            # status specifically; it must never queue on a genuine
+            # rejection below.
+            result["status"] = "offline"
+            result["error"] = str(exc)
+        except httpx.HTTPStatusError as exc:
+            # ZATCA received the request and rejected it (bad invoice data,
+            # invalid CSID, etc.) -- not retryable by blind resubmission,
+            # needs human review.
+            result["status"] = "rejected"
+            result["error"] = str(exc)
         except Exception as exc:
             result["status"] = "rejected"
             result["error"] = str(exc)

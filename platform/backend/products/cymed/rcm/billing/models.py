@@ -189,6 +189,7 @@ class Invoice(BaseModel):
 
     JOFOTARA_STATUS_CHOICES = [
         ("not_submitted", "Not Submitted"),
+        ("pending_clearance", "Pending Government Clearance"),
         ("submitted", "Submitted"),
         ("accepted", "Accepted"),
         ("rejected", "Rejected"),
@@ -207,6 +208,7 @@ class Invoice(BaseModel):
     # subclasses. See products/cymed/rcm/billing/zatca.py for the connector.
     ZATCA_STATUS_CHOICES = [
         ("not_submitted", "Not Submitted"),
+        ("pending_clearance", "Pending Government Clearance"),
         ("submitted", "Submitted"),
         ("accepted", "Accepted"),
         ("rejected", "Rejected"),
@@ -228,6 +230,46 @@ class Invoice(BaseModel):
 
     def __str__(self):
         return f"Invoice {self.invoice_number} ({self.status})"
+
+
+class OfflineTaxQueueEntry(BaseModel):
+    """
+    Hybrid Edge offline tax queue (Phase 7). When the hospital server's
+    internet connection is down, a tax-provider submission attempt fails at
+    the TRANSPORT level (no route to the provider's API at all) rather than
+    being rejected by the provider itself -- that distinction matters:
+    a transport failure is retryable once connectivity returns; a genuine
+    business rejection (bad invoice data, expired credentials) is not, and
+    queuing it for blind retry would just repeat the same failure forever.
+
+    Local POS/clinical transactions keep saving to the local database the
+    whole time -- this queue only holds the tax-submission SIDE of an
+    invoice that's otherwise already fully recorded.
+    """
+
+    STATUS_CHOICES = [
+        ("queued", "Queued"),
+        ("retrying", "Retrying"),
+        ("submitted", "Submitted"),
+        ("failed_permanent", "Failed (Requires Review)"),
+    ]
+
+    invoice = models.ForeignKey(Invoice, on_delete=models.CASCADE, related_name="offline_tax_queue_entries")
+    provider_code = models.CharField(max_length=20)  # matches tax_providers.py registry keys, e.g. "zatca", "jofotara"
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="queued")
+    queued_at = models.DateTimeField(auto_now_add=True)
+    last_attempted_at = models.DateTimeField(null=True, blank=True)
+    retry_count = models.PositiveIntegerField(default=0)
+    last_error = models.TextField(blank=True)
+    submitted_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = "cymed_rcm_bill_offline_tax_queue"
+        ordering = ["queued_at"]
+        indexes = [models.Index(fields=["tenant_id", "status"])]
+
+    def __str__(self):
+        return f"OfflineTaxQueueEntry({self.invoice.invoice_number}, {self.provider_code}, {self.status})"
 
 
 class InvoiceLine(BaseModel):

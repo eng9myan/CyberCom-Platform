@@ -1,5 +1,3 @@
-import uuid
-
 from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import status
@@ -107,99 +105,63 @@ class InvoiceViewSet(ModelViewSet):
         serializer = InvoiceSerializer(invoice, context={"request": request})
         return Response(serializer.data, status=status.HTTP_200_OK)
 
-    @action(detail=True, methods=["post"], url_path="submit-to-jofotara")
-    def submit_to_jofotara(self, request, pk=None):
-        """Build the invoice's UBL 2.1 XML and submit to JoFotara (Jordan e-invoicing)."""
+    @action(detail=True, methods=["post"], url_path="submit-tax/(?P<provider_code>[^/.]+)")
+    def submit_tax(self, request, pk=None, provider_code=None):
+        """
+        Submits the invoice to a registered national e-invoicing provider
+        (zatca, jofotara, or any other connector a customer has registered
+        in tax_providers.py -- this action doesn't hardcode which providers
+        exist). If the hospital's internet is down, the connector reports
+        status="offline" and this queues the invoice for
+        hybrid_sync_worker.py to retry automatically once connectivity
+        returns, flagging it "Pending Government Clearance" in the meantime
+        rather than silently failing or fabricating an acceptance.
+        """
         from products.cymed.commercial.compliance_settings.models import TenantComplianceSettings
 
-        from .jofotara import JoFotaraISTDService
+        from . import tax_providers
+        from .hybrid_sync_worker import queue_for_offline_retry
+
+        provider = tax_providers.get_provider(provider_code)
+        if provider is None:
+            return Response({"detail": f"Unknown tax provider '{provider_code}'."}, status=status.HTTP_404_NOT_FOUND)
 
         invoice = self.get_object()
         if invoice.status not in ("issued", "sent", "partial", "paid"):
             return Response(
-                {"detail": f"Cannot submit an invoice with status '{invoice.status}' to JoFotara."},
+                {"detail": f"Cannot submit an invoice with status '{invoice.status}' to {provider_code}."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
         tenant_id = getattr(request, "tenant_id", None)
         compliance_settings, _ = TenantComplianceSettings.objects.get_or_create(tenant_id=tenant_id)
-        result = JoFotaraISTDService(invoice, compliance_settings).submit()
-
-        invoice.jofotara_status = result["status"]
-        if result["status"] == "submitted":
-            invoice.jofotara_invoice_uuid = result.get("jofotara_invoice_uuid", "")
-            invoice.jofotara_qr_code = result.get("qr_code", "")
-            invoice.jofotara_submitted_at = timezone.now()
-            invoice.jofotara_error = ""
-        elif result["status"] == "rejected":
-            invoice.jofotara_error = result.get("error", "")
-        invoice.save(
-            update_fields=[
-                "jofotara_status", "jofotara_invoice_uuid", "jofotara_qr_code",
-                "jofotara_submitted_at", "jofotara_error", "updated_at",
-            ]
-        )
-        return Response(
-            {
-                "invoice": InvoiceSerializer(invoice, context={"request": request}).data,
-                "jofotara_status": result["status"],
-                "reason": result.get("reason", ""),
-                "ubl_xml": result.get("ubl_xml", ""),
-            }
-        )
-
-    @action(detail=True, methods=["post"], url_path="submit-to-zatca")
-    def submit_to_zatca(self, request, pk=None):
-        """Build the invoice's UBL 2.1 XML, sign it, and submit to ZATCA Phase 2 (KSA e-invoicing)."""
-        from products.cymed.commercial.compliance_settings.models import TenantComplianceSettings
-
-        from .zatca import ZatcaFatoorahService
-
-        invoice = self.get_object()
-        if invoice.status not in ("issued", "sent", "partial", "paid"):
+        if not provider.is_enabled(compliance_settings):
             return Response(
-                {"detail": f"Cannot submit an invoice with status '{invoice.status}' to ZATCA."},
+                {"detail": f"{provider_code} compliance is not enabled for this tenant."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
-
-        tenant_id = getattr(request, "tenant_id", None)
-        compliance_settings, _ = TenantComplianceSettings.objects.get_or_create(tenant_id=tenant_id)
 
         previous_invoice = (
-            Invoice.objects.filter(tenant_id=tenant_id, zatca_status="submitted")
-            .exclude(pk=invoice.pk)
-            .order_by("-zatca_submitted_at")
-            .first()
+            Invoice.objects.filter(tenant_id=tenant_id).exclude(pk=invoice.pk).order_by("-created_at").first()
         )
-        device_counter = Invoice.objects.filter(tenant_id=tenant_id, zatca_invoice_counter_value__isnull=False).count() + 1
+        device_counter = Invoice.objects.filter(tenant_id=tenant_id).count() + 1
 
-        result = ZatcaFatoorahService(invoice, compliance_settings).submit(
-            previous_invoice=previous_invoice, device_counter=device_counter,
-        )
+        result = provider.submit(invoice, compliance_settings, previous_invoice=previous_invoice, device_counter=device_counter)
 
-        invoice.zatca_status = result["status"]
-        if result["status"] in ("submitted", "not_submitted"):
-            invoice.zatca_invoice_uuid = invoice.zatca_invoice_uuid or uuid.uuid4()
-        if result["status"] == "submitted":
-            invoice.zatca_cryptographic_stamp = result.get("cryptographic_stamp", "")
-            invoice.zatca_qr_code = result.get("qr_code", "")
-            invoice.zatca_previous_invoice_hash = result.get("previous_invoice_hash", "")
-            invoice.zatca_invoice_counter_value = result.get("invoice_counter_value")
-            invoice.zatca_submitted_at = timezone.now()
-            invoice.zatca_error = ""
-        elif result["status"] == "rejected":
-            invoice.zatca_error = result.get("error", "")
-        invoice.save(
-            update_fields=[
-                "zatca_status", "zatca_invoice_uuid", "zatca_cryptographic_stamp", "zatca_qr_code",
-                "zatca_previous_invoice_hash", "zatca_invoice_counter_value", "zatca_submitted_at",
-                "zatca_error", "updated_at",
-            ]
-        )
+        if result["status"] == "offline":
+            queue_for_offline_retry(
+                invoice=invoice, provider_code=provider_code, tenant_id=tenant_id,
+                error=result.get("error", "No connectivity to the tax authority's API."),
+            )
+        else:
+            changed_fields = provider.apply_result(invoice, result)
+            invoice.save(update_fields=changed_fields + ["updated_at"])
+
         return Response(
             {
                 "invoice": InvoiceSerializer(invoice, context={"request": request}).data,
-                "zatca_status": result["status"],
+                "provider": provider_code,
+                "status": "pending_clearance" if result["status"] == "offline" else result["status"],
                 "reason": result.get("reason", ""),
                 "ubl_xml": result.get("ubl_xml", ""),
             }

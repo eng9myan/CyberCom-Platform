@@ -393,6 +393,13 @@ CELERY_BEAT_SCHEDULE = {
         "task": "hospital_command_center.broadcast_kpis",
         "schedule": 10.0,
     },
+    # Phase 7 (Hybrid Edge): retries ZATCA/JoFotara invoice submissions that
+    # were queued because the hospital's internet was down at the moment of
+    # the original attempt. See products/cymed/rcm/billing/hybrid_sync_worker.py.
+    "rcm-billing-retry-offline-tax-queue": {
+        "task": "rcm_billing.retry_offline_tax_queue",
+        "schedule": 300.0,  # every 5 minutes
+    },
 }
 
 # ---------------------------------------------------------------------------

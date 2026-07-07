@@ -181,6 +181,14 @@ def submit_invoice(invoice, tenant_id, *, client_id: str = "", client_secret: st
             "qr_code": data.get("EINV_RESULTS", {}).get("qrCode", ""),
             "ubl_xml": ubl_xml,
         }
+    except httpx.TransportError as exc:
+        # No route to JoFotara at all (hospital offline) -- retryable.
+        # hybrid_sync_worker.py queues on this status specifically.
+        return {"status": "offline", "error": str(exc), "ubl_xml": ubl_xml}
+    except httpx.HTTPStatusError as exc:
+        # ISTD received and rejected the request -- not retryable by blind
+        # resubmission.
+        return {"status": "rejected", "error": str(exc), "ubl_xml": ubl_xml}
     except Exception as exc:
         return {"status": "rejected", "error": str(exc), "ubl_xml": ubl_xml}
 

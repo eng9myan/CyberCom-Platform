@@ -2,6 +2,11 @@
 const nextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
+  // Required by infrastructure/Dockerfile.frontend's runtime stage, which
+  // copies .next/standalone -- that directory is only produced with this
+  // set. Without it the Docker build's COPY step fails on a path that was
+  // never created.
+  output: "standalone",
 
   async headers() {
     return [
