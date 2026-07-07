@@ -57,29 +57,29 @@ export default function ObservabilityAdminConsole() {
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(12, 1fr)", gap: "var(--spacing-lg)" }}>
         <aside className="glass-card" style={{ gridColumn: "span 3", display: "flex", flexDirection: "column", gap: "var(--spacing-sm)", height: "fit-content" }}>
-          <button onClick={() => setActiveTab("metrics")} style={{ background: activeTab === "metrics" ? "var(--color-primary)" : "none", color: "white", padding: "10px", borderRadius: "4px", border: "1px solid rgba(255,255,255,0.1)", cursor: "pointer", textAlign: isRtl ? "right" : "left" }}>{t.metricsTab}</button>
-          <button onClick={() => setActiveTab("latency")} style={{ background: activeTab === "latency" ? "var(--color-primary)" : "none", color: "white", padding: "10px", borderRadius: "4px", border: "1px solid rgba(255,255,255,0.1)", cursor: "pointer", textAlign: isRtl ? "right" : "left" }}>{t.latencyTab}</button>
+          <button onClick={() => setActiveTab("metrics")} style={{ background: activeTab === "metrics" ? "var(--color-primary)" : "none", color: "white", padding: "10px", borderRadius: "4px", border: "1px solid rgb(var(--color-ink-rgb) / 0.1)", cursor: "pointer", textAlign: isRtl ? "right" : "left" }}>{t.metricsTab}</button>
+          <button onClick={() => setActiveTab("latency")} style={{ background: activeTab === "latency" ? "var(--color-primary)" : "none", color: "white", padding: "10px", borderRadius: "4px", border: "1px solid rgb(var(--color-ink-rgb) / 0.1)", cursor: "pointer", textAlign: isRtl ? "right" : "left" }}>{t.latencyTab}</button>
         </aside>
 
         <main className="glass-card" style={{ gridColumn: "span 9" }}>
           {activeTab === "metrics" && (
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--spacing-md)" }}>
-              <div className="glass-card" style={{ background: "rgba(255,255,255,0.02)" }}>
+              <div className="glass-card" style={{ background: "rgb(var(--color-ink-rgb) / 0.02)" }}>
                 <h4>{t.apiCount}</h4>
                 <p className="metric-value" style={{ color: "var(--color-success)" }}>1,248,510</p>
                 <small style={{ color: "var(--color-text-muted)" }}>Total requests processed today</small>
               </div>
-              <div className="glass-card" style={{ background: "rgba(255,255,255,0.02)" }}>
+              <div className="glass-card" style={{ background: "rgb(var(--color-ink-rgb) / 0.02)" }}>
                 <h4>{t.errorRate}</h4>
                 <p className="metric-value" style={{ color: "var(--color-error)" }}>0.04%</p>
                 <small style={{ color: "var(--color-text-muted)" }}>HTTP 5xx rate matches SLO rules</small>
               </div>
-              <div className="glass-card" style={{ background: "rgba(255,255,255,0.02)" }}>
+              <div className="glass-card" style={{ background: "rgb(var(--color-ink-rgb) / 0.02)" }}>
                 <h4>{t.cpuLoad}</h4>
                 <p className="metric-value">14.2%</p>
                 <small style={{ color: "var(--color-text-muted)" }}>6 worker nodes average CPU load</small>
               </div>
-              <div className="glass-card" style={{ background: "rgba(255,255,255,0.02)" }}>
+              <div className="glass-card" style={{ background: "rgb(var(--color-ink-rgb) / 0.02)" }}>
                 <h4>{t.memoryUsage}</h4>
                 <p className="metric-value">42.8%</p>
                 <small style={{ color: "var(--color-text-muted)" }}>Kubernetes memory utilization</small>
@@ -90,19 +90,19 @@ export default function ObservabilityAdminConsole() {
           {activeTab === "latency" && (
             <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
               <h2>{t.latencyTab}</h2>
-              <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid rgba(255,255,255,0.05)", paddingBottom: "8px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid rgb(var(--color-ink-rgb) / 0.05)", paddingBottom: "8px" }}>
                 <span>Identity Token Validation</span>
                 <span style={{ fontWeight: "bold" }}>12 ms</span>
               </div>
-              <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid rgba(255,255,255,0.05)", paddingBottom: "8px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid rgb(var(--color-ink-rgb) / 0.05)", paddingBottom: "8px" }}>
                 <span>FHIR Connector Sync API</span>
                 <span style={{ fontWeight: "bold" }}>142 ms</span>
               </div>
-              <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid rgba(255,255,255,0.05)", paddingBottom: "8px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid rgb(var(--color-ink-rgb) / 0.05)", paddingBottom: "8px" }}>
                 <span>Clinical Records Query</span>
                 <span style={{ fontWeight: "bold" }}>38 ms</span>
               </div>
-              <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid rgba(255,255,255,0.05)", paddingBottom: "8px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", borderBottom: "1px solid rgb(var(--color-ink-rgb) / 0.05)", paddingBottom: "8px" }}>
                 <span>AI Prompt Evaluation</span>
                 <span style={{ fontWeight: "bold" }}>210 ms</span>
               </div>

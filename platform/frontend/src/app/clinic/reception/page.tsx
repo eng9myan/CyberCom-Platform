@@ -316,7 +316,7 @@ export default function ReceptionPage() {
                   const vtb = visitTypeBadge(p.visit_type, lang);
                   const stb = statusBadge(p.status, lang);
                   return (
-                    <tr key={p.id} style={{ borderBottom: "1px solid var(--color-border)", background: i % 2 === 0 ? "transparent" : "rgba(255,255,255,0.02)" }}>
+                    <tr key={p.id} style={{ borderBottom: "1px solid var(--color-border)", background: i % 2 === 0 ? "transparent" : "rgb(var(--color-ink-rgb) / 0.02)" }}>
                       <td style={{ padding: "0.75rem 0.875rem", fontWeight: 700, color: "#22D3EE", fontSize: "0.875rem" }}>{p.check_in_time}</td>
                       <td style={{ padding: "0.75rem 0.875rem" }}>
                         <div style={{ fontWeight: 600, color: "var(--color-text)", fontSize: "0.875rem" }}>{lang === "ar" ? p.patient_name_ar : p.patient_name}</div>

@@ -208,7 +208,7 @@ export default function PharmacyInventoryPage() {
             {filtered.map((item, i) => {
               const qty = parseFloat(item.quantity);
               return (
-                <tr key={item.id} style={{ borderBottom: "1px solid var(--color-border)", background: i % 2 === 0 ? "transparent" : "rgba(255,255,255,0.02)" }}>
+                <tr key={item.id} style={{ borderBottom: "1px solid var(--color-border)", background: i % 2 === 0 ? "transparent" : "rgb(var(--color-ink-rgb) / 0.02)" }}>
                   <td style={{ padding: "0.85rem 1rem", fontFamily: "monospace", fontSize: "0.78rem", color: "var(--color-text-muted)" }}>{item.sku}</td>
                   <td style={{ padding: "0.85rem 1rem", fontWeight: 600, fontSize: "0.88rem" }}>{item.name}</td>
                   <td style={{ padding: "0.85rem 1rem", fontSize: "0.82rem", color: "var(--color-text-muted)" }}>{item.warehouse}</td>

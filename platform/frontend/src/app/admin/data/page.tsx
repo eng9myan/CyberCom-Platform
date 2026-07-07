@@ -86,8 +86,8 @@ export default function DataAdminConsole() {
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(12, 1fr)", gap: "var(--spacing-lg)" }}>
         <aside className="glass-card" style={{ gridColumn: "span 3", display: "flex", flexDirection: "column", gap: "var(--spacing-sm)", height: "fit-content" }}>
-          <button onClick={() => setActiveTab("catalog")} style={{ background: activeTab === "catalog" ? "var(--color-primary)" : "none", color: "white", padding: "10px", borderRadius: "4px", border: "1px solid rgba(255,255,255,0.1)", cursor: "pointer", textAlign: isRtl ? "right" : "left" }}>{t.catalogTab}</button>
-          <button onClick={() => setActiveTab("lineage")} style={{ background: activeTab === "lineage" ? "var(--color-primary)" : "none", color: "white", padding: "10px", borderRadius: "4px", border: "1px solid rgba(255,255,255,0.1)", cursor: "pointer", textAlign: isRtl ? "right" : "left" }}>{t.lineageTab}</button>
+          <button onClick={() => setActiveTab("catalog")} style={{ background: activeTab === "catalog" ? "var(--color-primary)" : "none", color: "white", padding: "10px", borderRadius: "4px", border: "1px solid rgb(var(--color-ink-rgb) / 0.1)", cursor: "pointer", textAlign: isRtl ? "right" : "left" }}>{t.catalogTab}</button>
+          <button onClick={() => setActiveTab("lineage")} style={{ background: activeTab === "lineage" ? "var(--color-primary)" : "none", color: "white", padding: "10px", borderRadius: "4px", border: "1px solid rgb(var(--color-ink-rgb) / 0.1)", cursor: "pointer", textAlign: isRtl ? "right" : "left" }}>{t.lineageTab}</button>
         </aside>
 
         <main className="glass-card" style={{ gridColumn: "span 9" }}>
@@ -96,7 +96,7 @@ export default function DataAdminConsole() {
               <h2>{t.catalogTab}</h2>
               <table style={{ width: "100%", borderCollapse: "collapse", marginTop: "var(--spacing-md)" }}>
                 <thead>
-                  <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.1)" }}>
+                  <tr style={{ borderBottom: "1px solid rgb(var(--color-ink-rgb) / 0.1)" }}>
                     <th style={{ padding: "8px", textAlign: isRtl ? "right" : "left" }}>{t.name}</th>
                     <th style={{ padding: "8px", textAlign: isRtl ? "right" : "left" }}>{t.type}</th>
                     <th style={{ padding: "8px", textAlign: isRtl ? "right" : "left" }}>{t.path}</th>
@@ -106,9 +106,9 @@ export default function DataAdminConsole() {
                 </thead>
                 <tbody>
                   {assets.map(a => (
-                    <tr key={a.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                    <tr key={a.id} style={{ borderBottom: "1px solid rgb(var(--color-ink-rgb) / 0.05)" }}>
                       <td style={{ padding: "8px", fontWeight: "bold" }}>{a.name}</td>
-                      <td style={{ padding: "8px" }}><span style={{ background: "rgba(255,255,255,0.1)", padding: "2px 6px", borderRadius: "4px" }}>{a.type.toUpperCase()}</span></td>
+                      <td style={{ padding: "8px" }}><span style={{ background: "rgb(var(--color-ink-rgb) / 0.1)", padding: "2px 6px", borderRadius: "4px" }}>{a.type.toUpperCase()}</span></td>
                       <td style={{ padding: "8px" }}><code>{a.path}</code></td>
                       <td style={{ padding: "8px" }}>{a.region}</td>
                       <td style={{ padding: "8px" }}>
@@ -134,7 +134,7 @@ export default function DataAdminConsole() {
               <h2>{t.lineageTab}</h2>
               <table style={{ width: "100%", borderCollapse: "collapse", marginTop: "var(--spacing-md)" }}>
                 <thead>
-                  <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.1)" }}>
+                  <tr style={{ borderBottom: "1px solid rgb(var(--color-ink-rgb) / 0.1)" }}>
                     <th style={{ padding: "8px", textAlign: isRtl ? "right" : "left" }}>{t.source}</th>
                     <th style={{ padding: "8px", textAlign: isRtl ? "right" : "left" }}>{t.target}</th>
                     <th style={{ padding: "8px", textAlign: isRtl ? "right" : "left" }}>{t.job}</th>
@@ -142,7 +142,7 @@ export default function DataAdminConsole() {
                 </thead>
                 <tbody>
                   {lineages.map(l => (
-                    <tr key={l.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                    <tr key={l.id} style={{ borderBottom: "1px solid rgb(var(--color-ink-rgb) / 0.05)" }}>
                       <td style={{ padding: "8px" }}><code>{l.source}</code></td>
                       <td style={{ padding: "8px" }}><code>{l.target}</code></td>
                       <td style={{ padding: "8px" }}><span style={{ color: "var(--color-primary-light)" }}>{l.job}</span></td>

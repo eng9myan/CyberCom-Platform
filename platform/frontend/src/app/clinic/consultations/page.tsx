@@ -609,7 +609,7 @@ export default function ConsultationsPage() {
                       </thead>
                       <tbody>
                         {selected.orders.map((ord, i) => (
-                          <tr key={ord.id} style={{ borderBottom: "1px solid var(--color-border)", background: i % 2 === 0 ? "transparent" : "rgba(255,255,255,0.02)" }}>
+                          <tr key={ord.id} style={{ borderBottom: "1px solid var(--color-border)", background: i % 2 === 0 ? "transparent" : "rgb(var(--color-ink-rgb) / 0.02)" }}>
                             <td style={{ padding: "0.625rem 0.875rem" }}>
                               <span style={{ fontSize: "0.875rem", whiteSpace: "nowrap" }}>
                                 {orderTypeIcon(ord.type)}&nbsp;

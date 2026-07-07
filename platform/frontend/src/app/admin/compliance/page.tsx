@@ -81,7 +81,7 @@ export default function ComplianceAdminConsole() {
         <select
           value={filterFramework}
           onChange={e => setFilterFramework(e.target.value)}
-          style={{ background: "rgba(0,0,0,0.2)", border: "1px solid rgba(255,255,255,0.1)", padding: "6px 12px", color: "white", borderRadius: "4px" }}
+          style={{ background: "rgba(0,0,0,0.2)", border: "1px solid rgb(var(--color-ink-rgb) / 0.1)", padding: "6px 12px", color: "white", borderRadius: "4px" }}
         >
           <option value="all">Show All Frameworks</option>
           <option value="soc2">SOC2</option>
@@ -96,7 +96,7 @@ export default function ComplianceAdminConsole() {
       <div className="glass-card" style={{ overflowX: "auto" }}>
         <table style={{ width: "100%", borderCollapse: "collapse" }}>
           <thead>
-            <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.15)" }}>
+            <tr style={{ borderBottom: "1px solid rgb(var(--color-ink-rgb) / 0.15)" }}>
               <th style={{ padding: "12px 8px", textAlign: isRtl ? "right" : "left" }}>{t.framework}</th>
               <th style={{ padding: "12px 8px", textAlign: isRtl ? "right" : "left" }}>{t.controlName}</th>
               <th style={{ padding: "12px 8px", textAlign: isRtl ? "right" : "left" }}>{t.description}</th>
@@ -105,7 +105,7 @@ export default function ComplianceAdminConsole() {
           </thead>
           <tbody>
             {filteredControls.map(c => (
-              <tr key={c.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+              <tr key={c.id} style={{ borderBottom: "1px solid rgb(var(--color-ink-rgb) / 0.05)" }}>
                 <td style={{ padding: "12px 8px" }}><span style={{ background: "var(--color-primary-dark)", padding: "2px 8px", borderRadius: "4px", fontSize: "0.85rem", fontWeight: "bold" }}>{c.framework}</span></td>
                 <td style={{ padding: "12px 8px", fontWeight: "bold" }}>{c.name}</td>
                 <td style={{ padding: "12px 8px", color: "var(--color-text-muted)", fontSize: "0.92rem" }}>{c.description}</td>

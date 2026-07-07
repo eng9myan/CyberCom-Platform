@@ -305,7 +305,7 @@ export default function AppointmentsPage() {
             {filtered.map((apt, i) => {
               const sc = statusColor(apt.status);
               return (
-                <tr key={apt.id} style={{ borderBottom: "1px solid var(--color-border)", background: i % 2 === 0 ? "transparent" : "rgba(255,255,255,0.02)" }}>
+                <tr key={apt.id} style={{ borderBottom: "1px solid var(--color-border)", background: i % 2 === 0 ? "transparent" : "rgb(var(--color-ink-rgb) / 0.02)" }}>
                   <td style={{ padding: "0.875rem 1rem", fontWeight: 700, color: "#22D3EE", fontSize: "0.9rem", whiteSpace: "nowrap" }}>{apt.time}</td>
                   <td style={{ padding: "0.875rem 1rem", fontSize: "0.8rem", fontFamily: "monospace", color: "var(--color-text-muted)" }}>{apt.mrn}</td>
                   <td style={{ padding: "0.875rem 1rem" }}>

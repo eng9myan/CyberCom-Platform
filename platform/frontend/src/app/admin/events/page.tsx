@@ -114,9 +114,9 @@ export default function EventsAdminConsole() {
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(12, 1fr)", gap: "var(--spacing-lg)" }}>
         <aside className="glass-card" style={{ gridColumn: "span 3", display: "flex", flexDirection: "column", gap: "var(--spacing-sm)", height: "fit-content" }}>
-          <button onClick={() => setActiveTab("outbox")} style={{ background: activeTab === "outbox" ? "var(--color-primary)" : "none", color: "white", padding: "10px", borderRadius: "4px", border: "1px solid rgba(255,255,255,0.1)", textAlign: isRtl ? "right" : "left", cursor: "pointer" }}>{t.outboxTab}</button>
-          <button onClick={() => setActiveTab("dlq")} style={{ background: activeTab === "dlq" ? "var(--color-primary)" : "none", color: "white", padding: "10px", borderRadius: "4px", border: "1px solid rgba(255,255,255,0.1)", textAlign: isRtl ? "right" : "left", cursor: "pointer" }}>{t.dlqTab}</button>
-          <button onClick={() => setActiveTab("replay")} style={{ background: activeTab === "replay" ? "var(--color-primary)" : "none", color: "white", padding: "10px", borderRadius: "4px", border: "1px solid rgba(255,255,255,0.1)", textAlign: isRtl ? "right" : "left", cursor: "pointer" }}>{t.replayTab}</button>
+          <button onClick={() => setActiveTab("outbox")} style={{ background: activeTab === "outbox" ? "var(--color-primary)" : "none", color: "white", padding: "10px", borderRadius: "4px", border: "1px solid rgb(var(--color-ink-rgb) / 0.1)", textAlign: isRtl ? "right" : "left", cursor: "pointer" }}>{t.outboxTab}</button>
+          <button onClick={() => setActiveTab("dlq")} style={{ background: activeTab === "dlq" ? "var(--color-primary)" : "none", color: "white", padding: "10px", borderRadius: "4px", border: "1px solid rgb(var(--color-ink-rgb) / 0.1)", textAlign: isRtl ? "right" : "left", cursor: "pointer" }}>{t.dlqTab}</button>
+          <button onClick={() => setActiveTab("replay")} style={{ background: activeTab === "replay" ? "var(--color-primary)" : "none", color: "white", padding: "10px", borderRadius: "4px", border: "1px solid rgb(var(--color-ink-rgb) / 0.1)", textAlign: isRtl ? "right" : "left", cursor: "pointer" }}>{t.replayTab}</button>
         </aside>
 
         <main className="glass-card" style={{ gridColumn: "span 9" }}>
@@ -125,7 +125,7 @@ export default function EventsAdminConsole() {
               <h2>{t.outboxTab}</h2>
               <table style={{ width: "100%", borderCollapse: "collapse", marginTop: "var(--spacing-md)" }}>
                 <thead>
-                  <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.1)" }}>
+                  <tr style={{ borderBottom: "1px solid rgb(var(--color-ink-rgb) / 0.1)" }}>
                     <th style={{ padding: "8px", textAlign: isRtl ? "right" : "left" }}>ID</th>
                     <th style={{ padding: "8px", textAlign: isRtl ? "right" : "left" }}>{t.topic}</th>
                     <th style={{ padding: "8px", textAlign: isRtl ? "right" : "left" }}>{t.eventType}</th>
@@ -135,7 +135,7 @@ export default function EventsAdminConsole() {
                 </thead>
                 <tbody>
                   {outbox.map(e => (
-                    <tr key={e.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                    <tr key={e.id} style={{ borderBottom: "1px solid rgb(var(--color-ink-rgb) / 0.05)" }}>
                       <td style={{ padding: "8px" }}>{e.id}</td>
                       <td style={{ padding: "8px" }}><code>{e.topic}</code></td>
                       <td style={{ padding: "8px" }}>{e.eventType}</td>
@@ -153,7 +153,7 @@ export default function EventsAdminConsole() {
               <h2>{t.dlqTab}</h2>
               <table style={{ width: "100%", borderCollapse: "collapse", marginTop: "var(--spacing-md)" }}>
                 <thead>
-                  <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.1)" }}>
+                  <tr style={{ borderBottom: "1px solid rgb(var(--color-ink-rgb) / 0.1)" }}>
                     <th style={{ padding: "8px", textAlign: isRtl ? "right" : "left" }}>{t.topic}</th>
                     <th style={{ padding: "8px", textAlign: isRtl ? "right" : "left" }}>{t.errorMsg}</th>
                     <th style={{ padding: "8px", textAlign: isRtl ? "right" : "left" }}>{t.createdAt}</th>
@@ -165,7 +165,7 @@ export default function EventsAdminConsole() {
                     <tr><td colSpan={4} style={{ padding: "16px", textAlign: "center", color: "var(--color-text-muted)" }}>No toxic events found.</td></tr>
                   ) : (
                     dlq.map(e => (
-                      <tr key={e.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                      <tr key={e.id} style={{ borderBottom: "1px solid rgb(var(--color-ink-rgb) / 0.05)" }}>
                         <td style={{ padding: "8px" }}><code>{e.topic}</code></td>
                         <td style={{ padding: "8px", color: "var(--color-warning)" }}>{e.errorMessage}</td>
                         <td style={{ padding: "8px" }}><small>{new Date(e.failedAt).toLocaleTimeString()}</small></td>
@@ -185,11 +185,11 @@ export default function EventsAdminConsole() {
               <h2>{t.replayTab}</h2>
               <div className="form-group">
                 <label>{t.tenantId}</label>
-                <input type="text" required value={replayParams.tenantId} onChange={e => setReplayParams({ ...replayParams, tenantId: e.target.value })} placeholder="00000000-0000-0000-0000-000000000000" style={{ background: "rgba(0,0,0,0.2)", border: "1px solid rgba(255,255,255,0.1)", padding: "8px", color: "white", borderRadius: "4px", width: "100%" }} />
+                <input type="text" required value={replayParams.tenantId} onChange={e => setReplayParams({ ...replayParams, tenantId: e.target.value })} placeholder="00000000-0000-0000-0000-000000000000" style={{ background: "rgba(0,0,0,0.2)", border: "1px solid rgb(var(--color-ink-rgb) / 0.1)", padding: "8px", color: "white", borderRadius: "4px", width: "100%" }} />
               </div>
               <div className="form-group">
                 <label>{t.topic}</label>
-                <input type="text" required value={replayParams.topic} onChange={e => setReplayParams({ ...replayParams, topic: e.target.value })} placeholder="platform.identity.events" style={{ background: "rgba(0,0,0,0.2)", border: "1px solid rgba(255,255,255,0.1)", padding: "8px", color: "white", borderRadius: "4px", width: "100%" }} />
+                <input type="text" required value={replayParams.topic} onChange={e => setReplayParams({ ...replayParams, topic: e.target.value })} placeholder="platform.identity.events" style={{ background: "rgba(0,0,0,0.2)", border: "1px solid rgb(var(--color-ink-rgb) / 0.1)", padding: "8px", color: "white", borderRadius: "4px", width: "100%" }} />
               </div>
               <button type="submit" style={{ background: "var(--color-primary)", border: "none", color: "white", padding: "10px", borderRadius: "4px", cursor: "pointer", fontWeight: "bold" }}>{t.triggerReplay}</button>
             </form>

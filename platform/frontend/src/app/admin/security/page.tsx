@@ -86,8 +86,8 @@ export default function SecurityAdminConsole() {
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(12, 1fr)", gap: "var(--spacing-lg)" }}>
         <aside className="glass-card" style={{ gridColumn: "span 3", display: "flex", flexDirection: "column", gap: "var(--spacing-sm)", height: "fit-content" }}>
-          <button onClick={() => setActiveTab("vault")} style={{ background: activeTab === "vault" ? "var(--color-primary)" : "none", color: "white", padding: "10px", borderRadius: "4px", border: "1px solid rgba(255,255,255,0.1)", cursor: "pointer", textAlign: isRtl ? "right" : "left" }}>{t.vaultTab}</button>
-          <button onClick={() => setActiveTab("opa")} style={{ background: activeTab === "opa" ? "var(--color-primary)" : "none", color: "white", padding: "10px", borderRadius: "4px", border: "1px solid rgba(255,255,255,0.1)", cursor: "pointer", textAlign: isRtl ? "right" : "left" }}>{t.opaTab}</button>
+          <button onClick={() => setActiveTab("vault")} style={{ background: activeTab === "vault" ? "var(--color-primary)" : "none", color: "white", padding: "10px", borderRadius: "4px", border: "1px solid rgb(var(--color-ink-rgb) / 0.1)", cursor: "pointer", textAlign: isRtl ? "right" : "left" }}>{t.vaultTab}</button>
+          <button onClick={() => setActiveTab("opa")} style={{ background: activeTab === "opa" ? "var(--color-primary)" : "none", color: "white", padding: "10px", borderRadius: "4px", border: "1px solid rgb(var(--color-ink-rgb) / 0.1)", cursor: "pointer", textAlign: isRtl ? "right" : "left" }}>{t.opaTab}</button>
         </aside>
 
         <main className="glass-card" style={{ gridColumn: "span 9" }}>
@@ -99,7 +99,7 @@ export default function SecurityAdminConsole() {
               </div>
               <table style={{ width: "100%", borderCollapse: "collapse" }}>
                 <thead>
-                  <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.1)" }}>
+                  <tr style={{ borderBottom: "1px solid rgb(var(--color-ink-rgb) / 0.1)" }}>
                     <th style={{ padding: "8px", textAlign: isRtl ? "right" : "left" }}>{t.path}</th>
                     <th style={{ padding: "8px", textAlign: isRtl ? "right" : "left" }}>{t.keys}</th>
                     <th style={{ padding: "8px", textAlign: isRtl ? "right" : "left" }}>{t.lastRotated}</th>
@@ -107,11 +107,11 @@ export default function SecurityAdminConsole() {
                 </thead>
                 <tbody>
                   {secrets.map(s => (
-                    <tr key={s.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                    <tr key={s.id} style={{ borderBottom: "1px solid rgb(var(--color-ink-rgb) / 0.05)" }}>
                       <td style={{ padding: "8px" }}><code>{s.path}</code></td>
                       <td style={{ padding: "8px" }}>
                         {s.keys.map(k => (
-                          <span key={k} style={{ background: "rgba(255,255,255,0.1)", padding: "2px 6px", marginRight: "4px", borderRadius: "4px", fontSize: "0.8rem" }}>{k}</span>
+                          <span key={k} style={{ background: "rgb(var(--color-ink-rgb) / 0.1)", padding: "2px 6px", marginRight: "4px", borderRadius: "4px", fontSize: "0.8rem" }}>{k}</span>
                         ))}
                       </td>
                       <td style={{ padding: "8px" }}><small>{new Date(s.lastRotated).toLocaleString()}</small></td>
@@ -127,7 +127,7 @@ export default function SecurityAdminConsole() {
               <h2>{t.opaTab}</h2>
               <table style={{ width: "100%", borderCollapse: "collapse", marginTop: "var(--spacing-md)" }}>
                 <thead>
-                  <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.1)" }}>
+                  <tr style={{ borderBottom: "1px solid rgb(var(--color-ink-rgb) / 0.1)" }}>
                     <th style={{ padding: "8px", textAlign: isRtl ? "right" : "left" }}>{t.policy}</th>
                     <th style={{ padding: "8px", textAlign: isRtl ? "right" : "left" }}>{t.resource}</th>
                     <th style={{ padding: "8px", textAlign: isRtl ? "right" : "left" }}>{t.action}</th>
@@ -136,7 +136,7 @@ export default function SecurityAdminConsole() {
                 </thead>
                 <tbody>
                   {policies.map(p => (
-                    <tr key={p.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                    <tr key={p.id} style={{ borderBottom: "1px solid rgb(var(--color-ink-rgb) / 0.05)" }}>
                       <td style={{ padding: "8px" }}><code>{p.name}</code></td>
                       <td style={{ padding: "8px" }}>{p.resource}</td>
                       <td style={{ padding: "8px" }}>{p.action.toUpperCase()}</td>

@@ -105,8 +105,8 @@ export default function IntegrationsAdminConsole() {
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(12, 1fr)", gap: "var(--spacing-lg)" }}>
         <aside className="glass-card" style={{ gridColumn: "span 3", display: "flex", flexDirection: "column", gap: "var(--spacing-sm)", height: "fit-content" }}>
-          <button onClick={() => setActiveTab("connectors")} style={{ background: activeTab === "connectors" ? "var(--color-primary)" : "none", color: "white", padding: "10px", borderRadius: "4px", border: "1px solid rgba(255,255,255,0.1)", cursor: "pointer", textAlign: isRtl ? "right" : "left" }}>{t.connectorTab}</button>
-          <button onClick={() => setActiveTab("audits")} style={{ background: activeTab === "audits" ? "var(--color-primary)" : "none", color: "white", padding: "10px", borderRadius: "4px", border: "1px solid rgba(255,255,255,0.1)", cursor: "pointer", textAlign: isRtl ? "right" : "left" }}>{t.auditTab}</button>
+          <button onClick={() => setActiveTab("connectors")} style={{ background: activeTab === "connectors" ? "var(--color-primary)" : "none", color: "white", padding: "10px", borderRadius: "4px", border: "1px solid rgb(var(--color-ink-rgb) / 0.1)", cursor: "pointer", textAlign: isRtl ? "right" : "left" }}>{t.connectorTab}</button>
+          <button onClick={() => setActiveTab("audits")} style={{ background: activeTab === "audits" ? "var(--color-primary)" : "none", color: "white", padding: "10px", borderRadius: "4px", border: "1px solid rgb(var(--color-ink-rgb) / 0.1)", cursor: "pointer", textAlign: isRtl ? "right" : "left" }}>{t.auditTab}</button>
         </aside>
 
         <main className="glass-card" style={{ gridColumn: "span 9" }}>
@@ -115,7 +115,7 @@ export default function IntegrationsAdminConsole() {
               <h2>{t.connectorTab}</h2>
               <table style={{ width: "100%", borderCollapse: "collapse", marginTop: "var(--spacing-md)" }}>
                 <thead>
-                  <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.1)" }}>
+                  <tr style={{ borderBottom: "1px solid rgb(var(--color-ink-rgb) / 0.1)" }}>
                     <th style={{ padding: "8px", textAlign: isRtl ? "right" : "left" }}>{t.name}</th>
                     <th style={{ padding: "8px", textAlign: isRtl ? "right" : "left" }}>{t.type}</th>
                     <th style={{ padding: "8px", textAlign: isRtl ? "right" : "left" }}>{t.url}</th>
@@ -125,9 +125,9 @@ export default function IntegrationsAdminConsole() {
                 </thead>
                 <tbody>
                   {connectors.map(c => (
-                    <tr key={c.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                    <tr key={c.id} style={{ borderBottom: "1px solid rgb(var(--color-ink-rgb) / 0.05)" }}>
                       <td style={{ padding: "8px" }}>{c.name}</td>
-                      <td style={{ padding: "8px" }}><span style={{ background: "rgba(255,255,255,0.1)", padding: "2px 6px", borderRadius: "4px" }}>{c.type.toUpperCase()}</span></td>
+                      <td style={{ padding: "8px" }}><span style={{ background: "rgb(var(--color-ink-rgb) / 0.1)", padding: "2px 6px", borderRadius: "4px" }}>{c.type.toUpperCase()}</span></td>
                       <td style={{ padding: "8px" }}><code>{c.url}</code></td>
                       <td style={{ padding: "8px", color: c.active ? "var(--color-success)" : "var(--color-text-subtle)" }}>{c.active ? t.active : t.inactive}</td>
                       <td style={{ padding: "8px" }}>
@@ -145,7 +145,7 @@ export default function IntegrationsAdminConsole() {
               <h2>{t.auditTab}</h2>
               <table style={{ width: "100%", borderCollapse: "collapse", marginTop: "var(--spacing-md)" }}>
                 <thead>
-                  <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.1)" }}>
+                  <tr style={{ borderBottom: "1px solid rgb(var(--color-ink-rgb) / 0.1)" }}>
                     <th style={{ padding: "8px", textAlign: isRtl ? "right" : "left" }}>Message ID</th>
                     <th style={{ padding: "8px", textAlign: isRtl ? "right" : "left" }}>{t.type}</th>
                     <th style={{ padding: "8px", textAlign: isRtl ? "right" : "left" }}>{t.direction}</th>
@@ -155,9 +155,9 @@ export default function IntegrationsAdminConsole() {
                 </thead>
                 <tbody>
                   {audits.map(a => (
-                    <tr key={a.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                    <tr key={a.id} style={{ borderBottom: "1px solid rgb(var(--color-ink-rgb) / 0.05)" }}>
                       <td style={{ padding: "8px" }}>{a.id}</td>
-                      <td style={{ padding: "8px" }}><span style={{ background: "rgba(255,255,255,0.1)", padding: "2px 6px", borderRadius: "4px" }}>{a.connectorType.toUpperCase()}</span></td>
+                      <td style={{ padding: "8px" }}><span style={{ background: "rgb(var(--color-ink-rgb) / 0.1)", padding: "2px 6px", borderRadius: "4px" }}>{a.connectorType.toUpperCase()}</span></td>
                       <td style={{ padding: "8px" }}>{a.direction.toUpperCase()}</td>
                       <td style={{ padding: "8px", color: a.status === "success" ? "var(--color-success)" : "var(--color-error)" }}>{a.status.toUpperCase()}</td>
                       <td style={{ padding: "8px" }}>{a.duration} ms</td>

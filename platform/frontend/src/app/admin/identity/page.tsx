@@ -503,7 +503,7 @@ export default function IdentityAdminPortal() {
                   width: "100%",
                   padding: "var(--spacing-sm) var(--spacing-md)",
                   background: activeTab === tab.id ? "var(--color-primary)" : "none",
-                  border: "1px solid rgba(255, 255, 255, 0.1)",
+                  border: "1px solid rgb(var(--color-ink-rgb) / 0.1)",
                   color: "white",
                   borderRadius: "var(--radius-md)",
                   textAlign: isRtl ? "right" : "left",
@@ -531,7 +531,7 @@ export default function IdentityAdminPortal() {
                 <div style={{ overflowX: "auto" }}>
                   <table style={{ width: "100%", borderCollapse: "collapse", marginBottom: "var(--spacing-lg)" }}>
                     <thead>
-                      <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.15)" }}>
+                      <tr style={{ borderBottom: "1px solid rgb(var(--color-ink-rgb) / 0.15)" }}>
                         <th style={{ padding: "var(--spacing-sm)", textAlign: isRtl ? "right" : "left" }}>{t.realmName}</th>
                         <th style={{ padding: "var(--spacing-sm)", textAlign: isRtl ? "right" : "left" }}>{t.realmType}</th>
                         <th style={{ padding: "var(--spacing-sm)", textAlign: isRtl ? "right" : "left" }}>{t.region}</th>
@@ -541,10 +541,10 @@ export default function IdentityAdminPortal() {
                     </thead>
                     <tbody>
                       {realms.map(r => (
-                        <tr key={r.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                        <tr key={r.id} style={{ borderBottom: "1px solid rgb(var(--color-ink-rgb) / 0.05)" }}>
                           <td style={{ padding: "var(--spacing-sm)" }}>{r.name}</td>
                           <td style={{ padding: "var(--spacing-sm)" }}>
-                            <span style={{ background: "rgba(255,255,255,0.1)", padding: "2px 6px", borderRadius: "4px", fontSize: "0.8rem" }}>{r.type}</span>
+                            <span style={{ background: "rgb(var(--color-ink-rgb) / 0.1)", padding: "2px 6px", borderRadius: "4px", fontSize: "0.8rem" }}>{r.type}</span>
                           </td>
                           <td style={{ padding: "var(--spacing-sm)" }}>{r.region}</td>
                           <td style={{ padding: "var(--spacing-sm)" }}>
@@ -577,11 +577,11 @@ export default function IdentityAdminPortal() {
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--spacing-sm)", marginBottom: "var(--spacing-sm)" }}>
                     <div className="form-group">
                       <label>{t.realmName}</label>
-                      <input type="text" value={newRealm.name} onChange={e => setNewRealm({ ...newRealm, name: e.target.value })} placeholder="e.g. corp-workforce" style={{ background: "rgba(0,0,0,0.2)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "4px", padding: "6px", color: "white", width: "100%" }} />
+                      <input type="text" value={newRealm.name} onChange={e => setNewRealm({ ...newRealm, name: e.target.value })} placeholder="e.g. corp-workforce" style={{ background: "rgba(0,0,0,0.2)", border: "1px solid rgb(var(--color-ink-rgb) / 0.1)", borderRadius: "4px", padding: "6px", color: "white", width: "100%" }} />
                     </div>
                     <div className="form-group">
                       <label>{t.realmType}</label>
-                      <select value={newRealm.type} onChange={e => setNewRealm({ ...newRealm, type: e.target.value })} style={{ background: "rgba(0,0,0,0.2)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "4px", padding: "6px", color: "white", width: "100%" }}>
+                      <select value={newRealm.type} onChange={e => setNewRealm({ ...newRealm, type: e.target.value })} style={{ background: "rgba(0,0,0,0.2)", border: "1px solid rgb(var(--color-ink-rgb) / 0.1)", borderRadius: "4px", padding: "6px", color: "white", width: "100%" }}>
                         <option value="workforce">Workforce</option>
                         <option value="customer">Customer (Multi-Tenant)</option>
                         <option value="citizen">Citizen</option>
@@ -608,7 +608,7 @@ export default function IdentityAdminPortal() {
                 <div style={{ overflowX: "auto", marginTop: "var(--spacing-md)" }}>
                   <table style={{ width: "100%", borderCollapse: "collapse", marginBottom: "var(--spacing-lg)" }}>
                     <thead>
-                      <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.15)" }}>
+                      <tr style={{ borderBottom: "1px solid rgb(var(--color-ink-rgb) / 0.15)" }}>
                         <th style={{ padding: "var(--spacing-sm)", textAlign: isRtl ? "right" : "left" }}>{t.username}</th>
                         <th style={{ padding: "var(--spacing-sm)", textAlign: isRtl ? "right" : "left" }}>{t.email}</th>
                         <th style={{ padding: "var(--spacing-sm)", textAlign: isRtl ? "right" : "left" }}>{t.status}</th>
@@ -617,7 +617,7 @@ export default function IdentityAdminPortal() {
                     </thead>
                     <tbody>
                       {users.map(u => (
-                        <tr key={u.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                        <tr key={u.id} style={{ borderBottom: "1px solid rgb(var(--color-ink-rgb) / 0.05)" }}>
                           <td style={{ padding: "var(--spacing-sm)" }}>
                             <div>{u.displayName}</div>
                             <small style={{ color: "var(--color-text-muted)" }}>@{u.username}</small>
@@ -658,11 +658,11 @@ export default function IdentityAdminPortal() {
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "var(--spacing-sm)" }}>
                     <div className="form-group">
                       <label>{t.username}</label>
-                      <input type="text" value={newUser.username} onChange={e => setNewUser({ ...newUser, username: e.target.value })} placeholder="e.g. s.johansson" style={{ background: "rgba(0,0,0,0.2)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "4px", padding: "6px", color: "white", width: "100%" }} />
+                      <input type="text" value={newUser.username} onChange={e => setNewUser({ ...newUser, username: e.target.value })} placeholder="e.g. s.johansson" style={{ background: "rgba(0,0,0,0.2)", border: "1px solid rgb(var(--color-ink-rgb) / 0.1)", borderRadius: "4px", padding: "6px", color: "white", width: "100%" }} />
                     </div>
                     <div className="form-group">
                       <label>{t.email}</label>
-                      <input type="email" value={newUser.email} onChange={e => setNewUser({ ...newUser, email: e.target.value })} placeholder="email@cybercom.com" style={{ background: "rgba(0,0,0,0.2)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "4px", padding: "6px", color: "white", width: "100%" }} />
+                      <input type="email" value={newUser.email} onChange={e => setNewUser({ ...newUser, email: e.target.value })} placeholder="email@cybercom.com" style={{ background: "rgba(0,0,0,0.2)", border: "1px solid rgb(var(--color-ink-rgb) / 0.1)", borderRadius: "4px", padding: "6px", color: "white", width: "100%" }} />
                     </div>
                     <div className="form-group" style={{ display: "flex", flexDirection: "column", justifyContent: "flex-end" }}>
                       <button type="submit" style={{ background: "var(--color-primary)", color: "white", border: "none", padding: "8px 16px", borderRadius: "4px", cursor: "pointer", fontWeight: "bold" }}>{t.save}</button>
@@ -679,7 +679,7 @@ export default function IdentityAdminPortal() {
                 <div style={{ overflowX: "auto", marginTop: "var(--spacing-md)" }}>
                   <table style={{ width: "100%", borderCollapse: "collapse" }}>
                     <thead>
-                      <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.15)" }}>
+                      <tr style={{ borderBottom: "1px solid rgb(var(--color-ink-rgb) / 0.15)" }}>
                         <th style={{ padding: "var(--spacing-sm)", textAlign: isRtl ? "right" : "left" }}>{t.roleName}</th>
                         <th style={{ padding: "var(--spacing-sm)", textAlign: isRtl ? "right" : "left" }}>{t.roleType}</th>
                         <th style={{ padding: "var(--spacing-sm)", textAlign: isRtl ? "right" : "left" }}>{t.description}</th>
@@ -687,7 +687,7 @@ export default function IdentityAdminPortal() {
                     </thead>
                     <tbody>
                       {roles.map(r => (
-                        <tr key={r.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                        <tr key={r.id} style={{ borderBottom: "1px solid rgb(var(--color-ink-rgb) / 0.05)" }}>
                           <td style={{ padding: "var(--spacing-sm)", fontWeight: "bold" }}>{r.name}</td>
                           <td style={{ padding: "var(--spacing-sm)" }}>
                             <span style={{
@@ -713,7 +713,7 @@ export default function IdentityAdminPortal() {
                 <div style={{ overflowX: "auto", marginTop: "var(--spacing-md)" }}>
                   <table style={{ width: "100%", borderCollapse: "collapse" }}>
                     <thead>
-                      <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.15)" }}>
+                      <tr style={{ borderBottom: "1px solid rgb(var(--color-ink-rgb) / 0.15)" }}>
                         <th style={{ padding: "var(--spacing-sm)", textAlign: isRtl ? "right" : "left" }}>{t.groupName}</th>
                         <th style={{ padding: "var(--spacing-sm)", textAlign: isRtl ? "right" : "left" }}>{t.path}</th>
                         <th style={{ padding: "var(--spacing-sm)", textAlign: isRtl ? "right" : "left" }}>{t.description}</th>
@@ -721,7 +721,7 @@ export default function IdentityAdminPortal() {
                     </thead>
                     <tbody>
                       {groups.map(g => (
-                        <tr key={g.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                        <tr key={g.id} style={{ borderBottom: "1px solid rgb(var(--color-ink-rgb) / 0.05)" }}>
                           <td style={{ padding: "var(--spacing-sm)", fontWeight: "bold" }}>{g.name}</td>
                           <td style={{ padding: "var(--spacing-sm)" }}>
                             <code style={{ background: "rgba(0,0,0,0.3)", padding: "2px 6px", borderRadius: "4px" }}>{g.path}</code>
@@ -742,7 +742,7 @@ export default function IdentityAdminPortal() {
                 <div style={{ overflowX: "auto", marginTop: "var(--spacing-md)" }}>
                   <table style={{ width: "100%", borderCollapse: "collapse" }}>
                     <thead>
-                      <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.15)" }}>
+                      <tr style={{ borderBottom: "1px solid rgb(var(--color-ink-rgb) / 0.15)" }}>
                         <th style={{ padding: "var(--spacing-sm)", textAlign: isRtl ? "right" : "left" }}>{t.clientId}</th>
                         <th style={{ padding: "var(--spacing-sm)", textAlign: isRtl ? "right" : "left" }}>{t.protocol}</th>
                         <th style={{ padding: "var(--spacing-sm)", textAlign: isRtl ? "right" : "left" }}>{t.secretHint}</th>
@@ -751,13 +751,13 @@ export default function IdentityAdminPortal() {
                     </thead>
                     <tbody>
                       {clients.map(c => (
-                        <tr key={c.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                        <tr key={c.id} style={{ borderBottom: "1px solid rgb(var(--color-ink-rgb) / 0.05)" }}>
                           <td style={{ padding: "var(--spacing-sm)" }}>
                             <div>{c.name}</div>
                             <small style={{ color: "var(--color-text-muted)" }}>{c.clientId}</small>
                           </td>
                           <td style={{ padding: "var(--spacing-sm)" }}>
-                            <span style={{ textTransform: "uppercase", fontSize: "0.8rem", background: "rgba(255,255,255,0.1)", padding: "2px 6px", borderRadius: "4px" }}>{c.protocol}</span>
+                            <span style={{ textTransform: "uppercase", fontSize: "0.8rem", background: "rgb(var(--color-ink-rgb) / 0.1)", padding: "2px 6px", borderRadius: "4px" }}>{c.protocol}</span>
                           </td>
                           <td style={{ padding: "var(--spacing-sm)" }}>
                             {c.publicClient ? (
@@ -804,7 +804,7 @@ export default function IdentityAdminPortal() {
                 <div style={{ overflowX: "auto" }}>
                   <table style={{ width: "100%", borderCollapse: "collapse" }}>
                     <thead>
-                      <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.15)" }}>
+                      <tr style={{ borderBottom: "1px solid rgb(var(--color-ink-rgb) / 0.15)" }}>
                         <th style={{ padding: "var(--spacing-sm)", textAlign: isRtl ? "right" : "left" }}>{t.username}</th>
                         <th style={{ padding: "var(--spacing-sm)", textAlign: isRtl ? "right" : "left" }}>{t.ipAddress}</th>
                         <th style={{ padding: "var(--spacing-sm)", textAlign: isRtl ? "right" : "left" }}>{t.startedAt}</th>
@@ -814,7 +814,7 @@ export default function IdentityAdminPortal() {
                     </thead>
                     <tbody>
                       {sessions.map(s => (
-                        <tr key={s.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                        <tr key={s.id} style={{ borderBottom: "1px solid rgb(var(--color-ink-rgb) / 0.05)" }}>
                           <td style={{ padding: "var(--spacing-sm)" }}>{s.username}</td>
                           <td style={{ padding: "var(--spacing-sm)" }}><code>{s.ipAddress}</code></td>
                           <td style={{ padding: "var(--spacing-sm)" }}>{new Date(s.startedAt).toLocaleTimeString()}</td>
@@ -859,7 +859,7 @@ export default function IdentityAdminPortal() {
                 <div style={{ overflowX: "auto", marginTop: "var(--spacing-md)" }}>
                   <table style={{ width: "100%", borderCollapse: "collapse", marginBottom: "var(--spacing-lg)" }}>
                     <thead>
-                      <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.15)" }}>
+                      <tr style={{ borderBottom: "1px solid rgb(var(--color-ink-rgb) / 0.15)" }}>
                         <th style={{ padding: "var(--spacing-sm)", textAlign: isRtl ? "right" : "left" }}>Requestor</th>
                         <th style={{ padding: "var(--spacing-sm)", textAlign: isRtl ? "right" : "left" }}>{t.reason} / {t.justification}</th>
                         <th style={{ padding: "var(--spacing-sm)", textAlign: isRtl ? "right" : "left" }}>{t.target}</th>
@@ -869,7 +869,7 @@ export default function IdentityAdminPortal() {
                     </thead>
                     <tbody>
                       {breakGlasses.map(bg => (
-                        <tr key={bg.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                        <tr key={bg.id} style={{ borderBottom: "1px solid rgb(var(--color-ink-rgb) / 0.05)" }}>
                           <td style={{ padding: "var(--spacing-sm)" }}>{bg.username}</td>
                           <td style={{ padding: "var(--spacing-sm)" }}>
                             <div><strong>{bg.reason.toUpperCase()}</strong></div>
@@ -912,11 +912,11 @@ export default function IdentityAdminPortal() {
                     <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "var(--spacing-sm)", marginBottom: "var(--spacing-sm)" }}>
                       <div className="form-group">
                         <label>{t.approver1}</label>
-                        <input type="text" required value={dualApproval.approver} onChange={e => setDualApproval({ ...dualApproval, approver: e.target.value })} placeholder="Chief Security Officer" style={{ background: "rgba(0,0,0,0.2)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "4px", padding: "6px", color: "white", width: "100%" }} />
+                        <input type="text" required value={dualApproval.approver} onChange={e => setDualApproval({ ...dualApproval, approver: e.target.value })} placeholder="Chief Security Officer" style={{ background: "rgba(0,0,0,0.2)", border: "1px solid rgb(var(--color-ink-rgb) / 0.1)", borderRadius: "4px", padding: "6px", color: "white", width: "100%" }} />
                       </div>
                       <div className="form-group">
                         <label>{t.approver2}</label>
-                        <input type="text" required value={dualApproval.secondApprover} onChange={e => setDualApproval({ ...dualApproval, secondApprover: e.target.value })} placeholder="Clinical Director" style={{ background: "rgba(0,0,0,0.2)", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "4px", padding: "6px", color: "white", width: "100%" }} />
+                        <input type="text" required value={dualApproval.secondApprover} onChange={e => setDualApproval({ ...dualApproval, secondApprover: e.target.value })} placeholder="Clinical Director" style={{ background: "rgba(0,0,0,0.2)", border: "1px solid rgb(var(--color-ink-rgb) / 0.1)", borderRadius: "4px", padding: "6px", color: "white", width: "100%" }} />
                       </div>
                     </div>
                     <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
@@ -935,7 +935,7 @@ export default function IdentityAdminPortal() {
                 <div style={{ overflowX: "auto", marginTop: "var(--spacing-md)" }}>
                   <table style={{ width: "100%", borderCollapse: "collapse" }}>
                     <thead>
-                      <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.15)" }}>
+                      <tr style={{ borderBottom: "1px solid rgb(var(--color-ink-rgb) / 0.15)" }}>
                         <th style={{ padding: "var(--spacing-sm)", textAlign: isRtl ? "right" : "left" }}>{t.timestamp}</th>
                         <th style={{ padding: "var(--spacing-sm)", textAlign: isRtl ? "right" : "left" }}>User</th>
                         <th style={{ padding: "var(--spacing-sm)", textAlign: isRtl ? "right" : "left" }}>{t.outcome}</th>
@@ -944,7 +944,7 @@ export default function IdentityAdminPortal() {
                     </thead>
                     <tbody>
                       {auditLogs.map(a => (
-                        <tr key={a.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                        <tr key={a.id} style={{ borderBottom: "1px solid rgb(var(--color-ink-rgb) / 0.05)" }}>
                           <td style={{ padding: "var(--spacing-sm)", whiteSpace: "nowrap" }}><small>{new Date(a.timestamp).toLocaleString()}</small></td>
                           <td style={{ padding: "var(--spacing-sm)" }}>
                             <div>{a.usernameAttempted}</div>

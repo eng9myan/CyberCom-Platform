@@ -288,7 +288,7 @@ export default function ADTPage() {
                   <tr><td colSpan={6} style={{ padding: "1.5rem", textAlign: "center", color: "var(--color-text-muted)" }}>No ADT transactions for this tenant yet.</td></tr>
                 )}
                 {filteredLog.map((tx, i) => (
-                  <tr key={tx.id} style={{ borderBottom: "1px solid var(--color-border)", background: i % 2 === 0 ? "transparent" : "rgba(255,255,255,0.02)" }}>
+                  <tr key={tx.id} style={{ borderBottom: "1px solid var(--color-border)", background: i % 2 === 0 ? "transparent" : "rgb(var(--color-ink-rgb) / 0.02)" }}>
                     <td style={{ padding: "0.875rem 1rem" }}>
                       <span style={{ padding: "0.25rem 0.75rem", borderRadius: "20px", fontSize: "0.75rem", fontWeight: 700, background: typeColor(tx.kind) + "22", color: typeColor(tx.kind), textTransform: "capitalize" }}>{tx.kind}</span>
                     </td>
@@ -297,7 +297,7 @@ export default function ADTPage() {
                     <td style={{ padding: "0.875rem 1rem", fontSize: "0.8rem", color: "var(--color-text-muted)", maxWidth: "220px" }}>{tx.reason}</td>
                     <td style={{ padding: "0.875rem 1rem", fontSize: "0.8rem", color: "var(--color-text-muted)", whiteSpace: "nowrap" }}>{new Date(tx.timestamp).toLocaleString()}</td>
                     <td style={{ padding: "0.875rem 1rem" }}>
-                      <span style={{ padding: "0.25rem 0.625rem", borderRadius: "20px", fontSize: "0.75rem", fontWeight: 700, background: "rgba(255,255,255,0.06)", color: "var(--color-text-muted)", textTransform: "capitalize" }}>{tx.status}</span>
+                      <span style={{ padding: "0.25rem 0.625rem", borderRadius: "20px", fontSize: "0.75rem", fontWeight: 700, background: "rgb(var(--color-ink-rgb) / 0.06)", color: "var(--color-text-muted)", textTransform: "capitalize" }}>{tx.status}</span>
                     </td>
                   </tr>
                 ))}

@@ -105,9 +105,9 @@ export default function AIAdminConsole() {
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(12, 1fr)", gap: "var(--spacing-lg)" }}>
         <aside className="glass-card" style={{ gridColumn: "span 3", display: "flex", flexDirection: "column", gap: "var(--spacing-sm)", height: "fit-content" }}>
-          <button onClick={() => setActiveTab("models")} style={{ background: activeTab === "models" ? "var(--color-primary)" : "none", color: "white", padding: "10px", borderRadius: "4px", border: "1px solid rgba(255,255,255,0.1)", cursor: "pointer", textAlign: isRtl ? "right" : "left" }}>{t.modelTab}</button>
-          <button onClick={() => setActiveTab("prompts")} style={{ background: activeTab === "prompts" ? "var(--color-primary)" : "none", color: "white", padding: "10px", borderRadius: "4px", border: "1px solid rgba(255,255,255,0.1)", cursor: "pointer", textAlign: isRtl ? "right" : "left" }}>{t.promptTab}</button>
-          <button onClick={() => setActiveTab("logs")} style={{ background: activeTab === "logs" ? "var(--color-primary)" : "none", color: "white", padding: "10px", borderRadius: "4px", border: "1px solid rgba(255,255,255,0.1)", cursor: "pointer", textAlign: isRtl ? "right" : "left" }}>{t.logTab}</button>
+          <button onClick={() => setActiveTab("models")} style={{ background: activeTab === "models" ? "var(--color-primary)" : "none", color: "white", padding: "10px", borderRadius: "4px", border: "1px solid rgb(var(--color-ink-rgb) / 0.1)", cursor: "pointer", textAlign: isRtl ? "right" : "left" }}>{t.modelTab}</button>
+          <button onClick={() => setActiveTab("prompts")} style={{ background: activeTab === "prompts" ? "var(--color-primary)" : "none", color: "white", padding: "10px", borderRadius: "4px", border: "1px solid rgb(var(--color-ink-rgb) / 0.1)", cursor: "pointer", textAlign: isRtl ? "right" : "left" }}>{t.promptTab}</button>
+          <button onClick={() => setActiveTab("logs")} style={{ background: activeTab === "logs" ? "var(--color-primary)" : "none", color: "white", padding: "10px", borderRadius: "4px", border: "1px solid rgb(var(--color-ink-rgb) / 0.1)", cursor: "pointer", textAlign: isRtl ? "right" : "left" }}>{t.logTab}</button>
         </aside>
 
         <main className="glass-card" style={{ gridColumn: "span 9" }}>
@@ -116,7 +116,7 @@ export default function AIAdminConsole() {
               <h2>{t.modelTab}</h2>
               <table style={{ width: "100%", borderCollapse: "collapse", marginTop: "var(--spacing-md)" }}>
                 <thead>
-                  <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.1)" }}>
+                  <tr style={{ borderBottom: "1px solid rgb(var(--color-ink-rgb) / 0.1)" }}>
                     <th style={{ padding: "8px", textAlign: isRtl ? "right" : "left" }}>{t.name}</th>
                     <th style={{ padding: "8px", textAlign: isRtl ? "right" : "left" }}>{t.provider}</th>
                     <th style={{ padding: "8px", textAlign: isRtl ? "right" : "left" }}>{t.model}</th>
@@ -125,9 +125,9 @@ export default function AIAdminConsole() {
                 </thead>
                 <tbody>
                   {models.map(m => (
-                    <tr key={m.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                    <tr key={m.id} style={{ borderBottom: "1px solid rgb(var(--color-ink-rgb) / 0.05)" }}>
                       <td style={{ padding: "8px" }}>{m.name}</td>
-                      <td style={{ padding: "8px" }}><span style={{ textTransform: "uppercase", fontSize: "0.85rem", background: "rgba(255,255,255,0.1)", padding: "2px 6px", borderRadius: "4px" }}>{m.provider}</span></td>
+                      <td style={{ padding: "8px" }}><span style={{ textTransform: "uppercase", fontSize: "0.85rem", background: "rgb(var(--color-ink-rgb) / 0.1)", padding: "2px 6px", borderRadius: "4px" }}>{m.provider}</span></td>
                       <td style={{ padding: "8px" }}><code>{m.model}</code></td>
                       <td style={{ padding: "8px", color: m.active ? "var(--color-success)" : "var(--color-text-subtle)" }}>{m.active ? t.active : t.inactive}</td>
                     </tr>
@@ -142,7 +142,7 @@ export default function AIAdminConsole() {
               <h2>{t.promptTab}</h2>
               <table style={{ width: "100%", borderCollapse: "collapse", marginTop: "var(--spacing-md)" }}>
                 <thead>
-                  <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.1)" }}>
+                  <tr style={{ borderBottom: "1px solid rgb(var(--color-ink-rgb) / 0.1)" }}>
                     <th style={{ padding: "8px", textAlign: isRtl ? "right" : "left" }}>{t.name}</th>
                     <th style={{ padding: "8px", textAlign: isRtl ? "right" : "left" }}>Template Text</th>
                     <th style={{ padding: "8px", textAlign: isRtl ? "right" : "left" }}>{t.version}</th>
@@ -150,10 +150,10 @@ export default function AIAdminConsole() {
                 </thead>
                 <tbody>
                   {prompts.map(p => (
-                    <tr key={p.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                    <tr key={p.id} style={{ borderBottom: "1px solid rgb(var(--color-ink-rgb) / 0.05)" }}>
                       <td style={{ padding: "8px", fontWeight: "bold" }}>{p.name}</td>
                       <td style={{ padding: "8px" }}><code>{p.text}</code></td>
-                      <td style={{ padding: "8px" }}><span style={{ background: "rgba(255,255,255,0.1)", padding: "2px 8px", borderRadius: "4px" }}>v{p.version}</span></td>
+                      <td style={{ padding: "8px" }}><span style={{ background: "rgb(var(--color-ink-rgb) / 0.1)", padding: "2px 8px", borderRadius: "4px" }}>v{p.version}</span></td>
                     </tr>
                   ))}
                 </tbody>
@@ -166,7 +166,7 @@ export default function AIAdminConsole() {
               <h2>{t.logTab}</h2>
               <table style={{ width: "100%", borderCollapse: "collapse", marginTop: "var(--spacing-md)" }}>
                 <thead>
-                  <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.1)" }}>
+                  <tr style={{ borderBottom: "1px solid rgb(var(--color-ink-rgb) / 0.1)" }}>
                     <th style={{ padding: "8px", textAlign: isRtl ? "right" : "left" }}>{t.prompt}</th>
                     <th style={{ padding: "8px", textAlign: isRtl ? "right" : "left" }}>{t.response}</th>
                     <th style={{ padding: "8px", textAlign: isRtl ? "right" : "left" }}>{t.tokens}</th>
@@ -175,7 +175,7 @@ export default function AIAdminConsole() {
                 </thead>
                 <tbody>
                   {logs.map(l => (
-                    <tr key={l.id} style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+                    <tr key={l.id} style={{ borderBottom: "1px solid rgb(var(--color-ink-rgb) / 0.05)" }}>
                       <td style={{ padding: "8px" }}>{l.prompt}</td>
                       <td style={{ padding: "8px", color: "var(--color-text-muted)" }}>{l.response}</td>
                       <td style={{ padding: "8px" }}>{l.tokens}</td>
