@@ -129,6 +129,7 @@ class ExternalInvoiceGatewayView(APIView):
 
                 subtotal = Decimal("0")
                 tax_total = Decimal("0")
+                subsidy_total = Decimal("0")
                 for i, line in enumerate(data["lines"], start=1):
                     line_total = (line["quantity"] * line["unit_price"]).quantize(Decimal("0.01"))
                     line_obj = InvoiceLine(
@@ -147,12 +148,21 @@ class ExternalInvoiceGatewayView(APIView):
                     line_obj.save()
                     subtotal += line_total
                     tax_total += line_obj.tax_amount
+                    subsidy_total += line_obj.government_subsidy_amount
 
+                # amount_total/amount_tax are the REAL, full legal liability
+                # -- what ZATCA/JoFotara see. amount_government_subsidy is a
+                # separate reduction of what the PATIENT owes (amount_
+                # outstanding), not a change to the invoice's tax reporting.
                 invoice.amount_subtotal = subtotal
                 invoice.amount_tax = tax_total
                 invoice.amount_total = subtotal + tax_total
-                invoice.amount_outstanding = invoice.amount_total
-                invoice.save(update_fields=["amount_subtotal", "amount_tax", "amount_total", "amount_outstanding", "updated_at"])
+                invoice.amount_government_subsidy = subsidy_total
+                invoice.amount_outstanding = invoice.amount_total - subsidy_total
+                invoice.save(update_fields=[
+                    "amount_subtotal", "amount_tax", "amount_total",
+                    "amount_government_subsidy", "amount_outstanding", "updated_at",
+                ])
         except (InvalidOperation, ValueError) as exc:
             self._audit(tenant_id, actor, source_system, status_="rejected", detail={"error": str(exc)})
             return Response({"detail": f"Failed to map payload: {exc}"}, status=status.HTTP_400_BAD_REQUEST)

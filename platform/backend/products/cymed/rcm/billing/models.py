@@ -173,6 +173,11 @@ class Invoice(BaseModel):
     amount_tax = models.DecimalField(max_digits=14, decimal_places=2, default=0)
     amount_discount = models.DecimalField(max_digits=14, decimal_places=2, default=0)
     amount_total = models.DecimalField(max_digits=14, decimal_places=2, default=0)
+    # Sum of lines' government_subsidy_amount -- amount_total/amount_tax
+    # stay the real, full legal totals (what ZATCA/JoFotara see and what
+    # this invoice's UBL reports); this is a separate patient-payable
+    # reduction, not a change to the invoice's tax liability.
+    amount_government_subsidy = models.DecimalField(max_digits=14, decimal_places=2, default=0)
     amount_paid = models.DecimalField(max_digits=14, decimal_places=2, default=0)
     amount_outstanding = models.DecimalField(max_digits=14, decimal_places=2, default=0)
     currency = models.CharField(max_length=3, default="SAR")
@@ -274,11 +279,14 @@ class OfflineTaxQueueEntry(BaseModel):
 
 class ServiceClassification(models.TextChoices):
     """
-    Drives per-line VAT resolution (see vat.py). "medical_necessity" is the
-    only classification eligible for the citizen zero-rate; elective and
-    retail lines are always standard-rated regardless of the patient's
-    nationality, per the explicit "0% for qualifying citizens, 15% for
-    non-citizens OR elective/retail items" rule.
+    Drives per-line VAT resolution (see vat.py). Every line is taxed at the
+    real ZATCA standard rate (15%, category "S") regardless of nationality
+    or classification -- ZATCA's UBL schema has no "government pays this"
+    tax category, so citizenship never changes the RATE reported to ZATCA.
+    "medical_necessity" instead determines whether a qualifying citizen's
+    tax is covered by a government subsidy allocation (see
+    InvoiceLine.government_subsidy_amount) -- a patient-payable adjustment
+    that sits alongside the invoice, not inside its tax representation.
     """
 
     MEDICAL_NECESSITY = "medical_necessity", "Medical Necessity"
@@ -320,6 +328,11 @@ class InvoiceLine(BaseModel):
     )
     tax_rate = models.DecimalField(max_digits=5, decimal_places=4, default=0)
     tax_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    # Portion of tax_amount the government covers for a qualifying citizen's
+    # medical-necessity line -- reduces what the PATIENT owes without
+    # changing tax_amount/tax_rate, which stay the real, full legal VAT
+    # liability reported to ZATCA. See vat.py::resolve_government_subsidy.
+    government_subsidy_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0)
 
     charge_id = models.UUIDField(null=True, blank=True)
     icd11_diagnosis_code = models.CharField(max_length=20, blank=True)

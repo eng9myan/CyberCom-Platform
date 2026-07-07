@@ -40,6 +40,7 @@ UBL_NS = {
 ZATCA_REPORTING_URL = "https://gw-fatoora.zatca.gov.sa/e-invoicing/core/invoices/reporting/single"
 ZATCA_CLEARANCE_URL = "https://gw-fatoora.zatca.gov.sa/e-invoicing/core/invoices/clearance/single"
 ZERO_HASH_B64 = base64.b64encode(b"\x00").decode("ascii")  # ZATCA-defined PIH seed for a device's first invoice
+STANDARD_ZATCA_TAX_PERCENT = 15  # matches vat.py::STANDARD_VAT_RATE (0.15) -- category "S" always
 
 
 def _qn(prefix: str, tag: str) -> str:
@@ -95,8 +96,22 @@ class ZatcaFatoorahService:
         party_id = ET.SubElement(customer, _qn("cac", "PartyIdentification"))
         ET.SubElement(party_id, _qn("cbc", "ID"), {"schemeID": "TIN"}).text = str(invoice.patient_account.patient_id)
 
+        # Real ZATCA tax category: "S" (standard-rated), the only category
+        # this connector ever emits -- there is no ZATCA category for "the
+        # government covers this" (that's a separate patient-payable
+        # subsidy allocation on the Invoice model, not a tax-code change;
+        # see vat.py). Previously this element was entirely absent -- a real
+        # ZATCA-conformance gap independent of the subsidy question.
         tax_total = ET.SubElement(root, _qn("cac", "TaxTotal"))
         ET.SubElement(tax_total, _qn("cbc", "TaxAmount"), {"currencyID": invoice.currency}).text = str(invoice.amount_tax)
+        tax_subtotal = ET.SubElement(tax_total, _qn("cac", "TaxSubtotal"))
+        ET.SubElement(tax_subtotal, _qn("cbc", "TaxableAmount"), {"currencyID": invoice.currency}).text = str(invoice.amount_subtotal)
+        ET.SubElement(tax_subtotal, _qn("cbc", "TaxAmount"), {"currencyID": invoice.currency}).text = str(invoice.amount_tax)
+        tax_category = ET.SubElement(tax_subtotal, _qn("cac", "TaxCategory"))
+        ET.SubElement(tax_category, _qn("cbc", "ID"), {"schemeID": "UN/ECE 5305", "schemeAgencyID": "6"}).text = "S"
+        ET.SubElement(tax_category, _qn("cbc", "Percent")).text = str(STANDARD_ZATCA_TAX_PERCENT)
+        tax_scheme = ET.SubElement(tax_category, _qn("cac", "TaxScheme"))
+        ET.SubElement(tax_scheme, _qn("cbc", "ID"), {"schemeID": "UN/ECE 5153", "schemeAgencyID": "6"}).text = "VAT"
 
         monetary_total = ET.SubElement(root, _qn("cac", "LegalMonetaryTotal"))
         ET.SubElement(monetary_total, _qn("cbc", "TaxExclusiveAmount"), {"currencyID": invoice.currency}).text = str(invoice.amount_subtotal)
@@ -108,8 +123,23 @@ class ZatcaFatoorahService:
             ET.SubElement(invoice_line, _qn("cbc", "ID")).text = str(line.line_number)
             ET.SubElement(invoice_line, _qn("cbc", "InvoicedQuantity"), {"unitCode": "EA"}).text = str(line.quantity)
             ET.SubElement(invoice_line, _qn("cbc", "LineExtensionAmount"), {"currencyID": invoice.currency}).text = str(line.line_total)
+
+            line_tax_total = ET.SubElement(invoice_line, _qn("cac", "TaxTotal"))
+            ET.SubElement(line_tax_total, _qn("cbc", "TaxAmount"), {"currencyID": invoice.currency}).text = str(line.tax_amount)
+
             item = ET.SubElement(invoice_line, _qn("cac", "Item"))
             ET.SubElement(item, _qn("cbc", "Name")).text = line.service_description
+            # Real UBL location for a line's tax category is under
+            # Item/ClassifiedTaxCategory, not InvoiceLine/TaxTotal directly.
+            # Same "S" standard category every line -- line.tax_rate is
+            # always STANDARD_VAT_RATE now (see vat.py), no per-line
+            # citizen zero-rate ever reaches this XML.
+            classified_tax_category = ET.SubElement(item, _qn("cac", "ClassifiedTaxCategory"))
+            ET.SubElement(classified_tax_category, _qn("cbc", "ID"), {"schemeID": "UN/ECE 5305", "schemeAgencyID": "6"}).text = "S"
+            ET.SubElement(classified_tax_category, _qn("cbc", "Percent")).text = str((line.tax_rate * 100).normalize())
+            line_tax_scheme = ET.SubElement(classified_tax_category, _qn("cac", "TaxScheme"))
+            ET.SubElement(line_tax_scheme, _qn("cbc", "ID"), {"schemeID": "UN/ECE 5153", "schemeAgencyID": "6"}).text = "VAT"
+
             price = ET.SubElement(invoice_line, _qn("cac", "Price"))
             ET.SubElement(price, _qn("cbc", "PriceAmount"), {"currencyID": invoice.currency}).text = str(line.unit_price)
 
