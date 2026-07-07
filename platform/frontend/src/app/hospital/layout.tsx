@@ -27,6 +27,7 @@ import {
   ShieldCheck,
   ChevronLeft,
   ChevronRight,
+  ArrowLeftRight,
 } from "lucide-react";
 import { useAuth } from "@/contexts/auth";
 import { usePreferences } from "@/contexts/preferences";
@@ -51,6 +52,8 @@ const NAV_GROUPS = [
       { href: "/hospital/doctor-workspace", label: "Doctor Workspace", icon: Stethoscope },
       { href: "/hospital/nursing", label: "Nursing Dashboard", icon: HeartHandshake },
       { href: "/hospital/adt", label: "Admissions (ADT)", icon: ClipboardList },
+      { href: "/hospital/discharge", label: "Discharge Planning", icon: LogOut },
+      { href: "/hospital/transfer-center", label: "Transfer Center", icon: ArrowLeftRight },
       { href: "/hospital/emar", label: "Medication Admin (eMAR)", icon: Pill },
       { href: "/hospital/emergency", label: "Emergency", icon: Siren },
       { href: "/hospital/icu", label: "ICU", icon: HeartPulse },
