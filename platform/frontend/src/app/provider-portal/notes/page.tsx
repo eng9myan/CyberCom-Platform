@@ -149,7 +149,7 @@ export default function ClinicalNotesPage() {
         <button onClick={() => setShowForm(v => !v)} className="cy-btn cy-btn-primary !min-h-0 !py-2 !px-4 text-sm">+ New Note</button>
       </header>
 
-      {fetchError && <div className="mb-6 rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-400">{fetchError}</div>}
+      {fetchError && <div role="alert" className="mb-6 rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-400">{fetchError}</div>}
       {provider === null && (
         <div className="mb-6 rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-300">
           Your account isn&apos;t linked to a clinical Provider record — you can view notes but can&apos;t author or sign them.
@@ -202,7 +202,7 @@ export default function ClinicalNotesPage() {
               {assessedCode && (
                 <div className="mt-2 inline-flex items-center gap-2 rounded-full bg-brand-500/10 px-3 py-1 text-xs text-brand-300">
                   ICD-11 {assessedCode.code} — {assessedCode.display}
-                  <button onClick={() => setAssessedCode(null)} className="text-ink/40 hover:text-ink">×</button>
+                  <button onClick={() => setAssessedCode(null)} aria-label="Clear ICD-11 code" className="text-ink/40 hover:text-ink">×</button>
                 </div>
               )}
               {icdResults && !assessedCode && (

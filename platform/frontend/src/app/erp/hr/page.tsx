@@ -65,7 +65,7 @@ export default function HRPage() {
     return <div className="mx-auto mt-16 max-w-lg text-center"><h1 className="text-xl font-bold">Sign in required</h1></div>;
   }
   if (fetchError) {
-    return <div className="mx-auto mt-16 max-w-lg text-center"><h1 className="text-xl font-bold text-red-400">Unable to load HR data</h1><p className="mt-1 text-sm text-ink/50">{fetchError}</p></div>;
+    return <div role="alert" className="mx-auto mt-16 max-w-lg text-center"><h1 className="text-xl font-bold text-red-400">Unable to load HR data</h1><p className="mt-1 text-sm text-ink/50">{fetchError}</p></div>;
   }
   if (employees === null) {
     return <div className="mx-auto mt-16 max-w-lg text-center text-sm text-ink/40">Loading live HR data...</div>;
@@ -148,8 +148,8 @@ export default function HRPage() {
                   <td className="border-b border-ink/10 px-3 py-2.5">
                     {l.status === "pending" && (
                       <div className="flex gap-1">
-                        <button onClick={() => handleLeave(l.id, "approved")} className="rounded border border-emerald-500/40 bg-emerald-500/10 px-2 py-0.5 text-xs font-semibold text-emerald-400">✓</button>
-                        <button onClick={() => handleLeave(l.id, "rejected")} className="rounded border border-red-500/40 bg-red-500/10 px-2 py-0.5 text-xs font-semibold text-red-400">✗</button>
+                        <button onClick={() => handleLeave(l.id, "approved")} aria-label="Approve leave request" className="rounded border border-emerald-500/40 bg-emerald-500/10 px-2 py-0.5 text-xs font-semibold text-emerald-400">✓</button>
+                        <button onClick={() => handleLeave(l.id, "rejected")} aria-label="Reject leave request" className="rounded border border-red-500/40 bg-red-500/10 px-2 py-0.5 text-xs font-semibold text-red-400">✗</button>
                       </div>
                     )}
                   </td>

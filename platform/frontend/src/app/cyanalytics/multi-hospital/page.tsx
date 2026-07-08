@@ -127,7 +127,7 @@ export default function MultiHospitalDashboard() {
       )}
 
       {error && !forbidden && (
-        <div className="rounded-2xl border border-red-500/30 bg-red-500/10 p-5 text-sm text-red-300">
+        <div role="alert" className="rounded-2xl border border-red-500/30 bg-red-500/10 p-5 text-sm text-red-300">
           {error}
         </div>
       )}

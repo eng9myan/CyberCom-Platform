@@ -107,7 +107,7 @@ export default function AccountsReceivablePage() {
         <p className="mt-1 text-sm text-ink/50">Customer invoices, payments, and aging</p>
       </header>
 
-      {fetchError && <div className="mb-6 rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-400">{fetchError}</div>}
+      {fetchError && <div role="alert" className="mb-6 rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-400">{fetchError}</div>}
 
       <div className="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-3">
         <div className="cy-card p-4 text-center"><div className="text-2xl font-bold text-brand-400">{(invoices || []).length}</div><div className="mt-1 text-xs text-ink/50">Invoices</div></div>

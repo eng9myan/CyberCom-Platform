@@ -155,7 +155,7 @@ export default function ImagingReportsPage() {
       </nav>
 
       {fetchError && (
-        <div className="mb-6 rounded-lg border border-red-300 bg-red-100 px-4 py-3.5 text-sm text-red-700">
+        <div role="alert" className="mb-6 rounded-lg border border-red-300 bg-red-100 px-4 py-3.5 text-sm text-red-700">
           {fetchError}
         </div>
       )}

@@ -129,7 +129,7 @@ export default function PharmacyPortal() {
         ))}
       </nav>
 
-      {fetchError && <div className="mb-6 rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-400">{fetchError}</div>}
+      {fetchError && <div role="alert" className="mb-6 rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-400">{fetchError}</div>}
 
       {loading && <p className="mb-4 text-sm text-ink/50">{lang === "en" ? "Loading…" : "جارٍ التحميل…"}</p>}
 

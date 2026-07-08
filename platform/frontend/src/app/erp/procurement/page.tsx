@@ -129,7 +129,7 @@ export default function ProcurementPage() {
       </header>
 
       {fetchError && (
-        <div className="mb-6 rounded-lg border border-red-500/40 bg-red-500/10 px-5 py-3.5 text-sm font-semibold text-red-400">
+        <div role="alert" className="mb-6 rounded-lg border border-red-500/40 bg-red-500/10 px-5 py-3.5 text-sm font-semibold text-red-400">
           {fetchError}
         </div>
       )}

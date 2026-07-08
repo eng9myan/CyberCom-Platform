@@ -471,6 +471,8 @@ export default function IdentityAdminPortal() {
         {/* --- Notification Banner --- */}
         {notification && (
           <div
+            role="status"
+            aria-live="polite"
             className={`mb-4 flex items-center justify-between rounded-lg border px-4 py-3 text-sm font-semibold ${
               notification.type === "error"
                 ? "border-red-500/40 bg-red-500/10 text-red-400"
@@ -478,7 +480,7 @@ export default function IdentityAdminPortal() {
             }`}
           >
             <span>{notification.message}</span>
-            <button className="font-bold" onClick={() => setNotification(null)}>✕</button>
+            <button className="font-bold" aria-label="Dismiss notification" onClick={() => setNotification(null)}>✕</button>
           </div>
         )}
 
