@@ -46,14 +46,11 @@ class BiomedicalEquipment(BaseModel):
     """
     Biomedical/clinical-engineering extension of Asset -- reuses the real,
     already-registered Asset model (asset_type="medical_device" is already
-    a valid free-text value there) rather than duplicating it. A separate
-    cycom.assets.fixed_assets sub-app with near-identical FixedAsset/
-    Depreciation models exists in this codebase but is NOT registered in
-    INSTALLED_APPS (dead code, no migrations ever applied) -- deliberately
-    not wiring that up here, since doing so would create a second
-    duplicate asset ledger rather than resolve the one that already
-    exists. Flagged, not silently fixed (that's a separate consolidation
-    decision, out of scope for this task).
+    a valid free-text value there) rather than duplicating it. This is the
+    single source of truth for calibration_due status and equipment
+    tracking (the dead, never-registered cycom.assets.fixed_assets
+    duplicate that used to sit alongside this app has been removed --
+    see the consolidation commit).
     """
 
     STATUS_CHOICES = [
