@@ -25,4 +25,5 @@ urlpatterns = [
     path("dietary/", include("products.cymed.hospital.dietary.urls")),
     path("mortuary/", include("products.cymed.hospital.mortuary.urls")),
     path("linen-services/", include("products.cymed.hospital.linen_services.urls")),
+    path("waste-management/", include("products.cymed.hospital.waste_management.urls")),
 ]
