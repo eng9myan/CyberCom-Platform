@@ -20,4 +20,5 @@ urlpatterns = [
     path("incidents/", include("products.cymed.hospital.incident_reporting.urls")),
     path("infection-control/", include("products.cymed.hospital.infection_control.urls")),
     path("quality/", include("products.cymed.hospital.quality_management.urls")),
+    path("research/", include("products.cymed.hospital.research.urls")),
 ]

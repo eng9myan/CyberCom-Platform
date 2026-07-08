@@ -141,6 +141,7 @@ PRODUCT_APPS = [
     "products.cymed.hospital.incident_reporting",
     "products.cymed.hospital.infection_control",
     "products.cymed.hospital.quality_management",
+    "products.cymed.hospital.research",
     # CyMed Laboratory Edition (Program 3.3)
     "products.cymed.laboratory.orders",
     "products.cymed.laboratory.specimens",
