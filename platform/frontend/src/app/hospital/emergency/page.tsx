@@ -203,7 +203,7 @@ export default function EmergencyPage() {
     return <div style={{ padding: "2rem", textAlign: "center", marginTop: "4rem" }}><h1 style={{ fontWeight: 700, fontSize: "1.25rem" }}>Sign in required</h1></div>;
   }
   if (fetchError) {
-    return <div style={{ padding: "2rem", textAlign: "center", marginTop: "4rem" }}><h1 style={{ fontWeight: 700, fontSize: "1.25rem", color: "#ef4444" }}>Unable to load emergency department data</h1><p style={{ color: "var(--color-text-muted)" }}>{fetchError}</p></div>;
+    return <div role="alert" style={{ padding: "2rem", textAlign: "center", marginTop: "4rem" }}><h1 style={{ fontWeight: 700, fontSize: "1.25rem", color: "#ef4444" }}>Unable to load emergency department data</h1><p style={{ color: "var(--color-text-muted)" }}>{fetchError}</p></div>;
   }
   if (visits === null) {
     return <div style={{ padding: "2rem", textAlign: "center", marginTop: "4rem", color: "var(--color-text-muted)" }}>Loading live ED data...</div>;
@@ -394,7 +394,7 @@ export default function EmergencyPage() {
                 <h2 className="text-lg font-semibold">{patient ? `${patient.first_name} ${patient.last_name} — ${patient.mrn}` : "Unknown patient"}</h2>
                 <p className="mt-1 text-sm text-ink/50">{selectedVisit.presenting_complaint}</p>
               </div>
-              <button onClick={() => setSelectedVisit(null)} className="text-2xl leading-none text-ink/50 hover:text-ink">×</button>
+              <button onClick={() => setSelectedVisit(null)} aria-label={lang === "en" ? "Close" : "إغلاق"} className="text-2xl leading-none text-ink/50 hover:text-ink">×</button>
             </div>
             <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
               {obs && [

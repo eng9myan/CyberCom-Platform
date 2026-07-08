@@ -163,7 +163,7 @@ export default function DischargePage() {
         <p className="mt-1 text-sm text-ink/50">Checklist, medication reconciliation, follow-up scheduling, and instructions per admitted patient</p>
       </header>
 
-      {fetchError && <div className="mb-6 rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-400">{fetchError}</div>}
+      {fetchError && <div role="alert" className="mb-6 rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-400">{fetchError}</div>}
 
       <div className="grid gap-3">
         {admissions.length === 0 && <div className="cy-card p-6 text-center text-sm text-ink/40">No admitted patients.</div>}

@@ -106,7 +106,7 @@ export default function InventoryManagement() {
   }
   if (fetchError) {
     return (
-      <div className="mx-auto mt-16 max-w-lg text-center">
+      <div role="alert" className="mx-auto mt-16 max-w-lg text-center">
         <h1 className="text-xl font-bold text-red-400">Unable to load inventory data</h1>
         <p className="mt-2 text-white/50">{fetchError}</p>
       </div>

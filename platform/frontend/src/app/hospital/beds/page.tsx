@@ -67,7 +67,7 @@ export default function BedsPage() {
     return <div className="mx-auto mt-16 max-w-lg text-center"><h1 className="text-xl font-bold">Sign in required</h1></div>;
   }
   if (fetchError) {
-    return <div className="mx-auto mt-16 max-w-lg text-center"><h1 className="text-xl font-bold text-red-400">Unable to load bed management data</h1><p className="mt-1 text-sm text-ink/50">{fetchError}</p></div>;
+    return <div role="alert" className="mx-auto mt-16 max-w-lg text-center"><h1 className="text-xl font-bold text-red-400">Unable to load bed management data</h1><p className="mt-1 text-sm text-ink/50">{fetchError}</p></div>;
   }
   if (facilities === null) {
     return <div className="mx-auto mt-16 max-w-lg text-center text-sm text-ink/40">Loading live bed data...</div>;
@@ -193,7 +193,7 @@ export default function BedsPage() {
           <div className="fixed bottom-8 right-8 z-50 min-w-[280px] rounded-xl border-2 border-brand-400 bg-surface-raised p-5 shadow-2xl">
             <div className="mb-3 flex items-center justify-between">
               <h3 className="font-semibold text-brand-300">{lang === "en" ? "Bed" : "السرير"} {selectedBed.bed_number}</h3>
-              <button onClick={() => setSelectedBed(null)} className="text-xl leading-none text-white/50 hover:text-white">×</button>
+              <button onClick={() => setSelectedBed(null)} aria-label={lang === "en" ? "Close" : "إغلاق"} className="text-xl leading-none text-white/50 hover:text-white">×</button>
             </div>
             {selectedBed.status === "occupied" && patient && assignment ? (
               <>

@@ -168,7 +168,7 @@ export default function NursingDashboard() {
       </header>
 
       {fetchError && (
-        <div className="mb-6 rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-400">{fetchError}</div>
+        <div role="alert" className="mb-6 rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-400">{fetchError}</div>
       )}
 
       <div className="mb-6 grid grid-cols-3 gap-4">

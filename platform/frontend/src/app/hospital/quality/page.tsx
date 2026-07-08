@@ -85,7 +85,7 @@ export default function QualityPage() {
     return <div className="mx-auto mt-16 max-w-lg text-center"><h1 className="text-xl font-bold">Sign in required</h1></div>;
   }
   if (fetchError) {
-    return <div className="mx-auto mt-16 max-w-lg text-center"><h1 className="text-xl font-bold text-red-400">Unable to load quality data</h1><p className="mt-1 text-sm text-ink/50">{fetchError}</p></div>;
+    return <div role="alert" className="mx-auto mt-16 max-w-lg text-center"><h1 className="text-xl font-bold text-red-400">Unable to load quality data</h1><p className="mt-1 text-sm text-ink/50">{fetchError}</p></div>;
   }
   if (indicators === null) {
     return <div className="mx-auto mt-16 max-w-lg text-center text-sm text-ink/40">Loading...</div>;

@@ -169,7 +169,7 @@ export default function CSSDPage() {
         <p className="mt-1 text-sm text-ink/50">Sterilization cycles and instrument set tracking</p>
       </header>
 
-      {fetchError && <div className="mb-6 rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-400">{fetchError}</div>}
+      {fetchError && <div role="alert" className="mb-6 rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-400">{fetchError}</div>}
 
       <div className="mb-8">
         <div className="mb-3 flex items-center justify-between">

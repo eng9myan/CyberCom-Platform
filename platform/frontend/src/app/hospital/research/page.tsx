@@ -79,7 +79,7 @@ export default function ResearchPage() {
     return <div className="mx-auto mt-16 max-w-lg text-center"><h1 className="text-xl font-bold">Sign in required</h1></div>;
   }
   if (fetchError) {
-    return <div className="mx-auto mt-16 max-w-lg text-center"><h1 className="text-xl font-bold text-red-400">Unable to load research data</h1><p className="mt-1 text-sm text-ink/50">{fetchError}</p></div>;
+    return <div role="alert" className="mx-auto mt-16 max-w-lg text-center"><h1 className="text-xl font-bold text-red-400">Unable to load research data</h1><p className="mt-1 text-sm text-ink/50">{fetchError}</p></div>;
   }
   if (protocols === null) {
     return <div className="mx-auto mt-16 max-w-lg text-center text-sm text-ink/40">Loading...</div>;

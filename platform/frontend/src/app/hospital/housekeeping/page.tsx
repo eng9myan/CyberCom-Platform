@@ -136,7 +136,7 @@ export default function HousekeepingPage() {
         <p className="mt-1 text-sm text-ink/50">Cleaning task scheduling and hygiene compliance audits</p>
       </header>
 
-      {fetchError && <div className="mb-6 rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-400">{fetchError}</div>}
+      {fetchError && <div role="alert" className="mb-6 rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-400">{fetchError}</div>}
 
       <div className="mb-5 flex gap-2">
         {(["tasks", "audits"] as Tab[]).map(t => (

@@ -141,7 +141,7 @@ export default function IncidentReportingPage() {
         <button onClick={() => setShowForm(v => !v)} className="cy-btn cy-btn-primary !min-h-0 !py-2 !px-4 text-sm">+ Report Incident</button>
       </header>
 
-      {fetchError && <div className="mb-6 rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-400">{fetchError}</div>}
+      {fetchError && <div role="alert" className="mb-6 rounded-xl border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-400">{fetchError}</div>}
 
       <div className="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-3">
         <div className="cy-card p-4 text-center"><div className="text-2xl font-bold text-brand-400">{openCount}</div><div className="mt-1 text-xs text-ink/50">Open incidents</div></div>

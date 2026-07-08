@@ -187,7 +187,7 @@ export default function HospitalPortal() {
 
   if (fetchError) {
     return (
-      <div style={{ padding: "2rem", maxWidth: "600px", margin: "4rem auto", textAlign: "center" }}>
+      <div role="alert" style={{ padding: "2rem", maxWidth: "600px", margin: "4rem auto", textAlign: "center" }}>
         <h1 style={{ fontSize: "1.5rem", fontWeight: 700, marginBottom: "1rem", color: "#ef4444" }}>
           {lang === "en" ? "Unable to load hospital data" : "تعذر تحميل بيانات المستشفى"}
         </h1>
