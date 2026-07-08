@@ -143,6 +143,7 @@ PRODUCT_APPS = [
     "products.cymed.hospital.quality_management",
     "products.cymed.hospital.research",
     "products.cymed.hospital.rehabilitation",
+    "products.cymed.hospital.dietary",
     # CyMed Laboratory Edition (Program 3.3)
     "products.cymed.laboratory.orders",
     "products.cymed.laboratory.specimens",
