@@ -1,0 +1,69 @@
+name: Deploy to OCI (www.cy-com.com)
+
+# Reuses platform/infrastructure/deploy_cloud_gateway.sh as-is -- this
+# workflow is just the trigger + credential plumbing around it, not a
+# second deployment mechanism. That script still requires a real,
+# already-provisioned OCI Compute instance reachable over SSH and a real
+# platform/.env.production already placed on it -- this workflow cannot
+# create those. It will fail loudly (not silently/fake-succeed) until the
+# required repo secrets below are set to real values.
+#
+# Trigger is deliberately manual (workflow_dispatch) plus push-to-main --
+# `main` doesn't exist in this repo yet (only `develop`), so until it's
+# created this workflow only runs when someone deliberately clicks
+# "Run workflow" in the Actions tab. Auto-deploying every `develop` commit
+# straight to the production domain was not what was asked for and isn't
+# safe practice for a hospital system regardless.
+#
+# Required repository secrets (Settings -> Secrets and variables -> Actions):
+#   OCI_INSTANCE_IP    - public IP of the OCI Compute VM
+#   OCI_SSH_PRIVATE_KEY - private key (PEM) for that instance's `ubuntu` user
+#   LETSENCRYPT_EMAIL  - real email for TLS certificate registration
+# Required repository variable (or hardcode if it will never change):
+#   DEPLOY_DOMAIN      - defaults to www.cy-com.com below
+
+on:
+  workflow_dispatch: {}
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify required secrets are present
+        run: |
+          missing=0
+          [ -z "${{ secrets.OCI_INSTANCE_IP }}" ] && echo "::error::Secret OCI_INSTANCE_IP is not set." && missing=1
+          [ -z "${{ secrets.OCI_SSH_PRIVATE_KEY }}" ] && echo "::error::Secret OCI_SSH_PRIVATE_KEY is not set." && missing=1
+          [ -z "${{ secrets.LETSENCRYPT_EMAIL }}" ] && echo "::error::Secret LETSENCRYPT_EMAIL is not set." && missing=1
+          if [ "$missing" = "1" ]; then
+            echo "::error::One or more required secrets are missing -- see this workflow's header comment. Refusing to proceed rather than fail deep inside the deploy script."
+            exit 1
+          fi
+
+      - name: Set up SSH key
+        run: |
+          mkdir -p ~/.ssh
+          printf '%s\n' "${{ secrets.OCI_SSH_PRIVATE_KEY }}" > ~/.ssh/oci_deploy_key
+          chmod 600 ~/.ssh/oci_deploy_key
+
+      - name: Run deploy_cloud_gateway.sh against OCI
+        env:
+          OCI_INSTANCE_IP: ${{ secrets.OCI_INSTANCE_IP }}
+          SSH_KEY_PATH: /home/runner/.ssh/oci_deploy_key
+          DEPLOY_DOMAIN: ${{ vars.DEPLOY_DOMAIN || 'www.cy-com.com' }}
+          LETSENCRYPT_EMAIL: ${{ secrets.LETSENCRYPT_EMAIL }}
+          GIT_BRANCH: main
+        run: |
+          chmod +x platform/infrastructure/deploy_cloud_gateway.sh
+          ./platform/infrastructure/deploy_cloud_gateway.sh
+
+      - name: Clean up SSH key
+        if: always()
+        run: rm -f ~/.ssh/oci_deploy_key
