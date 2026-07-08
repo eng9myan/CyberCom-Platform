@@ -509,7 +509,14 @@ CORS_ALLOWED_ORIGINS = os.environ.get(
     "CORS_ALLOWED_ORIGINS", "http://localhost:3000,http://localhost:3001"
 ).split(",")
 CORS_ALLOW_CREDENTIALS = True
-CORS_ALLOW_ALL_ORIGINS = DEBUG
+# Previously `CORS_ALLOW_ALL_ORIGINS = DEBUG` -- any environment run with
+# DEBUG=True (a genuinely easy misconfiguration, e.g. this whole session's
+# own dev-server export block sets DJANGO_DEBUG=True) silently opened CORS
+# to every origin, completely bypassing CORS_ALLOWED_ORIGINS above. DEBUG
+# controls error-page verbosity, not CORS policy -- they're unrelated
+# concerns that got tied together. Now explicit and opt-in only, defaulting
+# closed regardless of DEBUG.
+CORS_ALLOW_ALL_ORIGINS = os.environ.get("CORS_ALLOW_ALL_ORIGINS", "False").lower() == "true"
 
 # django-cors-headers' default_headers doesn't include our custom X-Tenant-ID
 # header (required on every request by TenantIsolationMiddleware and sent by
