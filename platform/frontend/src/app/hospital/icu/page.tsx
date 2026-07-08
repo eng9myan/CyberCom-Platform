@@ -8,11 +8,27 @@ import { useAuth } from "@/contexts/auth";
 interface ICUStay {
   id: string;
   stay: string;
+  unit_type: "micu_sicu" | "ccu" | "nicu" | "picu";
   icu_admitted_at: string;
   icu_released_at: string | null;
   ventilator_status: string;
   invasive_lines_count: number;
+  gestational_age_weeks: number | null;
+  birth_weight_grams: number | null;
 }
+
+const UNIT_TYPE_LABELS: Record<ICUStay["unit_type"], string> = {
+  micu_sicu: "MICU/SICU",
+  ccu: "CCU",
+  nicu: "NICU",
+  picu: "PICU",
+};
+const UNIT_TYPE_COLORS: Record<ICUStay["unit_type"], string> = {
+  micu_sicu: "#22D3EE",
+  ccu: "#f59e0b",
+  nicu: "#f472b6",
+  picu: "#a78bfa",
+};
 interface HospitalStay { id: string; admission: string; current_code_status: string; }
 interface Admission { id: string; encounter: string; admitting_physician_id: string; }
 interface Encounter { id: string; patient: string; }
@@ -186,14 +202,14 @@ export default function ICUPage() {
           <table className="w-full border-collapse text-sm">
             <thead>
               <tr className="border-b border-ink/10 bg-ink/5">
-                {[isAr ? "المريض" : "Patient", isAr ? "أيام العناية" : "Days ICU", isAr ? "تنفس صناعي" : "Ventilator", "SOFA", "APACHE II", "GCS", isAr ? "حالة الرمز" : "Code Status", isAr ? "أحداث حرجة" : "Critical Events", ""].map(h => (
+                {[isAr ? "المريض" : "Patient", isAr ? "الوحدة" : "Unit", isAr ? "أيام العناية" : "Days ICU", isAr ? "تنفس صناعي" : "Ventilator", "SOFA", "APACHE II", "GCS", isAr ? "حالة الرمز" : "Code Status", isAr ? "أحداث حرجة" : "Critical Events", ""].map(h => (
                   <th key={h} className="px-4 py-3 text-left font-semibold text-ink/50">{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {activeStays.length === 0 && (
-                <tr><td colSpan={9} className="px-4 py-6 text-center text-ink/50">No patients currently in ICU.</td></tr>
+                <tr><td colSpan={10} className="px-4 py-6 text-center text-ink/50">No patients currently in ICU.</td></tr>
               )}
               {activeStays.map(stay => {
                 const patient = patientFor(stay.id);
@@ -206,6 +222,14 @@ export default function ICUPage() {
                     <tr className="border-b border-ink/5">
                       <td className="px-4 py-3 font-medium">
                         {patient ? `${patient.first_name} ${patient.last_name} (${patient.mrn})` : "Unknown patient"}
+                      </td>
+                      <td className="px-4 py-3">
+                        <span
+                          className="rounded-md px-2 py-0.5 text-xs font-semibold"
+                          style={{ color: UNIT_TYPE_COLORS[stay.unit_type], backgroundColor: `${UNIT_TYPE_COLORS[stay.unit_type]}1a` }}
+                        >
+                          {UNIT_TYPE_LABELS[stay.unit_type]}
+                        </span>
                       </td>
                       <td className="px-4 py-3 text-ink/60">{daysInICU(stay.icu_admitted_at)}</td>
                       <td className="px-4 py-3">
@@ -241,7 +265,14 @@ export default function ICUPage() {
                     </tr>
                     {expanded && (
                       <tr>
-                        <td colSpan={9} className="bg-ink/[0.02] px-4 py-4">
+                        <td colSpan={10} className="bg-ink/[0.02] px-4 py-4">
+                          {stay.unit_type === "nicu" && (
+                            <div className="mb-3 flex gap-4 rounded-lg border border-pink-400/30 bg-pink-500/5 px-3 py-2 text-xs">
+                              <span className="font-semibold text-pink-300">NICU</span>
+                              <span>Gestational age: <strong>{stay.gestational_age_weeks ?? "—"}</strong> weeks</span>
+                              <span>Birth weight: <strong>{stay.birth_weight_grams ?? "—"}</strong> g</span>
+                            </div>
+                          )}
                           <div className="mb-3 flex gap-2">
                             <button onClick={() => setActiveForm("round")} className={`rounded-md px-3 py-1.5 text-xs font-semibold ${activeForm === "round" ? "bg-brand-500/15 text-brand-300 border border-brand-400/40" : "border border-ink/10 text-ink/50"}`}>
                               {isAr ? "تسجيل جولة" : "Log Round (SOFA)"}

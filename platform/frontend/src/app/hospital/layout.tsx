@@ -32,6 +32,15 @@ import {
   Droplet,
   Sparkles,
   AlertTriangle,
+  Wrench,
+  ShieldAlert,
+  LineChart,
+  FlaskConical,
+  Activity,
+  Utensils,
+  Lock,
+  Shirt,
+  Biohazard,
 } from "lucide-react";
 import { useAuth } from "@/contexts/auth";
 import { usePreferences } from "@/contexts/preferences";
@@ -76,6 +85,20 @@ const NAV_GROUPS = [
       { href: "/hospital/blood-bank", label: "Blood Bank", icon: Droplet },
       { href: "/hospital/housekeeping", label: "Housekeeping", icon: Sparkles },
       { href: "/hospital/incidents", label: "Incident Reporting", icon: AlertTriangle },
+    ],
+  },
+  {
+    label: "Support Departments",
+    items: [
+      { href: "/hospital/biomed", label: "BioMed Engineering", icon: Wrench },
+      { href: "/hospital/infection-control", label: "Infection Control", icon: ShieldAlert },
+      { href: "/hospital/quality", label: "Quality Management", icon: LineChart },
+      { href: "/hospital/research", label: "Research", icon: FlaskConical },
+      { href: "/hospital/rehabilitation", label: "Rehabilitation", icon: Activity },
+      { href: "/hospital/dietary", label: "Dietary & Nutrition", icon: Utensils },
+      { href: "/hospital/mortuary", label: "Mortuary", icon: Lock },
+      { href: "/hospital/linen-services", label: "Linen & Laundry", icon: Shirt },
+      { href: "/hospital/waste-management", label: "Waste Management", icon: Biohazard },
     ],
   },
 ];
