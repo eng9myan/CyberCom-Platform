@@ -144,6 +144,7 @@ PRODUCT_APPS = [
     "products.cymed.hospital.research",
     "products.cymed.hospital.rehabilitation",
     "products.cymed.hospital.dietary",
+    "products.cymed.hospital.mortuary",
     # CyMed Laboratory Edition (Program 3.3)
     "products.cymed.laboratory.orders",
     "products.cymed.laboratory.specimens",
