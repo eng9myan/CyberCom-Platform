@@ -16,10 +16,13 @@ class ICUStaySerializer(serializers.ModelSerializer):
         fields = [
             "id",
             "stay",
+            "unit_type",
             "icu_admitted_at",
             "icu_released_at",
             "ventilator_status",
             "invasive_lines_count",
+            "gestational_age_weeks",
+            "birth_weight_grams",
         ]
         read_only_fields = ["icu_admitted_at"]
 
