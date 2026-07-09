@@ -7,10 +7,13 @@ from products.cymed.core.patients.models import Patient
 
 class AdmissionReason(BaseModel):
     name = models.CharField(max_length=255)
-    code = models.CharField(max_length=100, unique=True)
+    code = models.CharField(max_length=100)
 
     class Meta:
         db_table = "cymed_hospital_admission_reasons"
+        constraints = [
+            models.UniqueConstraint(fields=["tenant_id", "code"], name="uq_admission_reason_tenant_code"),
+        ]
 
     def __str__(self) -> str:
         return self.name
@@ -18,10 +21,13 @@ class AdmissionReason(BaseModel):
 
 class AdmissionType(BaseModel):
     name = models.CharField(max_length=255)
-    code = models.CharField(max_length=100, unique=True)
+    code = models.CharField(max_length=100)
 
     class Meta:
         db_table = "cymed_hospital_admission_types"
+        constraints = [
+            models.UniqueConstraint(fields=["tenant_id", "code"], name="uq_admission_type_tenant_code"),
+        ]
 
     def __str__(self) -> str:
         return self.name
@@ -29,18 +35,24 @@ class AdmissionType(BaseModel):
 
 class DischargeReason(BaseModel):
     name = models.CharField(max_length=255)
-    code = models.CharField(max_length=100, unique=True)
+    code = models.CharField(max_length=100)
 
     class Meta:
         db_table = "cymed_hospital_discharge_reasons"
+        constraints = [
+            models.UniqueConstraint(fields=["tenant_id", "code"], name="uq_discharge_reason_tenant_code"),
+        ]
 
 
 class DischargeDisposition(BaseModel):
     name = models.CharField(max_length=255)
-    code = models.CharField(max_length=100, unique=True)
+    code = models.CharField(max_length=100)
 
     class Meta:
         db_table = "cymed_hospital_discharge_dispositions"
+        constraints = [
+            models.UniqueConstraint(fields=["tenant_id", "code"], name="uq_discharge_disposition_tenant_code"),
+        ]
 
 
 class Admission(BaseModel):
