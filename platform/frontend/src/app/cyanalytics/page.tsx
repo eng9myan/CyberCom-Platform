@@ -31,26 +31,26 @@ import { useHospitalKpis } from "@/lib/cyanalytics/useKpiEngine";
 import type { DepartmentTile } from "@/lib/cyanalytics/types";
 
 const TILES: DepartmentTile[] = [
-  { id: "command-center", name: "Enterprise Command Center", href: "/cyanalytics", icon: "Building2", status: "live" },
   { id: "multi-hospital", name: "Multi-Hospital Dashboard", href: "/cyanalytics/multi-hospital", icon: "Radar", status: "live" },
   { id: "hospital-ceo", name: "Hospital CEO Dashboard", href: "/hospital", icon: "Building2", status: "live" },
   { id: "medical-director", name: "Medical Director", href: "/cyanalytics/medical-director", icon: "Stethoscope", status: "live" },
   { id: "operations", name: "Operations", href: "/cyanalytics/operations", icon: "ClipboardList", status: "live" },
+  { id: "command-center", name: "Clinical Command Center", href: "/hospital/command-center", icon: "Building2", status: "live" },
   { id: "emergency", name: "Emergency", href: "/hospital/emergency", icon: "Siren", status: "live" },
   { id: "icu", name: "ICU", href: "/hospital/icu", icon: "HeartPulse", status: "live" },
-  { id: "nursing", name: "Nursing", href: "#", icon: "Users", status: "coming_soon" },
+  { id: "nursing", name: "Nursing", href: "/hospital/nursing", icon: "Users", status: "live" },
   { id: "doctor", name: "Doctor Workspace", href: "/hospital/doctor-workspace", icon: "Stethoscope", status: "live" },
-  { id: "reception", name: "Reception", href: "#", icon: "ClipboardList", status: "coming_soon" },
+  { id: "reception", name: "Reception", href: "/hospital/reception", icon: "ClipboardList", status: "live" },
   { id: "laboratory", name: "Laboratory", href: "/laboratory", icon: "FlaskConical", status: "live" },
   { id: "imaging", name: "Imaging", href: "/imaging", icon: "Scan", status: "live" },
   { id: "pharmacy", name: "Pharmacy", href: "/pharmacy", icon: "Pill", status: "live" },
   { id: "hr", name: "HR", href: "/hospital/hr", icon: "Users", status: "live" },
   { id: "finance", name: "Finance", href: "/hospital/billing", icon: "Coins", status: "live" },
   { id: "inventory", name: "Inventory", href: "/hospital/inventory", icon: "Warehouse", status: "live" },
-  { id: "biomed", name: "BioMed Engineering", href: "#", icon: "Activity", status: "coming_soon" },
-  { id: "infection-control", name: "Infection Control", href: "#", icon: "AlertTriangle", status: "coming_soon" },
-  { id: "quality", name: "Quality", href: "#", icon: "ClipboardList", status: "coming_soon" },
-  { id: "research", name: "Research", href: "#", icon: "FlaskConical", status: "coming_soon" },
+  { id: "biomed", name: "BioMed Engineering", href: "/hospital/biomed", icon: "Activity", status: "live" },
+  { id: "infection-control", name: "Infection Control", href: "/hospital/infection-control", icon: "AlertTriangle", status: "live" },
+  { id: "quality", name: "Quality", href: "/hospital/quality", icon: "ClipboardList", status: "live" },
+  { id: "research", name: "Research", href: "/hospital/research", icon: "FlaskConical", status: "live" },
 ];
 
 const ICONS: Record<string, typeof Building2> = {
