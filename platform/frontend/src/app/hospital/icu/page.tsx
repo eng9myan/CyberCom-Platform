@@ -212,7 +212,7 @@ export default function ICUPage() {
                 <tr><td colSpan={10} className="px-4 py-6 text-center text-ink/50">No patients currently in ICU.</td></tr>
               )}
               {activeStays.map(stay => {
-                const patient = patientFor(stay.id);
+                const patient = patientFor(stay.stay);
                 const assessment = latestAssessment(stay.id);
                 const hStay = hospitalStays.find(h => h.id === stay.stay);
                 const events = eventsFor(stay.id);
