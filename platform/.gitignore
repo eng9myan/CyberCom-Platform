@@ -96,6 +96,11 @@ test-results/
 playwright-report/
 allure-results/
 
+# ----- Celery local runtime state -----
+celerybeat-schedule.dat
+celerybeat-schedule.dir
+celerybeat.pid
+
 # ----- Misc -----
 tmp/
 temp/
