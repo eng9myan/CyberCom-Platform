@@ -176,7 +176,9 @@ class TestOrders:
         )
         assert order.order_category == "laboratory"
         assert order.priority == "stat"
-        assert order.status == "submitted"
+        # CPOE fan-out signal holds the order: order_details has no resolvable
+        # test_codes against the LabTest catalog (none seeded here).
+        assert order.status == "on_hold"
 
     def test_place_medication_order(self):
         from products.cymed.provider_portal.orders.models import ProviderOrderRequest

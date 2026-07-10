@@ -48,7 +48,7 @@ class ChargeItemSerializer(serializers.ModelSerializer):
             charge_item = ChargeItem.objects.create(**validated_data)
             journal_entry = self._post_to_gl(tenant_id, charge_item)
             charge_item.posted_to_erp = True
-            charge_item.erp_transaction_id = str(journal_entry.id)
+            charge_item.erp_transaction_id = f"ERP-TX-{journal_entry.id}"
             charge_item.save(update_fields=["posted_to_erp", "erp_transaction_id"])
 
         self._dispatch_fhir_claim(tenant_id, charge_item, journal_entry.total_debit)

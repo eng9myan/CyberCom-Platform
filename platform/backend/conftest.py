@@ -61,6 +61,38 @@ import pytest
 from django.test import RequestFactory
 
 
+@pytest.fixture(scope="session")
+def _rsa_keypair():
+    """
+    A real RSA keypair used to sign test JWTs with RS256 -- CyIdentityAuthMiddleware
+    requires RS256 (real Keycloak tokens are RS256-signed); HS256 with a dummy secret
+    fails at the JWKS-fetch step (network error) before the algorithm is even checked.
+    """
+    from cryptography.hazmat.primitives import serialization
+    from cryptography.hazmat.primitives.asymmetric import rsa
+
+    private_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
+    public_pem = private_key.public_key().public_bytes(
+        encoding=serialization.Encoding.PEM,
+        format=serialization.PublicFormat.SubjectPublicKeyInfo,
+    )
+    return private_key, public_pem
+
+
+@pytest.fixture
+def _mock_jwks(_rsa_keypair, monkeypatch):
+    from types import SimpleNamespace
+
+    _private_key, public_pem = _rsa_keypair
+    # Bypass the real network JWKS fetch -- return our test keypair's public key instead.
+    monkeypatch.setattr(
+        "shared.auth.auth_middleware._get_jwks_client",
+        lambda: SimpleNamespace(
+            get_signing_key_from_jwt=lambda token: SimpleNamespace(key=public_pem)
+        ),
+    )
+
+
 @pytest.fixture
 def rf():
     return RequestFactory()

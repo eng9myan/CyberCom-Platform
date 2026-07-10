@@ -47,20 +47,29 @@ class EligibilityCheckSerializer(serializers.ModelSerializer):
             },
         )
 
-        # Route through CyIntegrationHub Connector
+        # Route through CyIntegrationHub Connector -- the FHIR connector requires a
+        # built resource dict (with resourceType), not a raw payload.
         connector_res = ConnectorFramework.execute_connector(
             tenant_id=tenant_id,
             partner=partner,
             connector_type="fhir",
             action="send",
             payload={
-                "patient_id": str(validated_data["patient"].id),
-                "plan_code": validated_data["plan"].plan_code,
-                "payer_code": validated_data["plan"].payer.payer_code,
+                "resourceType": "CoverageEligibilityRequest",
+                "status": "active",
+                "purpose": ["validation"],
+                "patient": {"reference": f"Patient/{validated_data['patient'].id}"},
+                "insurer": {"identifier": {"value": validated_data["plan"].payer.payer_code}},
+                "insurance": [
+                    {"coverage": {"identifier": {"value": validated_data["plan"].plan_code}}}
+                ],
             },
         )
 
-        is_eligible = True if connector_res.get("fhir_status") == "synced" else False
+        # "sent" is the only success status _send_fhir_resource ever returns (see its
+        # docstring: it never fabricates a status for a call that never happened) --
+        # "synced" was never a real value here.
+        is_eligible = connector_res.get("fhir_status") == "sent"
         response_details = {
             "card_status": "active" if is_eligible else "inactive",
             "coverage_valid": is_eligible,

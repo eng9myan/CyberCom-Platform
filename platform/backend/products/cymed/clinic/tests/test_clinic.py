@@ -1,7 +1,9 @@
+import time
 import uuid
 
 import jwt
 import pytest
+from django.conf import settings
 from django.utils import timezone
 from rest_framework.test import APIClient
 
@@ -46,8 +48,10 @@ def test_tenant_id():
 
 
 @pytest.fixture
-def auth_client(test_tenant_id):
+def auth_client(test_tenant_id, _rsa_keypair, _mock_jwks):
+    private_key, _public_pem = _rsa_keypair
     client = APIClient()
+    now = int(time.time())
     payload = {
         "sub": "33333333-3333-3333-3333-333333333333",
         "email": "doctor@cymed.io",
@@ -55,8 +59,12 @@ def auth_client(test_tenant_id):
         "realm_access": {"roles": ["platform_admin"]},
         "roles": ["platform_admin"],
         "permissions": ["read", "write"],
+        "iat": now,
+        "exp": now + 3600,
+        "aud": settings.CYIDENTITY_CLIENT_ID,
+        "iss": settings.CYIDENTITY_ISSUER,
     }
-    token = jwt.encode(payload, "dummy-secret", algorithm="HS256")
+    token = jwt.encode(payload, private_key, algorithm="RS256")
     client.credentials(
         HTTP_AUTHORIZATION=f"Bearer {token}",
         HTTP_X_TENANT_ID=str(test_tenant_id),
@@ -457,8 +465,11 @@ class TestClinicEdition:
             format="json",
         )
         assert elig_resp.status_code == 201
-        assert elig_resp.data["is_eligible"] is True
-        assert elig_resp.data["response_details"]["card_status"] == "active"
+        # No Availity ConnectorConfig/endpoint is configured in this test env, so the
+        # FHIR dispatch honestly reports "not_sent" (see ConnectorFramework docstring:
+        # it never fabricates a "synced"/success status for a call that never happened).
+        assert elig_resp.data["is_eligible"] is False
+        assert elig_resp.data["response_details"]["card_status"] == "inactive"
 
         # 2. Prior Authorization request (triggers auto approve response mock)
         auth_resp = auth_client.post(

@@ -9,10 +9,12 @@ against the in-memory Keycloak fake. Verifies:
   - Session revoke
 """
 
+import time
 import uuid
 from unittest.mock import patch
 
 import pytest
+from django.conf import settings
 from rest_framework.test import APIClient
 
 from platform.cyidentity.models import (
@@ -25,10 +27,12 @@ from platform.cyidentity.models import (
 
 
 @pytest.fixture
-def admin_client():
+def admin_client(_rsa_keypair, _mock_jwks):
     import jwt
 
+    private_key, _public_pem = _rsa_keypair
     client = APIClient()
+    now = int(time.time())
     payload = {
         "sub": "11111111-1111-1111-1111-111111111111",
         "email": "admin@cybercom.io",
@@ -36,8 +40,12 @@ def admin_client():
         "realm_access": {"roles": ["platform_admin"]},
         "roles": ["platform_admin"],
         "permissions": ["read", "write"],
+        "iat": now,
+        "exp": now + 3600,
+        "aud": settings.CYIDENTITY_CLIENT_ID,
+        "iss": settings.CYIDENTITY_ISSUER,
     }
-    token = jwt.encode(payload, "dummy-secret", algorithm="HS256")
+    token = jwt.encode(payload, private_key, algorithm="RS256")
     client.credentials(
         HTTP_AUTHORIZATION=f"Bearer {token}",
         HTTP_X_TENANT_ID="00000000-0000-0000-0000-000000000000",

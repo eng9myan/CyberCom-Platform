@@ -1,7 +1,9 @@
+import time
 import uuid
 
 import jwt
 import pytest
+from django.conf import settings
 from rest_framework import status
 from rest_framework.test import APIClient
 
@@ -13,16 +15,22 @@ TENANT_A = uuid.UUID("aaaaaaaa-0000-0000-0000-000000000001")
 
 
 @pytest.fixture
-def auth_client():
+def auth_client(_rsa_keypair, _mock_jwks):
+    private_key, _public_pem = _rsa_keypair
     client = APIClient()
+    now = int(time.time())
     payload = {
         "sub": "33333333-3333-3333-3333-333333333333",
         "email": "admin@cybercom.io",
         "tenant_id": str(TENANT_A),
         "roles": ["platform_admin"],
         "permissions": ["read", "write"],
+        "iat": now,
+        "exp": now + 3600,
+        "aud": settings.CYIDENTITY_CLIENT_ID,
+        "iss": settings.CYIDENTITY_ISSUER,
     }
-    token = jwt.encode(payload, "dummy-secret", algorithm="HS256")
+    token = jwt.encode(payload, private_key, algorithm="RS256")
     client.credentials(
         HTTP_AUTHORIZATION=f"Bearer {token}",
         HTTP_X_TENANT_ID=str(TENANT_A),

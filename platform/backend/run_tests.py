@@ -36,6 +36,12 @@ if __name__ == "__main__":
     os.environ.setdefault("DJANGO_DEBUG", "True")
     os.environ.setdefault("DJANGO_SECRET_KEY", "dev-test-secret-key-cyidentity-2026")
     os.environ.setdefault("KEYCLOAK_ENABLED", "False")
+    # Django's test runner (django.test.utils.setup_test_environment, invoked by
+    # pytest-django) force-sets settings.DEBUG = False for the duration of the test
+    # run regardless of DJANGO_DEBUG -- so encryption.py's DEBUG-gated dev-key
+    # fallback is unreachable here and a real key is required for any test that
+    # writes to an EncryptedCharField/EncryptedTextField/EncryptedEmailField.
+    os.environ.setdefault("PHI_FIELD_ENCRYPTION_KEY", "mSbdAwUAfQUOWBdg9IY5KqMMg2mMIw0GgcdeJvwU9fk=")
 
     args = (
         sys.argv[1:]

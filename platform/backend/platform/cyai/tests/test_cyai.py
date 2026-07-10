@@ -1,7 +1,9 @@
+import time
 import uuid
 
 import jwt
 import pytest
+from django.conf import settings
 from rest_framework.test import APIClient
 
 from platform.cyai.models import GuardrailPolicy, InferenceLog, ModelConfig, PromptTemplate
@@ -14,8 +16,10 @@ def test_tenant_id():
 
 
 @pytest.fixture
-def auth_client(test_tenant_id):
+def auth_client(test_tenant_id, _rsa_keypair, _mock_jwks):
+    private_key, _public_pem = _rsa_keypair
     client = APIClient()
+    now = int(time.time())
     payload = {
         "sub": "11111111-1111-1111-1111-111111111111",
         "email": "admin@cybercom.io",
@@ -23,8 +27,12 @@ def auth_client(test_tenant_id):
         "realm_access": {"roles": ["platform_admin"]},
         "roles": ["platform_admin"],
         "permissions": ["read", "write"],
+        "iat": now,
+        "exp": now + 3600,
+        "aud": settings.CYIDENTITY_CLIENT_ID,
+        "iss": settings.CYIDENTITY_ISSUER,
     }
-    token = jwt.encode(payload, "dummy-secret", algorithm="HS256")
+    token = jwt.encode(payload, private_key, algorithm="RS256")
     client.credentials(
         HTTP_AUTHORIZATION=f"Bearer {token}",
         HTTP_X_TENANT_ID=str(test_tenant_id),

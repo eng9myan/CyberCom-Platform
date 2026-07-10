@@ -474,7 +474,8 @@ class TestProviderWorkflow:
             priority="urgent",
             status="submitted",
         )
-        assert order.status == "submitted"
+        # CPOE fan-out signal holds the order: no order_details.test_codes given.
+        assert order.status == "on_hold"
 
         # Step 6: Critical result returns
         result = ProviderResultView.objects.create(
