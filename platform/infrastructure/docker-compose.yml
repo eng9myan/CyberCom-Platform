@@ -208,6 +208,39 @@ services:
     depends_on:
       - backend
 
+  # ── DICOM SCP (C-ECHO / C-STORE / Modality Worklist) ──────────────────────
+  # Own process, not part of the backend/gunicorn service -- DICOM
+  # associations are stateful long-lived TCP connections, not HTTP
+  # request/response, so this needs its own blocking listener loop.
+  dicom-scp:
+    build:
+      context: .
+      dockerfile: infrastructure/Dockerfile.backend
+    container_name: cybercom-dicom-scp
+    command:
+      [
+        "python", "manage.py", "run_dicom_scp",
+        "--ae-title", "CYBERCOM",
+        "--port", "11112",
+        "--storage-dir", "/var/lib/cybercom/dicom-store",
+        "--tenant-id", "${DICOM_SCP_TENANT_ID:?Set DICOM_SCP_TENANT_ID to the tenant this SCP serves}",
+      ]
+    ports:
+      - "11112:11112"
+    environment:
+      DJANGO_SECRET_KEY: dev-secret-key-not-for-production-use-1234567890
+      DJANGO_DEBUG: "True"
+      DB_HOST: postgres
+      DB_NAME: cybercom_dev
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      REDIS_URL: redis://redis:6379/0
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - dicom_store:/var/lib/cybercom/dicom-store
+
   # ── Frontend (Next.js) ───────────────────────────────────────────────────
   frontend:
     build:
@@ -228,3 +261,4 @@ volumes:
   keycloak_data:
   prometheus_data:
   grafana_data:
+  dicom_store:
