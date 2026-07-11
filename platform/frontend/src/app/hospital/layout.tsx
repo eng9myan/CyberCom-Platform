@@ -43,6 +43,7 @@ import {
   Biohazard,
   Baby,
   Waves,
+  PackageX,
 } from "lucide-react";
 import { useAuth } from "@/contexts/auth";
 import { usePreferences } from "@/contexts/preferences";
@@ -59,12 +60,22 @@ const NAV_GROUPS = [
     ],
   },
   {
+    label: "My Workspace",
+    items: [
+      { href: "/hospital/doctor-workspace", label: "Doctor Workspace", icon: Stethoscope },
+      { href: "/hospital/nurse-workspace", label: "Nurse Workspace", icon: HeartHandshake },
+      { href: "/hospital/lab-tech-workspace", label: "Lab Technician Workspace", icon: FlaskConical },
+      { href: "/hospital/pharmacist-workspace", label: "Pharmacist Workspace", icon: Pill },
+      { href: "/hospital/receptionist-workspace", label: "Receptionist Workspace", icon: ClipboardCheck },
+      { href: "/hospital/department-manager-workspace", label: "Department Manager Workspace", icon: PackageX },
+    ],
+  },
+  {
     label: "Clinical Operations",
     items: [
       { href: "/hospital/reception", label: "Reception", icon: ClipboardCheck },
       { href: "/hospital/patients", label: "Patient Registration", icon: UserPlus },
       { href: "/hospital/appointments", label: "Appointment Calendar", icon: CalendarDays },
-      { href: "/hospital/doctor-workspace", label: "Doctor Workspace", icon: Stethoscope },
       { href: "/hospital/nursing", label: "Nursing Dashboard", icon: HeartHandshake },
       { href: "/hospital/adt", label: "Admissions (ADT)", icon: ClipboardList },
       { href: "/hospital/discharge", label: "Discharge Planning", icon: LogOut },
