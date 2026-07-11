@@ -5,6 +5,13 @@ import { NextRequest, NextResponse } from "next/server";
  * under src/app/. One Next.js deployment serves all subdomains; this
  * middleware makes each subdomain look like its own standalone app by
  * rewriting "/" and deep links onto the matching route tree.
+ *
+ * "cymed" is deliberately NOT listed here. It's the CyMed suite's umbrella
+ * subdomain (cymed.cy-com.com/hospital, /clinic, /pharmacy, /laboratory,
+ * /imaging, /patient-portal, /provider-portal, /rcm, /population-health) --
+ * those paths already exist 1:1 under src/app/, so it must fall through to
+ * plain passthrough below rather than being rewritten onto one fixed path
+ * the way the single-product subdomains are.
  */
 const SUBDOMAIN_TO_PATH: Record<string, string> = {
   hospital: "/hospital",

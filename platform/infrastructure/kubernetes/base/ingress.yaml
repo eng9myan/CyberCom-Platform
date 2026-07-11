@@ -19,6 +19,7 @@ spec:
         - laboratory.cy-com.com
         - imaging.cy-com.com
         - erp.cy-com.com
+        - cymed.cy-com.com
         - api.cy-com.com
       secretName: cybercom-flagship-tls
   rules:
@@ -75,6 +76,22 @@ spec:
                 port:
                   number: 80
     - host: erp.cy-com.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: cybercom-frontend
+                port:
+                  number: 80
+
+    # cymed.cy-com.com is the CyMed suite umbrella domain: unlike the single-product
+    # subdomains above, it is NOT rewritten by middleware.ts to one fixed path -- it
+    # exposes every CyMed route by path as-is (cymed.cy-com.com/hospital,
+    # /clinic, /pharmacy, /laboratory, /imaging, /patient-portal, /provider-portal,
+    # /rcm, /population-health), matching src/app/'s existing route tree directly.
+    - host: cymed.cy-com.com
       http:
         paths:
           - path: /
