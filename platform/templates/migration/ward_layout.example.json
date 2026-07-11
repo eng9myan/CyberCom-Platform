@@ -1,0 +1,35 @@
+{
+  "_comment": "Template for `python manage.py configure_wards --tenant-id <uuid> --config <this file>`. Copy, rename, and fill in per-customer numbers -- see products/cymed/core/facilities/management/commands/configure_wards.py for the full field reference.",
+  "facility_code": "HOSP-MAIN",
+  "department_code": "DEPT-INPATIENT",
+  "department_name": "Inpatient Wards",
+  "tiers": [
+    {
+      "code_prefix": "STD-MULTI",
+      "name": "Standard Multi-Bed",
+      "accommodation_tier": "multi_bed",
+      "room_type": "standard",
+      "stations": 5,
+      "rooms_per_station": 10,
+      "beds_per_room": 4
+    },
+    {
+      "code_prefix": "STD-SINGLE",
+      "name": "Standard Single-Bed",
+      "accommodation_tier": "single_bed",
+      "room_type": "standard",
+      "stations": 5,
+      "rooms_per_station": 10,
+      "beds_per_room": 1
+    },
+    {
+      "code_prefix": "VIP",
+      "name": "VIP",
+      "accommodation_tier": "vip",
+      "room_type": "standard",
+      "stations": 4,
+      "rooms_per_station": 5,
+      "beds_per_room": 1
+    }
+  ]
+}

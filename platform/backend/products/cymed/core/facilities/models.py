@@ -70,6 +70,17 @@ class Room(BaseModel):
         ],
         default="standard",
     )
+    accommodation_tier = models.CharField(
+        max_length=30,
+        choices=[
+            ("multi_bed", "Standard Multi-Bed"),
+            ("single_bed", "Standard Single-Bed"),
+            ("vip", "VIP"),
+        ],
+        default="multi_bed",
+        help_text="Accommodation class for room-rate billing, independent of clinical room_type "
+        "-- a VIP room is still room_type=standard clinically, but bills at the VIP tier.",
+    )
 
     class Meta:
         db_table = "cymed_facility_rooms"

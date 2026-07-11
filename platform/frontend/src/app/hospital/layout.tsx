@@ -41,6 +41,7 @@ import {
   Lock,
   Shirt,
   Biohazard,
+  Baby,
 } from "lucide-react";
 import { useAuth } from "@/contexts/auth";
 import { usePreferences } from "@/contexts/preferences";
@@ -70,6 +71,7 @@ const NAV_GROUPS = [
       { href: "/hospital/emar", label: "Medication Admin (eMAR)", icon: Pill },
       { href: "/hospital/emergency", label: "Emergency", icon: Siren },
       { href: "/hospital/icu", label: "ICU", icon: HeartPulse },
+      { href: "/hospital/maternity", label: "Maternity", icon: Baby },
       { href: "/hospital/operating-room", label: "Operating Room", icon: Scissors },
       { href: "/hospital/beds", label: "Bed Management", icon: BedDouble },
     ],

@@ -29,6 +29,7 @@ ORDER_TYPES = [
     ("emergency", "Emergency"),
     ("scheduled", "Scheduled"),
     ("teleradiology", "Teleradiology"),
+    ("external", "External Referral"),
 ]
 
 ORDER_STATUSES = [
