@@ -92,10 +92,13 @@ def _parse_decimal(value: str, default: str = "0") -> Decimal | None:
 
 def import_inventory(
     csv_path: str, tenant_id: str, *, warehouse_code: str, warehouse_name: str, dry_run: bool,
+    batch_id: str,
 ) -> dict:
+    from platform.common.models import MigrationRecord
     from products.cycom.inventory.models import StockBatch, StockItem, StockMovement, Warehouse
 
     tenant_uuid = uuid.UUID(tenant_id)
+    batch_uuid = uuid.UUID(batch_id)
 
     stats = {
         "rows_read": 0,
@@ -179,7 +182,7 @@ def import_inventory(
                 with transaction.atomic():
                     _set_tenant_guc(tenant_id)
 
-                    stock_item, _ = StockItem.objects.get_or_create(
+                    stock_item, stock_item_created = StockItem.objects.get_or_create(
                         tenant_id=tenant_uuid, warehouse=warehouse, sku=sku,
                         defaults={
                             "name": name,
@@ -189,6 +192,12 @@ def import_inventory(
                             "par_level": par_level,
                         },
                     )
+                    if stock_item_created:
+                        MigrationRecord.objects.create(
+                            tenant_id=tenant_uuid, batch_id=batch_uuid, entity_type="stock_item",
+                            model_label="inventory.StockItem", object_id=stock_item.id,
+                            source_row_identifier=sku, imported_by_script="import_inventory.py",
+                        )
 
                     if StockBatch.objects.filter(
                         tenant_id=tenant_uuid, stock_item=stock_item, batch_number=batch_number
@@ -202,16 +211,29 @@ def import_inventory(
                         tenant_id=tenant_uuid, stock_item=stock_item,
                         batch_number=batch_number, expiry_date=expiry_date,
                     )
+                    MigrationRecord.objects.create(
+                        tenant_id=tenant_uuid, batch_id=batch_uuid, entity_type="stock_batch",
+                        model_label="inventory.StockBatch", object_id=batch.id,
+                        source_row_identifier=f"{sku}/{batch_number}", imported_by_script="import_inventory.py",
+                    )
 
                     # Real receipt movement -- this is what actually
                     # updates StockItem.quantity AND StockBatch.
                     # quantity_on_hand together, via StockMovement.save()'s
                     # existing FEFO-aware logic, instead of hand-setting
                     # either field and risking drift.
-                    StockMovement.objects.create(
+                    movement = StockMovement.objects.create(
                         tenant_id=tenant_uuid, stock_item=stock_item, batch=batch,
                         movement_type="receipt", quantity=quantity,
                         notes=f"Legacy cutover import (batch {batch_number})",
+                    )
+                    # StockMovement.batch is on_delete=PROTECT -- rollback_migration.py
+                    # needs to know this movement exists to delete it before the batch,
+                    # or StockBatch deletion would raise ProtectedError.
+                    MigrationRecord.objects.create(
+                        tenant_id=tenant_uuid, batch_id=batch_uuid, entity_type="stock_movement",
+                        model_label="inventory.StockMovement", object_id=movement.id,
+                        source_row_identifier=f"{sku}/{batch_number}", imported_by_script="import_inventory.py",
                     )
 
                     if expiry_date < date.today():
@@ -239,6 +261,7 @@ def main() -> int:
     parser.add_argument("--warehouse-code", required=True, help="Warehouse code to import stock into (created if it doesn't exist).")
     parser.add_argument("--warehouse-name", default="", help="Warehouse display name, used only if the warehouse is being created.")
     parser.add_argument("--dry-run", action="store_true", help="Validate and report without writing any rows.")
+    parser.add_argument("--batch-id", default=None, help="UUID to tag this run's rows with (auto-generated if omitted).")
     parser.add_argument("--error-log", default="inventory_error_log.json", help="Where to write rejected rows.")
     parser.add_argument("--warning-log", default="inventory_warnings.json", help="Where to write non-fatal warnings (e.g. already-expired batches).")
     args = parser.parse_args()
@@ -247,10 +270,11 @@ def main() -> int:
         print(f"FATAL: CSV file not found: {args.csv}", file=sys.stderr)
         return 1
 
+    batch_id = args.batch_id or str(uuid.uuid4())
     result = import_inventory(
         args.csv, args.tenant_id,
         warehouse_code=args.warehouse_code, warehouse_name=args.warehouse_name,
-        dry_run=args.dry_run,
+        dry_run=args.dry_run, batch_id=batch_id,
     )
 
     Path(args.error_log).write_text(json.dumps(result["errors"], indent=2), encoding="utf-8")
@@ -258,7 +282,7 @@ def main() -> int:
 
     stats = result["stats"]
     mode = "DRY RUN" if args.dry_run else "LIVE IMPORT"
-    print(f"=== import_inventory.py [{mode}] ===")
+    print(f"=== import_inventory.py [{mode}] === batch-id: {batch_id}")
     for key, value in stats.items():
         print(f"  {key}: {value}")
     print(f"  -> {len(result['errors'])} row(s) written to {args.error_log}")

@@ -74,6 +74,42 @@ class BaseModel(UUIDPrimaryKeyMixin, TimestampMixin, TenantScopedMixin):
         abstract = True
 
 
+class MigrationRecord(UUIDPrimaryKeyMixin, TimestampMixin, TenantScopedMixin):
+    """
+    One row per record created by a customer-data-migration script run
+    (scripts/import_patients.py, scripts/import_inventory.py, etc.) --
+    lets validate_migration.py confirm exactly what a batch created and
+    rollback_migration.py undo exactly that batch, nothing else. Without
+    this, "rollback batch X" has no way to know which rows belong to X
+    versus data that existed before the import or was entered by hand
+    afterward.
+    """
+
+    batch_id = models.UUIDField(db_index=True)
+    entity_type = models.CharField(
+        max_length=100, help_text='e.g. "patient", "stock_item", "stock_batch".'
+    )
+    model_label = models.CharField(
+        max_length=200, help_text='Django app_label.ModelName, e.g. "cymed_patients.Patient".'
+    )
+    object_id = models.UUIDField()
+    source_row_identifier = models.CharField(
+        max_length=255, blank=True, help_text="Natural key from the source CSV row (MRN, SKU, etc.)."
+    )
+    imported_by_script = models.CharField(max_length=255)
+    rolled_back_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = "platform_common_migration_records"
+        indexes = [
+            models.Index(fields=["tenant_id", "batch_id"]),
+            models.Index(fields=["tenant_id", "model_label", "object_id"]),
+        ]
+
+    def __str__(self):
+        return f"MigrationRecord(batch={self.batch_id}, {self.model_label}={self.object_id})"
+
+
 class PlatformModel(UUIDPrimaryKeyMixin, TimestampMixin):
     """
     Base model for platform-level (non-tenant-scoped) entities like

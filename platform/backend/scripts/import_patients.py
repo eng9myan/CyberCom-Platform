@@ -48,9 +48,14 @@ required, case-sensitive):
     row is created. An unresolvable code is flagged, not guessed at.
   - medical_history_notes: free text. Never auto-coded (see above).
 
+Every row actually written is logged to platform.common.models.MigrationRecord
+under --batch-id (auto-generated if not given, printed either way) --
+validate_migration.py and rollback_migration.py both key off this to know
+exactly what a given run created, separate from pre-existing data.
+
 Usage:
     python scripts/import_patients.py --csv legacy_patients.csv \
-        --tenant-id <uuid> [--dry-run] \
+        --tenant-id <uuid> [--dry-run] [--batch-id <uuid>] \
         [--error-log error_log.json] \
         [--needs-coding-log needs_clinical_coding.json]
 """
@@ -101,12 +106,14 @@ def _parse_date(value: str):
         return None
 
 
-def import_patients(csv_path: str, tenant_id: str, *, dry_run: bool) -> dict:
+def import_patients(csv_path: str, tenant_id: str, *, dry_run: bool, batch_id: str) -> dict:
     from products.cymed.core.clinical.models import Condition
     from products.cymed.core.patients.models import Patient, PatientNationality
+    from platform.common.models import MigrationRecord
     from platform.terminology.services import TerminologyService
 
     tenant_uuid = uuid.UUID(tenant_id)
+    batch_uuid = uuid.UUID(batch_id)
 
     stats = {
         "rows_read": 0,
@@ -182,6 +189,11 @@ def import_patients(csv_path: str, tenant_id: str, *, dry_run: bool) -> dict:
                     )
                     patient.full_clean(exclude=["merged_into"])
                     patient.save()
+                    MigrationRecord.objects.create(
+                        tenant_id=tenant_uuid, batch_id=batch_uuid, entity_type="patient",
+                        model_label="cymed_patients.Patient", object_id=patient.id,
+                        source_row_identifier=mrn, imported_by_script="import_patients.py",
+                    )
 
                     country_code = (row.get("nationality_country_code") or "").strip().upper()
                     if country_code:
@@ -254,6 +266,7 @@ def main() -> int:
     parser.add_argument("--csv", required=True, help="Path to the legacy patient CSV export.")
     parser.add_argument("--tenant-id", required=True, help="Tenant UUID this hospital's data belongs to.")
     parser.add_argument("--dry-run", action="store_true", help="Validate and report without writing any rows.")
+    parser.add_argument("--batch-id", default=None, help="UUID to tag this run's rows with (auto-generated if omitted).")
     parser.add_argument("--error-log", default="error_log.json", help="Where to write flagged/failed rows.")
     parser.add_argument("--needs-coding-log", default="needs_clinical_coding.json", help="Where to write rows needing human clinical coding.")
     args = parser.parse_args()
@@ -262,14 +275,15 @@ def main() -> int:
         print(f"FATAL: CSV file not found: {args.csv}", file=sys.stderr)
         return 1
 
-    result = import_patients(args.csv, args.tenant_id, dry_run=args.dry_run)
+    batch_id = args.batch_id or str(uuid.uuid4())
+    result = import_patients(args.csv, args.tenant_id, dry_run=args.dry_run, batch_id=batch_id)
 
     Path(args.error_log).write_text(json.dumps(result["errors"], indent=2), encoding="utf-8")
     Path(args.needs_coding_log).write_text(json.dumps(result["needs_coding"], indent=2), encoding="utf-8")
 
     stats = result["stats"]
     mode = "DRY RUN" if args.dry_run else "LIVE IMPORT"
-    print(f"=== import_patients.py [{mode}] ===")
+    print(f"=== import_patients.py [{mode}] === batch-id: {batch_id}")
     for key, value in stats.items():
         print(f"  {key}: {value}")
     print(f"  -> {len(result['errors'])} row(s) written to {args.error_log}")
