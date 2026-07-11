@@ -143,6 +143,7 @@ PRODUCT_APPS = [
     "products.cymed.hospital.quality_management",
     "products.cymed.hospital.research",
     "products.cymed.hospital.rehabilitation",
+    "products.cymed.hospital.dialysis",
     "products.cymed.hospital.dietary",
     "products.cymed.hospital.mortuary",
     "products.cymed.hospital.linen_services",

@@ -42,6 +42,7 @@ import {
   Shirt,
   Biohazard,
   Baby,
+  Waves,
 } from "lucide-react";
 import { useAuth } from "@/contexts/auth";
 import { usePreferences } from "@/contexts/preferences";
@@ -72,6 +73,7 @@ const NAV_GROUPS = [
       { href: "/hospital/emergency", label: "Emergency", icon: Siren },
       { href: "/hospital/icu", label: "ICU", icon: HeartPulse },
       { href: "/hospital/maternity", label: "Maternity", icon: Baby },
+      { href: "/hospital/dialysis", label: "Dialysis", icon: Waves },
       { href: "/hospital/operating-room", label: "Operating Room", icon: Scissors },
       { href: "/hospital/beds", label: "Bed Management", icon: BedDouble },
     ],
