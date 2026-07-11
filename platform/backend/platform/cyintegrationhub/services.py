@@ -142,6 +142,8 @@ class TransformationEngine:
         patient_info: dict[str, Any] = {}
         visit_info: dict[str, Any] = {}
         observations: list[dict[str, Any]] = []
+        order_groups: list[dict[str, Any]] = []
+        current_order_group: dict[str, Any] | None = None
 
         for seg in segments:
             parts = seg.split("|")
@@ -213,6 +215,18 @@ class TransformationEngine:
                             break
                 visit_info["encounter_id"] = enc_id
 
+            elif seg_name == "OBR":
+                # Observation Request -- ties a group of OBX results back to
+                # the order that requested them (Placer/Filler Order Number),
+                # and to which test/panel (Universal Service ID) they answer.
+                current_order_group = {
+                    "placer_order_number": parts[2].split("^")[0] if len(parts) > 2 else "",
+                    "filler_order_number": parts[3].split("^")[0] if len(parts) > 3 else "",
+                    "universal_service_id": parts[4].split("^")[0] if len(parts) > 4 else "",
+                    "observations": [],
+                }
+                order_groups.append(current_order_group)
+
             elif seg_name == "OBX":
                 # Observation / Segment
                 obs = {
@@ -225,6 +239,8 @@ class TransformationEngine:
                     "result_status": parts[11] if len(parts) > 11 else "",
                 }
                 observations.append(obs)
+                if current_order_group is not None:
+                    current_order_group["observations"].append(obs)
 
         if patient_info:
             parsed["patient"] = patient_info
@@ -232,6 +248,8 @@ class TransformationEngine:
             parsed["visit"] = visit_info
         if observations:
             parsed["observations"] = observations
+        if order_groups:
+            parsed["order_groups"] = order_groups
 
         return parsed
 

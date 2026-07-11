@@ -241,6 +241,35 @@ services:
     volumes:
       - dicom_store:/var/lib/cybercom/dicom-store
 
+  # ── MLLP listener (lab analyzer HL7v2 ORU results) ────────────────────────
+  # Own process, same reasoning as dicom-scp: a persistent TCP accept()
+  # loop, not an HTTP request/response cycle.
+  mllp-listener:
+    build:
+      context: .
+      dockerfile: infrastructure/Dockerfile.backend
+    container_name: cybercom-mllp-listener
+    command:
+      [
+        "python", "manage.py", "run_mllp_listener",
+        "--host", "0.0.0.0",
+        "--port", "2575",
+        "--tenant-id", "${MLLP_LISTENER_TENANT_ID:?Set MLLP_LISTENER_TENANT_ID to the tenant this listener serves}",
+      ]
+    ports:
+      - "2575:2575"
+    environment:
+      DJANGO_SECRET_KEY: dev-secret-key-not-for-production-use-1234567890
+      DJANGO_DEBUG: "True"
+      DB_HOST: postgres
+      DB_NAME: cybercom_dev
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      REDIS_URL: redis://redis:6379/0
+    depends_on:
+      postgres:
+        condition: service_healthy
+
   # ── Frontend (Next.js) ───────────────────────────────────────────────────
   frontend:
     build:
