@@ -1,3 +1,4 @@
+import io
 import time
 import uuid
 
@@ -189,9 +190,10 @@ class TestConnectorFramework:
             partner=partner,
             connector_type="dicom",
             action="send",
-            payload="binary-dicom-data",
+            payload=_build_real_dicom_bytes(),
         )
         assert res["dicom_status"] == "archived"
+        assert res["patient_id"] == "MRN12345"
 
     def test_ldap_connector(self, test_tenant_id):
         partner = IntegrationPartner.objects.create(name="P4", slug="p4", protocol="ldap")
@@ -255,17 +257,63 @@ class TestIntegrationAPIs:
         assert resp.data["fhir_status"] == "not_sent"
 
 
+def _build_real_dicom_bytes(
+    patient_name="Doe^John",
+    patient_id="MRN12345",
+    sop_instance_uid="1.2.840.10008.5.1.4.1.1.2.999",
+    modality="CT",
+) -> bytes:
+    """
+    Builds a genuine, parseable DICOM Part 10 file in memory -- real
+    preamble, real File Meta Information group, real dataset -- so
+    ConnectorFramework.parse_dicom_metadata (which uses pydicom.dcmread,
+    not string-sniffing) has something real to parse.
+    """
+    import pydicom
+    from pydicom.dataset import FileDataset, FileMetaDataset
+    from pydicom.uid import ExplicitVRLittleEndian, generate_uid
+
+    file_meta = FileMetaDataset()
+    file_meta.MediaStorageSOPClassUID = "1.2.840.10008.5.1.4.1.1.2"
+    file_meta.MediaStorageSOPInstanceUID = sop_instance_uid
+    file_meta.TransferSyntaxUID = ExplicitVRLittleEndian
+    file_meta.ImplementationClassUID = generate_uid()
+
+    dataset = FileDataset(None, {}, file_meta=file_meta, preamble=b"\x00" * 128)
+    dataset.PatientName = patient_name
+    dataset.PatientID = patient_id
+    dataset.SOPInstanceUID = sop_instance_uid
+    dataset.SOPClassUID = file_meta.MediaStorageSOPClassUID
+    dataset.StudyInstanceUID = generate_uid()
+    dataset.SeriesInstanceUID = generate_uid()
+    dataset.StudyDate = "20260628"
+    dataset.Modality = modality
+    dataset.is_little_endian = True
+    dataset.is_implicit_VR = False
+
+    buffer = io.BytesIO()
+    pydicom.dcmwrite(buffer, dataset, write_like_original=False)
+    return buffer.getvalue()
+
+
 @pytest.mark.django_db
 class TestResilienceAndParsers:
     def test_dicom_binary_parsing(self):
-        # Create a mock DICOM byte string: 128 bytes preamble + b"DICM" + metadata
-        preamble = b"\x00" * 128
-        magic = b"DICM"
-        payload = preamble + magic + b"some_dicom_data"
+        payload = _build_real_dicom_bytes(patient_name="Doe^John", sop_instance_uid="1.2.840.10008.5.1.4.1.1.2.999")
 
         metadata = ConnectorFramework.parse_dicom_metadata(payload)
-        assert metadata["patient_name"] == "John Doe"
+        assert metadata["patient_name"] == "Doe^John"
         assert metadata["sop_instance_uid"] == "1.2.840.10008.5.1.4.1.1.2.999"
+        assert metadata["modality"] == "CT"
+
+    def test_dicom_parsing_rejects_non_bytes(self):
+        with pytest.raises(ValueError, match="must be bytes"):
+            ConnectorFramework.parse_dicom_metadata("not a real dicom file")
+
+    def test_dicom_parsing_rejects_garbage_bytes(self):
+        garbage = b"\x00" * 128 + b"DICM" + b"not_actually_a_valid_dataset"
+        with pytest.raises(Exception):
+            ConnectorFramework.parse_dicom_metadata(garbage)
 
     def test_complex_hl7_parsing(self):
         hl7_msg = (

@@ -1,10 +1,11 @@
+import io
 import logging
 import re
 import time
 from typing import Any
 
 import httpx
-from django.utils import timezone
+import pydicom
 
 from platform.cyintegrationhub.models import (
     ConnectorConfig,
@@ -423,22 +424,32 @@ class ConnectorFramework:
     @classmethod
     def parse_dicom_metadata(cls, payload: Any) -> dict[str, Any]:
         """
-        Parses binary bytes or string representing DICOM files to extract tags (SOP Instance, Patient Name).
+        Parses a real DICOM Part 10 file (128-byte preamble + "DICM" magic
+        + File Meta Information + dataset) via pydicom and extracts the
+        tags archiving/routing actually needs. Raises on anything that
+        isn't a genuine, parseable DICOM file rather than fabricating
+        placeholder tag values -- same "never fake a result for a call
+        that didn't really happen" rule as the FHIR connector.
         """
-        metadata = {
-            "sop_instance_uid": "1.2.840.10008.5.1.4.1.1.2",
-            "patient_name": "Unknown Patient",
-            "study_date": timezone.now().date().isoformat(),
+        if not isinstance(payload, (bytes, bytearray)):
+            raise ValueError("DICOM payload must be bytes (a Part 10 file), not a string.")
+
+        dataset = pydicom.dcmread(io.BytesIO(payload))
+
+        # pydicom.dcmread is lenient by default -- garbage bytes after a
+        # valid "DICM" magic don't raise, they just parse into a near-empty
+        # Dataset. Require the one tag every real instance must carry
+        # rather than silently returning empty metadata for a non-instance.
+        if "SOPInstanceUID" not in dataset:
+            raise ValueError("Parsed DICOM dataset has no SOPInstanceUID -- not a real instance.")
+
+        return {
+            "sop_instance_uid": str(getattr(dataset, "SOPInstanceUID", "")),
+            "sop_class_uid": str(getattr(dataset, "SOPClassUID", "")),
+            "patient_name": str(getattr(dataset, "PatientName", "")),
+            "patient_id": str(getattr(dataset, "PatientID", "")),
+            "study_date": str(getattr(dataset, "StudyDate", "")),
+            "study_instance_uid": str(getattr(dataset, "StudyInstanceUID", "")),
+            "series_instance_uid": str(getattr(dataset, "SeriesInstanceUID", "")),
+            "modality": str(getattr(dataset, "Modality", "")),
         }
-
-        if isinstance(payload, bytes):
-            if len(payload) > 132 and payload[128:132] == b"DICM":
-                metadata["patient_name"] = "John Doe"
-                metadata["sop_instance_uid"] = "1.2.840.10008.5.1.4.1.1.2.999"
-        elif isinstance(payload, str):
-            if "SOPInstanceUID" in payload:
-                metadata["sop_instance_uid"] = "1.2.840.10008.5.1.4.1.1.2.888"
-            if "PatientName" in payload:
-                metadata["patient_name"] = "Jane Smith"
-
-        return metadata
