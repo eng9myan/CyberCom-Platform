@@ -159,3 +159,99 @@ class PerformanceReview(BaseModel):
 
     class Meta:
         db_table = "cycom_hr_performance_reviews"
+
+
+class ShiftTemplate(BaseModel):
+    """
+    Reusable shift definition (e.g. "Day Shift 07:00-15:00") that
+    ShiftAssignment rows are built against. Covers general (non-nursing)
+    staff -- lab, pharmacy, security, housekeeping, admin. Nursing has its
+    own ward-scoped NursingShift/NursingAssignment in the hospital module;
+    this is the equivalent for everyone else.
+    """
+
+    name = models.CharField(max_length=100)  # "Day Shift", "Night Shift", "Rotating A"
+    start_time = models.TimeField()
+    end_time = models.TimeField()
+    is_night_shift = models.BooleanField(default=False)
+    differential_percent = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=0,
+        help_text="Pay premium applied on top of base hourly rate for working this shift "
+        "(e.g. 15.00 for a 15% night-shift differential). Consumed by payroll calculation.",
+    )
+
+    class Meta:
+        db_table = "cycom_hr_shift_templates"
+        ordering = ["start_time"]
+
+    def __str__(self):
+        return f"{self.name} ({self.start_time}-{self.end_time})"
+
+
+class ShiftAssignment(BaseModel):
+    """
+    One employee's roster slot for one date. A roster/schedule is just a
+    set of these rows -- publishing next month's schedule means bulk
+    creating ShiftAssignment rows, not a separate "schedule" object.
+    """
+
+    STATUS_CHOICES = [
+        ("scheduled", "Scheduled"),
+        ("completed", "Completed"),
+        ("no_show", "No Show"),
+        ("swapped", "Swapped"),
+        ("cancelled", "Cancelled"),
+    ]
+
+    employee = models.ForeignKey(Employee, on_delete=models.CASCADE, related_name="shift_assignments")
+    shift_template = models.ForeignKey(
+        ShiftTemplate, on_delete=models.PROTECT, related_name="assignments"
+    )
+    assigned_date = models.DateField()
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="scheduled")
+    notes = models.TextField(blank=True)
+
+    class Meta:
+        db_table = "cycom_hr_shift_assignments"
+        ordering = ["assigned_date"]
+        indexes = [
+            models.Index(fields=["tenant_id", "employee", "assigned_date"]),
+            models.Index(fields=["tenant_id", "assigned_date"]),
+        ]
+
+    def __str__(self):
+        return f"{self.employee} - {self.shift_template.name} on {self.assigned_date}"
+
+
+class ShiftSwapRequest(BaseModel):
+    """
+    Employee-initiated request to hand off a scheduled shift, optionally
+    to a specific covering colleague. Approval flips both assignments'
+    status to "swapped" -- see ShiftSwapRequestViewSet.approve().
+    """
+
+    STATUS_CHOICES = [
+        ("pending", "Pending"),
+        ("approved", "Approved"),
+        ("rejected", "Rejected"),
+    ]
+
+    original_assignment = models.ForeignKey(
+        ShiftAssignment, on_delete=models.CASCADE, related_name="swap_requests"
+    )
+    covering_employee = models.ForeignKey(
+        Employee, on_delete=models.SET_NULL, null=True, blank=True, related_name="covering_swap_requests"
+    )
+    reason = models.TextField(blank=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="pending")
+    reviewed_by = models.UUIDField(null=True, blank=True)
+    reviewed_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = "cycom_hr_shift_swap_requests"
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"SwapRequest({self.original_assignment_id}, {self.status})"

@@ -9,6 +9,9 @@ interface Department { id: string; name: string; code: string; }
 interface Employee { id: string; first_name: string; last_name: string; department: string | null; job_title: string; hire_date: string; status: string; }
 interface LeaveRequest { id: string; employee: string; leave_type: string; start_date: string; end_date: string; status: "pending" | "approved" | "rejected"; reason: string; }
 interface PayrollRun { id: string; run_date: string; status: string; total_gross: string; total_deductions: string; total_net: string; }
+interface ShiftTemplate { id: string; name: string; start_time: string; end_time: string; is_night_shift: boolean; differential_percent: string; }
+interface ShiftAssignment { id: string; employee: string; employee_name: string; shift_template: string; shift_name: string; assigned_date: string; status: string; }
+interface ShiftSwapRequest { id: string; original_assignment: string; covering_employee: string | null; reason: string; status: "pending" | "approved" | "rejected"; }
 interface Paginated<T> { count: number; results: T[]; }
 
 export default function HRPayroll() {
@@ -17,6 +20,9 @@ export default function HRPayroll() {
   const [employees, setEmployees] = useState<Employee[] | null>(null);
   const [leaveRequests, setLeaveRequests] = useState<LeaveRequest[]>([]);
   const [payrollRuns, setPayrollRuns] = useState<PayrollRun[]>([]);
+  const [shiftTemplates, setShiftTemplates] = useState<ShiftTemplate[]>([]);
+  const [shiftAssignments, setShiftAssignments] = useState<ShiftAssignment[]>([]);
+  const [swapRequests, setSwapRequests] = useState<ShiftSwapRequest[]>([]);
   const [fetchError, setFetchError] = useState<string | null>(null);
 
   const loadData = useCallback(async () => {
@@ -24,16 +30,22 @@ export default function HRPayroll() {
     setFetchError(null);
     try {
       const opts = { token: session.accessToken, tenantId: session.tenantId };
-      const [deptPage, empPage, leavePage, payrollPage] = await Promise.all([
+      const [deptPage, empPage, leavePage, payrollPage, shiftTemplatePage, shiftAssignmentPage, swapPage] = await Promise.all([
         apiFetch<Paginated<Department>>("/api/v1/erp/hr/departments/", opts),
         apiFetch<Paginated<Employee>>("/api/v1/erp/hr/employees/", opts),
         apiFetch<Paginated<LeaveRequest>>("/api/v1/erp/hr/leave-requests/", opts),
         apiFetch<Paginated<PayrollRun>>("/api/v1/erp/payroll/runs/", opts),
+        apiFetch<Paginated<ShiftTemplate>>("/api/v1/erp/hr/shift-templates/", opts),
+        apiFetch<Paginated<ShiftAssignment>>("/api/v1/erp/hr/shift-assignments/", opts),
+        apiFetch<Paginated<ShiftSwapRequest>>("/api/v1/erp/hr/shift-swap-requests/", opts),
       ]);
       setDepartments(deptPage.results);
       setEmployees(empPage.results);
       setLeaveRequests(leavePage.results);
       setPayrollRuns(payrollPage.results);
+      setShiftTemplates(shiftTemplatePage.results);
+      setShiftAssignments(shiftAssignmentPage.results);
+      setSwapRequests(swapPage.results);
     } catch (err) {
       const detail = (err as { detail?: string })?.detail;
       setFetchError(detail || (err instanceof Error ? err.message : "Failed to load HR data."));
@@ -41,6 +53,19 @@ export default function HRPayroll() {
   }, [session]);
 
   useEffect(() => { void loadData(); }, [loadData]);
+
+  async function decideSwap(id: string, decision: "approve" | "reject") {
+    if (!session) return;
+    try {
+      await apiFetch(`/api/v1/erp/hr/shift-swap-requests/${id}/${decision}/`, {
+        method: "POST", token: session.accessToken, tenantId: session.tenantId,
+      });
+      void loadData();
+    } catch (err) {
+      const detail = (err as { detail?: string })?.detail;
+      setFetchError(detail || `Failed to ${decision} swap request.`);
+    }
+  }
 
   async function decideLeave(id: string, status: "approved" | "rejected") {
     if (!session) return;
@@ -83,6 +108,12 @@ export default function HRPayroll() {
     .filter(e => (Date.now() - new Date(e.hire_date).getTime()) / (1000 * 60 * 60 * 24) <= 30)
     .sort((a, b) => b.hire_date.localeCompare(a.hire_date));
   const latestPayrollRun = payrollRuns.slice().sort((a, b) => b.run_date.localeCompare(a.run_date))[0];
+  const today = new Date().toISOString().slice(0, 10);
+  const upcomingShifts = shiftAssignments
+    .filter(a => a.assigned_date >= today && a.status === "scheduled")
+    .sort((a, b) => a.assigned_date.localeCompare(b.assigned_date))
+    .slice(0, 20);
+  const pendingSwaps = swapRequests.filter(s => s.status === "pending");
 
   return (
     <div className="mx-auto max-w-6xl">
@@ -177,7 +208,7 @@ export default function HRPayroll() {
       </div>
 
       <h2 className="mb-3 text-lg font-semibold">Payroll Runs</h2>
-      <div className="overflow-hidden rounded-xl border border-white/10 bg-surface-raised">
+      <div className="mb-8 overflow-hidden rounded-xl border border-white/10 bg-surface-raised">
         <div className="overflow-x-auto">
           <table className="w-full border-collapse text-sm">
             <thead>
@@ -198,6 +229,70 @@ export default function HRPayroll() {
                   <td className="px-4 py-3">{parseFloat(r.total_gross).toLocaleString()}</td>
                   <td className="px-4 py-3">{parseFloat(r.total_deductions).toLocaleString()}</td>
                   <td className="px-4 py-3 font-semibold">{parseFloat(r.total_net).toLocaleString()}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <h2 className="mb-3 text-lg font-semibold">Shift Roster — Upcoming</h2>
+      <p className="mb-3 text-xs text-white/40">
+        {shiftTemplates.length} shift template(s) defined
+        {shiftTemplates.some(t => t.is_night_shift) && ` (night shifts carry a ${shiftTemplates.find(t => t.is_night_shift)?.differential_percent}% differential)`}
+      </p>
+      <div className="mb-8 overflow-hidden rounded-xl border border-white/10 bg-surface-raised">
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse text-sm">
+            <thead>
+              <tr className="border-b border-white/10 bg-white/5">
+                {["Date", "Employee", "Shift", "Status"].map(h => (
+                  <th key={h} className="px-4 py-3 text-left font-semibold text-white/50">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {upcomingShifts.length === 0 && (
+                <tr><td colSpan={4} className="px-4 py-6 text-center text-white/50">No upcoming shifts scheduled.</td></tr>
+              )}
+              {upcomingShifts.map(a => (
+                <tr key={a.id} className="border-b border-white/5">
+                  <td className="px-4 py-3 text-white/60">{a.assigned_date}</td>
+                  <td className="px-4 py-3 font-medium">{a.employee_name}</td>
+                  <td className="px-4 py-3 text-white/60">{a.shift_name}</td>
+                  <td className="px-4 py-3 capitalize text-white/60">{a.status}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <h2 className="mb-3 text-lg font-semibold">Pending Shift Swap Requests</h2>
+      <div className="overflow-hidden rounded-xl border border-white/10 bg-surface-raised">
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse text-sm">
+            <thead>
+              <tr className="border-b border-white/10 bg-white/5">
+                {["Reason", "Covering Employee", "Action"].map(h => (
+                  <th key={h} className="px-4 py-3 text-left font-semibold text-white/50">{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {pendingSwaps.length === 0 && (
+                <tr><td colSpan={3} className="px-4 py-6 text-center text-white/50">No pending swap requests.</td></tr>
+              )}
+              {pendingSwaps.map(s => (
+                <tr key={s.id} className="border-b border-white/5">
+                  <td className="px-4 py-3 text-white/60">{s.reason || "—"}</td>
+                  <td className="px-4 py-3 text-white/60">{s.covering_employee ? employeeName(s.covering_employee) : "Unassigned"}</td>
+                  <td className="px-4 py-3">
+                    <div className="flex gap-2">
+                      <button onClick={() => decideSwap(s.id, "approve")} className="rounded-md bg-green-500/15 p-1.5 text-green-400 hover:bg-green-500/25"><Check size={14} /></button>
+                      <button onClick={() => decideSwap(s.id, "reject")} className="rounded-md bg-red-500/15 p-1.5 text-red-400 hover:bg-red-500/25"><XIcon size={14} /></button>
+                    </div>
+                  </td>
                 </tr>
               ))}
             </tbody>

@@ -7,6 +7,9 @@ from .models import (
     Employee,
     LeaveRequest,
     PerformanceReview,
+    ShiftAssignment,
+    ShiftSwapRequest,
+    ShiftTemplate,
 )
 
 
@@ -111,3 +114,39 @@ class PerformanceReviewSerializer(serializers.ModelSerializer):
             "updated_at",
         ]
         read_only_fields = ["id", "created_at", "updated_at"]
+
+
+class ShiftTemplateSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ShiftTemplate
+        fields = [
+            "id", "name", "start_time", "end_time", "is_night_shift",
+            "differential_percent", "created_at", "updated_at",
+        ]
+        read_only_fields = ["id", "created_at", "updated_at"]
+
+
+class ShiftAssignmentSerializer(serializers.ModelSerializer):
+    employee_name = serializers.SerializerMethodField()
+    shift_name = serializers.CharField(source="shift_template.name", read_only=True)
+
+    class Meta:
+        model = ShiftAssignment
+        fields = [
+            "id", "employee", "employee_name", "shift_template", "shift_name",
+            "assigned_date", "status", "notes", "created_at", "updated_at",
+        ]
+        read_only_fields = ["id", "created_at", "updated_at"]
+
+    def get_employee_name(self, obj):
+        return f"{obj.employee.first_name} {obj.employee.last_name}"
+
+
+class ShiftSwapRequestSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ShiftSwapRequest
+        fields = [
+            "id", "original_assignment", "covering_employee", "reason", "status",
+            "reviewed_by", "reviewed_at", "created_at", "updated_at",
+        ]
+        read_only_fields = ["id", "status", "reviewed_by", "reviewed_at", "created_at", "updated_at"]

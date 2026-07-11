@@ -13,5 +13,8 @@ router.register(
 router.register(
     "clinical-credentials", views.ClinicalCredentialViewSet, basename="clinical-credential"
 )
+router.register("shift-templates", views.ShiftTemplateViewSet, basename="shift-template")
+router.register("shift-assignments", views.ShiftAssignmentViewSet, basename="shift-assignment")
+router.register("shift-swap-requests", views.ShiftSwapRequestViewSet, basename="shift-swap-request")
 
 urlpatterns = router.urls
