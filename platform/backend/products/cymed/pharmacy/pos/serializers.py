@@ -33,6 +33,10 @@ class CheckoutLineInputSerializer(serializers.Serializer):
 
 class CheckoutSerializer(serializers.Serializer):
     cashier_id = serializers.UUIDField()
+    location = serializers.UUIDField(
+        help_text="Warehouse id for the pharmacy location this sale is rung up at. "
+        "Every line's stock_item_id must belong to this location's own stock pool."
+    )
     patient_id = serializers.UUIDField(required=False, allow_null=True)
     payment_method = serializers.ChoiceField(choices=PharmacySale.PAYMENT_METHOD_CHOICES)
     discount_amount = serializers.DecimalField(max_digits=18, decimal_places=2, required=False, default=Decimal("0"), min_value=Decimal("0"))

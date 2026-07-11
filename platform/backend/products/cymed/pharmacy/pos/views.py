@@ -7,7 +7,9 @@ from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.response import Response
 
-from products.cycom.inventory.models import StockItem, StockMovement
+from rest_framework.exceptions import ValidationError
+
+from products.cycom.inventory.models import StockItem, StockMovement, Warehouse
 
 from ..views import PharmacyModelViewSet
 from .models import VAT_RATE, PharmacySale, PharmacySaleLine
@@ -28,13 +30,41 @@ class PharmacySaleViewSet(PharmacyModelViewSet):
         VAT/total, and posts a real "issue" StockMovement per line so the
         shared inventory StockItem.quantity actually decrements (no
         separate PATCH needed -- that's handled by StockMovement.save()).
+
+        Every line's stock item must belong to the sale's own location
+        (Warehouse) -- a hospital running e.g. a separate ER pharmacy and
+        outpatient retail pharmacy must not be able to ring up one
+        location's stock against the other's pool.
         """
         tenant_id = getattr(request, "tenant_id", None)
         serializer = CheckoutSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         data = serializer.validated_data
 
+        location = Warehouse.objects.filter(id=data["location"], tenant_id=tenant_id).first()
+        if location is None:
+            raise ValidationError({"location": "No pharmacy location (warehouse) found for that id."})
+
         lines_input = data["lines"]
+        stock_items_by_id = {
+            item.id: item
+            for item in StockItem.objects.filter(
+                id__in=[line["stock_item_id"] for line in lines_input], tenant_id=tenant_id
+            )
+        }
+        for line in lines_input:
+            stock_item = stock_items_by_id.get(line["stock_item_id"])
+            if stock_item is not None and stock_item.warehouse_id != location.id:
+                raise ValidationError(
+                    {
+                        "lines": (
+                            f"Stock item {line['stock_item_id']} belongs to warehouse "
+                            f"{stock_item.warehouse_id}, not this sale's location {location.id} "
+                            f"({location.code}). Cannot sell one pharmacy's stock at another."
+                        )
+                    }
+                )
+
         subtotal = sum((line["quantity"] * line["unit_price"] for line in lines_input), Decimal("0"))
         discount = data.get("discount_amount") or Decimal("0")
         taxable = max(subtotal - discount, Decimal("0"))
@@ -45,6 +75,7 @@ class PharmacySaleViewSet(PharmacyModelViewSet):
             sale = PharmacySale.objects.create(
                 tenant_id=tenant_id,
                 sale_number=f"POS-{uuid.uuid4().hex[:8].upper()}",
+                location=location,
                 cashier_id=data["cashier_id"],
                 patient_id=data.get("patient_id"),
                 payment_method=data["payment_method"],
@@ -65,9 +96,7 @@ class PharmacySaleViewSet(PharmacyModelViewSet):
                     unit_price=line["unit_price"],
                     line_total=line_total,
                 )
-                stock_item = StockItem.objects.filter(
-                    id=line["stock_item_id"], tenant_id=tenant_id
-                ).first()
+                stock_item = stock_items_by_id.get(line["stock_item_id"])
                 if stock_item is not None:
                     StockMovement.objects.create(
                         tenant_id=tenant_id,

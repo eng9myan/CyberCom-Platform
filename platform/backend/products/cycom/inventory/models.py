@@ -8,6 +8,16 @@ class Warehouse(BaseModel):
     name = models.CharField(max_length=200)
     code = models.CharField(max_length=50)
     location = models.CharField(max_length=255, blank=True)
+    room = models.ForeignKey(
+        "cymed_facilities.Room",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="warehouses",
+        help_text="Physical room this warehouse/stock pool is located in, e.g. a specific "
+        "pharmacy counter -- lets multiple warehouses (ER pharmacy vs outpatient retail "
+        "pharmacy) be distinguished by real facility location, not just free-text.",
+    )
 
     class Meta:
         db_table = "cycom_inventory_warehouses"

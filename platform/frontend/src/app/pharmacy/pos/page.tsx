@@ -5,7 +5,8 @@ import { Search, ShoppingCart, Trash2, Banknote, CreditCard, ShieldCheck, Smartp
 import { apiFetch } from "@/lib/api";
 import { useAuth } from "@/contexts/auth";
 
-interface StockItem { id: string; name: string; sku: string; quantity: string; unit: string; unit_cost: string; }
+interface StockItem { id: string; name: string; sku: string; quantity: string; unit: string; unit_cost: string; warehouse: string | null; }
+interface Warehouse { id: string; name: string; code: string; }
 interface Paginated<T> { count: number; results: T[]; }
 
 interface CartLine { stock_item_id: string; item_name: string; unit_price: number; quantity: number; available: number; }
@@ -32,6 +33,8 @@ const PAYMENT_OPTIONS: { key: PaymentMethod; label: string; icon: typeof Banknot
 export default function PharmacyPOS() {
   const { session, isAuthenticated } = useAuth();
   const [items, setItems] = useState<StockItem[] | null>(null);
+  const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
+  const [locationId, setLocationId] = useState<string>("");
   const [search, setSearch] = useState("");
   const [cart, setCart] = useState<CartLine[]>([]);
   const [payment, setPayment] = useState<PaymentMethod>("cash");
@@ -43,10 +46,18 @@ export default function PharmacyPOS() {
     if (!session) return;
     setFetchError(null);
     try {
-      const data = await apiFetch<Paginated<StockItem> | StockItem[]>("/api/v1/erp/inventory/stock-items/", {
-        token: session.accessToken, tenantId: session.tenantId,
-      });
-      setItems(unwrap(data));
+      const [itemData, warehouseData] = await Promise.all([
+        apiFetch<Paginated<StockItem> | StockItem[]>("/api/v1/erp/inventory/stock-items/", {
+          token: session.accessToken, tenantId: session.tenantId,
+        }),
+        apiFetch<Paginated<Warehouse> | Warehouse[]>("/api/v1/erp/inventory/warehouses/", {
+          token: session.accessToken, tenantId: session.tenantId,
+        }),
+      ]);
+      setItems(unwrap(itemData));
+      const warehouseList = unwrap(warehouseData);
+      setWarehouses(warehouseList);
+      setLocationId(prev => prev || warehouseList[0]?.id || "");
     } catch (err) {
       const detail = (err as { detail?: string })?.detail;
       setFetchError(detail || (err instanceof Error ? err.message : "Failed to load stock items."));
@@ -55,12 +66,21 @@ export default function PharmacyPOS() {
 
   useEffect(() => { void loadItems(); }, [loadItems]);
 
+  // Cart carries stock across a location switch as dead weight otherwise --
+  // clear it so a cashier can't accidentally ring up the previous
+  // location's items against the new one.
+  useEffect(() => { setCart([]); }, [locationId]);
+
+  const locationItems = useMemo(
+    () => (items || []).filter(i => !locationId || i.warehouse === locationId),
+    [items, locationId]
+  );
+
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    const list = items || [];
-    if (!q) return list;
-    return list.filter(i => i.name.toLowerCase().includes(q) || i.sku.toLowerCase().includes(q));
-  }, [items, search]);
+    if (!q) return locationItems;
+    return locationItems.filter(i => i.name.toLowerCase().includes(q) || i.sku.toLowerCase().includes(q));
+  }, [locationItems, search]);
 
   function addToCart(item: StockItem) {
     const available = Number(item.quantity);
@@ -91,7 +111,7 @@ export default function PharmacyPOS() {
   const total = subtotal + tax;
 
   async function checkout() {
-    if (!session || cart.length === 0) return;
+    if (!session || cart.length === 0 || !locationId) return;
     setCheckingOut(true);
     setFetchError(null);
     try {
@@ -101,6 +121,7 @@ export default function PharmacyPOS() {
         tenantId: session.tenantId,
         body: JSON.stringify({
           cashier_id: session.userId,
+          location: locationId,
           payment_method: payment,
           lines: cart.map(l => ({ stock_item_id: l.stock_item_id, item_name: l.item_name, quantity: l.quantity, unit_price: l.unit_price })),
         }),
@@ -122,10 +143,21 @@ export default function PharmacyPOS() {
 
   return (
     <div className="mx-auto max-w-6xl">
-      <header className="mb-6 flex items-center justify-between">
+      <header className="mb-6 flex items-center justify-between gap-4">
         <div>
           <h1 className="flex items-center gap-2 font-heading text-2xl font-bold"><ShoppingCart size={22} className="text-brand-400" /> Pharmacy POS</h1>
           <p className="mt-1 text-sm text-ink/50">Real-time checkout against live stock — quantity decrements on completion</p>
+        </div>
+        <div>
+          <label className="mb-1 block text-right text-xs text-ink/50">Pharmacy Location</label>
+          <select
+            value={locationId}
+            onChange={e => setLocationId(e.target.value)}
+            className="rounded-lg border border-ink/10 bg-surface px-3 py-2 text-sm focus:border-brand-400 focus:outline-none"
+          >
+            {warehouses.length === 0 && <option value="">No locations configured</option>}
+            {warehouses.map(w => <option key={w.id} value={w.id}>{w.name}</option>)}
+          </select>
         </div>
       </header>
 
@@ -212,10 +244,10 @@ export default function PharmacyPOS() {
 
           <button
             onClick={checkout}
-            disabled={checkingOut || cart.length === 0}
+            disabled={checkingOut || cart.length === 0 || !locationId}
             className="cy-btn cy-btn-primary w-full text-sm disabled:opacity-50"
           >
-            {checkingOut ? "Processing…" : `Pay SAR ${total.toFixed(2)} (F5)`}
+            {checkingOut ? "Processing…" : !locationId ? "Select a pharmacy location" : `Pay SAR ${total.toFixed(2)} (F5)`}
           </button>
         </div>
       </div>

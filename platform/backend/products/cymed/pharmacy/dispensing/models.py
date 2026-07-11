@@ -10,6 +10,7 @@ FHIR: MedicationDispense
 from django.db import models
 
 from platform.common.models import BaseModel
+from products.cycom.inventory.models import Warehouse
 
 
 class DispenseStatus(models.TextChoices):
@@ -64,7 +65,16 @@ class DispenseOrder(BaseModel):
     # Pharmacy assignment
     pharmacist_id = models.UUIDField(null=True, blank=True)  # Assigned pharmacist
     technician_id = models.UUIDField(null=True, blank=True)  # Assigned technician
-    pharmacy_location = models.CharField(max_length=255, blank=True)
+    pharmacy_location = models.ForeignKey(
+        Warehouse,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="dispense_orders",
+        help_text="Which pharmacy stock pool this order is fulfilled from (e.g. ER pharmacy "
+        "vs outpatient retail pharmacy) -- was free text, now a real Warehouse so stock "
+        "can't be double-counted or dispensed from the wrong location's pool.",
+    )
     dispensing_counter = models.CharField(max_length=50, blank=True)
 
     # Verification

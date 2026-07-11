@@ -3,6 +3,7 @@ from decimal import Decimal
 from django.db import models
 
 from platform.common.models import BaseModel
+from products.cycom.inventory.models import Warehouse
 
 VAT_RATE = Decimal("0.15")  # Saudi standard VAT rate, matches ZATCA e-invoicing elsewhere
 
@@ -22,6 +23,15 @@ class PharmacySale(BaseModel):
     data_classification = "phi"  # may carry patient_id for insurance-linked sales
 
     sale_number = models.CharField(max_length=50, unique=True)
+    location = models.ForeignKey(
+        Warehouse,
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="pharmacy_sales",
+        help_text="Which pharmacy this retail sale was rung up at -- lines can only draw "
+        "stock from this location's own StockItem pool (see checkout()).",
+    )
     cashier_id = models.UUIDField()
     patient_id = models.UUIDField(null=True, blank=True)
     payment_method = models.CharField(max_length=20, choices=PAYMENT_METHOD_CHOICES)
