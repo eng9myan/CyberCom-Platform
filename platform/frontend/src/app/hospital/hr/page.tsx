@@ -1,9 +1,11 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Users, Check, XIcon } from "lucide-react";
+import { Users, Check, XIcon, Download } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { useAuth } from "@/contexts/auth";
+
+const API_BASE = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
 
 interface Department { id: string; name: string; code: string; }
 interface Employee { id: string; first_name: string; last_name: string; department: string | null; job_title: string; hire_date: string; status: string; }
@@ -64,6 +66,53 @@ export default function HRPayroll() {
     } catch (err) {
       const detail = (err as { detail?: string })?.detail;
       setFetchError(detail || `Failed to ${decision} swap request.`);
+    }
+  }
+
+  const [payslipForm, setPayslipForm] = useState({ runId: "", employeeId: "", periodStart: "", periodEnd: "", allowances: "0" });
+  const [generatingPayslip, setGeneratingPayslip] = useState(false);
+
+  async function generatePayslip() {
+    if (!session || !payslipForm.runId || !payslipForm.employeeId || !payslipForm.periodStart || !payslipForm.periodEnd) return;
+    setGeneratingPayslip(true);
+    try {
+      await apiFetch(`/api/v1/erp/payroll/runs/${payslipForm.runId}/generate-payslip/`, {
+        method: "POST",
+        token: session.accessToken,
+        tenantId: session.tenantId,
+        body: JSON.stringify({
+          employee_id: payslipForm.employeeId,
+          period_start: payslipForm.periodStart,
+          period_end: payslipForm.periodEnd,
+          allowances: payslipForm.allowances || "0",
+        }),
+      });
+      setPayslipForm(f => ({ ...f, employeeId: "" }));
+      void loadData();
+    } catch (err) {
+      const detail = (err as { detail?: string })?.detail;
+      setFetchError(detail || (err instanceof Error ? err.message : "Failed to generate payslip."));
+    } finally {
+      setGeneratingPayslip(false);
+    }
+  }
+
+  async function exportWPS(runId: string, runDate: string) {
+    if (!session) return;
+    try {
+      const resp = await fetch(`${API_BASE}/api/v1/erp/payroll/runs/${runId}/export-wps/`, {
+        headers: { Authorization: `Bearer ${session.accessToken}`, "X-Tenant-ID": session.tenantId },
+      });
+      if (!resp.ok) throw new Error(`Export failed (${resp.status})`);
+      const blob = await resp.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `wps_${runDate}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      setFetchError(err instanceof Error ? err.message : "Failed to export WPS file.");
     }
   }
 
@@ -208,19 +257,42 @@ export default function HRPayroll() {
       </div>
 
       <h2 className="mb-3 text-lg font-semibold">Payroll Runs</h2>
+      <div className="mb-4 rounded-xl border border-white/10 bg-surface-raised p-4">
+        <p className="mb-2 text-xs font-semibold text-white/50">Generate Payslip (overtime + shift differential calculated from real attendance/roster data)</p>
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-6">
+          <select value={payslipForm.runId} onChange={e => setPayslipForm(f => ({ ...f, runId: e.target.value }))} className="rounded-lg border border-white/10 bg-surface px-2 py-1.5 text-sm">
+            <option value="">Payroll run…</option>
+            {payrollRuns.map(r => <option key={r.id} value={r.id}>{r.run_date}</option>)}
+          </select>
+          <select value={payslipForm.employeeId} onChange={e => setPayslipForm(f => ({ ...f, employeeId: e.target.value }))} className="rounded-lg border border-white/10 bg-surface px-2 py-1.5 text-sm">
+            <option value="">Employee…</option>
+            {employees.map(e => <option key={e.id} value={e.id}>{e.first_name} {e.last_name}</option>)}
+          </select>
+          <input type="date" value={payslipForm.periodStart} onChange={e => setPayslipForm(f => ({ ...f, periodStart: e.target.value }))} className="rounded-lg border border-white/10 bg-surface px-2 py-1.5 text-sm" />
+          <input type="date" value={payslipForm.periodEnd} onChange={e => setPayslipForm(f => ({ ...f, periodEnd: e.target.value }))} className="rounded-lg border border-white/10 bg-surface px-2 py-1.5 text-sm" />
+          <input type="number" value={payslipForm.allowances} onChange={e => setPayslipForm(f => ({ ...f, allowances: e.target.value }))} placeholder="Allowances" className="rounded-lg border border-white/10 bg-surface px-2 py-1.5 text-sm" />
+          <button
+            disabled={generatingPayslip || !payslipForm.runId || !payslipForm.employeeId || !payslipForm.periodStart || !payslipForm.periodEnd}
+            onClick={generatePayslip}
+            className="rounded-lg bg-brand-500 px-3 py-1.5 text-sm font-semibold text-white disabled:opacity-40"
+          >
+            {generatingPayslip ? "Generating…" : "Generate"}
+          </button>
+        </div>
+      </div>
       <div className="mb-8 overflow-hidden rounded-xl border border-white/10 bg-surface-raised">
         <div className="overflow-x-auto">
           <table className="w-full border-collapse text-sm">
             <thead>
               <tr className="border-b border-white/10 bg-white/5">
-                {["Run Date", "Status", "Gross", "Deductions", "Net"].map(h => (
+                {["Run Date", "Status", "Gross", "Deductions", "Net", ""].map(h => (
                   <th key={h} className="px-4 py-3 text-left font-semibold text-white/50">{h}</th>
                 ))}
               </tr>
             </thead>
             <tbody>
               {payrollRuns.length === 0 && (
-                <tr><td colSpan={5} className="px-4 py-6 text-center text-white/50">No payroll runs recorded yet.</td></tr>
+                <tr><td colSpan={6} className="px-4 py-6 text-center text-white/50">No payroll runs recorded yet.</td></tr>
               )}
               {payrollRuns.map(r => (
                 <tr key={r.id} className="border-b border-white/5">
@@ -229,6 +301,11 @@ export default function HRPayroll() {
                   <td className="px-4 py-3">{parseFloat(r.total_gross).toLocaleString()}</td>
                   <td className="px-4 py-3">{parseFloat(r.total_deductions).toLocaleString()}</td>
                   <td className="px-4 py-3 font-semibold">{parseFloat(r.total_net).toLocaleString()}</td>
+                  <td className="px-4 py-3">
+                    <button onClick={() => exportWPS(r.id, r.run_date)} className="flex items-center gap-1 rounded-md border border-white/10 px-2 py-1 text-xs font-semibold text-white/60 hover:bg-white/5">
+                      <Download size={12} /> WPS
+                    </button>
+                  </td>
                 </tr>
               ))}
             </tbody>

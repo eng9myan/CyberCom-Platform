@@ -41,6 +41,17 @@ class Employee(BaseModel):
         default=False,
         help_text="Physicians, nurses, pharmacists, techs -- anyone whose license must be tracked.",
     )
+    national_id = models.CharField(
+        max_length=50, blank=True, help_text="National ID / civil registry number, required by WPS export."
+    )
+    bank_iban = models.CharField(
+        max_length=34, blank=True, help_text="IBAN salary is paid to, required by WPS export."
+    )
+    monthly_basic_salary = models.DecimalField(
+        max_digits=18, decimal_places=2, null=True, blank=True,
+        help_text="Base monthly salary used to derive the hourly rate for overtime/shift-differential "
+        "calculation (basic / STANDARD_MONTHLY_HOURS) and as the payslip default.",
+    )
 
     class Meta:
         db_table = "cycom_hr_employees"
