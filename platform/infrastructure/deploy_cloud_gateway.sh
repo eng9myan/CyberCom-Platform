@@ -35,8 +35,8 @@ set -euo pipefail
 : "${DEPLOY_DOMAIN:?Set DEPLOY_DOMAIN to the domain this deployment serves, e.g. hospital.cy-com.com}"
 : "${SSH_KEY_PATH:?Set SSH_KEY_PATH to the private key for the instance's ubuntu user}"
 
-SSH_USER="ubuntu"
-GIT_REPO="${GIT_REPO:-https://github.com/eng9myan/Final-Cybercom.git}"
+SSH_USER="${SSH_USER:-ubuntu}"
+GIT_REPO="${GIT_REPO:-https://github.com/eng9myan/CyberCom-Platform.git}"
 GIT_BRANCH="${GIT_BRANCH:-develop}"
 REMOTE_DIR="${REMOTE_DIR:-/opt/cybercom}"
 LETSENCRYPT_EMAIL="${LETSENCRYPT_EMAIL:?Set LETSENCRYPT_EMAIL for TLS certificate registration}"

@@ -8,17 +8,21 @@ name: Deploy to OCI (www.cy-com.com)
 # create those. It will fail loudly (not silently/fake-succeed) until the
 # required repo secrets below are set to real values.
 #
-# Trigger is deliberately manual (workflow_dispatch) plus push-to-main --
-# `main` doesn't exist in this repo yet (only `develop`), so until it's
-# created this workflow only runs when someone deliberately clicks
-# "Run workflow" in the Actions tab. Auto-deploying every `develop` commit
-# straight to the production domain was not what was asked for and isn't
-# safe practice for a hospital system regardless.
+# Trigger is workflow_dispatch plus push-to-main. Auto-deploying every
+# commit straight to the production domain was not what was asked for and
+# isn't safe practice for a hospital system regardless -- prefer manual
+# dispatch unless you deliberately want push-to-main to go live untended.
 #
-# Required repository secrets (Settings -> Secrets and variables -> Actions):
-#   OCI_INSTANCE_IP    - public IP of the OCI Compute VM
-#   OCI_SSH_PRIVATE_KEY - private key (PEM) for that instance's `ubuntu` user
-#   LETSENCRYPT_EMAIL  - real email for TLS certificate registration
+# Required repository secrets (Settings -> Secrets and variables -> Actions)
+# -- names below match what's actually provisioned on this repo (OCI-native
+# naming), not the generic OCI_INSTANCE_IP/OCI_SSH_PRIVATE_KEY names an
+# earlier version of this workflow assumed:
+#   OCI_HOST          - public IP/hostname of the OCI Compute VM
+#   OCI_SSH_KEY        - private key (PEM) for SSH access
+#   OCI_SSH_USERNAME   - SSH user on that instance (e.g. "ubuntu" or "opc")
+#   LETSENCRYPT_EMAIL  - real email for TLS certificate registration --
+#                        NOT currently set; deploy will fail at the
+#                        verification step until it's added.
 # Required repository variable (or hardcode if it will never change):
 #   DEPLOY_DOMAIN      - defaults to www.cy-com.com below
 
@@ -39,8 +43,8 @@ jobs:
       - name: Verify required secrets are present
         run: |
           missing=0
-          [ -z "${{ secrets.OCI_INSTANCE_IP }}" ] && echo "::error::Secret OCI_INSTANCE_IP is not set." && missing=1
-          [ -z "${{ secrets.OCI_SSH_PRIVATE_KEY }}" ] && echo "::error::Secret OCI_SSH_PRIVATE_KEY is not set." && missing=1
+          [ -z "${{ secrets.OCI_HOST }}" ] && echo "::error::Secret OCI_HOST is not set." && missing=1
+          [ -z "${{ secrets.OCI_SSH_KEY }}" ] && echo "::error::Secret OCI_SSH_KEY is not set." && missing=1
           [ -z "${{ secrets.LETSENCRYPT_EMAIL }}" ] && echo "::error::Secret LETSENCRYPT_EMAIL is not set." && missing=1
           if [ "$missing" = "1" ]; then
             echo "::error::One or more required secrets are missing -- see this workflow's header comment. Refusing to proceed rather than fail deep inside the deploy script."
@@ -50,13 +54,14 @@ jobs:
       - name: Set up SSH key
         run: |
           mkdir -p ~/.ssh
-          printf '%s\n' "${{ secrets.OCI_SSH_PRIVATE_KEY }}" > ~/.ssh/oci_deploy_key
+          printf '%s\n' "${{ secrets.OCI_SSH_KEY }}" > ~/.ssh/oci_deploy_key
           chmod 600 ~/.ssh/oci_deploy_key
 
       - name: Run deploy_cloud_gateway.sh against OCI
         env:
-          OCI_INSTANCE_IP: ${{ secrets.OCI_INSTANCE_IP }}
+          OCI_INSTANCE_IP: ${{ secrets.OCI_HOST }}
           SSH_KEY_PATH: /home/runner/.ssh/oci_deploy_key
+          SSH_USER: ${{ secrets.OCI_SSH_USERNAME || 'ubuntu' }}
           DEPLOY_DOMAIN: ${{ vars.DEPLOY_DOMAIN || 'www.cy-com.com' }}
           LETSENCRYPT_EMAIL: ${{ secrets.LETSENCRYPT_EMAIL }}
           GIT_BRANCH: main
